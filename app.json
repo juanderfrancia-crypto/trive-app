@@ -9,11 +9,11 @@
     "splash": {
       "image": "./assets/logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#154AA8",
+      "backgroundColor": "#FFFFFF",
       "dark": {
         "image": "./assets/logo.png",
         "resizeMode": "contain",
-        "backgroundColor": "#154AA8"
+        "backgroundColor": "#FFFFFF"
       }
     },
     "ios": {
@@ -48,11 +48,11 @@
         {
           "image": "./assets/logo.png",
           "resizeMode": "contain",
-          "backgroundColor": "#154AA8",
+          "backgroundColor": "#FFFFFF",
           "dark": {
             "image": "./assets/logo.png",
             "resizeMode": "contain",
-            "backgroundColor": "#154AA8"
+            "backgroundColor": "#FFFFFF"
           }
         }
       ],
