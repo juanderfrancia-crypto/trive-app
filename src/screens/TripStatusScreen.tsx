@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -10,6 +10,7 @@ import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
 import Toast from '../components/Toast'
 import { TripMessagesModal } from '../components/TripMessagesModal'
+import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
 export default function TripStatusScreen() {
   const navigation = useNavigation<any>()
@@ -25,6 +26,8 @@ export default function TripStatusScreen() {
   }>({ visible: false, message: '', type: 'info' })
   const [userBooking, setUserBooking] = useState<any>(null)
   const [selectedTripForChat, setSelectedTripForChat] = useState<any>(null)
+  const [chatUnreadCount, setChatUnreadCount] = useState(0)
+  const chatChannelRef = useRef<(() => void) | null>(null)
 
   const loadBookings = useCallback(async () => {
     if (!selectedRoute) return
@@ -45,7 +48,24 @@ export default function TripStatusScreen() {
 
       setBookingData(null)
       loadBookings()
-    }, [selectedRoute, setBookingData, loadBookings, navigation])
+
+      // Cargar unread count y suscribir mensajes del viaje
+      if (user?.id && selectedRoute.id) {
+        getTripUnreadCount(selectedRoute.id, user.id).then(setChatUnreadCount)
+        chatChannelRef.current = subscribeTripMessages(selectedRoute.id, (msg) => {
+          if (msg.to_user_id === user.id) {
+            setChatUnreadCount((prev) => prev + 1)
+          }
+        })
+      }
+
+      return () => {
+        if (chatChannelRef.current) {
+          chatChannelRef.current()
+          chatChannelRef.current = null
+        }
+      }
+    }, [selectedRoute, setBookingData, loadBookings, navigation, user?.id])
   )
 
   if (!selectedRoute) return null
@@ -308,6 +328,7 @@ export default function TripStatusScreen() {
               <TouchableOpacity
                 style={styles.quickChatBtn}
                 onPress={() => {
+                  setChatUnreadCount(0)
                   setSelectedTripForChat({
                     id: selectedRoute.id,
                     driverId: selectedRoute.driver_id,
@@ -317,6 +338,13 @@ export default function TripStatusScreen() {
               >
                 <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
                 <Text style={styles.quickChatBtnText}>Contactar conductor</Text>
+                {chatUnreadCount > 0 && (
+                  <View style={styles.chatBadge}>
+                    <Text style={styles.chatBadgeText}>
+                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                    </Text>
+                  </View>
+                )}
               </TouchableOpacity>
             </LinearGradient>
 
@@ -869,11 +897,32 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     marginTop: SPACING.sm,
+    overflow: 'visible',
   },
   quickChatBtnText: {
     ...TYPOGRAPHY.bodyMedium,
     color: '#fff',
     fontWeight: '700',
+  },
+  chatBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#111111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  chatBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 14,
   },
   cancelBtn: {
     flexDirection: 'row',

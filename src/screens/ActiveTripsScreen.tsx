@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ import { supabase } from '../services/supabase'
 import { notifyTripCancellation } from '../services/pushNotifications'
 import Toast from '../components/Toast'
 import { TripMessagesModal } from '../components/TripMessagesModal'
+import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
 interface ActiveTrip {
   id: string
@@ -51,6 +52,8 @@ export default function ActiveTripsScreen() {
     type: 'info' as 'success' | 'error' | 'info' | 'warning',
   })
   const [selectedTripForChat, setSelectedTripForChat] = useState<ActiveTrip | null>(null)
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
+  const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
 
   useEffect(() => {
     if (user?.id) {
@@ -63,6 +66,10 @@ export default function ActiveTripsScreen() {
     useCallback(() => {
       if (user?.id) {
         loadActiveTrips()
+      }
+      return () => {
+        msgChannelsRef.current.forEach((unsub) => unsub())
+        msgChannelsRef.current.clear()
       }
     }, [user?.id])
   )
@@ -178,6 +185,23 @@ export default function ActiveTripsScreen() {
 
       setActiveTrips(formattedTrips)
 
+      // Cargar unread counts y suscribir canales por viaje
+      if (user?.id) {
+        const counts: Record<string, number> = {}
+        for (const trip of formattedTrips) {
+          counts[trip.id] = await getTripUnreadCount(trip.id, user.id)
+          if (!msgChannelsRef.current.has(trip.id)) {
+            const unsub = subscribeTripMessages(trip.id, (msg) => {
+              if (msg.to_user_id === user.id) {
+                setUnreadCounts((prev) => ({ ...prev, [trip.id]: (prev[trip.id] ?? 0) + 1 }))
+              }
+            })
+            msgChannelsRef.current.set(trip.id, unsub)
+          }
+        }
+        setUnreadCounts(counts)
+      }
+
       console.log('✅ Viajes activos finales:', {
         count: formattedTrips.length,
         trips: formattedTrips.map(t => ({
@@ -254,7 +278,7 @@ export default function ActiveTripsScreen() {
   }
 
   const handleContactDriver = (trip: ActiveTrip) => {
-    // Abrir modal de chat contextual para el viaje
+    setUnreadCounts((prev) => ({ ...prev, [trip.id]: 0 }))
     setSelectedTripForChat(trip)
   }
 
@@ -364,6 +388,13 @@ export default function ActiveTripsScreen() {
         <TouchableOpacity style={styles.secondaryButton} onPress={() => handleContactDriver(trip)}>
           <Ionicons name="chatbubble-outline" size={18} color={COLORS.primary} />
           <Text style={styles.secondaryButtonText}>Contactar</Text>
+          {(unreadCounts[trip.id] ?? 0) > 0 && (
+            <View style={styles.chatBadge}>
+              <Text style={styles.chatBadgeText}>
+                {unreadCounts[trip.id] > 9 ? '9+' : unreadCounts[trip.id]}
+              </Text>
+            </View>
+          )}
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.primaryButton} onPress={() => handleTrackTrip(trip)}>
@@ -675,6 +706,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
+  chatBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#111111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  chatBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 13,
+  },
   secondaryButton: {
     flex: 1,
     flexDirection: 'row',
