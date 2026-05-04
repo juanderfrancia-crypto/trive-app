@@ -115,23 +115,12 @@ export default function ActiveTripsScreen() {
         `
         )
         .eq('passenger_id', user.id)
-        .eq('booking_status', 'confirmed')
+        .in('booking_status', ['confirmed', 'pending'])
         .order('created_at', { ascending: false })
 
       if (bookingsError) throw bookingsError
 
-      console.log('📍 ActiveTripsScreen - Bookings obtenidos:', {
-        count: bookings?.length || 0,
-        bookings: bookings?.map(b => ({
-          id: b.id,
-          status: b.booking_status,
-          hasRoute: !!b.routes,
-          routeStatus: b.routes?.status,
-        }))
-      })
-
       if (!bookings || bookings.length === 0) {
-        console.log('❌ No hay bookings para este usuario')
         setActiveTrips([])
         return
       }
@@ -202,16 +191,8 @@ export default function ActiveTripsScreen() {
         setUnreadCounts(counts)
       }
 
-      console.log('✅ Viajes activos finales:', {
-        count: formattedTrips.length,
-        trips: formattedTrips.map(t => ({
-          id: t.id,
-          route: `${t.origin} → ${t.destination}`,
-          status: t.routeStatus,
-        }))
-      })
     } catch (error) {
-      console.error('❌ Error loading active trips:', error)
+      console.error('Error loading active trips:', error)
       setToastConfig({
         visible: true,
         message: 'Error cargando viajes activos',

@@ -72,7 +72,7 @@ export default function TripHistoryScreen() {
 
       const enriched = await Promise.all(
         formatted.map(async (trip) => {
-          if (!trip.driver_id || trip.status !== 'completed') return trip
+          if (!trip.driver_id || trip.routeStatus !== 'completed') return trip
           const alreadyRated = await hasUserRated(trip.id, user!.id, trip.driver_id)
           return {
             ...trip,
@@ -90,9 +90,12 @@ export default function TripHistoryScreen() {
 
   const filteredTrips = tripHistory.filter((trip) => {
     if (filter === 'all') return true
-    if (filter === 'active') return ['scheduled', 'in_progress'].includes(trip.routeStatus)
-    if (filter === 'completed') return trip.status === 'completed' && !['scheduled', 'in_progress'].includes(trip.routeStatus)
-    if (filter === 'cancelled') return trip.status === 'cancelled'
+    if (filter === 'active')
+      return trip.status !== 'cancelled' && ['scheduled', 'in_progress'].includes(trip.routeStatus)
+    if (filter === 'completed')
+      return trip.routeStatus === 'completed'
+    if (filter === 'cancelled')
+      return trip.status === 'cancelled' || trip.routeStatus === 'cancelled'
     return true
   })
 

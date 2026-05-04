@@ -234,6 +234,7 @@ export const useBookings = () => {
         .from("bookings")
         .select(`*, routes:route_id(*)`)
         .eq("passenger_id", passengerId)
+        .not("booking_status", "eq", "pending")
         .order("created_at", { ascending: false });
 
       if (fetchError) throw fetchError;
