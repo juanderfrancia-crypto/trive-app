@@ -18,14 +18,12 @@ export const configureNotificationHandler = () => {
   try {
     Notifications.setNotificationHandler({
       handleNotification: async () => ({
-        shouldShowAlert: false,
-        shouldPlaySound: false,
-        shouldSetBadge: false,
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
       }),
     })
-  } catch (_e) {
-    // handler not available
-  }
+  } catch (_e) {}
 }
 
 export const getPushNotificationToken = async (): Promise<string | null> => {
@@ -46,20 +44,10 @@ export const getPushNotificationToken = async (): Promise<string | null> => {
 
     if (finalStatus !== 'granted') return null
 
-    let token = null
-    try {
-      const pushTokenData = await Notifications.getExpoPushTokenAsync({
-        projectId: 'trive-app',
-      })
-      token = pushTokenData.data
-    } catch (_e) {
-      try {
-        const pushTokenData = await Notifications.getExpoPushTokenAsync()
-        token = pushTokenData.data
-      } catch (fallbackError) {
-        throw fallbackError
-      }
-    }
+    const pushTokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: 'e96c93aa-7f2b-45e1-bdf0-d60e07577512',
+    })
+    const token = pushTokenData.data
 
     return token
   } catch (_e) {

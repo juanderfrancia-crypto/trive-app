@@ -1,6 +1,9 @@
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import AppNavigator from "./src/navigation/AppNavigator";
+import { configureNotificationHandler } from "./src/services/pushNotifications";
+
+configureNotificationHandler();
 
 export default function App() {
   return (
