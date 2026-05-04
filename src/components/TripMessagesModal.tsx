@@ -72,7 +72,7 @@ export const TripMessagesModal = React.memo(
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="chevron-down" size={24} color={COLORS.text.primary} />
+              <Ionicons name="chevron-down" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
             <View style={styles.headerContent}>
@@ -133,7 +133,7 @@ TripMessagesModal.displayName = 'TripMessagesModal'
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background.primary,
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -154,11 +154,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.headline,
-    color: COLORS.text.primary,
+    color: COLORS.textPrimary,
   },
   subtitle: {
     ...TYPOGRAPHY.caption,
-    color: COLORS.text.secondary,
+    color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
   headerRight: {
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.text.secondary,
+    color: COLORS.textSecondary,
     marginTop: SPACING.md,
   },
   errorText: {
