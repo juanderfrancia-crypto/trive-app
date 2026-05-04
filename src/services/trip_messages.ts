@@ -206,7 +206,7 @@ export const subscribeTripMessages = (
   }
 
   const channel = supabase
-    .channel(`trip:${tripId}`)
+    .channel(`trip:${tripId}:${Date.now()}`)
     .on(
       'postgres_changes',
       {
@@ -217,18 +217,11 @@ export const subscribeTripMessages = (
       },
       (payload) => {
         const newMessage = payload.new as TripMessage
-        if (newMessage) {
-          callback(newMessage)
-        }
+        if (newMessage) callback(newMessage)
       }
     )
-    .subscribe((status) => {
-      if (status === 'CLOSED') {
-        console.warn(`Subscription to trip:${tripId} closed`)
-      }
-    })
+    .subscribe()
 
-  // Retornar función de desuscripción
   return () => {
     supabase.removeChannel(channel)
   }
@@ -254,7 +247,7 @@ export const subscribeTripMessageUpdates = (
   }
 
   const channel = supabase
-    .channel(`trip-updates:${tripId}`)
+    .channel(`trip-updates:${tripId}:${Date.now()}`)
     .on(
       'postgres_changes',
       {
@@ -265,9 +258,7 @@ export const subscribeTripMessageUpdates = (
       },
       (payload) => {
         const updatedMessage = payload.new as TripMessage
-        if (updatedMessage) {
-          callback(updatedMessage.id, updatedMessage.is_read)
-        }
+        if (updatedMessage) callback(updatedMessage.id, updatedMessage.is_read)
       }
     )
     .subscribe()
