@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { View, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import SearchScreen from '../screens/SearchScreen'
 import NotificationsScreen from '../screens/NotificationsScreen'
@@ -12,6 +13,7 @@ const Tab = createBottomTabNavigator()
 
 export default function TabNavigator() {
   const notificationUnreadCount = useAppStore((s) => s.notificationUnreadCount)
+  const insets = useSafeAreaInsets()
   const alertsBadge =
     notificationUnreadCount > 0
       ? notificationUnreadCount > 99
@@ -50,8 +52,8 @@ export default function TabNavigator() {
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopWidth: 1,
-          height: 65,
-          paddingBottom: SPACING.md,
+          height: 65 + insets.bottom,
+          paddingBottom: SPACING.md + insets.bottom,
           paddingTop: SPACING.sm,
           elevation: 10,
           shadowColor: '#000',
