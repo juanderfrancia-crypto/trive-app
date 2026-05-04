@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    ...TYPOGRAPHY.headline,
+    ...TYPOGRAPHY.h4,
     color: COLORS.textPrimary,
   },
   subtitle: {
