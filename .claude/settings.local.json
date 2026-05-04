@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la C:/Users/T460s/trive-app/*.js C:/Users/T460s/trive-app/*.json)",
+      "Bash(npm install:*)",
+      "Bash(npm list:*)",
+      "Bash(npx expo:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm view:*)",
+      "Bash(node -e \"console.log\\(typeof require\\('nativewind/babel'\\)\\)\")",
+      "Bash(node -e \"const p = require\\('nativewind/babel'\\); console.log\\(p.toString\\(\\).substring\\(0, 200\\)\\)\")",
+      "Bash(gh auth:*)",
+      "Bash(node -e \"console.log\\(require.resolve\\('./assets/screens/HomeScreen'\\)\\)\")",
+      "Bash(node -e \"console.log\\(require.resolve\\('../screens/HomeScreen'\\)\\)\")",
+      "Bash(git restore:*)",
+      "Bash(mkdir -p pruebas)",
+      "Bash(ls -la *.md *.sql *.js)",
+      "Bash(ls *.js *.sql)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(npm search:*)",
+      "Bash(git archive *)",
+      "Bash(unzip -l trive_2026-04-25.zip)",
+      "mcp__ide__getDiagnostics",
+      "Bash(grep -v \"//\")",
+      "Bash(npx tsc *)"
+    ]
+  }
+}
