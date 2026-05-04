@@ -20,6 +20,7 @@ import { checkDriverApprovalStatus, getDriverRestrictionMessage, type DriverAppr
 import { notifyRouteCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { TripMessagesModal } from '../components/TripMessagesModal'
+import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
 
 interface Passenger {
   booking_id: string
@@ -67,6 +68,20 @@ export default function DriverPanelScreen() {
     otherUserId: string
     otherUserName: string
   } | null>(null)
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
+  const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
+
+  const loadUnreadCounts = useCallback(async (loadedRoutes: DriverRoute[]) => {
+    if (!user?.id) return
+    const counts: Record<string, number> = {}
+    for (const route of loadedRoutes) {
+      for (const p of route.passengers || []) {
+        const key = `${route.id}-${p.passenger_id}`
+        counts[key] = await getTripUnreadCountFrom(route.id, user.id, p.passenger_id)
+      }
+    }
+    setUnreadCounts(counts)
+  }, [user?.id])
 
   const fetchDriverRoutes = useCallback(async () => {
     if (!user?.id) return
@@ -137,6 +152,23 @@ export default function DriverPanelScreen() {
       )
 
       setRoutes(routesWithPassengers)
+      loadUnreadCounts(routesWithPassengers)
+
+      // Suscribir canales de mensajes para cada ruta nueva
+      for (const route of routesWithPassengers) {
+        if (!msgChannelsRef.current.has(route.id)) {
+          const unsub = subscribeTripMessages(route.id, (msg) => {
+            if (msg.to_user_id === user?.id) {
+              const key = `${route.id}-${msg.from_user_id}`
+              setUnreadCounts((prev) => ({
+                ...prev,
+                [key]: (prev[key] ?? 0) + 1,
+              }))
+            }
+          })
+          msgChannelsRef.current.set(route.id, unsub)
+        }
+      }
     } catch (err: any) {
       console.error('Error fetching routes:', err)
       Alert.alert('Error', 'No se pudieron cargar tus rutas')
@@ -144,17 +176,18 @@ export default function DriverPanelScreen() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [user?.id])
+  }, [user?.id, loadUnreadCounts])
 
   useEffect(() => {
     fetchDriverRoutes()
   }, [fetchDriverRoutes])
 
+
   // Polling para actualizar rutas cuando está enfocada
   useFocusEffect(
     useCallback(() => {
       fetchDriverRoutes()
-      
+
       pollingIntervalRef.current = setInterval(() => {
         fetchDriverRoutes()
       }, 10000)
@@ -164,6 +197,8 @@ export default function DriverPanelScreen() {
           clearInterval(pollingIntervalRef.current)
           pollingIntervalRef.current = null
         }
+        msgChannelsRef.current.forEach((unsub) => unsub())
+        msgChannelsRef.current.clear()
       }
     }, [fetchDriverRoutes])
   )
@@ -591,15 +626,26 @@ export default function DriverPanelScreen() {
                               </View>
                               <TouchableOpacity
                                 style={styles.chatBtn}
-                                onPress={() =>
+                                onPress={() => {
+                                  const key = `${route.id}-${passenger.passenger_id}`
+                                  setUnreadCounts((prev) => ({ ...prev, [key]: 0 }))
                                   setSelectedChat({
                                     tripId: route.id,
                                     otherUserId: passenger.passenger_id,
                                     otherUserName: passenger.name,
                                   })
-                                }
+                                }}
                               >
                                 <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.primary} />
+                                {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
+                                  <View style={styles.chatBadge}>
+                                    <Text style={styles.chatBadgeText}>
+                                      {unreadCounts[`${route.id}-${passenger.passenger_id}`] > 9
+                                        ? '9+'
+                                        : unreadCounts[`${route.id}-${passenger.passenger_id}`]}
+                                    </Text>
+                                  </View>
+                                )}
                               </TouchableOpacity>
                             </View>
                           ))}
@@ -1003,6 +1049,25 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'visible',
+  },
+  chatBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#111111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 3,
+  },
+  chatBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
   },
 
   // Earnings Section

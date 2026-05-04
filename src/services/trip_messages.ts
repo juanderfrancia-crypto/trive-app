@@ -306,3 +306,23 @@ export const getTripUnreadCount = async (tripId: string, userId: string): Promis
     return 0
   }
 }
+
+export const getTripUnreadCountFrom = async (
+  tripId: string,
+  toUserId: string,
+  fromUserId: string
+): Promise<number> => {
+  try {
+    const { count, error } = await supabase
+      .from('trip_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('trip_id', tripId)
+      .eq('to_user_id', toUserId)
+      .eq('from_user_id', fromUserId)
+      .eq('is_read', false)
+    if (error) throw error
+    return count ?? 0
+  } catch {
+    return 0
+  }
+}
