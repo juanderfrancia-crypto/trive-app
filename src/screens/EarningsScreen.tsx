@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -8,344 +8,424 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
-import { supabase } from '../services/supabase';
-import { COLORS } from '../theme/colors';
+import { useDriverEarnings } from '../hooks/useDriverEarnings';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme';
 
-interface EarningsData {
-  total_earnings: number;
-  completed_trips: number;
-  pending_earnings: number;
-  total_bookings: number;
-}
-
-interface Withdrawal {
-  id: string;
-  amount: number;
-  status: string;
-  created_at: string;
-}
+const PAGE_SIZE = 20;
 
 export function EarningsScreen() {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const [earnings, setEarnings] = useState<EarningsData | null>(null);
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { earnings, transactions, loading, loadEarnings } = useDriverEarnings(user?.id);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useFocusEffect(
     React.useCallback(() => {
-      if (user?.id) {
-        loadEarningsData();
-      }
-    }, [user?.id])
+      setVisibleCount(PAGE_SIZE);
+      loadEarnings();
+    }, [loadEarnings])
   );
 
-  const loadEarningsData = async () => {
-    try {
-      setLoading(true);
-
-      // Get completed routes and their bookings
-      const { data: routes } = await supabase
-        .from('routes')
-        .select('id, status, price_per_seat')
-        .eq('driver_id', user?.id);
-
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('price, payment_status')
-        .in(
-          'route_id',
-          routes?.map((r) => r.id) || []
-        );
-
-      // Calculate earnings
-      const completedTrips = routes?.filter((r) => r.status === 'completed').length || 0;
-      const totalEarnings = bookings
-        ?.filter((b) => b.payment_status === 'completed')
-        .reduce((sum, b) => sum + (b.price || 0), 0) || 0;
-
-      const totalBookings = bookings?.length || 0;
-      const pendingEarnings = bookings
-        ?.filter((b) => b.payment_status === 'pending')
-        .reduce((sum, b) => sum + (b.price || 0), 0) || 0;
-
-      setEarnings({
-        total_earnings: totalEarnings,
-        completed_trips: completedTrips,
-        pending_earnings: pendingEarnings,
-        total_bookings: totalBookings,
-      });
-    } catch (err) {
-      console.error('Error loading earnings:', err);
-      Alert.alert('Error', 'No se pudo cargar las ganancias');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('es-CO', {
+  const formatCOP = (value: number) =>
+    new Intl.NumberFormat('es-CO', {
       style: 'currency',
       currency: 'COP',
       minimumFractionDigits: 0,
     }).format(value);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  if (loading && !earnings) {
+    return (
+      <SafeAreaView style={[styles.container, styles.center]} edges={['top']}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
-        </TouchableOpacity>
-        <Text style={styles.title}>Ganancias</Text>
-        <View style={{ width: 28 }} />
-      </View>
-
-      {/* Total Earnings Card */}
-      <View style={styles.mainCard}>
-        <View style={styles.iconContainer}>
-          <Ionicons name="wallet-outline" size={48} color={COLORS.primary} />
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.title}>Ganancias</Text>
+          <View style={{ width: 28 }} />
         </View>
-        <Text style={styles.label}>Ganancias Totales</Text>
-        <Text style={styles.totalAmount}>{formatCurrency(earnings?.total_earnings || 0)}</Text>
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{earnings?.completed_trips || 0}</Text>
-            <Text style={styles.statLabel}>Viajes Completados</Text>
-          </View>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{earnings?.total_bookings || 0}</Text>
-            <Text style={styles.statLabel}>Total de Pasajeros</Text>
-          </View>
-        </View>
-      </View>
 
-      {/* Pending Earnings */}
-      {earnings && earnings.pending_earnings > 0 && (
-        <View style={styles.card}>
-          <View style={styles.pendingHeader}>
-            <Ionicons name="time-outline" size={24} color="#FF9500" />
-            <View style={styles.pendingInfo}>
-              <Text style={styles.pendingLabel}>Ganancias Pendientes</Text>
-              <Text style={styles.pendingAmount}>{formatCurrency(earnings.pending_earnings)}</Text>
-            </View>
+        {/* Card principal */}
+        <View style={styles.mainCard}>
+          <View style={styles.mainCardIcon}>
+            <Ionicons name="wallet-outline" size={36} color={COLORS.primary} />
           </View>
-          <Text style={styles.pendingSubtext}>
-            Los pagos pendientes serán acreditados al completar los viajes
+          <Text style={styles.mainCardLabel}>GANANCIAS TOTALES</Text>
+          <Text style={styles.mainCardAmount}>
+            {formatCOP(earnings?.totalEarnings ?? 0)}
           </Text>
-        </View>
-      )}
-
-      {/* Earnings Breakdown */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Resumen de Ganancias</Text>
-
-        <View style={styles.breakdownRow}>
-          <View style={styles.breakdownItem}>
-            <View style={[styles.breakdownIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Ionicons name="checkmark-circle-outline" size={24} color="#10B981" />
+          <View style={styles.mainCardStats}>
+            <View style={styles.mainCardStat}>
+              <Text style={styles.mainCardStatValue}>{earnings?.completedTrips ?? 0}</Text>
+              <Text style={styles.mainCardStatLabel}>Viajes</Text>
             </View>
-            <Text style={styles.breakdownLabel}>Completadas</Text>
-            <Text style={styles.breakdownValue}>
-              {formatCurrency(earnings?.total_earnings || 0)}
-            </Text>
-          </View>
-
-          <View style={styles.breakdownItem}>
-            <View style={[styles.breakdownIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Ionicons name="time-outline" size={24} color="#FF9500" />
+            <View style={styles.mainCardStatDivider} />
+            <View style={styles.mainCardStat}>
+              <Text style={styles.mainCardStatValue}>{earnings?.completedPassengers ?? 0}</Text>
+              <Text style={styles.mainCardStatLabel}>Pasajeros</Text>
             </View>
-            <Text style={styles.breakdownLabel}>Pendientes</Text>
-            <Text style={styles.breakdownValue}>
-              {formatCurrency(earnings?.pending_earnings || 0)}
-            </Text>
+            <View style={styles.mainCardStatDivider} />
+            <View style={styles.mainCardStat}>
+              <Text style={styles.mainCardStatValue}>{formatCOP(earnings?.averagePerTrip ?? 0)}</Text>
+              <Text style={styles.mainCardStatLabel}>Promedio/viaje</Text>
+            </View>
           </View>
         </View>
-      </View>
 
-      {/* Withdrawal Section */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Retiros</Text>
-        <Text style={styles.noDataText}>Saldo disponible: {formatCurrency(earnings?.total_earnings || 0)}</Text>
-        <TouchableOpacity
-          style={styles.withdrawButton}
-          onPress={() => Alert.alert('Retiro', 'Funcionalidad de retiro en desarrollo')}
-        >
-          <Ionicons name="cash-outline" size={18} color="white" />
-          <Text style={styles.withdrawButtonText}>Solicitar Retiro</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        {/* Este mes */}
+        <View style={styles.row}>
+          <View style={[styles.statCard, { borderLeftColor: COLORS.primary }]}>
+            <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
+            <Text style={styles.statCardLabel}>Este mes</Text>
+            <Text style={[styles.statCardValue, { color: COLORS.primary }]}>
+              {formatCOP(earnings?.thisMonthEarnings ?? 0)}
+            </Text>
+          </View>
+          {(earnings?.pendingAmount ?? 0) > 0 && (
+            <View style={[styles.statCard, { borderLeftColor: '#FF9500' }]}>
+              <Ionicons name="time-outline" size={20} color="#FF9500" style={{ marginBottom: 6 }} />
+              <Text style={styles.statCardLabel}>Por cobrar</Text>
+              <Text style={[styles.statCardValue, { color: '#FF9500' }]}>
+                {formatCOP(earnings?.pendingAmount ?? 0)}
+              </Text>
+              <Text style={styles.statCardHint}>Al completar el viaje</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Retiro */}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Retiros</Text>
+          <Text style={styles.cardSub}>
+            Saldo disponible:{' '}
+            <Text style={{ fontWeight: '700', color: COLORS.primary }}>
+              {formatCOP(earnings?.totalEarnings ?? 0)}
+            </Text>
+            {(earnings?.pendingAmount ?? 0) > 0 && (
+              <Text style={{ color: COLORS.textTertiary }}>
+                {`  +${formatCOP(earnings?.pendingAmount ?? 0)} por cobrar`}
+              </Text>
+            )}
+          </Text>
+          <TouchableOpacity
+            style={styles.withdrawBtn}
+            onPress={() => Alert.alert('Próximamente', 'Los retiros estarán disponibles en la próxima versión.')}
+          >
+            <Ionicons name="cash-outline" size={18} color="#fff" />
+            <Text style={styles.withdrawBtnText}>Solicitar Retiro</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Historial de transacciones */}
+        <View style={styles.card}>
+          <View style={styles.txHeader}>
+            <Text style={styles.cardTitle}>Historial de Pagos</Text>
+            {transactions.length > 0 && (
+              <Text style={styles.txCount}>{transactions.length} total</Text>
+            )}
+          </View>
+
+          {transactions.length === 0 ? (
+            <View style={styles.emptyTx}>
+              <Ionicons name="receipt-outline" size={40} color={COLORS.textTertiary} />
+              <Text style={styles.emptyTxText}>Sin transacciones aún</Text>
+            </View>
+          ) : (
+            <>
+              {transactions.slice(0, visibleCount).map((tx, idx) => (
+                <View key={tx.id}>
+                  <View style={styles.txRow}>
+                    <View style={[
+                      styles.txIcon,
+                      { backgroundColor: tx.status === 'completed' ? `${COLORS.success}15` : '#FF950015' }
+                    ]}>
+                      <Ionicons
+                        name={tx.status === 'completed' ? 'checkmark-circle-outline' : 'time-outline'}
+                        size={20}
+                        color={tx.status === 'completed' ? COLORS.success : '#FF9500'}
+                      />
+                    </View>
+                    <View style={styles.txInfo}>
+                      <Text style={styles.txDesc}>
+                        {tx.status === 'completed' ? 'Pago recibido' : 'Pago pendiente'}
+                      </Text>
+                      <Text style={styles.txDate}>{formatDate(tx.date)}</Text>
+                    </View>
+                    <Text style={[
+                      styles.txAmount,
+                      { color: tx.status === 'completed' ? COLORS.success : '#FF9500' }
+                    ]}>
+                      +{formatCOP(tx.amount)}
+                    </Text>
+                  </View>
+                  {idx < Math.min(visibleCount, transactions.length) - 1 && (
+                    <View style={styles.txDivider} />
+                  )}
+                </View>
+              ))}
+
+              {visibleCount < transactions.length && (
+                <TouchableOpacity
+                  style={styles.loadMoreBtn}
+                  onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.loadMoreText}>
+                    Ver más ({transactions.length - visibleCount} restantes)
+                  </Text>
+                  <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+                </TouchableOpacity>
+              )}
+
+              {visibleCount >= transactions.length && transactions.length > PAGE_SIZE && (
+                <TouchableOpacity
+                  style={styles.loadMoreBtn}
+                  onPress={() => setVisibleCount(PAGE_SIZE)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.loadMoreText}>Mostrar menos</Text>
+                  <Ionicons name="chevron-up" size={16} color={COLORS.primary} />
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
-  centerContent: {
+  center: {
     justifyContent: 'center',
     alignItems: 'center',
   },
   header: {
-    padding: 20,
-    paddingTop: 30,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    ...TYPOGRAPHY.h3,
     color: COLORS.textPrimary,
   },
   mainCard: {
+    margin: SPACING.lg,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.md,
+  },
+  mainCardIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: `${COLORS.primary}15`,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 24,
-    marginBottom: 20,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  iconContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
+  mainCardLabel: {
+    ...TYPOGRAPHY.label,
     color: COLORS.textSecondary,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
   },
-  totalAmount: {
+  mainCardAmount: {
     fontSize: 36,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 20,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+    letterSpacing: -1,
+    marginBottom: SPACING.lg,
   },
-  statsRow: {
+  mainCardStats: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    alignItems: 'center',
+    gap: SPACING.lg,
   },
-  stat: {
+  mainCardStat: {
     alignItems: 'center',
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  mainCardStatValue: {
+    ...TYPOGRAPHY.h4,
     color: COLORS.textPrimary,
+    fontWeight: '700',
   },
-  statLabel: {
-    fontSize: 12,
+  mainCardStatLabel: {
+    ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  mainCardStatDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: COLORS.borderLight,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
+    ...SHADOWS.sm,
+  },
+  statCardLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  statCardValue: {
+    ...TYPOGRAPHY.h4,
+    fontWeight: '800',
+  },
+  statCardHint: {
+    ...TYPOGRAPHY.caption,
+    color: '#FF9500',
+    marginTop: 2,
   },
   card: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.sm,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textPrimary,
-    marginBottom: 16,
+    fontWeight: '700',
+    marginBottom: SPACING.sm,
   },
-  pendingHeader: {
+  cardSub: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
+  },
+  withdrawBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-    gap: 12,
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.md,
   },
-  pendingInfo: {
-    flex: 1,
-  },
-  pendingLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+  withdrawBtnText: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: '#fff',
     fontWeight: '600',
-    textTransform: 'uppercase',
   },
-  pendingAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#FF9500',
-  },
-  pendingSubtext: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginLeft: 36,
-  },
-  breakdownRow: {
+  txHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
-  },
-  breakdownItem: {
-    flex: 1,
     alignItems: 'center',
+    marginBottom: SPACING.sm,
   },
-  breakdownIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  breakdownLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
+  txCount: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
     fontWeight: '600',
   },
-  breakdownValue: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
+  emptyTx: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    gap: SPACING.sm,
   },
-  noDataText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginBottom: 16,
-    textAlign: 'center',
+  emptyTxText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textTertiary,
   },
-  withdrawButton: {
+  loadMoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-    paddingVertical: 12,
-    borderRadius: 10,
-    gap: 8,
-    marginTop: 8,
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
-  withdrawButtonText: {
-    color: 'white',
-    fontSize: 14,
+  loadMoreText: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.primary,
     fontWeight: '600',
+  },
+  txRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    gap: SPACING.md,
+  },
+  txIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  txInfo: {
+    flex: 1,
+  },
+  txDesc: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.textPrimary,
+    fontWeight: '600',
+  },
+  txDate: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  txAmount: {
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: '700',
+  },
+  txDivider: {
+    height: 1,
+    backgroundColor: COLORS.borderLight,
+    marginLeft: 56,
   },
 });

@@ -127,7 +127,7 @@ export default function HelpScreen() {
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.title}>Preguntas Frecuentes</Text>
+          <Text style={styles.title}>Centro de Ayuda</Text>
           <View style={{ width: 28 }} />
         </View>
 
@@ -188,7 +188,7 @@ export default function HelpScreen() {
           <Text style={styles.helpText}>Contáctanos en cualquier momento. Nuestro equipo está aquí para ti.</Text>
           <TouchableOpacity
             style={styles.contactBtn}
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('Support' as never)}
             activeOpacity={0.8}
           >
             <Text style={styles.contactBtnText}>Ir a Soporte</Text>

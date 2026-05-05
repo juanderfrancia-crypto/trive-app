@@ -1,106 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  Alert,
-  ActivityIndicator,
-  Platform,
-  Share,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, Alert, ActivityIndicator, Platform, Share,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import * as FileSystem from 'expo-file-system/legacy'
-import { getItem, setItem } from '../utils/storage'
-import { exportUserData } from '../services/exportData'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { exportUserData } from '../services/exportData'
+import { supabase } from '../services/supabase'
+import { useAppStore } from '../store/useAppStore'
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const [isPublicProfile, setIsPublicProfile] = useState(false)
-  const [shareLocation, setShareLocation] = useState(true)
-  const [showRating, setShowRating] = useState(true)
-  const [allowMessages, setAllowMessages] = useState(true)
-  const [searchIndexing, setSearchIndexing] = useState(false)
-  const [isExportingData, setIsExportingData] = useState(false)
-
-  useEffect(() => {
-    const loadPrivacySettings = async () => {
-      try {
-        const [
-          storedPublic,
-          storedShareLocation,
-          storedShowRating,
-          storedAllowMessages,
-          storedSearchIndexing,
-        ] = await Promise.all([
-          getItem('privacy_public_profile'),
-          getItem('privacy_share_location'),
-          getItem('privacy_show_rating'),
-          getItem('privacy_allow_messages'),
-          getItem('privacy_search_indexing'),
-        ])
-
-        if (storedPublic !== null) {
-          setIsPublicProfile(storedPublic === 'true')
-        }
-        if (storedShareLocation !== null) {
-          setShareLocation(storedShareLocation === 'true')
-        }
-        if (storedShowRating !== null) {
-          setShowRating(storedShowRating === 'true')
-        }
-        if (storedAllowMessages !== null) {
-          setAllowMessages(storedAllowMessages === 'true')
-        }
-        if (storedSearchIndexing !== null) {
-          setSearchIndexing(storedSearchIndexing === 'true')
-        }
-      } catch (error) {
-        console.log('Error loading privacy settings:', error)
-      }
-    }
-
-    loadPrivacySettings()
-  }, [])
-
-  const savePrivacySetting = async (key: string, value: boolean) => {
-    try {
-      await setItem(key, value.toString())
-    } catch (error) {
-      console.log(`Error saving privacy setting ${key}:`, error)
-    }
-  }
-
-  const togglePublicProfile = () => {
-    const nextValue = !isPublicProfile
-    setIsPublicProfile(nextValue)
-    savePrivacySetting('privacy_public_profile', nextValue)
-  }
+  const { user, setUser, setAuthUser } = useAppStore()
+  const [isExporting, setIsExporting] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDownloadData = () => {
     Alert.alert(
       'Descargar mis datos',
-      'Se generará un archivo JSON con tu información personal para que puedas guardarla o compartirla.',
+      'Se generará un archivo JSON con toda tu información personal.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Generar archivo',
           onPress: async () => {
-            setIsExportingData(true)
+            setIsExporting(true)
             try {
               const data = await exportUserData()
-              const fileName = `trive-data-export-${new Date()
-                .toISOString()
-                .replace(/[:.]/g, '-')}.json`
+              const fileName = `trive-datos-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
               const jsonContent = JSON.stringify(data, null, 2)
 
-              if (Platform.OS === 'web' && typeof document !== 'undefined' && typeof Blob !== 'undefined') {
+              if (Platform.OS === 'web' && typeof Blob !== 'undefined') {
                 const blob = new Blob([jsonContent], { type: 'application/json' })
                 const url = URL.createObjectURL(blob)
                 const anchor = document.createElement('a')
@@ -111,25 +45,23 @@ export default function PrivacyScreen() {
                 anchor.remove()
                 URL.revokeObjectURL(url)
               } else {
-                const directory = FileSystem.documentDirectory || FileSystem.cacheDirectory || ''
-                const fileUri = `${directory}${fileName}`
+                const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory || ''
+                const fileUri = `${dir}${fileName}`
                 await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
                   encoding: FileSystem.EncodingType.UTF8,
                 })
-
                 await Share.share({
                   url: fileUri,
-                  title: 'Exportación de datos de Trive',
+                  title: 'Mis datos de Trive',
                   message: 'Aquí tienes tu archivo de datos de Trive.',
                 })
               }
 
-              Alert.alert('¡Listo!', 'Tu archivo de datos se generó correctamente.')
-            } catch (error: any) {
-              console.error('Error exportando datos:', error)
-              Alert.alert('Error', error?.message || 'No se pudo generar el archivo de datos.')
+              Alert.alert('Listo', 'Tu archivo de datos se generó correctamente.')
+            } catch (err: any) {
+              Alert.alert('Error', err?.message || 'No se pudo generar el archivo.')
             } finally {
-              setIsExportingData(false)
+              setIsExporting(false)
             }
           },
         },
@@ -140,18 +72,23 @@ export default function PrivacyScreen() {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Eliminar cuenta',
-      '⚠️ Esta acción no se puede deshacer. Se eliminarán todos tus datos y ese cuenta no podrá ser recuperada.',
+      '¿Estás seguro? Se cancelarán tus reservas y rutas activas. Esta acción no se puede deshacer.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Entendido, continuar',
+          text: 'Sí, eliminar',
+          style: 'destructive',
           onPress: () => {
             Alert.alert(
-              'Confirmar eliminación',
-              'Por favor, ingresa tu contraseña para confirmar la eliminación de tu cuenta.',
+              'Confirmación final',
+              'Escribe ELIMINAR en el siguiente paso para confirmar.',
               [
                 { text: 'Cancelar', style: 'cancel' },
-                { text: 'Eliminar', style: 'destructive' },
+                {
+                  text: 'Confirmar eliminación',
+                  style: 'destructive',
+                  onPress: () => confirmDeleteAccount(),
+                },
               ]
             )
           },
@@ -160,240 +97,107 @@ export default function PrivacyScreen() {
     )
   }
 
-  const handleBlockedUsers = () => {
-    Alert.alert(
-      'Usuarios bloqueados',
-      'Aquí puedes ver y desbloquear usuarios.',
-      [{ text: 'OK' }]
-    )
+  const confirmDeleteAccount = async () => {
+    if (!user?.id) return
+    setIsDeleting(true)
+    try {
+      // Cancelar reservas activas del pasajero
+      await supabase
+        .from('bookings')
+        .update({ booking_status: 'cancelled' })
+        .eq('passenger_id', user.id)
+        .in('booking_status', ['pending', 'confirmed'])
+
+      // Cancelar rutas activas del conductor
+      await supabase
+        .from('routes')
+        .update({ status: 'cancelled' })
+        .eq('driver_id', user.id)
+        .eq('status', 'scheduled')
+
+      // Limpiar push token
+      await supabase
+        .from('profiles')
+        .update({ push_token: null })
+        .eq('id', user.id)
+
+      // Cerrar sesión
+      await supabase.auth.signOut()
+      setUser(null)
+      setAuthUser(null)
+    } catch (err: any) {
+      Alert.alert('Error', err?.message || 'No se pudo eliminar la cuenta. Contacta a soporte.')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <View style={[s.safe, { paddingTop: insets.top }]}>
+      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.title}>Privacidad</Text>
+          <Text style={s.title}>Privacidad</Text>
           <View style={{ width: 28 }} />
         </View>
 
-        {/* Perfil */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Mi Perfil</Text>
+        {/* Tus Datos */}
+        <View style={s.section}>
+          <Text style={s.sectionTitle}>Tus Datos</Text>
 
           <TouchableOpacity
-            style={styles.card}
-            onPress={togglePublicProfile}
-            activeOpacity={0.8}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="person-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Perfil Público</Text>
-                <Text style={styles.cardDescription}>
-                  {isPublicProfile ? 'Tu perfil es visible para todos' : 'Tu perfil solo es visible para contactos'}
-                </Text>
-                <Text style={styles.cardHint}>
-                  Toca para cambiar el estado de tu perfil público
-                </Text>
-              </View>
-              <View style={styles.switchWrapper}>
-                <Switch
-                  value={isPublicProfile}
-                  onValueChange={(value) => {
-                    setIsPublicProfile(value)
-                    savePrivacySetting('privacy_public_profile', value)
-                  }}
-                  trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                  thumbColor={isPublicProfile ? COLORS.primary : COLORS.textTertiary}
-                />
-              </View>
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="star-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Mostrar Calificación</Text>
-                <Text style={styles.cardDescription}>
-                  {showRating ? 'Tu calificación es visible' : 'Tu calificación está oculta'}
-                </Text>
-              </View>
-              <Switch
-                value={showRating}
-                onValueChange={(value) => {
-                  setShowRating(value)
-                  savePrivacySetting('privacy_show_rating', value)
-                }}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                thumbColor={showRating ? COLORS.primary : COLORS.textTertiary}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Ubicación */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ubicación</Text>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="location-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Compartir Ubicación en Viajes</Text>
-                <Text style={styles.cardDescription}>
-                  {shareLocation ? 'Los conductores ven tu ubicación' : 'Ubicación no compartida'}
-                </Text>
-              </View>
-              <Switch
-                value={shareLocation}
-                onValueChange={(value) => {
-                  setShareLocation(value)
-                  savePrivacySetting('privacy_share_location', value)
-                }}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                thumbColor={shareLocation ? COLORS.primary : COLORS.textTertiary}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Comunicación */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Comunicación</Text>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="chatbubble-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Recibir Mensajes</Text>
-                <Text style={styles.cardDescription}>
-                  {allowMessages ? 'Puedes recibir mensajes de otros usuarios' : 'Mensajes desactivados'}
-                </Text>
-              </View>
-              <Switch
-                value={allowMessages}
-                onValueChange={(value) => {
-                  setAllowMessages(value)
-                  savePrivacySetting('privacy_allow_messages', value)
-                }}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                thumbColor={allowMessages ? COLORS.primary : COLORS.textTertiary}
-              />
-            </View>
-          </View>
-
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="search-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Indexación en Búsqueda</Text>
-                <Text style={styles.cardDescription}>
-                  {searchIndexing
-                    ? 'Tu perfil puede aparecer en las búsquedas dentro de la app'
-                    : 'Tu perfil no aparece en las búsquedas dentro de la app'}
-                </Text>
-              </View>
-              <Switch
-                value={searchIndexing}
-                onValueChange={(value) => {
-                  setSearchIndexing(value)
-                  savePrivacySetting('privacy_search_indexing', value)
-                }}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                thumbColor={searchIndexing ? COLORS.primary : COLORS.textTertiary}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Usuarios Bloqueados */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Seguridad</Text>
-
-          <TouchableOpacity
-            style={styles.card}
-            onPress={handleBlockedUsers}
-            activeOpacity={0.7}
-          >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
-                <Ionicons name="ban-outline" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Usuarios Bloqueados</Text>
-                <Text style={styles.cardDescription}>Gestiona usuarios que has bloqueado</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Datos */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tus Datos</Text>
-
-          <TouchableOpacity
-            style={styles.card}
+            style={s.card}
             onPress={handleDownloadData}
             activeOpacity={0.7}
-            disabled={isExportingData}
+            disabled={isExporting}
           >
-            <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
+            <View style={s.cardRow}>
+              <View style={s.icon}>
                 <Ionicons name="download-outline" size={20} color={COLORS.primary} />
               </View>
-              <View style={styles.cardContent}>
-                <Text style={styles.cardLabel}>Descargar mis Datos</Text>
-                <Text style={styles.cardDescription}>Obtén una copia de tu información</Text>
+              <View style={s.cardContent}>
+                <Text style={s.cardLabel}>Descargar mis datos</Text>
+                <Text style={s.cardDesc}>Obtén una copia de toda tu información</Text>
               </View>
-              {isExportingData ? (
-                <ActivityIndicator size="small" color={COLORS.primary} />
-              ) : (
-                <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
-              )}
+              {isExporting
+                ? <ActivityIndicator size="small" color={COLORS.primary} />
+                : <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              }
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.card, styles.dangerCard]}
+            style={[s.card, s.dangerCard]}
             onPress={handleDeleteAccount}
             activeOpacity={0.7}
+            disabled={isDeleting}
           >
-            <View style={styles.cardHeader}>
-              <View style={[styles.cardIcon, styles.dangerIcon]}>
+            <View style={s.cardRow}>
+              <View style={[s.icon, s.dangerIcon]}>
                 <Ionicons name="trash-outline" size={20} color={COLORS.error} />
               </View>
-              <View style={styles.cardContent}>
-                <Text style={[styles.cardLabel, styles.dangerLabel]}>Eliminar Cuenta</Text>
-                <Text style={[styles.cardDescription, styles.dangerDescription]}>
-                  Esta acción no se puede deshacer
+              <View style={s.cardContent}>
+                <Text style={[s.cardLabel, { color: COLORS.error }]}>Eliminar cuenta</Text>
+                <Text style={[s.cardDesc, { color: COLORS.error + 'AA' }]}>
+                  Cancela reservas activas y cierra tu cuenta
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              {isDeleting
+                ? <ActivityIndicator size="small" color={COLORS.error} />
+                : <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              }
             </View>
           </TouchableOpacity>
         </View>
 
-        {/* Info Footer */}
-        <View style={styles.footer}>
+        {/* Info */}
+        <View style={s.infoBox}>
           <Ionicons name="information-circle-outline" size={16} color={COLORS.textTertiary} />
-          <Text style={styles.footerText}>
-            Tu privacidad es importante. Puedes cambiar estas configuraciones en cualquier momento.
+          <Text style={s.infoText}>
+            Para solicitudes adicionales sobre tus datos contáctanos en soporte.
           </Text>
         </View>
       </ScrollView>
@@ -401,15 +205,10 @@ export default function PrivacyScreen() {
   )
 }
 
-const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.background },
+  scroll: { flex: 1 },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -417,47 +216,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.borderLight,
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
+  title: { ...TYPOGRAPHY.h3, color: COLORS.textPrimary },
+
   section: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingTop: SPACING.xl,
   },
   sectionTitle: {
     ...TYPOGRAPHY.label,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
     textTransform: 'uppercase',
     fontSize: 12,
+    marginBottom: SPACING.md,
   },
+
   card: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.md,
     padding: SPACING.lg,
     ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   dangerCard: {
-    backgroundColor: COLORS.surface,
+    borderColor: COLORS.error + '30',
   },
-  cardHeader: {
+  cardRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.lg,
   },
-  switchWrapper: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardIcon: {
-    width: 44,
-    height: 44,
+  icon: {
+    width: 44, height: 44,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary + '15',
     justifyContent: 'center',
@@ -466,42 +259,33 @@ const styles = StyleSheet.create({
   dangerIcon: {
     backgroundColor: COLORS.error + '15',
   },
-  cardContent: {
-    flex: 1,
-  },
+  cardContent: { flex: 1 },
   cardLabel: {
-    ...TYPOGRAPHY.body,
+    ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textPrimary,
     fontWeight: '500',
-    marginBottom: SPACING.xs,
+    marginBottom: 2,
   },
-  cardHint: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  dangerLabel: {
-    color: COLORS.error,
-  },
-  cardDescription: {
+  cardDesc: {
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.textSecondary,
   },
-  dangerDescription: {
-    color: COLORS.error,
-  },
-  footer: {
+
+  infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    backgroundColor: COLORS.background,
+    margin: SPACING.lg,
+    padding: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
-  footerText: {
+  infoText: {
+    flex: 1,
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.textTertiary,
-    flex: 1,
-    lineHeight: 20,
+    lineHeight: 18,
   },
 })

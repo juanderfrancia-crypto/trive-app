@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image,
+  ActivityIndicator, Image, Modal,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -17,8 +17,12 @@ import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import Toast from '../components/Toast'
 import { uploadProfilePhoto, uploadVehiclePhoto } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import AdminMenuButton from '../components/AdminMenuButton'
+import { TripMessagesModal } from '../components/TripMessagesModal'
+import { useActiveBookingsWithChat, ActiveBookingChat } from '../hooks/useActiveBookingsWithChat'
+import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
 
-const BARS = [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5]
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
@@ -37,6 +41,47 @@ export default function ProfileScreen() {
   const [toastType, setToastType]         = useState<'success' | 'error' | 'info'>('success')
   const [driverVehicle, setDriverVehicle] = useState<any>(null)
   const [recentRoutes, setRecentRoutes]   = useState<any[]>([])
+
+  // Chat
+  const { bookings: activeBookings, refetch: refetchActiveBookings } = useActiveBookingsWithChat(
+    !isDriver ? user?.id : undefined
+  )
+  const [chatsListVisible, setChatsListVisible]   = useState(false)
+  const [chatModalVisible, setChatModalVisible]   = useState(false)
+  const [selectedChat, setSelectedChat]           = useState<ActiveBookingChat | null>(null)
+  const [hiddenChatIds, setHiddenChatIds]         = useState<Set<string>>(new Set())
+  const [unreadCounts, setUnreadCounts]           = useState<Record<string, number>>({})
+  const chatChannelsRef = useRef<Record<string, () => void>>({})
+  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0)
+
+  const HIDDEN_CHATS_KEY = 'hidden_active_chats'
+
+  useEffect(() => {
+    AsyncStorage.getItem(HIDDEN_CHATS_KEY).then((raw) => {
+      if (raw) setHiddenChatIds(new Set(JSON.parse(raw)))
+    })
+  }, [])
+
+  const saveHiddenChats = async (ids: Set<string>) => {
+    await AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...ids]))
+  }
+
+  const hideChat = (bookingId: string) => {
+    Alert.alert('Eliminar chat', '¿Quieres eliminar este chat?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar', style: 'destructive',
+        onPress: () => {
+          const next = new Set(hiddenChatIds)
+          next.add(bookingId)
+          setHiddenChatIds(next)
+          saveHiddenChats(next)
+        },
+      },
+    ])
+  }
+
+  const visibleChats = activeBookings.filter((b) => !hiddenChatIds.has(b.bookingId))
 
   // Hooks called unconditionally, ID gated
   const { earnings, loadEarnings } = useDriverEarnings(isDriver ? user?.id : undefined)
@@ -58,8 +103,33 @@ export default function ProfileScreen() {
       loadDriverData()
     } else {
       refetchStats()
+      refetchActiveBookings()
     }
   }, [isDriver, user?.id]))
+
+  useEffect(() => {
+    if (!user || !activeBookings.length) return
+
+    activeBookings.forEach((b) => {
+      getTripUnreadCountFrom(b.routeId, user.id, b.driverId)
+        .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
+        .catch(() => {})
+
+      if (!chatChannelsRef.current[b.routeId]) {
+        const unsub = subscribeTripMessages(b.routeId, () => {
+          getTripUnreadCountFrom(b.routeId, user!.id, b.driverId)
+            .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
+            .catch(() => {})
+        })
+        chatChannelsRef.current[b.routeId] = unsub
+      }
+    })
+
+    return () => {
+      Object.values(chatChannelsRef.current).forEach((fn) => fn())
+      chatChannelsRef.current = {}
+    }
+  }, [activeBookings, user?.id])
 
   // ── Driver vehicle + route history ─────────────────────────────────────────
   const loadDriverData = useCallback(async () => {
@@ -76,6 +146,7 @@ export default function ProfileScreen() {
         .from('routes')
         .select('id, origin, destination, departure_time, price_per_seat, status, total_seats')
         .eq('driver_id', user.id)
+        .eq('status', 'completed')
         .order('departure_time', { ascending: false })
         .limit(4),
     ])
@@ -232,13 +303,34 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick stat: Mis Viajes (documentos solo en vista conductor) */}
+      {/* Quick stat: Mis Viajes + Mis Chats */}
       <View style={s.section}>
         <View style={pv.statsRow}>
           <TouchableOpacity style={pv.statCard} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.8}>
             <View style={pv.statIcon}><Ionicons name="time-outline" size={24} color={COLORS.accentLight} /></View>
             <Text style={pv.statTitle}>Mis Viajes</Text>
             <Text style={pv.statSub}>{passengerStats?.totalTrips ?? 0} completados</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={pv.statCard}
+            onPress={() => setChatsListVisible(true)}
+            activeOpacity={0.8}
+          >
+            <View style={[pv.statIcon, { position: 'relative' }]}>
+              <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.accentLight} />
+              {totalUnread > 0 && (
+                <View style={pv.chatBadge}>
+                  <Text style={pv.chatBadgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={pv.statTitle}>Mis Chats</Text>
+            <Text style={pv.statSub}>
+              {activeBookings.length > 0
+                ? `${activeBookings.length} activo${activeBookings.length !== 1 ? 's' : ''}`
+                : 'Sin chats activos'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -297,7 +389,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Footer */}
-      <Text style={pv.footer}>TRIVE V4.2.0 • HECHO CON SEGURIDAD</Text>
+      <Text style={pv.footer}>TRIVE V1.0.0 • 2026</Text>
       <View style={{ height: SPACING.xxxl }} />
     </>
   )
@@ -309,6 +401,8 @@ export default function ProfileScreen() {
       : '—'
     const totalTrips = earnings?.completedTrips ?? profile?.total_trips ?? 0
     const monthEarnings = earnings?.thisMonthEarnings ?? 0
+    const bars = earnings?.weeklyBars ?? [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5]
+    const peakBar = earnings?.peakBarIndex ?? 5
 
     return (
       <>
@@ -351,9 +445,9 @@ export default function ProfileScreen() {
             </Text>
             {/* Bar chart */}
             <View style={dv.barsRow}>
-              {BARS.map((h, i) => (
+              {bars.map((h, i) => (
                 <View key={i} style={dv.barWrap}>
-                  <View style={[dv.bar, { height: 40 * h, backgroundColor: i === 5 ? COLORS.primaryDark : `${COLORS.primaryDark}55` }]} />
+                  <View style={[dv.bar, { height: 40 * h, backgroundColor: i === peakBar ? COLORS.primaryDark : `${COLORS.primaryDark}55` }]} />
                 </View>
               ))}
             </View>
@@ -510,7 +604,7 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <View style={s.sectionTitleRow}>
             <Text style={s.sectionTitle}>Historial de Rutas</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => navigation.navigate('DriverPanel')} activeOpacity={0.7}>
               <Text style={dv.seeAll}>Ver todo</Text>
             </TouchableOpacity>
           </View>
@@ -578,6 +672,81 @@ export default function ProfileScreen() {
       </ScrollView>
 
       <Toast visible={toastVisible} message={toastMessage} type={toastType} onHide={() => setToastVisible(false)} />
+
+      {/* Modal lista de chats */}
+      <Modal visible={chatsListVisible} animationType="slide" transparent onRequestClose={() => setChatsListVisible(false)}>
+        <View style={cm.overlay}>
+          <View style={cm.sheet}>
+            {/* Header */}
+            <View style={cm.sheetHeader}>
+              <Text style={cm.sheetTitle}>Mis Chats</Text>
+              <TouchableOpacity onPress={() => setChatsListVisible(false)} style={cm.closeBtn}>
+                <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+            <Text style={cm.sheetSub}>Los chats desaparecen cuando el viaje finaliza</Text>
+
+            {visibleChats.length === 0 ? (
+              <View style={cm.empty}>
+                <Ionicons name="chatbubbles-outline" size={48} color={COLORS.textTertiary} />
+                <Text style={cm.emptyTitle}>Sin chats activos</Text>
+                <Text style={cm.emptyText}>Aparecen aquí mientras tengas una reserva activa</Text>
+              </View>
+            ) : (
+              <ScrollView>
+                {visibleChats.map((chat) => {
+                  const unread = unreadCounts[chat.routeId] ?? 0
+                  return (
+                    <TouchableOpacity
+                      key={chat.bookingId}
+                      style={cm.chatRow}
+                      onPress={() => { setSelectedChat(chat); setChatsListVisible(false); setChatModalVisible(true) }}
+                      activeOpacity={0.75}
+                    >
+                      <View style={cm.avatar}>
+                        <Text style={cm.avatarText}>{chat.driverName.charAt(0).toUpperCase()}</Text>
+                        {chat.routeStatus === 'in_progress' && <View style={cm.activeDot} />}
+                      </View>
+                      <View style={cm.chatInfo}>
+                        <Text style={cm.driverName}>{chat.driverName}</Text>
+                        <Text style={cm.routeText} numberOfLines={1}>{chat.origin} → {chat.destination}</Text>
+                      </View>
+                      {unread > 0 && (
+                        <View style={cm.badge}>
+                          <Text style={cm.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity style={cm.deleteBtn} onPress={() => hideChat(chat.bookingId)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                        <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  )
+                })}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de mensajes */}
+      {selectedChat && user && (
+        <TripMessagesModal
+          visible={chatModalVisible}
+          tripId={selectedChat.routeId}
+          userId={user.id}
+          otherUserId={selectedChat.driverId}
+          otherUserName={selectedChat.driverName}
+          onClose={() => {
+            setChatModalVisible(false)
+            getTripUnreadCountFrom(selectedChat.routeId, user.id, selectedChat.driverId)
+              .then((count) => setUnreadCounts((prev) => ({ ...prev, [selectedChat.routeId]: count })))
+              .catch(() => {})
+          }}
+        />
+      )}
+
+      {/* Acceso admin — solo aparece si user.is_admin === true */}
+      <AdminMenuButton onAdminDocumentsPress={() => navigation.navigate('AdminDocuments')} />
     </SafeAreaView>
   )
 }
@@ -685,6 +854,22 @@ const pv = StyleSheet.create({
   helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   helpIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FEF3C7', justifyContent: 'center', alignItems: 'center' },
   helpText: { flex: 1 },
+  chatBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#fff',
+  },
+  chatBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
+
   secondaryActionBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
@@ -846,5 +1031,71 @@ const dv = StyleSheet.create({
   routeStatusTextDone: { color: COLORS.success },
   emptyRoutes: { alignItems: 'center', paddingVertical: SPACING.xl, gap: SPACING.sm },
   emptyRoutesText: { fontSize: 14, color: COLORS.textSecondary },
+})
+
+// ── Chats modal styles ────────────────────────────────────────────────────────
+const cm = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    maxHeight: '80%',
+    paddingBottom: SPACING.xxxl,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.sm,
+  },
+  sheetTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  closeBtn: {
+    width: 36, height: 36, borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  sheetSub: { fontSize: 12, color: COLORS.textSecondary, paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
+  empty: { alignItems: 'center', paddingVertical: 40, gap: SPACING.md, paddingHorizontal: SPACING.xl },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  emptyText: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  chatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+    gap: SPACING.md,
+  },
+  avatar: {
+    width: 46, height: 46, borderRadius: 23,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+    position: 'relative', flexShrink: 0,
+  },
+  avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  activeDot: {
+    position: 'absolute', bottom: 1, right: 1,
+    width: 11, height: 11, borderRadius: 6,
+    backgroundColor: COLORS.success,
+    borderWidth: 2, borderColor: '#fff',
+  },
+  chatInfo: { flex: 1 },
+  driverName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  routeText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  badge: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 10, minWidth: 20, height: 20,
+    justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5,
+  },
+  badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
+  deleteBtn: {
+    width: 32, height: 32, borderRadius: RADIUS.md,
+    backgroundColor: COLORS.error + '12',
+    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+  },
 })
 

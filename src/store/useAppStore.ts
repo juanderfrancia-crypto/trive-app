@@ -146,14 +146,3 @@ export const useAppStore = create<AppState>()(
     }
   )
 )
-
-// Mock user para pruebas sin Supabase
-export const MOCK_USER: AppUser = {
-  id: '550e8400-e29b-41d4-a716-446655440001',
-  name: 'María Pasajera',
-  email: 'maria@test.com',
-  phone: '+57 320 123 4567',
-  role: 'passenger',
-  rating: 4.8,
-  avatar_url: 'https://via.placeholder.com/150?text=Maria',
-}

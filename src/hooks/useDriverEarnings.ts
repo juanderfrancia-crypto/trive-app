@@ -6,8 +6,11 @@ export interface EarningsData {
   thisMonthEarnings: number;
   pendingAmount: number;
   completedTrips: number;
+  completedPassengers: number;
   averagePerTrip: number;
   totalRideHours: number;
+  weeklyBars: number[];
+  peakBarIndex: number;
 }
 
 export interface EarningsTransaction {
@@ -79,8 +82,11 @@ export const useDriverEarnings = (driverId?: string) => {
           thisMonthEarnings: 0,
           pendingAmount: 0,
           completedTrips: 0,
+          completedPassengers: 0,
           averagePerTrip: 0,
           totalRideHours: 0,
+          weeklyBars: [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5],
+          peakBarIndex: 5,
         });
         setTransactions([]);
         setLoading(false);
@@ -134,6 +140,28 @@ export const useDriverEarnings = (driverId?: string) => {
       // Horas totales (estimado: 45 min por viaje en promedio)
       const totalRideHours = Math.round((completedTrips * 45) / 60);
 
+      // Pasajeros que pagaron
+      const completedPassengers = bookings
+        ?.filter((b) => b.payment_status === 'completed').length || 0;
+
+      // Barras de los últimos 7 días (ganancias diarias normalizadas 0-1)
+      const todayDate = new Date();
+      const rawDays: number[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const day = new Date(todayDate);
+        day.setDate(todayDate.getDate() - i);
+        const dayStr = day.toISOString().split('T')[0];
+        const dayTotal = bookings
+          ?.filter((b) => b.payment_status === 'completed' && b.created_at.startsWith(dayStr))
+          .reduce((sum, b) => sum + (b.price || 0), 0) || 0;
+        rawDays.push(dayTotal);
+      }
+      const maxDay = Math.max(...rawDays);
+      const weeklyBars = maxDay > 0
+        ? rawDays.map((d) => Math.max(0.08, d / maxDay))
+        : [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5];
+      const peakBarIndex = maxDay > 0 ? rawDays.indexOf(maxDay) : 5;
+
       // 4️⃣ CONSTRUIR HISTORIAL DE TRANSACCIONES
       const transactionsList: EarningsTransaction[] = [];
 
@@ -171,13 +199,16 @@ export const useDriverEarnings = (driverId?: string) => {
 
       // 5️⃣ ACTUALIZAR STATE
         setEarnings({
-        totalEarnings,
-        thisMonthEarnings,
-        pendingAmount,
-        completedTrips,
-        averagePerTrip,
-        totalRideHours,
-      });
+          totalEarnings,
+          thisMonthEarnings,
+          pendingAmount,
+          completedTrips,
+          completedPassengers,
+          averagePerTrip,
+          totalRideHours,
+          weeklyBars,
+          peakBarIndex,
+        });
 
         setTransactions(transactionsList);
         lastLoadedAtRef.current = Date.now();

@@ -24,20 +24,30 @@ export default function ChangePasswordScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const { user } = useAuth()
+  const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [errors, setErrors] = useState<{ newPassword?: string; confirmPassword?: string }>({})
+  const [errors, setErrors] = useState<{ currentPassword?: string; newPassword?: string; confirmPassword?: string }>({})
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async () => {
+    const newErrors: typeof errors = {}
+
+    if (!currentPassword) {
+      newErrors.currentPassword = 'Ingresa tu contraseña actual'
+    }
+
     const validation = validatePassword(newPassword)
     if (!validation.valid) {
-      setErrors({ newPassword: validation.error })
-      return
+      newErrors.newPassword = validation.error
     }
 
     if (newPassword !== confirmPassword) {
-      setErrors({ confirmPassword: 'Las contraseñas no coinciden' })
+      newErrors.confirmPassword = 'Las contraseñas no coinciden'
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors)
       return
     }
 
@@ -45,15 +55,25 @@ export default function ChangePasswordScreen() {
     setErrors({})
 
     try {
-      const { data, error } = await supabase.auth.updateUser({ password: newPassword })
-      if (error) {
-        throw error
+      // Verificar contraseña actual re-autenticando
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      const email = authUser?.email
+      if (!email) throw new Error('No se encontró el correo de la cuenta')
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: currentPassword,
+      })
+
+      if (signInError) {
+        setErrors({ currentPassword: 'Contraseña actual incorrecta' })
+        return
       }
 
-      // Registrar cambio de contraseña
-      if (user?.id) {
-        await logPasswordChange(user.id)
-      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+
+      if (user?.id) await logPasswordChange(user.id)
 
       Alert.alert('Contraseña actualizada', 'Tu contraseña se actualizó correctamente.')
       navigation.goBack()
@@ -85,6 +105,25 @@ export default function ChangePasswordScreen() {
           </Text>
 
           <View style={styles.formCard}>
+            <View style={styles.inputWrapper}>
+              <Text style={styles.label}>Contraseña actual</Text>
+              <View style={[styles.inputContainer, errors.currentPassword && styles.inputError]}>
+                <Ionicons name="lock-closed-outline" size={20} color={errors.currentPassword ? COLORS.error : COLORS.textSecondary} />
+                <TextInput
+                  style={styles.input}
+                  secureTextEntry
+                  placeholder="••••••••"
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={currentPassword}
+                  onChangeText={(text) => {
+                    setCurrentPassword(text)
+                    if (errors.currentPassword) setErrors((prev) => ({ ...prev, currentPassword: undefined }))
+                  }}
+                />
+              </View>
+              {errors.currentPassword && <Text style={styles.errorText}>{errors.currentPassword}</Text>}
+            </View>
+
             <View style={styles.inputWrapper}>
               <Text style={styles.label}>Nueva contraseña</Text>
               <View style={[styles.inputContainer, errors.newPassword && styles.inputError]}>

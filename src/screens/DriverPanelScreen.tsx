@@ -284,7 +284,7 @@ export default function DriverPanelScreen() {
             const bookingIds = bookings.map((b: any) => b.id)
             await supabase
               .from('bookings')
-              .update({ booking_status: 'cancelled' })
+              .update({ booking_status: 'cancelled', payment_status: 'refunded' })
               .in('id', bookingIds)
           }
 

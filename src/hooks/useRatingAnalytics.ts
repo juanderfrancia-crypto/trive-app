@@ -51,113 +51,91 @@ export const useRatingAnalytics = () => {
       setLoading(true);
       setError(null);
 
-      // Get all reviews
-      const { data: reviews, error: reviewsError } = await supabase
-        .from('reviews')
-        .select(`
-          id,
-          rating,
-          comment,
-          created_at,
-          routes(driver_id),
-          passenger_id,
-          profiles(name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(1000);
+      // Query reviews con join de ambos perfiles en una sola llamada
+      const [reviewsResult, driverDetailsResult] = await Promise.all([
+        supabase
+          .from('reviews')
+          .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            reviewer_id,
+            reviewee_id,
+            reviewer:profiles!reviews_reviewer_id_fkey(name),
+            reviewee:profiles!reviews_reviewee_id_fkey(name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(1000),
+        supabase
+          .from('profiles')
+          .select('id, name, rating')
+          .eq('role', 'driver')
+          .not('rating', 'is', null)
+          .gt('rating', 0)
+          .order('rating', { ascending: false }),
+      ]);
 
-      if (reviewsError) throw reviewsError;
+      if (reviewsResult.error) throw reviewsResult.error;
 
-      // Calculate distribution
-      const distribution = {
-        five_stars: 0,
-        four_stars: 0,
-        three_stars: 0,
-        two_stars: 0,
-        one_star: 0,
-      };
+      const reviews = reviewsResult.data || [];
 
+      // Calcular distribución y promedio
+      const distribution = { five_stars: 0, four_stars: 0, three_stars: 0, two_stars: 0, one_star: 0 };
       let totalRating = 0;
-      reviews?.forEach(review => {
-        const rating = Math.round(review.rating);
-        if (rating === 5) distribution.five_stars++;
-        else if (rating === 4) distribution.four_stars++;
-        else if (rating === 3) distribution.three_stars++;
-        else if (rating === 2) distribution.two_stars++;
-        else if (rating === 1) distribution.one_star++;
+
+      reviews.forEach(review => {
+        const r = Math.round(review.rating);
+        if (r === 5) distribution.five_stars++;
+        else if (r === 4) distribution.four_stars++;
+        else if (r === 3) distribution.three_stars++;
+        else if (r === 2) distribution.two_stars++;
+        else if (r === 1) distribution.one_star++;
         totalRating += review.rating;
       });
 
-      const averageRating = reviews && reviews.length > 0
+      const averageRating = reviews.length > 0
         ? parseFloat((totalRating / reviews.length).toFixed(2))
         : 0;
 
-      // Get top rated drivers
-      const { data: drivers, error: driversError } = await supabase
-        .from('drivers')
-        .select('id')
-        .order('average_rating', { ascending: false })
-        .limit(10);
+      // Contar reviews por conductor desde los datos ya cargados
+      const reviewCountByDriver = new Map<string, number>();
+      reviews.forEach(r => {
+        reviewCountByDriver.set(r.reviewee_id, (reviewCountByDriver.get(r.reviewee_id) || 0) + 1);
+      });
 
-      if (driversError) throw driversError;
-
-      // Get driver details with ratings
+      // Top y lowest rated usando profiles con role='driver'
       const topRatedDrivers: RatingStats['top_rated_drivers'] = [];
       const lowestRatedDrivers: RatingStats['lowest_rated_drivers'] = [];
 
-      if (drivers && drivers.length > 0) {
-        const { data: driverDetails, error: detailsError } = await supabase
-          .from('profiles')
-          .select(`
-            id,
-            name,
-            rating
-          `)
-          .in('role', ['driver'])
-          .order('rating', { ascending: false });
+      if (!driverDetailsResult.error && driverDetailsResult.data) {
+        const withCounts = driverDetailsResult.data.map(d => ({
+          driver_id: d.id,
+          driver_name: d.name || 'Conductor',
+          average_rating: d.rating || 0,
+          review_count: reviewCountByDriver.get(d.id) || 0,
+        }));
 
-        if (!detailsError && driverDetails) {
-          driverDetails
-            .filter(d => d.rating && d.rating > 0)
-            .slice(0, 5)
-            .forEach(driver => {
-              topRatedDrivers.push({
-                driver_id: driver.id,
-                driver_name: driver.name || 'Unknown',
-                average_rating: driver.rating || 0,
-                review_count: 0, // Would need separate query to get accurate count
-              });
-            });
-
-          driverDetails
-            .filter(d => d.rating && d.rating > 0)
-            .reverse()
-            .slice(0, 5)
-            .forEach(driver => {
-              lowestRatedDrivers.push({
-                driver_id: driver.id,
-                driver_name: driver.name || 'Unknown',
-                average_rating: driver.rating || 0,
-                review_count: 0,
-              });
-            });
-        }
+        topRatedDrivers.push(...withCounts.slice(0, 5));
+        lowestRatedDrivers.push(...[...withCounts].reverse().slice(0, 5));
       }
 
-      // Get recent reviews formatted
-      const recentReviews = (reviews || [])
-        .slice(0, 10)
-        .map(review => ({
+      // Reviews recientes con nombres reales
+      const recentReviews = reviews.slice(0, 10).map(review => {
+        const reviewer = Array.isArray(review.reviewer) ? review.reviewer[0] : review.reviewer;
+        const reviewee = Array.isArray(review.reviewee) ? review.reviewee[0] : review.reviewee;
+        return {
           id: review.id,
           rating: review.rating,
           comment: review.comment || '',
           created_at: review.created_at,
-          driver_name: 'Driver',
-          passenger_name: (Array.isArray(review.profiles) && review.profiles[0]?.name) ? review.profiles[0].name : (review.profiles as any)?.name || 'Passenger',
-        }));
+          driver_name: (reviewee as any)?.name || 'Conductor',
+          passenger_name: (reviewer as any)?.name || 'Pasajero',
+        };
+      });
 
       setStats({
-        total_reviews: reviews?.length || 0,
+        total_reviews: reviews.length,
         average_rating: averageRating,
         distribution,
         top_rated_drivers: topRatedDrivers,

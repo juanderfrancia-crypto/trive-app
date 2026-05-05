@@ -1,52 +1,31 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
 import {
-  authenticateBiometric,
-  getStoredBiometricEnabled,
-  isBiometricEnrolled,
-  isBiometricSupported,
-  setStoredBiometricEnabled,
-} from '../services/biometricAuth'
-import {
   loadNotificationPreferences,
   updateNotificationPreference,
   createDefaultPreferences,
 } from '../services/notificationPreferences'
+import { getPushNotificationToken, registerPushToken } from '../services/pushNotifications'
+import { supabase } from '../services/supabase'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
   const [pushNotifications, setPushNotifications] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
-  const [smsNotifications, setSmsNotifications] = useState(false)
-  const [biometric, setBiometric] = useState(false)
-  const [biometricAvailable, setBiometricAvailable] = useState(true)
-  const [loadingPrefs, setLoadingPrefs] = useState(true)
 
   useEffect(() => {
     const loadPreferences = async () => {
       try {
-        // Cargar preferencias biométricas
-        const supported = await isBiometricSupported()
-        setBiometricAvailable(supported)
-        if (!supported) {
-          setBiometric(false)
-        } else {
-          const enabled = await getStoredBiometricEnabled()
-          setBiometric(enabled)
-        }
-
-        // Cargar preferencias de notificaciones
         if (!user?.id) return
 
         let prefs = await loadNotificationPreferences(user.id)
-        
-        // Si no existen, crearlas por defecto
+
         if (!prefs) {
           await createDefaultPreferences(user.id)
           prefs = await loadNotificationPreferences(user.id)
@@ -55,12 +34,9 @@ export default function SettingsScreen() {
         if (prefs) {
           setPushNotifications(prefs.push_notifications)
           setEmailNotifications(prefs.email_notifications)
-          setSmsNotifications(prefs.sms_notifications)
         }
       } catch (err) {
         console.error('Error loading preferences:', err)
-      } finally {
-        setLoadingPrefs(false)
       }
     }
 
@@ -68,35 +44,33 @@ export default function SettingsScreen() {
   }, [user?.id])
 
   const handlePushNotificationsChange = async (value: boolean) => {
+    if (!user?.id) return
     setPushNotifications(value)
-    if (user?.id) {
-      const success = await updateNotificationPreference(user.id, 'push_notifications', value)
-      if (!success) {
-        Alert.alert('Error', 'No se pudo guardar la preferencia')
-        setPushNotifications(!value)
-      }
+
+    const success = await updateNotificationPreference(user.id, 'push_notifications', value)
+    if (!success) {
+      Alert.alert('Error', 'No se pudo guardar la preferencia')
+      setPushNotifications(!value)
+      return
+    }
+
+    if (value) {
+      // Reactivar: registrar el token de nuevo en el perfil
+      const token = await getPushNotificationToken()
+      if (token) await registerPushToken(user.id, token)
+    } else {
+      // Desactivar: borrar el token del perfil para que no reciba pushes
+      await supabase.from('profiles').update({ push_token: null }).eq('id', user.id)
     }
   }
 
   const handleEmailNotificationsChange = async (value: boolean) => {
+    if (!user?.id) return
     setEmailNotifications(value)
-    if (user?.id) {
-      const success = await updateNotificationPreference(user.id, 'email_notifications', value)
-      if (!success) {
-        Alert.alert('Error', 'No se pudo guardar la preferencia')
-        setEmailNotifications(!value)
-      }
-    }
-  }
-
-  const handleSmsNotificationsChange = async (value: boolean) => {
-    setSmsNotifications(value)
-    if (user?.id) {
-      const success = await updateNotificationPreference(user.id, 'sms_notifications', value)
-      if (!success) {
-        Alert.alert('Error', 'No se pudo guardar la preferencia')
-        setSmsNotifications(!value)
-      }
+    const success = await updateNotificationPreference(user.id, 'email_notifications', value)
+    if (!success) {
+      Alert.alert('Error', 'No se pudo guardar la preferencia')
+      setEmailNotifications(!value)
     }
   }
 
@@ -156,86 +130,13 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.settingCard}>
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Ionicons name="phone-portrait-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Mensajes SMS</Text>
-              <Text style={styles.settingDescription}>Alertas críticas por SMS</Text>
-            </View>
-            <Switch 
-              value={smsNotifications}
-              onValueChange={handleSmsNotificationsChange}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '30' }}
-              thumbColor={smsNotifications ? COLORS.primary : COLORS.textTertiary}
-            />
-          </View>
-        </View>
       </View>
 
       {/* Privacidad y Seguridad */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Privacidad y Seguridad</Text>
         
-        <TouchableOpacity 
-          style={styles.settingCard}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Ionicons name="finger-print-outline" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Autenticación Biométrica</Text>
-              <Text style={styles.settingDescription}>Huella o reconocimiento facial</Text>
-            </View>
-            <Switch 
-              value={biometric}
-              onValueChange={async () => {
-                if (biometric) {
-                  setBiometric(false)
-                  await setStoredBiometricEnabled(false)
-                  Alert.alert('Autenticación Biométrica', 'Autenticación biométrica desactivada')
-                  return
-                }
-
-                const supported = await isBiometricSupported()
-                if (!supported) {
-                  Alert.alert(
-                    'Autenticación Biométrica',
-                    'Tu dispositivo no soporta autenticación biométrica o no tiene sensores configurados.'
-                  )
-                  return
-                }
-
-                const enrolled = await isBiometricEnrolled()
-                if (!enrolled) {
-                  Alert.alert(
-                    'Autenticación Biométrica',
-                    'No hay datos biométricos registrados. Configura tu huella o reconocimiento facial en el dispositivo.'
-                  )
-                  return
-                }
-
-                const success = await authenticateBiometric()
-                if (success) {
-                  setBiometric(true)
-                  await setStoredBiometricEnabled(true)
-                  Alert.alert('Autenticación Biométrica', 'Autenticación biométrica activada correctamente.')
-                } else {
-                  Alert.alert('Autenticación Biométrica', 'No se pudo verificar tu identidad. Intenta de nuevo.')
-                }
-              }}
-              disabled={!biometricAvailable}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '30' }}
-              thumbColor={biometric ? COLORS.primary : COLORS.textTertiary}
-            />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingCard}
           onPress={() => navigation.navigate('ChangePassword' as never)}
           activeOpacity={0.7}

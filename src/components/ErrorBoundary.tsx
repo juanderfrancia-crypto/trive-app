@@ -1,264 +1,97 @@
-/**
- * Global Error Boundary Component
- * Catches errors across the entire app and displays user-friendly messages
- */
-
-import React, { Component, ReactNode } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import Toast from 'react-native-toast-message';
+import React, { Component, ReactNode } from 'react'
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native'
 
 interface Props {
-  children: ReactNode;
+  children: ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
-  errorCount: number;
+  hasError: boolean
+  error: Error | null
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorCount: 0,
-    };
+    super(props)
+    this.state = { hasError: false, error: null }
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorCount: 0,
-    };
+    return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('🚨 Error Boundary Caught:', error);
-    console.error('Component Stack:', errorInfo.componentStack);
-
-    // Incrementar contador de errores
-    this.setState(prev => ({
-      errorCount: prev.errorCount + 1,
-    }));
-
-    // Mostrar toast con error
-    Toast.show({
-      type: 'error',
-      text1: 'Algo salio mal',
-      text2: this.getErrorMessage(error),
-      visibilityTime: 4000,
-    });
-
-    // Si hay demasiados errores, podría intentar reload
-    if (this.state.errorCount > 5) {
-      console.warn('⚠️ Múltiples errores detectados - considera reiniciar la app');
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    if (__DEV__) {
+      console.error('[ErrorBoundary]', error, info.componentStack)
     }
   }
 
-  private getErrorMessage(error: Error): string {
-    const errorMessage = error.message || 'Error desconocido';
+  private reset = () => this.setState({ hasError: false, error: null })
 
-    // Mensajes amigables según tipo de error
-    if (errorMessage.includes('Network')) {
-      return 'Problema de conexión - verifica tu internet';
-    }
-    if (errorMessage.includes('AuthError') || errorMessage.includes('auth')) {
-      return 'Sesión expirada - por favor inicia sesión de nuevo';
-    }
-    if (errorMessage.includes('Database') || errorMessage.includes('FOREIGN')) {
-      return 'Error en la base de datos - intenta de nuevo más tarde';
-    }
-    if (errorMessage.includes('Payment')) {
-      return 'Problema al procesar el pago - intenta de nuevo';
-    }
-    if (errorMessage.includes('File')) {
-      return 'Problema al procesar el archivo - asegúrate del formato y tamaño';
-    }
-
-    // Mensaje genérico si el específico es muy largo
-    if (errorMessage.length > 80) {
-      return 'Ocurrió un error inesperado - intenta de nuevo';
-    }
-
-    return errorMessage;
+  private friendlyMessage(error: Error): string {
+    const msg = error.message || ''
+    if (msg.includes('Network') || msg.includes('fetch'))
+      return 'Problema de conexión. Verifica tu internet.'
+    if (msg.includes('auth') || msg.includes('Auth'))
+      return 'Sesión expirada. Inicia sesión de nuevo.'
+    if (msg.includes('Database') || msg.includes('FOREIGN'))
+      return 'Error en la base de datos. Intenta de nuevo.'
+    return 'Ocurrió un error inesperado.'
   }
-
-  private handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorCount: 0,
-    });
-  };
 
   render() {
-    if (this.state.hasError) {
-      return (
-        <View style={styles.container}>
-          <ScrollView contentContainerStyle={styles.content}>
-            <View style={styles.errorBox}>
-              <Text style={styles.errorIcon}>⚠️</Text>
-              <Text style={styles.errorTitle}>Algo salió mal</Text>
-              
-              <View style={styles.errorDetails}>
-                <Text style={styles.errorMessage}>
-                  {this.state.error?.message || 'Error desconocido'}
-                </Text>
-              </View>
+    if (!this.state.hasError) return this.props.children
 
-              <View style={styles.suggestions}>
-                <Text style={styles.suggestionsTitle}>Qué puedes hacer:</Text>
-                <Text style={styles.suggestion}>• Intenta recargar la pantalla</Text>
-                <Text style={styles.suggestion}>• Verifica tu conexión a internet</Text>
-                <Text style={styles.suggestion}>• Cierra y abre la app de nuevo</Text>
-                <Text style={styles.suggestion}>• Si persiste, contacta a soporte</Text>
-              </View>
-
-              <View style={styles.actions}>
-                <View style={[styles.button, styles.retryButton]}>
-                  <Text
-                    style={styles.retryButtonText}
-                    onPress={this.handleReset}
-                  >
-                    ↻ Intentar de nuevo
-                  </Text>
-                </View>
-              </View>
-
-              {__DEV__ && (
-                <View style={styles.devInfo}>
-                  <Text style={styles.devTitle}>Developer Info:</Text>
-                  <Text style={styles.devError}>{this.state.error?.toString()}</Text>
-                  <Text style={styles.devStack}>
-                    {this.state.error?.stack}
-                  </Text>
-                </View>
-              )}
+    return (
+      <View style={s.container}>
+        <ScrollView contentContainerStyle={s.content}>
+          <Text style={s.icon}>⚠️</Text>
+          <Text style={s.title}>Algo salió mal</Text>
+          <Text style={s.message}>
+            {this.state.error ? this.friendlyMessage(this.state.error) : 'Error desconocido'}
+          </Text>
+          <Text style={s.hint}>
+            • Verifica tu conexión{'\n'}
+            • Cierra y abre la app{'\n'}
+            • Si persiste, contacta soporte
+          </Text>
+          <TouchableOpacity style={s.btn} onPress={this.reset}>
+            <Text style={s.btnText}>↻ Intentar de nuevo</Text>
+          </TouchableOpacity>
+          {__DEV__ && this.state.error && (
+            <View style={s.devBox}>
+              <Text style={s.devText}>{this.state.error.toString()}</Text>
             </View>
-          </ScrollView>
-        </View>
-      );
-    }
-
-    return this.props.children;
+          )}
+        </ScrollView>
+      </View>
+    )
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFF8F0',
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#FFF8F0' },
+  content: { flexGrow: 1, justifyContent: 'center', padding: 24 },
+  icon: { fontSize: 48, textAlign: 'center', marginBottom: 16 },
+  title: { fontSize: 20, fontWeight: '700', color: '#2C3E50', textAlign: 'center', marginBottom: 12 },
+  message: {
+    fontSize: 14, color: '#555', textAlign: 'center', lineHeight: 20,
+    backgroundColor: '#F8F9FA', borderRadius: 8, padding: 12,
+    borderLeftWidth: 3, borderLeftColor: '#FF6B6B', marginBottom: 16,
   },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 16,
+  hint: {
+    fontSize: 13, color: '#555', lineHeight: 22,
+    backgroundColor: '#F0F7FF', borderRadius: 8, padding: 12,
+    borderLeftWidth: 3, borderLeftColor: '#3498DB', marginBottom: 24,
   },
-  errorBox: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
-    padding: 24,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B6B',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  btn: {
+    backgroundColor: '#3498DB', borderRadius: 8,
+    paddingVertical: 13, alignItems: 'center',
   },
-  errorIcon: {
-    fontSize: 48,
-    textAlign: 'center',
-    marginBottom: 16,
+  btnText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  devBox: {
+    marginTop: 20, backgroundColor: '#F8F9FA',
+    borderRadius: 6, padding: 10,
   },
-  errorTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2C3E50',
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  errorDetails: {
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    borderLeftWidth: 3,
-    borderLeftColor: '#FF6B6B',
-  },
-  errorMessage: {
-    fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
-  },
-  suggestions: {
-    backgroundColor: '#F0F7FF',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 20,
-    borderLeftWidth: 3,
-    borderLeftColor: '#3498DB',
-  },
-  suggestionsTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#2C3E50',
-    marginBottom: 8,
-  },
-  suggestion: {
-    fontSize: 13,
-    color: '#555',
-    lineHeight: 18,
-    marginBottom: 4,
-  },
-  actions: {
-    gap: 12,
-  },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  retryButton: {
-    backgroundColor: '#3498DB',
-  },
-  retryButtonText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  devInfo: {
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E0E0E0',
-  },
-  devTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#7F8C8D',
-    marginBottom: 8,
-  },
-  devError: {
-    fontSize: 11,
-    color: '#E74C3C',
-    fontFamily: 'monospace',
-    marginBottom: 8,
-    backgroundColor: '#F8F9FA',
-    padding: 8,
-    borderRadius: 4,
-  },
-  devStack: {
-    fontSize: 10,
-    color: '#7F8C8D',
-    fontFamily: 'monospace',
-    backgroundColor: '#F8F9FA',
-    padding: 8,
-    borderRadius: 4,
-    maxHeight: 200,
-  },
-});
+  devText: { fontSize: 11, color: '#E74C3C', fontFamily: 'monospace' },
+})

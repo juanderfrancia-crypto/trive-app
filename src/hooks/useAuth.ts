@@ -3,6 +3,7 @@ import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
+import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -81,6 +82,13 @@ export const useAuth = () => {
       }
 
       await registerUserSession(currentSession.user.id);
+
+      // Registrar push token en background — no bloquea ni falla el login
+      getPushNotificationToken()
+        .then((token) => {
+          if (token) registerPushToken(currentSession.user.id, token)
+        })
+        .catch(() => {})
     } catch (err: any) {
       console.error("Error restoring profile from session:", err);
       setAppUser(null);

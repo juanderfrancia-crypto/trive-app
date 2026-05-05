@@ -70,6 +70,7 @@ export default function HomeScreen() {
   const showRoutesLoading = (fetchingRoutes || routesLoading) && topRoutes.length === 0
   const showRoutesError   = routesError && topRoutes.length === 0
 
+
   // ── Load top routes ────────────────────────────────────────────────────────
   const loadTopRoutes = useCallback(async () => {
     setFetchingRoutes(true)
@@ -527,6 +528,7 @@ export default function HomeScreen() {
         )}
 
       </ScrollView>
+
     </SafeAreaView>
   )
 }

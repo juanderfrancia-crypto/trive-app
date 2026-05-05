@@ -1,745 +1,465 @@
-import { useState, useEffect } from 'react'
-import React from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Image } from 'react-native'
+import React, { useState, useCallback } from 'react'
+import {
+  View, Text, TouchableOpacity, StyleSheet,
+  FlatList, ActivityIndicator, Alert,
+} from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { useBookings } from '../hooks/useBookings'
+import { supabase } from '../services/supabase'
+import { createReview } from '../services/reviews'
 import RatingModal from '../components/RatingModal'
-import { createReview, hasUserRated } from '../services/reviews'
 import Toast from '../components/Toast'
+
+const HIDDEN_KEY = 'hidden_trip_history'
+
+type FilterType = 'all' | 'active' | 'completed' | 'cancelled'
+
+interface TripItem {
+  id: string
+  origin: string
+  destination: string
+  departureTime: string
+  driverName: string
+  driverId: string | null
+  price: number
+  status: string
+  routeStatus: string
+  hasRated: boolean
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  completed: COLORS.success,
+  cancelled: COLORS.error,
+  scheduled: COLORS.primary,
+  in_progress: COLORS.warning,
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  completed: 'Completado',
+  cancelled: 'Cancelado',
+  confirmed: 'Confirmado',
+  pending: 'Pendiente',
+}
 
 export default function TripHistoryScreen() {
   const navigation = useNavigation<any>()
   const { user } = useAppStore()
-  const { getPassengerBookings, loading } = useBookings()
-  const [filter, setFilter] = useState<'all' | 'active' | 'completed' | 'cancelled'>('all')
-  const [tripHistory, setTripHistory] = useState<any[]>([])
-  const [ratingModalVisible, setRatingModalVisible] = useState(false)
-  const [selectedTrip, setSelectedTrip] = useState<any | null>(null)
-  const [toastConfig, setToastConfig] = useState({
-    visible: false,
-    message: '',
-    type: 'info' as 'success' | 'error' | 'info' | 'warning',
-  })
-  const [refreshing, setRefreshing] = useState(false)
 
-  const onRefresh = React.useCallback(async () => {
-    setRefreshing(true)
-    await loadTripHistory()
-    setRefreshing(false)
-  }, [user])
+  const [trips, setTrips] = useState<TripItem[]>([])
+  const [loading, setLoading] = useState(false)
+  const [filter, setFilter] = useState<FilterType>('all')
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
+  const [ratingTrip, setRatingTrip] = useState<TripItem | null>(null)
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'info' as any })
 
-  useEffect(() => {
-    if (!user) return
-    loadTripHistory()
-  }, [user])
+  // Carga inicial de IDs ocultos
+  useFocusEffect(useCallback(() => {
+    AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
+      setHiddenIds(raw ? new Set(JSON.parse(raw)) : new Set())
+    })
+    if (user?.id) loadTrips(user.id)
+  }, [user?.id]))
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (user) {
-        loadTripHistory()
-      }
-    }, [user])
-  )
-
-  const loadTripHistory = async () => {
+  const loadTrips = async (passengerId: string) => {
+    setLoading(true)
     try {
-      const bookings = await getPassengerBookings(user!.id)
-      const formatted = bookings.map((booking: any) => {
-        const route = booking.routes || {}
+      // 1 query — solo los campos necesarios + nombre del conductor
+      const { data, error } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          booking_status,
+          price,
+          routes:route_id (
+            id,
+            origin,
+            destination,
+            departure_time,
+            status,
+            price_per_seat,
+            driver_id,
+            profiles:driver_id ( name )
+          )
+        `)
+        .eq('passenger_id', passengerId)
+        .not('booking_status', 'eq', 'pending')
+        .order('created_at', { ascending: false })
+
+      if (error || !data) { setTrips([]); return }
+
+      const completedBookingIds = (data as any[])
+        .filter((b) => b.routes?.status === 'completed')
+        .map((b) => b.id)
+
+      // 1 query batch para saber qué viajes ya calificó — sin N+1
+      let ratedSet = new Set<string>()
+      if (completedBookingIds.length > 0) {
+        const { data: ratedData } = await supabase
+          .from('reviews')
+          .select('booking_id')
+          .eq('reviewer_id', passengerId)
+          .in('booking_id', completedBookingIds)
+        ratedSet = new Set((ratedData || []).map((r: any) => r.booking_id))
+      }
+
+      const formatted: TripItem[] = (data as any[]).map((b) => {
+        const route = b.routes || {}
         return {
-          id: booking.id,
+          id: b.id,
           origin: route.origin || 'Origen desconocido',
           destination: route.destination || 'Destino desconocido',
-          date: route.departure_time ? new Date(route.departure_time).toISOString().split('T')[0] : '',
-          time: route.departure_time
-            ? new Date(route.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-            : '00:00',
-          seats: booking.seat_number ? 1 : 0,
-          price: booking.price || route.price_per_seat || 0,
-          status: booking.booking_status || 'confirmed',
+          departureTime: route.departure_time || '',
+          driverName: route.profiles?.name || 'Conductor',
+          driverId: route.driver_id || null,
+          price: b.price || route.price_per_seat || 0,
+          status: b.booking_status,
           routeStatus: route.status || 'scheduled',
-          rating: route.driver_rating || null,
-          driver: route.driver_name || 'Conductor',
-          driver_id: route.driver_id || null,
-          hasRated: false,
+          hasRated: ratedSet.has(b.id),
         }
       })
 
-      const enriched = await Promise.all(
-        formatted.map(async (trip) => {
-          if (!trip.driver_id || trip.routeStatus !== 'completed') return trip
-          const alreadyRated = await hasUserRated(trip.id, user!.id, trip.driver_id)
-          return {
-            ...trip,
-            hasRated: alreadyRated,
-          }
-        })
-      )
-
-      setTripHistory(enriched)
-    } catch (err) {
-      console.error('Error loading trip history:', err)
-      setTripHistory([])
+      setTrips(formatted)
+    } catch {
+      setTrips([])
+    } finally {
+      setLoading(false)
     }
   }
 
-  const filteredTrips = tripHistory.filter((trip) => {
-    if (filter === 'all') return true
-    if (filter === 'active')
-      return trip.status !== 'cancelled' && ['scheduled', 'in_progress'].includes(trip.routeStatus)
-    if (filter === 'completed')
-      return trip.routeStatus === 'completed'
-    if (filter === 'cancelled')
-      return trip.status === 'cancelled' || trip.routeStatus === 'cancelled'
-    return true
-  })
-
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
-    return date.toLocaleDateString('es-CO', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    })
+  const saveHidden = async (ids: Set<string>) => {
+    await AsyncStorage.setItem(HIDDEN_KEY, JSON.stringify([...ids]))
   }
 
-  const handleRateTrip = async (trip: any) => {
-    if (!user) return
-    if (trip.hasRated) {
-      setToastConfig({
-        visible: true,
-        message: 'Ya has calificado este viaje.',
-        type: 'info',
-      })
-      return
-    }
+  const hideTrip = (id: string) => {
+    Alert.alert(
+      'Eliminar del historial',
+      '¿Quieres eliminar este viaje de tu historial?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar', style: 'destructive',
+          onPress: () => {
+            const next = new Set(hiddenIds)
+            next.add(id)
+            setHiddenIds(next)
+            saveHidden(next)
+          },
+        },
+      ]
+    )
+  }
 
-    if (!trip.driver_id) {
-      setToastConfig({
-        visible: true,
-        message: 'No se encontró el conductor del viaje para calificar.',
-        type: 'error',
-      })
-      return
-    }
-
-    const alreadyRated = await hasUserRated(trip.id, user.id, trip.driver_id)
-    if (alreadyRated) {
-      setTripHistory((prev) =>
-        prev.map((item) =>
-          item.id === trip.id ? { ...item, hasRated: true } : item
-        )
-      )
-      setToastConfig({
-        visible: true,
-        message: 'Ya has calificado este viaje.',
-        type: 'info',
-      })
-      return
-    }
-
-    setSelectedTrip(trip)
-    setRatingModalVisible(true)
+  const hideAll = () => {
+    Alert.alert(
+      'Eliminar todo',
+      '¿Quieres eliminar todos los viajes visibles?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar todo', style: 'destructive',
+          onPress: () => {
+            const next = new Set(hiddenIds)
+            filtered.forEach((t) => next.add(t.id))
+            setHiddenIds(next)
+            saveHidden(next)
+          },
+        },
+      ]
+    )
   }
 
   const handleRatingSubmit = async (rating: number, comment: string, recommend: boolean) => {
-    if (!selectedTrip || !user) return
-    if (!selectedTrip.driver_id) {
-      setToastConfig({
-        visible: true,
-        message: 'No se encontró el conductor del viaje para calificar.',
-        type: 'error',
-      })
-      return
-    }
-
+    if (!ratingTrip || !user) return
     try {
-      const alreadyRated = await hasUserRated(selectedTrip.id, user.id, selectedTrip.driver_id)
-      if (alreadyRated) {
-        setTripHistory((prev) =>
-          prev.map((item) =>
-            item.id === selectedTrip.id ? { ...item, hasRated: true } : item
-          )
-        )
-        setToastConfig({
-          visible: true,
-          message: 'Ya has calificado este viaje.',
-          type: 'info',
-        })
-        setRatingModalVisible(false)
-        setSelectedTrip(null)
-        return
-      }
-
-      const success = await createReview(
-        selectedTrip.id,
-        user.id,
-        selectedTrip.driver_id,
-        rating,
-        comment || undefined,
-        recommend
+      const result = await createReview(
+        ratingTrip.id, user.id, ratingTrip.driverId!, rating,
+        comment || undefined, recommend,
       )
-
-      if (success) {
-        setToastConfig({
-          visible: true,
-          message: `✓ Viaje calificado con ${rating} estrellas${recommend ? ' - ¡Recomendado!' : ''}`,
-          type: 'success',
-        })
-
-        // Update the trip in local state to reflect rating
-        setTripHistory(prev => prev.map(t => 
-          t.id === selectedTrip.id ? { ...t, rating } : t
+      if (result) {
+        setTrips((prev) => prev.map((t) =>
+          t.id === ratingTrip.id ? { ...t, hasRated: true } : t
         ))
-
-        setRatingModalVisible(false)
-        setSelectedTrip(null)
+        setToast({ visible: true, message: `Calificado con ${rating} estrellas`, type: 'success' })
       }
-    } catch (error) {
-      console.error('Error submitting rating:', error)
-      setToastConfig({
-        visible: true,
-        message: 'Error al enviar calificación',
-        type: 'error',
-      })
+    } catch {
+      setToast({ visible: true, message: 'Error al enviar calificación', type: 'error' })
+    } finally {
+      setRatingTrip(null)
     }
   }
 
-  return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Historial de Viajes</Text>
-            <Text style={styles.subtitle}>Tus viajes recientes</Text>
-          </View>
-        </View>
+  const filtered = trips.filter((t) => {
+    if (hiddenIds.has(t.id)) return false
+    if (filter === 'active') return ['scheduled', 'in_progress'].includes(t.routeStatus) && t.status !== 'cancelled'
+    if (filter === 'completed') return t.routeStatus === 'completed'
+    if (filter === 'cancelled') return t.status === 'cancelled' || t.routeStatus === 'cancelled'
+    return true
+  })
 
-        {/* Filter Tabs */}
-        <View style={styles.filterTabs}>
-          {(['all', 'active', 'completed', 'cancelled'] as const).map((f) => (
-            <TouchableOpacity
-              key={f}
-              style={[styles.filterTab, filter === f && styles.filterTabActive]}
-              onPress={() => setFilter(f)}
-            >
-              <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
-                {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'completed' ? 'Completados' : 'Cancelados'}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+  const formatDate = (iso: string) => {
+    if (!iso) return ''
+    return new Date(iso).toLocaleDateString('es-CO', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    })
+  }
 
-        {loading ? (
-          <View style={styles.content}>
-            {[1, 2, 3].map((idx) => (
-              <View key={idx} style={styles.skeletonCard}>
-                <View style={styles.skeletonHeader} />
-                <View style={styles.skeletonLine} />
-                <View style={[styles.skeletonLine, { width: '80%' }]} />
-                <View style={[styles.skeletonLine, { width: '60%', marginTop: SPACING.md }]} />
-              </View>
-            ))}
-          </View>
-        ) : filteredTrips.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrapper}>
-              <Ionicons name="receipt-outline" size={64} color={COLORS.textTertiary} />
-            </View>
-            <Text style={styles.emptyTitle}>Sin viajes</Text>
-            <Text style={styles.emptyText}>
-              {filter === 'all'
-                ? 'Aún no tienes viajes realizados'
-                : filter === 'active'
-                ? 'No hay viajes activos'
-                : filter === 'completed'
-                ? 'No hay viajes completados'
-                : 'No hay viajes cancelados'}
+  const formatTime = (iso: string) => {
+    if (!iso) return ''
+    return new Date(iso).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const effectiveStatus = (trip: TripItem) =>
+    trip.status === 'cancelled' ? 'cancelled' : trip.routeStatus
+
+  const renderItem = ({ item }: { item: TripItem }) => {
+    const status = effectiveStatus(item)
+    const accentColor = STATUS_COLOR[status] ?? COLORS.textSecondary
+    const canRate = status === 'completed' && !item.hasRated && !!item.driverId
+
+    return (
+      <View style={s.row}>
+        {/* Indicador de color */}
+        <View style={[s.accent, { backgroundColor: accentColor }]} />
+
+        {/* Contenido */}
+        <View style={s.rowContent}>
+          <View style={s.rowTop}>
+            <Text style={s.route} numberOfLines={1}>
+              {item.origin} → {item.destination}
             </Text>
-            <TouchableOpacity
-              style={styles.searchBtn}
-              onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
-            >
-              <Ionicons name="search" size={20} color={COLORS.textInverse} />
-              <Text style={styles.searchBtnText}>Buscar rutas</Text>
-            </TouchableOpacity>
+            <Text style={s.price}>${item.price.toLocaleString('es-CO')}</Text>
           </View>
-        ) : (
-          <View style={styles.content}>
-            {filteredTrips.map((trip) => (
-              <View key={trip.id} style={styles.tripCard}>
-                {/* Status Badge & Date */}
-                <View style={styles.tripHeaderRow}>
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      trip.status === 'completed' ? styles.statusCompleted : styles.statusCancelled,
-                    ]}
-                  >
-                    <Ionicons
-                      name={trip.status === 'completed' ? 'checkmark-circle' : 'close-circle'}
-                      size={16}
-                      color={trip.status === 'completed' ? COLORS.success : COLORS.error}
-                    />
-                    <Text
-                      style={[
-                        styles.statusText,
-                        { color: trip.status === 'completed' ? COLORS.success : COLORS.error },
-                      ]}
-                    >
-                      {trip.status === 'completed' ? 'Completado' : 'Cancelado'}
-                    </Text>
-                  </View>
-                  <Text style={styles.tripDate}>{formatDate(trip.date)} • {trip.time}</Text>
-                </View>
 
-                {/* Route Section */}
-                <View style={styles.routeSection}>
-                  <View style={styles.routePoint}>
-                    <View style={styles.routeDot} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.routeLabel}>Origen</Text>
-                      <Text style={styles.routeValue}>{trip.origin}</Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.routeArrow}>
-                    <Ionicons name="arrow-forward" size={18} color={COLORS.textTertiary} />
-                  </View>
+          <View style={s.rowBottom}>
+            <Text style={s.meta} numberOfLines={1}>
+              {item.driverName}
+              {item.departureTime ? `  ·  ${formatDate(item.departureTime)}  ·  ${formatTime(item.departureTime)}` : ''}
+            </Text>
 
-                  <View style={styles.routePoint}>
-                    <View style={[styles.routeDot, styles.routeDotEnd]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.routeLabel}>Destino</Text>
-                      <Text style={styles.routeValue}>{trip.destination}</Text>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Trip Details Grid */}
-                <View style={styles.detailsGrid}>
-                  <View style={styles.detailCard}>
-                    <Ionicons name="time-outline" size={18} color={COLORS.primary} />
-                    <Text style={styles.detailLabel}>Hora</Text>
-                    <Text style={styles.detailValue}>{trip.time}</Text>
-                  </View>
-                  <View style={styles.detailCard}>
-                    <Ionicons name="cash-outline" size={18} color={COLORS.primary} />
-                    <Text style={styles.detailLabel}>Precio</Text>
-                    <Text style={styles.detailValue}>${trip.price.toLocaleString('es-CO')}</Text>
-                  </View>
-                  <View style={styles.detailCard}>
-                    <Ionicons name="person-outline" size={18} color={COLORS.primary} />
-                    <Text style={styles.detailLabel}>Puestos</Text>
-                    <Text style={styles.detailValue}>{trip.seats}</Text>
-                  </View>
-                </View>
-
-                {/* Driver Info Section */}
-                {trip.status === 'completed' && (
-                  <View style={styles.driverSection}>
-                    <View style={styles.driverCard}>
-                      <View style={styles.driverAvatar}>
-                        <Text style={styles.driverAvatarText}>
-                          {trip.driver.charAt(0).toUpperCase()}
-                        </Text>
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.driverName}>{trip.driver}</Text>
-                        {(trip.rating || trip.hasRated) && (
-                          <View style={styles.ratingBadge}>
-                            <Ionicons name="star" size={12} color={COLORS.warning} />
-                            <Text style={styles.ratingText}>
-                              {trip.rating ? trip.rating.toFixed(1) : 'Calificado'}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                    
-                    {!trip.rating && !trip.hasRated && (
-                      <TouchableOpacity
-                        style={styles.rateBtn}
-                        onPress={() => handleRateTrip(trip)}
-                      >
-                        <Ionicons name="star" size={18} color="#FFFFFF" />
-                        <Text style={styles.rateBtnText}>Calificar</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                )}
-
-                {/* Repeat Button */}
-                <TouchableOpacity
-                  style={styles.repeatBtn}
-                  onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="repeat" size={18} color={COLORS.primary} />
-                  <Text style={styles.repeatBtnText}>Repetir ruta</Text>
-                </TouchableOpacity>
+            {canRate ? (
+              <TouchableOpacity style={s.rateBtn} onPress={() => setRatingTrip(item)}>
+                <Ionicons name="star" size={11} color="#fff" />
+                <Text style={s.rateBtnText}>Calificar</Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={[s.statusChip, { backgroundColor: accentColor + '18' }]}>
+                <Text style={[s.statusChipText, { color: accentColor }]}>
+                  {STATUS_LABEL[status] ?? status}
+                </Text>
               </View>
-            ))}
+            )}
           </View>
-        )}
-      </ScrollView>
+        </View>
 
-      <RatingModal
-        visible={ratingModalVisible}
-        userName={selectedTrip?.driver || 'Conductor'}
-        onClose={() => {
-          setRatingModalVisible(false)
-          setSelectedTrip(null)
-        }}
-        onSubmit={handleRatingSubmit}
-        isDriver={true}
-      />
+        {/* Eliminar */}
+        <TouchableOpacity
+          style={s.deleteBtn}
+          onPress={() => hideTrip(item.id)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+        </TouchableOpacity>
+      </View>
+    )
+  }
+
+  return (
+    <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
+      {/* Header */}
+      <View style={s.header}>
+        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={s.title}>Historial de Viajes</Text>
+          <Text style={s.subtitle}>Tus viajes recientes</Text>
+        </View>
+        {filtered.length > 0 && (
+          <TouchableOpacity style={s.deleteAllBtn} onPress={hideAll}>
+            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+            <Text style={s.deleteAllText}>Eliminar todo</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Filtros */}
+      <View style={s.filters}>
+        {(['all', 'active', 'completed', 'cancelled'] as FilterType[]).map((f) => (
+          <TouchableOpacity
+            key={f}
+            style={[s.filterChip, filter === f && s.filterChipActive]}
+            onPress={() => setFilter(f)}
+          >
+            <Text style={[s.filterText, filter === f && s.filterTextActive]}>
+              {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'completed' ? 'Completados' : 'Cancelados'}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {loading ? (
+        <View style={s.centered}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      ) : filtered.length === 0 ? (
+        <View style={s.empty}>
+          <Ionicons name="receipt-outline" size={52} color={COLORS.textTertiary} />
+          <Text style={s.emptyTitle}>Sin viajes</Text>
+          <Text style={s.emptyText}>
+            {filter === 'all' ? 'Aún no tienes viajes registrados'
+              : filter === 'active' ? 'No tienes viajes activos'
+              : filter === 'completed' ? 'No tienes viajes completados'
+              : 'No tienes viajes cancelados'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={s.list}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={s.separator} />}
+        />
+      )}
+
+      {ratingTrip && (
+        <RatingModal
+          visible
+          userName={ratingTrip.driverName}
+          isDriver
+          onClose={() => setRatingTrip(null)}
+          onSubmit={handleRatingSubmit}
+        />
+      )}
 
       <Toast
-        visible={toastConfig.visible}
-        message={toastConfig.message}
-        type={toastConfig.type}
-        onHide={() => setToastConfig({ ...toastConfig, visible: false })}
+        visible={toast.visible}
+        message={toast.message}
+        type={toast.type}
+        onHide={() => setToast({ ...toast, visible: false })}
       />
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-  },
+const s = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     gap: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 44, height: 44,
     borderRadius: RADIUS.lg,
     backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.sm,
   },
-  headerContent: {
-    flex: 1,
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary },
+  subtitle: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginTop: 2 },
+  deleteAllBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.error + '12',
+    borderWidth: 1, borderColor: COLORS.error + '30',
   },
-  title: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-  subtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  filterTabs: {
+  deleteAllText: { ...TYPOGRAPHY.labelSmall, color: COLORS.error, fontWeight: '600' },
+
+  filters: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-    gap: SPACING.sm,
-  },
-  filterTab: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface,
-  },
-  filterTabActive: {
-    backgroundColor: COLORS.primary,
-  },
-  filterText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-  },
-  filterTextActive: {
-    color: COLORS.textInverse,
-    fontWeight: '600',
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxxl,
-  },
-  loadingContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-  },
-  skeletonCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  skeletonHeader: {
-    height: 24,
-    backgroundColor: '#E5E7EB',
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.md,
-  },
-  skeletonLine: {
-    height: 14,
-    backgroundColor: '#F3F4F6',
-    borderRadius: RADIUS.sm,
-    marginBottom: SPACING.sm,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 60,
-  },
-  emptyIconWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  emptyGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  emptyText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-  },
-  searchBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    ...SHADOWS.sm,
+    gap: SPACING.sm,
   },
-  searchBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '600',
-  },
-  tripCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    gap: SPACING.md,
-  },
-  tripHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+  filterChip: {
+    paddingHorizontal: SPACING.md, paddingVertical: 6,
     borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1, borderColor: COLORS.borderLight,
   },
-  statusCompleted: {
-    backgroundColor: COLORS.success + '15',
+  filterChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  filterText: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary },
+  filterTextActive: { color: '#fff', fontWeight: '600' },
+
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+  empty: {
+    flex: 1, justifyContent: 'center', alignItems: 'center',
+    paddingHorizontal: SPACING.xl, gap: SPACING.md,
   },
-  statusCancelled: {
-    backgroundColor: COLORS.error + '15',
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary },
+  emptyText: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, textAlign: 'center' },
+
+  list: { paddingBottom: SPACING.xxxl },
+  separator: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: SPACING.lg + 4 },
+
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    paddingVertical: SPACING.md,
+    paddingRight: SPACING.md,
   },
-  statusText: {
-    ...TYPOGRAPHY.bodyMedium,
-    fontWeight: '700',
+  accent: { width: 4, alignSelf: 'stretch', borderRadius: 2, marginRight: SPACING.md, marginLeft: SPACING.md },
+  rowContent: { flex: 1, gap: 5 },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
   },
-  tripDate: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+  route: {
+    flex: 1,
+    fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
+  },
+  price: { fontSize: 14, fontWeight: '700', color: COLORS.primary, flexShrink: 0 },
+  rowBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  meta: {
+    flex: 1,
+    fontSize: 12, color: COLORS.textSecondary,
   },
 
-  /* Route Section */
-  routeSection: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  routePoint: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-  },
-  routeDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    marginTop: 4,
+  statusChip: {
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: RADIUS.full,
     flexShrink: 0,
   },
-  routeDotEnd: {
-    backgroundColor: COLORS.accent,
-  },
-  routeLabel: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  routeValue: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  routeArrow: {
-    paddingHorizontal: SPACING.xs,
-  },
+  statusChipText: { fontSize: 11, fontWeight: '600' },
 
-  /* Details Grid */
-  detailsGrid: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  detailCard: {
-    flex: 1,
-    backgroundColor: COLORS.primary + '08',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.primary + '15',
-  },
-  detailLabel: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    fontWeight: '500',
-  },
-  detailValue: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-
-  /* Driver Section */
-  driverSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  driverCard: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  driverAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.sm,
-  },
-  driverAvatarText: {
-    ...TYPOGRAPHY.h4,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  driverName: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '700',
-  },
-  ratingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: COLORS.warning + '20',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-    marginTop: 4,
-    alignSelf: 'flex-start',
-  },
-  ratingText: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.warning,
-    fontWeight: '700',
-  },
   rateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: COLORS.warning,
-    ...SHADOWS.md,
+    paddingHorizontal: 8, paddingVertical: 3,
+    borderRadius: RADIUS.full,
+    flexShrink: 0,
   },
-  rateBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: '#FFFFFF',
-    fontWeight: '700',
-  },
-  repeatBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  rateBtnText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+
+  deleteBtn: {
+    width: 30, height: 30,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.error + '12',
     justifyContent: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    borderWidth: 2,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + '08',
-  },
-  repeatBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.primary,
-    fontWeight: '700',
+    alignItems: 'center',
+    marginLeft: SPACING.sm,
+    flexShrink: 0,
   },
 })

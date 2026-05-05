@@ -14,12 +14,13 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
-import { getUserReviews, getUserAverageRating } from '../services/reviews'
+import { getUserAverageRating } from '../services/reviews'
 
 interface ReviewWithDetails {
   id: string
   rating: number
   comment?: string
+  recommend?: boolean
   createdAt: string
   reviewerName: string
   reviewerId: string
@@ -53,79 +54,63 @@ export default function ReviewsScreen() {
         return
       }
 
-      // Obtener reviews recibidos
-      const receivedReviews = await getUserReviews(user.id)
+      // Dos queries batch — cada una hace join de perfiles en la misma llamada
+      const [receivedResult, givenResult, avg] = await Promise.all([
+        supabase
+          .from('reviews')
+          .select(`
+            id, rating, comment, recommend, created_at, booking_id, reviewer_id, reviewee_id,
+            profiles!reviews_reviewer_id_fkey(name)
+          `)
+          .eq('reviewee_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('reviews')
+          .select(`
+            id, rating, comment, recommend, created_at, booking_id, reviewer_id, reviewee_id,
+            profiles!reviews_reviewee_id_fkey(name)
+          `)
+          .eq('reviewer_id', user.id)
+          .order('created_at', { ascending: false }),
+        getUserAverageRating(user.id),
+      ])
 
-      // Obtener reviews dados
-      const { data: givenData, error: givenError } = await supabase
-        .from('reviews')
-        .select(
-          `
-          id,
-          rating,
-          comment,
-          created_at,
-          booking_id,
-          reviewer_id,
-          reviewee_id,
-          profiles!reviews_reviewee_id_fkey(
-            id,
-            name
-          )
-        `
-        )
-        .eq('reviewer_id', user.id)
-        .order('created_at', { ascending: false })
+      if (receivedResult.error) throw receivedResult.error
+      if (givenResult.error) throw givenResult.error
 
-      if (givenError) throw givenError
+      const enrichedReceived: ReviewWithDetails[] = (receivedResult.data || []).map((r: any) => {
+        const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+        return {
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          recommend: r.recommend,
+          createdAt: r.created_at,
+          reviewerName: profile?.name || 'Usuario',
+          reviewerId: r.reviewer_id,
+          revieweeName: user.name || 'Yo',
+          revieweeId: r.reviewee_id,
+          bookingId: r.booking_id,
+          type: 'received' as const,
+        }
+      })
 
-      // Obtener detalles del reviewer para reviews recibidos
-      const enrichedReceived = await Promise.all(
-        receivedReviews.map(async (review) => {
-          const { data: reviewer } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', review.reviewer_id)
-            .single()
-
-          return {
-            id: review.id,
-            rating: review.rating,
-            comment: review.comment,
-            createdAt: review.created_at,
-            reviewerName: reviewer?.name || 'Usuario',
-            reviewerId: review.reviewer_id,
-            revieweeName: user.name || 'Yo',
-            revieweeId: review.reviewee_id,
-            bookingId: review.booking_id,
-            type: 'received' as const,
-          }
-        })
-      )
-
-      // Enriquecer reviews dados
-      const enrichedGiven = await Promise.all(
-        (givenData as any[])?.map(async (review) => {
-          const { data: reviewee } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', review.reviewee_id)
-            .single()
-
-          return {
-            id: review.id,
-            rating: review.rating,
-            comment: review.comment,
-            createdAt: review.created_at,
-            reviewerName: user.name || 'Yo',
-            reviewerId: review.reviewer_id,
-            revieweeName: reviewee?.name || 'Usuario',
-            revieweeId: review.reviewee_id,
-            bookingId: review.booking_id,
-            type: 'given' as const,
-          }
-        }) || []
-      )
+      const enrichedGiven: ReviewWithDetails[] = (givenResult.data || []).map((r: any) => {
+        const profile = Array.isArray(r.profiles) ? r.profiles[0] : r.profiles
+        return {
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment,
+          recommend: r.recommend,
+          createdAt: r.created_at,
+          reviewerName: user.name || 'Yo',
+          reviewerId: r.reviewer_id,
+          revieweeName: profile?.name || 'Usuario',
+          revieweeId: r.reviewee_id,
+          bookingId: r.booking_id,
+          type: 'given' as const,
+        }
+      })
 
       const allReviews = [...enrichedReceived, ...enrichedGiven].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -133,10 +118,7 @@ export default function ReviewsScreen() {
 
       setReviews(allReviews)
       setTotalReviews(allReviews.length)
-
-      // Obtener rating promedio
-      const avgRating = await getUserAverageRating(user.id)
-      setAvgRating(avgRating)
+      setAvgRating(avg)
     } catch (error) {
       console.error('Error loading reviews:', error)
       setReviews([])
@@ -229,10 +211,18 @@ export default function ReviewsScreen() {
           </View>
         )}
 
-        {/* Badge de contexto */}
-        <View style={styles.contextBadge}>
-          <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
-          <Text style={styles.contextText}>Verificado después de viaje completado</Text>
+        {/* Badges de contexto */}
+        <View style={styles.badgesRow}>
+          <View style={styles.contextBadge}>
+            <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
+            <Text style={styles.contextText}>Verificado</Text>
+          </View>
+          {review.recommend && (
+            <View style={styles.recommendBadge}>
+              <Ionicons name="thumbs-up" size={12} color={COLORS.primary} />
+              <Text style={styles.recommendText}>Recomendado</Text>
+            </View>
+          )}
         </View>
       </View>
     )
@@ -587,6 +577,12 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
+  badgesRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    flexWrap: 'wrap',
+  },
+
   contextBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -600,6 +596,22 @@ const styles = StyleSheet.create({
   contextText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.success,
+    fontWeight: '600',
+  },
+
+  recommendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.primary + '15',
+    borderRadius: RADIUS.md,
+  },
+
+  recommendText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.primary,
     fontWeight: '600',
   },
 

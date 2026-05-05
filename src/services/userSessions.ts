@@ -85,9 +85,16 @@ export const registerUserSession = async (userId: string): Promise<string> => {
       { onConflict: 'session_key' }
     )
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
+
+  // Limpiar sesiones antiguas del mismo dispositivo (mismo device_name + user)
+  // que NO sean la sesión actual — eliminan los duplicados acumulados
+  await supabase
+    .from('user_sessions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('device_name', deviceName)
+    .neq('session_key', sessionKey)
 
   return sessionKey
 }
@@ -100,11 +107,17 @@ export const getUserSessions = async (userId: string): Promise<UserSessionRecord
     .eq('is_current', true)
     .order('last_active_at', { ascending: false })
 
-  if (error) {
-    throw error
-  }
+  if (error) throw error
 
-  return data || []
+  // Deduplicar por device_name — si hay varios registros del mismo dispositivo
+  // solo mostramos el más reciente (el primero por orden descendente)
+  const seen = new Set<string>()
+  return (data || []).filter((s) => {
+    const key = s.device_name || s.session_key
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
 }
 
 export const deactivateCurrentSession = async (): Promise<void> => {

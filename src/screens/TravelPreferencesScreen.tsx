@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   Switch,
-  TextInput,
   ActivityIndicator,
   Alert,
 } from 'react-native'
@@ -36,8 +35,6 @@ export default function TravelPreferencesScreen() {
   const [musicPreference, setMusicPreference] = useState<MusicPref>('quiet')
   const [acPreference, setAcPreference] = useState<ACPref>('normal')
   const [luggageRestriction, setLuggageRestriction] = useState<LuggagePref>('moderate')
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
-  const [priceAlert, setPriceAlert] = useState('50000')
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -62,8 +59,6 @@ export default function TravelPreferencesScreen() {
         setMusicPreference((prefs.music_preference as MusicPref) || 'quiet')
         setAcPreference((prefs.ac_preference as ACPref) || 'normal')
         setLuggageRestriction((prefs.luggage_restriction as LuggagePref) || 'moderate')
-        setNotificationsEnabled(prefs.notifications_enabled !== false)
-        setPriceAlert(prefs.price_alert_threshold?.toString() || '50000')
       }
     } catch (error) {
       console.error('Error loading preferences:', error)
@@ -80,8 +75,6 @@ export default function TravelPreferencesScreen() {
         music_preference: musicPreference,
         ac_preference: acPreference,
         luggage_restriction: luggageRestriction,
-        notifications_enabled: notificationsEnabled,
-        price_alert_threshold: parseFloat(priceAlert) || 50000,
       })
       setToastMessage('Preferencias guardadas exitosamente')
       setToastVisible(true)
@@ -240,41 +233,6 @@ export default function TravelPreferencesScreen() {
             </View>
           </View>
 
-          {/* Notificaciones Section */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔔 Notificaciones y Alertas</Text>
-
-            <View style={styles.preferenceRow}>
-              <View style={styles.preferenceInfoRow}>
-                <Ionicons name="notifications" size={20} color={COLORS.info} />
-                <View style={styles.preferenceInfo}>
-                  <Text style={styles.preferenceName}>Notificaciones Activas</Text>
-                  <Text style={styles.preferenceDesc}>Recibir alertas de viajes</Text>
-                </View>
-              </View>
-              <Switch
-                value={notificationsEnabled}
-                onValueChange={setNotificationsEnabled}
-                trackColor={{ false: COLORS.surfaceHover, true: COLORS.success + '50' }}
-                thumbColor={notificationsEnabled ? COLORS.success : COLORS.textSecondary}
-              />
-            </View>
-
-            <View style={styles.preferenceRow}>
-              <View style={styles.preferenceInfo}>
-                <Text style={styles.preferenceName}>Alerta de Precio</Text>
-                <Text style={styles.preferenceDesc}>Notificar si el precio baja de $</Text>
-              </View>
-              <TextInput
-                style={styles.priceInput}
-                value={priceAlert}
-                onChangeText={setPriceAlert}
-                keyboardType="number-pad"
-                placeholder="50000"
-              />
-            </View>
-          </View>
-
           {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.saveBtn} onPress={handleSavePreferences} disabled={saving}>
@@ -406,17 +364,6 @@ const styles = StyleSheet.create({
   },
   optionBtnTextActive: {
     color: COLORS.textInverse,
-  },
-  priceInput: {
-    backgroundColor: COLORS.background,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceHover,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textPrimary,
-    minWidth: 80,
   },
   buttonContainer: {
     marginHorizontal: SPACING.md,
