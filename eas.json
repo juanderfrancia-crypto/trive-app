@@ -1,16 +1,19 @@
 {
   "build": {
     "development": {
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
       "android": {
         "buildType": "apk"
       }
     },
     "preview": {
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
       "android": {
         "buildType": "apk"
       }
     },
     "production": {
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
       "android": {
         "buildType": "apk"
       }
