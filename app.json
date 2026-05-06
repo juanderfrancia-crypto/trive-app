@@ -35,8 +35,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.traive.triveapp",
-      "googleServicesFile": "./google-services.json"
+      "package": "com.traive.triveapp"
     },
     "web": {
       "favicon": "./assets/logo.png"
