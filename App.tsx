@@ -1,5 +1,6 @@
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
+import Toast from "react-native-toast-message";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
@@ -20,6 +21,7 @@ export default function App() {
     <ErrorBoundary>
       <StatusBar style="dark" />
       <AppNavigator />
+      <Toast />
     </ErrorBoundary>
   );
 }

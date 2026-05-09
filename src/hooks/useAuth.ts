@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
+import { Alert } from "react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
 import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
+
+// Flag de módulo: evita mostrar el alert de sesión expirada cuando el logout es manual
+let _manualLogout = false
+// Evita mostrar el alert múltiples veces si hay varios listeners activos
+let _sessionExpiredAlertPending = false
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -118,7 +124,18 @@ export const useAuth = () => {
 
     initializeSession();
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' && !_manualLogout && !_sessionExpiredAlertPending) {
+        _sessionExpiredAlertPending = true
+        Alert.alert(
+          'Sesión expirada',
+          'Tu sesión expiró o fue cerrada en otro dispositivo. Por favor inicia sesión de nuevo.',
+          [{ text: 'OK', onPress: () => { _sessionExpiredAlertPending = false } }]
+        )
+      }
+      if (event === 'SIGNED_OUT') {
+        _manualLogout = false
+      }
       restoreSession(session);
     });
 
@@ -306,6 +323,7 @@ export const useAuth = () => {
     try {
       setError(null);
       setLoading(true);
+      _manualLogout = true
       await deactivateCurrentSession();
       await clearLocalSessionKey();
       const { error } = await supabase.auth.signOut();
