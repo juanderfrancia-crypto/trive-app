@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
+import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
@@ -31,6 +32,7 @@ export default function LoginEmailScreen() {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const { isLocked, formatCountdown, recordFailure, recordSuccess } = useBruteForceGuard()
 
   const validate = () => {
     const newErrors: { email?: string; password?: string } = {}
@@ -49,7 +51,7 @@ export default function LoginEmailScreen() {
   }
 
   const handleLogin = async () => {
-    if (!validate()) return
+    if (isLocked || !validate()) return
     try {
       setIsSubmitting(true)
       const data = (await login(email.trim(), password)) as any
@@ -58,7 +60,7 @@ export default function LoginEmailScreen() {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single()
+          .maybeSingle()
 
         if (profileError) {
           errorHandler.handleSupabaseError(profileError, 'fetch_profile', { userId: data.user.id })
@@ -79,35 +81,20 @@ export default function LoginEmailScreen() {
           })
         }
         setAuthUser(data.user)
+        recordSuccess()
         await logLogin(data.user.id)
       }
     } catch (err: any) {
       if (err.message?.includes('Network') || err.message?.includes('Failed to fetch')) {
-        errorHandler.handle(
-          'Sin conexión a internet',
-          ErrorType.NETWORK,
-          ErrorSeverity.HIGH,
-          true,
-          { context: 'login' }
-        )
+        errorHandler.handle('Sin conexión a internet', ErrorType.NETWORK, ErrorSeverity.HIGH, true, { context: 'login' })
       } else if (err.message?.includes('Invalid') || err.message?.includes('credentials')) {
-        errorHandler.handle(
-          'Correo o contraseña incorrectos',
-          ErrorType.AUTH,
-          ErrorSeverity.MEDIUM,
-          true,
-          { email, context: 'login' }
-        )
+        recordFailure()
+        errorHandler.handle('Correo o contraseña incorrectos', ErrorType.AUTH, ErrorSeverity.MEDIUM, true, { context: 'login' })
       } else if (err.status === 401 || err.status === 403) {
+        recordFailure()
         errorHandler.handleApiError(err, { context: 'login_auth' })
       } else {
-        errorHandler.handle(
-          err,
-          ErrorType.UNKNOWN,
-          ErrorSeverity.MEDIUM,
-          true,
-          { context: 'login' }
-        )
+        errorHandler.handle(err, ErrorType.UNKNOWN, ErrorSeverity.MEDIUM, true, { context: 'login' })
       }
     } finally {
       setIsSubmitting(false)
@@ -204,16 +191,27 @@ export default function LoginEmailScreen() {
               <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
             </TouchableOpacity>
 
+            {isLocked && (
+              <View style={styles.lockBanner}>
+                <Ionicons name="lock-closed" size={15} color="#92400E" />
+                <Text style={styles.lockBannerText}>
+                  Demasiados intentos. Espera {formatCountdown()}
+                </Text>
+              </View>
+            )}
+
             <TouchableOpacity
-              style={[styles.loginBtn, (isSubmitting || authLoading) && styles.buttonDisabled]}
+              style={[styles.loginBtn, (isSubmitting || authLoading || isLocked) && styles.buttonDisabled]}
               onPress={handleLogin}
-              disabled={isSubmitting || authLoading}
+              disabled={isSubmitting || authLoading || isLocked}
               activeOpacity={0.85}
             >
               {isSubmitting || authLoading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.loginBtnText}>Iniciar Sesión</Text>
+                <Text style={styles.loginBtnText}>
+                  {isLocked ? `Bloqueado ${formatCountdown()}` : 'Iniciar Sesión'}
+                </Text>
               )}
             </TouchableOpacity>
 
@@ -358,6 +356,24 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  lockBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+  },
+  lockBannerText: {
+    fontSize: 13,
+    color: '#92400E',
+    fontWeight: '600',
+    flex: 1,
   },
   footer: {
     flexDirection: 'row',

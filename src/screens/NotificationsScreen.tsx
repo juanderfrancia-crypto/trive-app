@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert,
+  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -381,6 +381,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FC" />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerIconBtn}
@@ -437,7 +438,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F8F9FC',
   },
   header: {
     flexDirection: 'row',

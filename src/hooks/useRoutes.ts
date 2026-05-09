@@ -26,6 +26,7 @@ export interface Route {
   driver_rating?: number;
   driver_trips?: number;
   driver_avatar_url?: string;
+  vehicle_photo_url?: string | null;
 }
 
 const isMissingColumnError = (err: any, column: string) => {
@@ -245,7 +246,7 @@ export const useRoutes = () => {
         .from("routes")
         .select("*")
         .eq("id", routeId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       if (!data) return null;

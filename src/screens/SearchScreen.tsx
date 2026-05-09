@@ -11,6 +11,7 @@ import {
   Modal,
   RefreshControl,
   Dimensions,
+  StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -191,10 +192,9 @@ function InfoCards() {
       {/* Pago Digital */}
       <View style={[info.card, info.cardLight]}>
         <View style={[info.iconWrap, info.iconWrapLight]}>
-          <Ionicons name="card" size={28} color={COLORS.primary} />
+          <Ionicons name="card" size={32} color={COLORS.primary} />
         </View>
         <Text style={info.titleLight}>Pago{'\n'}Digital</Text>
-        <Text style={info.subLight}>Aceptamos Trive Wallet y QR.</Text>
       </View>
     </View>
   )
@@ -318,6 +318,7 @@ export default function SearchScreen() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <OfflineBanner />
 
       {/* ══ STICKY HEADER ═══════════════════════════════════════════════════ */}
@@ -631,6 +632,8 @@ const info = StyleSheet.create({
   cardLight: {
     backgroundColor: '#EEF4FF',
     borderWidth: 1, borderColor: `${COLORS.primary}18`,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   iconWrap: {
     width: 36, height: 36, borderRadius: RADIUS.md,
@@ -638,10 +641,10 @@ const info = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 0,
   },
-  iconWrapLight: { backgroundColor: `${COLORS.primary}15` },
+  iconWrapLight: { backgroundColor: `${COLORS.primary}15`, width: 44, height: 44, borderRadius: RADIUS.md },
   titleDark: { fontSize: 14, fontWeight: '800', color: '#fff', letterSpacing: -0.1, lineHeight: 18 },
   subDark:   { fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 14 },
-  titleLight: { fontSize: 14, fontWeight: '800', color: COLORS.primary, letterSpacing: -0.1, lineHeight: 18 },
+  titleLight: { fontSize: 18, fontWeight: '800', color: COLORS.primary, letterSpacing: -0.3, lineHeight: 22, textAlign: 'center' },
   subLight:   { fontSize: 11, color: COLORS.textSecondary, lineHeight: 14 },
 })
 
@@ -651,7 +654,7 @@ const s = StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.sm,

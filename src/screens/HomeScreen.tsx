@@ -12,9 +12,10 @@ import {
   Animated,
   Easing,
   Dimensions,
+  StatusBar,
 } from 'react-native'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -45,6 +46,7 @@ const MEMBERSHIP_CFG: Record<string, { bg: string; text: string; icon: string; l
 
 export default function HomeScreen() {
   const navigation   = useNavigation<any>()
+  const insets       = useSafeAreaInsets()
   const [origin, setOrigin]           = useState('')
   const [destination, setDestination] = useState('')
   const [originFocused, setOriginFocused]           = useState(false)
@@ -114,9 +116,9 @@ export default function HomeScreen() {
     const days   = expiry && expiry > new Date() ? Math.ceil((expiry.getTime() - Date.now()) / 86400000) : 0
     const cfg    = MEMBERSHIP_CFG[type] ?? MEMBERSHIP_CFG.free
     return (
-      <View style={[styles.pill, { backgroundColor: cfg.bg }]}>
-        <Ionicons name={cfg.icon as any} size={13} color={cfg.text} />
-        <Text style={[styles.pillText, { color: cfg.text }]}>
+      <View style={styles.pillGlass}>
+        <Ionicons name={cfg.icon as any} size={13} color="rgba(255,255,255,0.9)" />
+        <Text style={styles.pillTextWhite}>
           {cfg.label}{days > 0 ? ` · ${days}d` : ''}
         </Text>
       </View>
@@ -226,69 +228,80 @@ export default function HomeScreen() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
 
-        {/* ══ HEADER ════════════════════════════════════════════════════════ */}
-        <View style={styles.header}>
-          <Text style={styles.wordmark}>TRIVE</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.avatarBtn} onPress={() => navigation.navigate('Profile' as never)} accessibilityLabel="Ver perfil">
-              {user?.avatar_url ? (
-                <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
-              ) : (
-                <Text style={styles.avatarInitial}>{user?.name?.charAt(0).toUpperCase() ?? 'U'}</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* ══ GRADIENT HERO SECTION ═════════════════════════════════════════ */}
+        <View style={styles.heroBgWrap}>
+        <LinearGradient
+          colors={['#082D66', '#0D3A88', '#154AA8', '#1E5FBF']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.heroBg, { paddingTop: insets.top }]}
+        >
+          <View style={styles.decorCircle1} pointerEvents="none" />
+          <View style={styles.decorCircle2} pointerEvents="none" />
+          <View style={styles.decorCircle3} pointerEvents="none" />
 
-        {/* ══ HERO CARD ══════════════════════════════════════════════════════ */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroTop}>
-            <Text style={styles.heroGreeting}>
-              {getGreeting()},{' '}
-              <Text style={styles.heroName}>{user?.name?.split(' ')[0] ?? 'Usuario'}</Text>
-            </Text>
-            {metricLoading && <ActivityIndicator size="small" color={COLORS.primary} />}
+          {/* ── Header ─────────────────────────────────────────────────────── */}
+          <View style={styles.header}>
+            <Text style={[styles.wordmark, { color: '#fff' }]}>TRIVE</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity style={styles.avatarBtnGlass} onPress={() => navigation.navigate('Profile' as never)} accessibilityLabel="Ver perfil">
+                {user?.avatar_url ? (
+                  <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
+                ) : (
+                  <Text style={[styles.avatarInitial, { color: '#fff' }]}>{user?.name?.charAt(0).toUpperCase() ?? 'U'}</Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-          {metricLoading ? (
-            <>
-              <Animated.View style={[styles.skeletonAmount, { opacity: skeletonAnim }]} />
-              <Animated.View style={[styles.skeletonLabel,  { opacity: skeletonAnim }]} />
-            </>
-          ) : (
-            <>
-              <Text style={styles.heroAmount}>{metricValue}</Text>
-              <Text style={styles.heroLabel}>{metricLabel}</Text>
-            </>
-          )}
 
-          <View style={styles.pillRow}>
-            {!isDriver && (
-              <View style={styles.pill}>
-                <Ionicons name="calendar-outline" size={13} color={COLORS.primary} />
-                <Text style={styles.pillText}>Próx: {passengerStats?.nextTripTime ?? '--:--'}</Text>
-              </View>
-            )}
-            {!isDriver && membershipBadge()}
-            {isDriver && (
+          {/* ── Hero content ───────────────────────────────────────────────── */}
+          <View style={styles.heroContent}>
+            <View style={styles.heroTop}>
+              <Text style={styles.heroGreetingWhite}>
+                {getGreeting()},{' '}
+                <Text style={{ fontWeight: '700', color: '#fff' }}>{user?.name?.split(' ')[0] ?? 'Usuario'}</Text>
+              </Text>
+              {metricLoading && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />}
+            </View>
+            {metricLoading ? (
               <>
-                <View style={styles.pill}>
-                  <Ionicons name="car-outline" size={13} color={COLORS.primary} />
-                  <Text style={styles.pillText}>{driverEarnings?.completedTrips ?? driverProfile?.total_trips ?? 0} viajes</Text>
-                </View>
-                <View style={[styles.pill, { backgroundColor: 'rgba(250,204,21,0.12)' }]}>
-                  <Ionicons name="star" size={13} color="#D97706" />
-                  <Text style={[styles.pillText, { color: '#92400E' }]}>{user?.rating ?? '--'}</Text>
-                </View>
-                <View style={[styles.pill, { backgroundColor: 'rgba(16,185,129,0.12)' }]}>
-                  <Ionicons name="radio" size={13} color="#059669" />
-                  <Text style={[styles.pillText, { color: '#065F46' }]}>En línea</Text>
-                </View>
+                <Animated.View style={[styles.skeletonAmountWhite, { opacity: skeletonAnim }]} />
+                <Animated.View style={[styles.skeletonLabelWhite,  { opacity: skeletonAnim }]} />
+              </>
+            ) : (
+              <>
+                <Text style={styles.heroAmountWhite}>{metricValue}</Text>
+                <Text style={styles.heroLabelWhite}>{metricLabel}</Text>
               </>
             )}
+
+            <View style={styles.pillRow}>
+              {!isDriver && (
+                <View style={styles.pillGlass}>
+                  <Ionicons name="calendar-outline" size={13} color="rgba(255,255,255,0.9)" />
+                  <Text style={styles.pillTextWhite}>Próx: {passengerStats?.nextTripTime ?? '--:--'}</Text>
+                </View>
+              )}
+              {!isDriver && membershipBadge()}
+              {isDriver && (
+                <>
+                  <View style={styles.pillGlass}>
+                    <Ionicons name="car-outline" size={13} color="rgba(255,255,255,0.9)" />
+                    <Text style={styles.pillTextWhite}>{driverEarnings?.completedTrips ?? driverProfile?.total_trips ?? 0} viajes</Text>
+                  </View>
+                  <View style={styles.pillGlass}>
+                    <Ionicons name="star" size={13} color="#FBBF24" />
+                    <Text style={styles.pillTextWhite}>{user?.rating ?? '--'}</Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
+        </LinearGradient>
         </View>
 
         {/* ══ PRÓXIMO VIAJE (solo pasajeros) ════════════════════════════════ */}
@@ -434,6 +447,14 @@ export default function HomeScreen() {
             accessibilityLabel="Buscar rutas"
             activeOpacity={0.85}
           >
+            {origin && destination && (
+              <LinearGradient
+                colors={[COLORS.primaryDark, COLORS.primaryLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+            )}
             <Ionicons name="search" size={18} color={origin && destination ? '#fff' : COLORS.textTertiary} />
             <Text style={[styles.searchBtnText, (!origin || !destination) && styles.searchBtnTextDisabled]}>
               Buscar rutas
@@ -451,7 +472,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <LinearGradient
-                colors={[COLORS.primaryDark, '#0a2a6e']}
+                colors={['#082D66', '#0D3A88', '#154AA8', '#1E5FBF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
@@ -535,9 +556,33 @@ export default function HomeScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
+  safe: { flex: 1, backgroundColor: '#082D66' },
+  scroll: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { paddingBottom: 32 },
+
+  // ── Gradient Hero Background ─────────────────────────────────────────────────
+  heroBgWrap: {
+    borderRadius: 32,
+    marginBottom: SPACING.lg,
+    marginTop: SPACING.sm,
+    marginHorizontal: SPACING.sm,
+    overflow: 'hidden',
+  },
+  heroBg: {
+    paddingBottom: SPACING.xl,
+  },
+  decorCircle1: {
+    position: 'absolute', width: 240, height: 240, borderRadius: 120,
+    backgroundColor: 'rgba(255,255,255,0.07)', top: -80, right: -60,
+  },
+  decorCircle2: {
+    position: 'absolute', width: 160, height: 160, borderRadius: 80,
+    backgroundColor: 'rgba(255,255,255,0.05)', bottom: 10, left: -40,
+  },
+  decorCircle3: {
+    position: 'absolute', width: 90, height: 90, borderRadius: 45,
+    backgroundColor: 'rgba(255,255,255,0.06)', top: 55, right: 70,
+  },
 
   // ── Header ──────────────────────────────────────────────────────────────────
   header: {
@@ -548,50 +593,53 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.sm,
   },
-  wordmark: { fontSize: 22, fontWeight: '900', color: COLORS.primary, letterSpacing: 2 },
+  wordmark: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 2 },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   avatarBtn: {
     width: 40, height: 40, borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.35, shadowRadius: 8, elevation: 5,
+  },
+  avatarBtnGlass: {
+    width: 40, height: 40, borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
   },
   avatarInitial: { fontSize: 16, fontWeight: '700', color: '#fff' },
   avatarImage: { width: 40, height: 40, borderRadius: RADIUS.md },
 
-  // ── Hero Card ────────────────────────────────────────────────────────────────
-  heroCard: {
-    marginHorizontal: SPACING.lg, marginTop: SPACING.sm, marginBottom: SPACING.lg,
-    backgroundColor: '#EEF4FF', borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderLeftWidth: 4, borderLeftColor: COLORS.primary,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 20,
-    elevation: 5,
-  },
+  // ── Hero Content (floating on gradient) ──────────────────────────────────────
+  heroContent: { paddingHorizontal: SPACING.lg },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
+  heroGreetingWhite: { fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
+  heroAmountWhite: { fontSize: 36, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 2 },
+  heroLabelWhite: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: SPACING.md },
+  skeletonAmountWhite: {
+    height: 40, width: 160, borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 6,
+  },
+  skeletonLabelWhite: {
+    height: 14, width: 110, borderRadius: RADIUS.xs,
+    backgroundColor: 'rgba(255,255,255,0.15)', marginBottom: SPACING.md,
+  },
+  pillRow: { flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' },
+  pillGlass: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
+  },
+  pillTextWhite: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  // legacy (kept for safety)
+  heroCard: { marginHorizontal: SPACING.lg, marginTop: SPACING.sm, marginBottom: SPACING.lg, backgroundColor: '#EEF4FF', borderRadius: RADIUS.lg, padding: SPACING.lg },
   heroGreeting: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
   heroName: { fontWeight: '700', color: COLORS.primary },
   heroAmount: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 2 },
   heroLabel: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
-  skeletonAmount: {
-    height: 40, width: 160, borderRadius: RADIUS.sm,
-    backgroundColor: `${COLORS.primary}20`, marginBottom: 6,
-  },
-  skeletonLabel: {
-    height: 14, width: 110, borderRadius: RADIUS.xs,
-    backgroundColor: `${COLORS.primary}15`, marginBottom: SPACING.md,
-  },
-  pillRow: { flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' },
-  pill: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(21,74,168,0.10)',
-    paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
-  },
+  skeletonAmount: { height: 40, width: 160, borderRadius: RADIUS.sm, backgroundColor: `${COLORS.primary}20`, marginBottom: 6 },
+  skeletonLabel: { height: 14, width: 110, borderRadius: RADIUS.xs, backgroundColor: `${COLORS.primary}15`, marginBottom: SPACING.md },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(21,74,168,0.10)', paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full },
   pillText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
 
   // ── Upcoming Trip Card ───────────────────────────────────────────────────────
@@ -600,11 +648,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
     borderWidth: 1, borderColor: COLORS.borderLight,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.07,
-    shadowRadius: 18,
-    elevation: 4,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.13,
+    shadowRadius: 22,
+    elevation: 6,
   },
   upcomingHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
@@ -666,11 +714,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: COLORS.border,
     marginBottom: SPACING.sm, overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.09,
+    shadowRadius: 14,
+    elevation: 3,
   },
   searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.md },
   dotCol: { alignItems: 'center', width: 20, marginRight: SPACING.md },
@@ -704,18 +752,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border,
     paddingHorizontal: SPACING.md, paddingVertical: 7, borderRadius: RADIUS.full,
     maxWidth: 220,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 2,
   },
   recentChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
 
   searchBtn: {
     backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 50,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: SPACING.sm,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 14, elevation: 8,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 18, elevation: 10,
+    overflow: 'hidden',
   },
   searchBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
   searchBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
@@ -724,7 +773,7 @@ const styles = StyleSheet.create({
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
     borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 12,
+    shadowColor: '#082D66', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.55, shadowRadius: 24, elevation: 16,
   },
   ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md },
   ctaIconWrap: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },
@@ -737,7 +786,7 @@ const styles = StyleSheet.create({
   carouselContent: { paddingHorizontal: SPACING.lg },
   routeCard: {
     width: CARD_W, borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: '#0D3A88', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.32, shadowRadius: 22, elevation: 14,
+    shadowColor: '#082D66', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.42, shadowRadius: 28, elevation: 18,
   },
   routeCardInner: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
   routeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm },

@@ -1,89 +1,38 @@
-import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
 
-type StorageAdapter = {
-  getItem(key: string): string | null
-  setItem(key: string, value: string): void
-  removeItem(key: string): void
-}
+// Claves que contienen datos sensibles → siempre en SecureStore cifrado
+const SECURE_KEYS = new Set(['trive_user_session_key'])
 
-const inMemoryStorage = new Map<string, string>()
+// Fallback en memoria para web/entornos sin SecureStore
+const inMemory = new Map<string, string>()
 
-const createFallbackStorage = (): StorageAdapter => {
-  if (typeof globalThis !== 'undefined' && typeof (globalThis as any).localStorage !== 'undefined') {
-    const browserStorage = (globalThis as any).localStorage as Storage
-    return {
-      getItem: (key: string) => browserStorage.getItem(key),
-      setItem: (key: string, value: string) => browserStorage.setItem(key, value),
-      removeItem: (key: string) => browserStorage.removeItem(key),
-    }
+const isSecureStoreAvailable = (): boolean => {
+  try {
+    return typeof SecureStore.getItemAsync === 'function'
+  } catch {
+    return false
   }
-
-  return {
-    getItem: (key: string) => inMemoryStorage.get(key) ?? null,
-    setItem: (key: string, value: string) => {
-      inMemoryStorage.set(key, value)
-    },
-    removeItem: (key: string) => {
-      inMemoryStorage.delete(key)
-    },
-  }
-}
-
-const fallbackStorage = createFallbackStorage()
-let useFallback = false
-
-const isAsyncStorageUsable = () => {
-  return (
-    !useFallback &&
-    AsyncStorage != null &&
-    typeof AsyncStorage.getItem === 'function' &&
-    typeof AsyncStorage.setItem === 'function' &&
-    typeof AsyncStorage.removeItem === 'function'
-  )
-}
-
-const handleAsyncError = (error: unknown) => {
-  useFallback = true
-  return error
 }
 
 export async function getItem(key: string): Promise<string | null> {
-  if (!isAsyncStorageUsable()) {
-    return fallbackStorage.getItem(key)
+  if (SECURE_KEYS.has(key) && isSecureStoreAvailable()) {
+    return SecureStore.getItemAsync(key)
   }
-
-  try {
-    return await AsyncStorage.getItem(key)
-  } catch (error) {
-    handleAsyncError(error)
-    return fallbackStorage.getItem(key)
-  }
+  return inMemory.get(key) ?? null
 }
 
 export async function setItem(key: string, value: string): Promise<void> {
-  if (!isAsyncStorageUsable()) {
-    fallbackStorage.setItem(key, value)
+  if (SECURE_KEYS.has(key) && isSecureStoreAvailable()) {
+    await SecureStore.setItemAsync(key, value)
     return
   }
-
-  try {
-    await AsyncStorage.setItem(key, value)
-  } catch (error) {
-    handleAsyncError(error)
-    fallbackStorage.setItem(key, value)
-  }
+  inMemory.set(key, value)
 }
 
 export async function removeItem(key: string): Promise<void> {
-  if (!isAsyncStorageUsable()) {
-    fallbackStorage.removeItem(key)
+  if (SECURE_KEYS.has(key) && isSecureStoreAvailable()) {
+    await SecureStore.deleteItemAsync(key)
     return
   }
-
-  try {
-    await AsyncStorage.removeItem(key)
-  } catch (error) {
-    handleAsyncError(error)
-    fallbackStorage.removeItem(key)
-  }
+  inMemory.delete(key)
 }

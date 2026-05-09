@@ -76,7 +76,6 @@ export const useDriverEarnings = (driverId?: string) => {
       }
 
       if (!routes || routes.length === 0) {
-        // Sin rutas = sin ganancias
         setEarnings({
           totalEarnings: 0,
           thisMonthEarnings: 0,
@@ -85,8 +84,8 @@ export const useDriverEarnings = (driverId?: string) => {
           completedPassengers: 0,
           averagePerTrip: 0,
           totalRideHours: 0,
-          weeklyBars: [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5],
-          peakBarIndex: 5,
+          weeklyBars: [0, 0, 0, 0, 0, 0, 0],
+          peakBarIndex: -1,
         });
         setTransactions([]);
         setLoading(false);
@@ -145,22 +144,30 @@ export const useDriverEarnings = (driverId?: string) => {
         ?.filter((b) => b.payment_status === 'completed').length || 0;
 
       // Barras de los últimos 7 días (ganancias diarias normalizadas 0-1)
+      // Usa fecha local del dispositivo para evitar desfase por zona horaria (UTC-5 Colombia)
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const localDateStr = (d: Date) =>
+        `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
       const todayDate = new Date();
       const rawDays: number[] = [];
       for (let i = 6; i >= 0; i--) {
         const day = new Date(todayDate);
         day.setDate(todayDate.getDate() - i);
-        const dayStr = day.toISOString().split('T')[0];
+        const dayStr = localDateStr(day);
         const dayTotal = bookings
-          ?.filter((b) => b.payment_status === 'completed' && b.created_at.startsWith(dayStr))
+          ?.filter((b) => {
+            if (b.payment_status !== 'completed') return false;
+            return localDateStr(new Date(b.created_at)) === dayStr;
+          })
           .reduce((sum, b) => sum + (b.price || 0), 0) || 0;
         rawDays.push(dayTotal);
       }
       const maxDay = Math.max(...rawDays);
       const weeklyBars = maxDay > 0
-        ? rawDays.map((d) => Math.max(0.08, d / maxDay))
-        : [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5];
-      const peakBarIndex = maxDay > 0 ? rawDays.indexOf(maxDay) : 5;
+        ? rawDays.map((d) => (d === 0 ? 0 : Math.max(0.08, d / maxDay)))
+        : [0, 0, 0, 0, 0, 0, 0];
+      const peakBarIndex = maxDay > 0 ? rawDays.indexOf(maxDay) : -1;
 
       // 4️⃣ CONSTRUIR HISTORIAL DE TRANSACCIONES
       const transactionsList: EarningsTransaction[] = [];

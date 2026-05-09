@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../services/supabase";
+import { withTimeout } from "../utils/withTimeout";
 
 export interface Booking {
   id: string;
@@ -110,10 +111,10 @@ export const useBookings = () => {
         return row;
       });
 
-      const { data, error: bookingError } = await supabase
-        .from('bookings')
-        .insert(insertRows)
-        .select();
+      const { data, error: bookingError } = await withTimeout(
+        supabase.from('bookings').insert(insertRows).select(),
+        12000
+      );
 
       if (bookingError) {
         if (bookingError.code === '23505' || bookingError.message.includes('unique')) {
@@ -142,11 +143,13 @@ export const useBookings = () => {
       setError(null);
       setLoading(true);
 
-      const { data, error } = await supabase
-        .rpc('finalize_bookings_atomic', {
+      const { data, error } = await withTimeout(
+        supabase.rpc('finalize_bookings_atomic', {
           p_booking_ids: bookingIds,
           p_payment_method: paymentMethod,
-        });
+        }),
+        15000
+      );
 
       if (error) throw error;
 

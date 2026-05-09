@@ -1,17 +1,12 @@
 import { Platform } from 'react-native'
 import * as Device from 'expo-device'
+import * as Crypto from 'expo-crypto'
 import { supabase } from './supabase'
 import { getItem, removeItem, setItem } from '../utils/storage'
 
 const SESSION_KEY = 'trive_user_session_key'
 
-const createSessionKey = (): string => {
-  if (typeof globalThis !== 'undefined' && typeof (globalThis as any).crypto !== 'undefined' && typeof (globalThis as any).crypto.randomUUID === 'function') {
-    return (globalThis as any).crypto.randomUUID()
-  }
-
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
-}
+const createSessionKey = (): string => Crypto.randomUUID()
 
 const getSessionKey = async (): Promise<string> => {
   let sessionKey = await getItem(SESSION_KEY)

@@ -17,25 +17,33 @@ export interface TripMessage {
 // ============================================
 
 /**
- * Obtiene todos los mensajes de un viaje en orden cronológico
- * @param tripId - ID del viaje
- * @returns Array de mensajes
+ * Obtiene los mensajes de una conversación específica dentro de un viaje.
+ * Solo devuelve mensajes entre userId y otherUserId — nunca mezcla conversaciones
+ * de distintos pasajeros del mismo viaje.
  */
-export const getTripMessages = async (tripId: string): Promise<TripMessage[]> => {
+export const getTripMessages = async (
+  tripId: string,
+  userId: string,
+  otherUserId: string
+): Promise<TripMessage[]> => {
   try {
-    if (!tripId) throw new Error('tripId is required')
+    if (!tripId || !userId || !otherUserId) throw new Error('tripId, userId and otherUserId are required')
 
     const { data, error } = await supabase
       .from('trip_messages')
       .select('*')
       .eq('trip_id', tripId)
+      .or(
+        `and(from_user_id.eq.${userId},to_user_id.eq.${otherUserId}),` +
+        `and(from_user_id.eq.${otherUserId},to_user_id.eq.${userId})`
+      )
       .order('created_at', { ascending: true })
 
     if (error) throw error
 
     return data || []
   } catch (err: any) {
-    console.error('Error fetching trip messages:', err)
+    if (__DEV__) console.error('Error fetching trip messages:', err)
     throw err
   }
 }
@@ -191,22 +199,33 @@ export const markTripMessagesAsRead = async (tripId: string, userId: string): Pr
 // ============================================
 
 /**
- * Suscribirse a nuevos mensajes en un viaje
- * @param tripId - ID del viaje
- * @param callback - Función a llamar cuando hay nuevo mensaje
- * @returns Función para desuscribirse
+ * Suscribirse a nuevos mensajes dentro de un viaje.
+ *
+ * - Si se pasa `otherUserId`: solo dispara el callback para mensajes entre
+ *   `userId` y `otherUserId` (chat 1-a-1, evita cruce de conversaciones).
+ * - Si `otherUserId` es null: dispara el callback solo cuando `to_user_id === userId`
+ *   (útil para badges en pantallas donde hay múltiples conversaciones, ej. driver).
+ *
+ * Nota: Supabase Realtime no soporta filtros OR en postgres_changes, por eso
+ * el filtro de participantes se aplica en el callback JS.
  */
 export const subscribeTripMessages = (
   tripId: string,
+  userId: string,
+  otherUserId: string | null,
   callback: (message: TripMessage) => void
 ) => {
-  if (!tripId) {
-    console.error('subscribeTripMessages: tripId is required')
+  if (!tripId || !userId) {
+    if (__DEV__) console.error('subscribeTripMessages: tripId and userId are required')
     return () => {}
   }
 
+  const channelKey = otherUserId
+    ? `trip:${tripId}:${userId}:${otherUserId}`
+    : `trip:${tripId}:${userId}`
+
   const channel = supabase
-    .channel(`trip:${tripId}:${Date.now()}`)
+    .channel(channelKey)
     .on(
       'postgres_changes',
       {
@@ -216,8 +235,18 @@ export const subscribeTripMessages = (
         filter: `trip_id=eq.${tripId}`,
       },
       (payload) => {
-        const newMessage = payload.new as TripMessage
-        if (newMessage) callback(newMessage)
+        const msg = payload.new as TripMessage
+        if (!msg) return
+
+        if (otherUserId) {
+          // Chat 1-a-1: solo mensajes entre estos dos usuarios
+          const isMine = msg.from_user_id === userId && msg.to_user_id === otherUserId
+          const isTheirs = msg.from_user_id === otherUserId && msg.to_user_id === userId
+          if (isMine || isTheirs) callback(msg)
+        } else {
+          // Badge: solo mensajes dirigidos a mí
+          if (msg.to_user_id === userId) callback(msg)
+        }
       }
     )
     .subscribe()

@@ -76,18 +76,14 @@ export default function AdminDocumentsScreen() {
     try {
       setLoadingPreview(true)
       setSelectedDocument(doc)
-      console.log('Loading preview for document:', doc.id, 'file_path:', doc.file_path)
       if (doc.file_path) {
-        console.log('Fetching signed URL...')
         const url = await getDocumentDownloadUrl(doc.file_path)
-        console.log('Signed URL obtained:', url)
         if (!url) {
           Alert.alert('Error', 'No se pudo obtener la URL del documento')
           return
         }
         setDocumentUrl(url)
       } else {
-        console.log('Document has no file_path')
         Alert.alert('Error', 'El documento no tiene archivo asociado')
       }
     } catch (error) {

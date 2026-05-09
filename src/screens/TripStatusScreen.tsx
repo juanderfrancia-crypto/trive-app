@@ -35,7 +35,7 @@ export default function TripStatusScreen() {
       const routeBookings = await getRouteBookings(selectedRoute.id)
       setBookings(routeBookings)
     } catch (error) {
-      console.log('Error loading bookings:', error)
+      if (__DEV__) console.error('Error loading bookings:', error)
     }
   }, [getRouteBookings, selectedRoute])
 
@@ -52,10 +52,8 @@ export default function TripStatusScreen() {
       // Cargar unread count y suscribir mensajes del viaje
       if (user?.id && selectedRoute.id) {
         getTripUnreadCount(selectedRoute.id, user.id).then(setChatUnreadCount)
-        chatChannelRef.current = subscribeTripMessages(selectedRoute.id, (msg) => {
-          if (msg.to_user_id === user.id) {
-            setChatUnreadCount((prev) => prev + 1)
-          }
+        chatChannelRef.current = subscribeTripMessages(selectedRoute.id, user.id, null, () => {
+          setChatUnreadCount((prev) => prev + 1)
         })
       }
 
@@ -125,7 +123,7 @@ export default function TripStatusScreen() {
       }, 2000)
     } catch (error) {
       setToastConfig({ visible: true, message: 'Error al cancelar. Intenta más tarde.', type: 'error' })
-      console.log('Cancel error:', error)
+      if (__DEV__) console.error('Cancel error:', error)
     } finally {
       setCancelLoading(false)
     }

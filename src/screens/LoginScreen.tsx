@@ -60,7 +60,7 @@ export default function LoginScreen() {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single()
+          .maybeSingle()
 
         if (profileError) {
           errorHandler.handleSupabaseError(profileError, 'fetch_profile', { userId: data.user.id })

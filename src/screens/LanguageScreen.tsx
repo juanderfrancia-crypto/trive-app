@@ -64,7 +64,7 @@ export default function LanguageScreen() {
         setSelectedLanguage(saved as Language)
       }
     } catch (error) {
-      console.log('Error loading language:', error)
+      if (__DEV__) console.error('Error loading language:', error)
     } finally {
       setLoading(false)
     }
@@ -78,7 +78,7 @@ export default function LanguageScreen() {
       // You can add additional logic here to change app language
       // For now it's just for preference storage
     } catch (error) {
-      console.log('Error saving language:', error)
+      if (__DEV__) console.error('Error saving language:', error)
     }
   }
 

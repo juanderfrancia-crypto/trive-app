@@ -28,15 +28,15 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
   // ============================================
 
   useEffect(() => {
-    if (!tripId || !userId) return
+    if (!tripId || !userId || !otherUserId) return
 
     const loadMessages = async () => {
       try {
         setError(null)
         setLoading(true)
 
-        // Cargar mensajes
-        const data = await getTripMessages(tripId)
+        // Cargar mensajes de esta conversación específica
+        const data = await getTripMessages(tripId, userId, otherUserId)
         setMessages(data)
 
         // Cargar unread count
@@ -57,14 +57,14 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
     }
 
     loadMessages()
-  }, [tripId, userId, autoMarkAsRead])
+  }, [tripId, userId, otherUserId, autoMarkAsRead])
 
   // ============================================
   // SUSCRIBIRSE A NUEVOS MENSAJES
   // ============================================
 
   useEffect(() => {
-    if (!tripId) return
+    if (!tripId || !userId || !otherUserId) return
 
     // Limpiar suscripciones previas
     if (messagesChannelRef.current) {
@@ -72,17 +72,13 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
       messagesChannelRef.current = null
     }
 
-    // Suscribirse a nuevos mensajes
-    messagesChannelRef.current = subscribeTripMessages(tripId, (newMessage) => {
+    // Suscribirse a nuevos mensajes de esta conversación específica
+    messagesChannelRef.current = subscribeTripMessages(tripId, userId, otherUserId ?? null, (newMessage) => {
       setMessages((prev) => {
-        // Evitar duplicados
-        if (prev.some((m) => m.id === newMessage.id)) {
-          return prev
-        }
+        if (prev.some((m) => m.id === newMessage.id)) return prev
         return [...prev, newMessage]
       })
 
-      // Marcar como leído si soy el destinatario
       if (autoMarkAsRead && newMessage.to_user_id === userId && !newMessage.is_read) {
         setUnreadCount((prev) => Math.max(0, prev - 1))
       }
@@ -94,7 +90,7 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
         messagesChannelRef.current = null
       }
     }
-  }, [tripId, userId, autoMarkAsRead])
+  }, [tripId, userId, otherUserId, autoMarkAsRead])
 
   // ============================================
   // SUSCRIBIRSE A CAMBIOS DE ESTADO (read status)

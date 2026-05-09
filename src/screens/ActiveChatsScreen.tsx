@@ -47,7 +47,7 @@ export default function ActiveChatsScreen() {
         .catch(() => {})
 
       if (!channelsRef.current[b.routeId]) {
-        const unsub = subscribeTripMessages(b.routeId, () => {
+        const unsub = subscribeTripMessages(b.routeId, user!.id, b.driverId, () => {
           getTripUnreadCountFrom(b.routeId, user!.id, b.driverId)
             .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
             .catch(() => {})

@@ -85,7 +85,7 @@ export default function VerifyEmailScreen() {
           .from('profiles')
           .select('*')
           .eq('id', data.user.id)
-          .single()
+          .maybeSingle()
 
         if (profile) {
           setUser({

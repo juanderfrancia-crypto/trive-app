@@ -62,7 +62,9 @@ export default function DriverPanelScreen() {
   const [updatingRouteId, setUpdatingRouteId] = useState<string | null>(null)
   const [approvalStatus, setApprovalStatus] = useState<DriverApprovalStatus | null>(null)
   const [checkingApproval, setCheckingApproval] = useState(true)
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollingIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFetchingRef = useRef(false)
+  const failureCountRef = useRef(0)
   const [selectedChat, setSelectedChat] = useState<{
     tripId: string
     otherUserId: string
@@ -85,6 +87,8 @@ export default function DriverPanelScreen() {
 
   const fetchDriverRoutes = useCallback(async () => {
     if (!user?.id) return
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
     try {
       const { data, error } = await supabase
         .from('routes')
@@ -151,28 +155,28 @@ export default function DriverPanelScreen() {
         })
       )
 
+      failureCountRef.current = 0
       setRoutes(routesWithPassengers)
       loadUnreadCounts(routesWithPassengers)
 
       // Suscribir canales de mensajes para cada ruta nueva
       for (const route of routesWithPassengers) {
         if (!msgChannelsRef.current.has(route.id)) {
-          const unsub = subscribeTripMessages(route.id, (msg) => {
-            if (msg.to_user_id === user?.id) {
-              const key = `${route.id}-${msg.from_user_id}`
-              setUnreadCounts((prev) => ({
-                ...prev,
-                [key]: (prev[key] ?? 0) + 1,
-              }))
-            }
+          const unsub = subscribeTripMessages(route.id, user!.id, null, (msg) => {
+            const key = `${route.id}-${msg.from_user_id}`
+            setUnreadCounts((prev) => ({
+              ...prev,
+              [key]: (prev[key] ?? 0) + 1,
+            }))
           })
           msgChannelsRef.current.set(route.id, unsub)
         }
       }
     } catch (err: any) {
-      console.error('Error fetching routes:', err)
-      Alert.alert('Error', 'No se pudieron cargar tus rutas')
+      failureCountRef.current += 1
+      if (__DEV__) console.error('Error fetching routes:', err)
     } finally {
+      isFetchingRef.current = false
       setLoading(false)
       setRefreshing(false)
     }
@@ -183,18 +187,24 @@ export default function DriverPanelScreen() {
   }, [fetchDriverRoutes])
 
 
-  // Polling para actualizar rutas cuando está enfocada
+  // Polling con backoff exponencial: 10s base, hasta 60s al fallar consecutivamente
   useFocusEffect(
     useCallback(() => {
+      failureCountRef.current = 0
       fetchDriverRoutes()
 
-      pollingIntervalRef.current = setInterval(() => {
-        fetchDriverRoutes()
-      }, 10000)
+      const scheduleNext = () => {
+        const backoffMs = Math.min(10000 * Math.pow(2, failureCountRef.current), 60000)
+        pollingIntervalRef.current = setTimeout(() => {
+          fetchDriverRoutes()
+          scheduleNext()
+        }, backoffMs)
+      }
+      scheduleNext()
 
       return () => {
         if (pollingIntervalRef.current) {
-          clearInterval(pollingIntervalRef.current)
+          clearTimeout(pollingIntervalRef.current)
           pollingIntervalRef.current = null
         }
         msgChannelsRef.current.forEach((unsub) => unsub())

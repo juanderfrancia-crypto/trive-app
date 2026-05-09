@@ -116,8 +116,6 @@ export default function DriverDocumentsScreen() {
         filter: `driver_id=eq.${authUser.id}`,
       },
       () => {
-        // When any document changes, reload all documents
-        console.log('Document change detected, reloading...')
         loadDocuments()
       }
     )
@@ -134,8 +132,6 @@ export default function DriverDocumentsScreen() {
         filter: `id=eq.${authUser.id}`,
       },
       (payload: any) => {
-        console.log('Profile update detected:', payload)
-        // If is_driver_verified just became true, show success message and refresh
         if (payload.new?.is_driver_verified === true && !payload.old?.is_driver_verified) {
           Alert.alert(
             '¡Felicidades! 🎉',

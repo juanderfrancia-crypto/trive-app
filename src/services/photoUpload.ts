@@ -123,8 +123,6 @@ export async function uploadProfilePhoto(userId: string, fileUri: string): Promi
     // Get a stable storage URL for the uploaded profile image
     const photoUrl = await getStorageUrl('profile-photos', filePath, { allowPublicUrl: true })
 
-    console.log('Profile photo URL:', photoUrl)
-
     // Update profile in database
     const { data, error: dbError } = await supabase
       .from('profiles')
@@ -235,8 +233,6 @@ export async function uploadVehiclePhoto(
     // Get a stable storage URL for the uploaded vehicle image
     const photoUrl = await getStorageUrl('vehicle-photos', uploadedFilePath, { allowPublicUrl: false })
 
-    console.log('Vehicle photo URL:', photoUrl)
-
     if (routeId) {
       try {
         const { error: dbError } = await supabase
@@ -262,7 +258,6 @@ export async function uploadVehiclePhoto(
       if (profileError) {
         console.warn('Error updating profile vehicle photo URL:', profileError)
       } else {
-        console.log('Profile vehicle_photo_url updated successfully')
       }
     } catch (profileErr) {
       console.warn('Error saving profile vehicle photo URL:', profileErr)

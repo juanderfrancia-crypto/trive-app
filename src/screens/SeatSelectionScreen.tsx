@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -8,8 +8,10 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { useRoutes } from '../hooks/useRoutes'
+import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import OfflineBanner from '../components/OfflineBanner'
+import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
 export default function SeatSelectionScreen() {
   const navigation = useNavigation()
@@ -19,9 +21,32 @@ export default function SeatSelectionScreen() {
   const [bookings, setBookings] = useState<any[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
+  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
+  const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
+  const { isOnline } = useNetworkStatus()
+  const isMountedRef = useRef(true)
+  const isFetchingRef = useRef(false)
+  const navTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false
+      navTimeoutsRef.current.forEach(clearTimeout)
+    }
+  }, [])
+
+  const safeNavigate = useCallback((fn: () => void, delay = 0) => {
+    if (delay === 0) {
+      if (isMountedRef.current) fn()
+      return
+    }
+    const id = setTimeout(() => { if (isMountedRef.current) fn() }, delay)
+    navTimeoutsRef.current.push(id)
+  }, [])
 
   const loadBookings = useCallback(async (skipValidation = false) => {
     if (!selectedRoute?.id) return
+    if (isFetchingRef.current) return
     if (!authUser) {
       if (!skipValidation) {
         errorHandler.handle(
@@ -31,11 +56,12 @@ export default function SeatSelectionScreen() {
           true,
           { context: 'seat_selection_not_authenticated' }
         )
-        setTimeout(() => navigation.navigate('Login' as never), 1500)
+        safeNavigate(() => navigation.navigate('Login' as never), 800)
       }
       return
     }
 
+    isFetchingRef.current = true
     try {
       setInitialLoading(true)
 
@@ -49,9 +75,27 @@ export default function SeatSelectionScreen() {
             true,
             { context: 'route_not_found', route_id: selectedRoute.id }
           )
-          setTimeout(() => navigation.goBack(), 1500)
+          safeNavigate(() => navigation.goBack(), 800)
         }
         return
+      }
+
+      // Busca foto del vehículo y avatar del conductor desde profiles
+      const photoFromRoute = currentRoute.vehicle_photo_url
+      const { data: driverProfile } = await supabase
+        .from('profiles')
+        .select('vehicle_photo_url, avatar_url')
+        .eq('id', currentRoute.driver_id)
+        .maybeSingle()
+
+      if (photoFromRoute) {
+        setVehiclePhotoUrl(photoFromRoute)
+      } else if (driverProfile?.vehicle_photo_url) {
+        setVehiclePhotoUrl(driverProfile.vehicle_photo_url)
+      }
+
+      if (driverProfile?.avatar_url) {
+        setDriverPhotoUrl(driverProfile.avatar_url)
       }
 
       if (currentRoute.status !== 'scheduled') {
@@ -63,7 +107,7 @@ export default function SeatSelectionScreen() {
             true,
             { context: 'route_not_scheduled', route_id: selectedRoute.id, status: currentRoute.status }
           )
-          setTimeout(() => navigation.goBack(), 1500)
+          safeNavigate(() => navigation.goBack(), 800)
         }
         return
       }
@@ -74,7 +118,6 @@ export default function SeatSelectionScreen() {
         seat_number: Number(booking.seat_number),
       }))
       setBookings(normalizedBookings)
-      console.log('SeatSelection loaded bookings:', selectedRoute.id, normalizedBookings.map((b) => b.seat_number))
     } catch (error: any) {
       console.error('Error loading bookings:', error)
       if (error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
@@ -98,8 +141,9 @@ export default function SeatSelectionScreen() {
       }
     } finally {
       setInitialLoading(false)
+      isFetchingRef.current = false
     }
-  }, [getRouteBookings, getRouteById, selectedRoute?.id, authUser, navigation])
+  }, [getRouteBookings, getRouteById, selectedRoute?.id, authUser, navigation, safeNavigate])
 
   useEffect(() => {
     if (!selectedRoute) {
@@ -110,7 +154,7 @@ export default function SeatSelectionScreen() {
         true,
         { context: 'no_route_selected' }
       )
-      setTimeout(() => navigation.goBack(), 1500)
+      safeNavigate(() => navigation.goBack(), 800)
       return
     }
 
@@ -122,13 +166,13 @@ export default function SeatSelectionScreen() {
         true,
         { context: 'seat_selection_auth' }
       )
-      setTimeout(() => navigation.navigate('Login' as never), 1500)
+      safeNavigate(() => navigation.navigate('Login' as never), 800)
       return
     }
 
     setSelectedSeats([])
     loadBookings()
-  }, [selectedRoute?.id, loadBookings, authUser, navigation])
+  }, [selectedRoute?.id, loadBookings, authUser, navigation, safeNavigate])
 
   useFocusEffect(
     useCallback(() => {
@@ -188,6 +232,17 @@ export default function SeatSelectionScreen() {
   }
 
   const handleContinue = async () => {
+    if (!isOnline) {
+      errorHandler.handle(
+        'Sin conexión a internet. Verifica tu red antes de reservar.',
+        ErrorType.NETWORK,
+        ErrorSeverity.HIGH,
+        true,
+        { context: 'seat_reserve_offline' }
+      )
+      return
+    }
+
     if (selectedSeats.length === 0) {
       errorHandler.handle(
         'Selecciona al menos un asiento para continuar',
@@ -221,7 +276,7 @@ export default function SeatSelectionScreen() {
           true,
           { context: 'route_unavailable_continue', route_id: selectedRoute.id }
         )
-        setTimeout(() => navigation.goBack(), 1500)
+        safeNavigate(() => navigation.goBack(), 800)
         return
       }
 
@@ -233,14 +288,13 @@ export default function SeatSelectionScreen() {
           true,
           { context: 'route_not_scheduled_continue', route_id: selectedRoute.id }
         )
-        setTimeout(() => navigation.goBack(), 1500)
+        safeNavigate(() => navigation.goBack(), 800)
         return
       }
 
       const latestBookings = await getRouteBookings(selectedRoute.id, true)
       const latestOccupiedSeats = new Set(latestBookings.map((b: any) => Number(b.seat_number)))
       const invalidSeat = selectedSeats.find((seat) => latestOccupiedSeats.has(seat))
-      console.log('Attempting to reserve seats', selectedSeats, 'occupied:', Array.from(latestOccupiedSeats))
 
       if (invalidSeat) {
         errorHandler.handle(
@@ -299,9 +353,9 @@ export default function SeatSelectionScreen() {
           { context: 'seat_already_reserved' }
         )
         await loadBookings()
-      } else if (error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
+      } else if (error.code === 'TIMEOUT' || error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
         errorHandler.handle(
-          'Sin conexión a internet',
+          'Sin conexión o respuesta lenta. Verifica tu red e intenta de nuevo.',
           ErrorType.NETWORK,
           ErrorSeverity.HIGH,
           true,
@@ -455,11 +509,11 @@ export default function SeatSelectionScreen() {
                 {/* Legend */}
                 <View style={styles.legend}>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                    <View style={[styles.legendDot, { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#D1D5DB' }]} />
                     <Text style={styles.legendText}>Disponible</Text>
                   </View>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.success }]} />
+                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
                     <Text style={styles.legendText}>Seleccionado</Text>
                   </View>
                   <View style={styles.legendItem}>
@@ -547,9 +601,17 @@ export default function SeatSelectionScreen() {
             {/* Driver Card */}
             <View style={styles.driverCardGradient}>
               <View style={styles.driverHeader}>
-                <View style={styles.driverAvatar}>
-                  <Text style={styles.driverInitial}>{driverInitial}</Text>
-                </View>
+                {/* Avatar */}
+                {driverPhotoUrl ? (
+                  <Image
+                    source={{ uri: driverPhotoUrl }}
+                    style={styles.driverAvatarPhoto}
+                  />
+                ) : (
+                  <View style={styles.driverAvatar}>
+                    <Text style={styles.driverInitial}>{driverInitial}</Text>
+                  </View>
+                )}
                 <View style={styles.driverInfo}>
                   <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
                   <View style={styles.ratingRow}>
@@ -557,6 +619,24 @@ export default function SeatSelectionScreen() {
                     <Text style={styles.ratingText}>{selectedRoute.driver_rating || '0'}</Text>
                     <Text style={styles.ratingLabel}> ({selectedRoute.driver_trips || 0} viajes)</Text>
                   </View>
+                  <Text style={styles.vehicleLabel}>
+                    {[selectedRoute.vehicle_make, selectedRoute.vehicle_color].filter(Boolean).join(' · ')}
+                  </Text>
+                </View>
+
+                {/* Foto del vehículo */}
+                <View style={styles.vehiclePhotoWrap}>
+                  {vehiclePhotoUrl ? (
+                    <Image
+                      source={{ uri: vehiclePhotoUrl }}
+                      style={styles.vehiclePhoto}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <View style={styles.vehiclePhotoPlaceholder}>
+                      <Ionicons name="car-outline" size={26} color={COLORS.textTertiary} />
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
@@ -772,9 +852,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: RADIUS.md,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.sm,
@@ -794,11 +874,11 @@ const styles = StyleSheet.create({
   },
   seatText: {
     ...TYPOGRAPHY.labelMedium,
-    color: COLORS.primary,
+    color: COLORS.textSecondary,
     fontWeight: '700',
   },
   seatTextOccupied: {
-    color: COLORS.textSecondary,
+    color: COLORS.textTertiary,
   },
   seatTextSelected: {
     color: COLORS.textInverse,
@@ -992,6 +1072,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  driverAvatarPhoto: {
+    width: 48,
+    height: 48,
+    borderRadius: RADIUS.full,
+  },
   driverInitial: {
     ...TYPOGRAPHY.h4,
     color: COLORS.textInverse,
@@ -1019,6 +1104,33 @@ const styles = StyleSheet.create({
   ratingLabel: {
     ...TYPOGRAPHY.label,
     color: COLORS.textSecondary,
+  },
+  vehicleLabel: {
+    fontSize: 12,
+    color: COLORS.textTertiary,
+    marginTop: 4,
+  },
+  vehiclePhotoWrap: {
+    width: 92,
+    height: 68,
+    borderRadius: 10,
+    overflow: 'hidden',
+    flexShrink: 0,
+    marginLeft: 8,
+  },
+  vehiclePhoto: {
+    width: '100%',
+    height: '100%',
+  },
+  vehiclePhotoPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
 
   // Summary

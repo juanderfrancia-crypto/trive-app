@@ -180,10 +180,8 @@ export default function ActiveTripsScreen() {
         for (const trip of formattedTrips) {
           counts[trip.id] = await getTripUnreadCount(trip.id, user.id)
           if (!msgChannelsRef.current.has(trip.id)) {
-            const unsub = subscribeTripMessages(trip.id, (msg) => {
-              if (msg.to_user_id === user.id) {
-                setUnreadCounts((prev) => ({ ...prev, [trip.id]: (prev[trip.id] ?? 0) + 1 }))
-              }
+            const unsub = subscribeTripMessages(trip.id, user.id, null, () => {
+              setUnreadCounts((prev) => ({ ...prev, [trip.id]: (prev[trip.id] ?? 0) + 1 }))
             })
             msgChannelsRef.current.set(trip.id, unsub)
           }
@@ -343,8 +341,7 @@ export default function ActiveTripsScreen() {
           <TouchableOpacity
             style={styles.callButton}
             onPress={() => {
-              // Implementar llamada/WhatsApp
-              console.log('Calling driver:', trip.driverPhone)
+              // TODO: Implementar llamada/WhatsApp
             }}
           >
             <Ionicons name="call" size={16} color={COLORS.primary} />

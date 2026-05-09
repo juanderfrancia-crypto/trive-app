@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   TextInput,
+  Image,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -34,6 +35,25 @@ export default function BookingScreen() {
   const [toastVisible, setToastVisible] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success')
+  const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
+  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!selectedRoute?.driver_id) return
+    let isMounted = true
+    supabase
+      .from('profiles')
+      .select('avatar_url, vehicle_photo_url')
+      .eq('id', selectedRoute.driver_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!isMounted) return
+        if (data?.avatar_url) setDriverPhotoUrl(data.avatar_url)
+        const vPhoto = (selectedRoute as any).vehicle_photo_url || data?.vehicle_photo_url
+        if (vPhoto) setVehiclePhotoUrl(vPhoto)
+      })
+    return () => { isMounted = false }
+  }, [selectedRoute?.driver_id])
 
   useEffect(() => {
     return () => {
@@ -41,9 +61,10 @@ export default function BookingScreen() {
         releasePendingBookings(pendingBookingIds, selectedRoute.id).catch((error) => {
           console.warn('Error releasing pending bookings on unmount:', error)
         })
+        setBookingData(null)
       }
     }
-  }, [bookingFinalized, pendingBookingIds, releasePendingBookings, selectedRoute])
+  }, [bookingFinalized, pendingBookingIds, releasePendingBookings, selectedRoute, setBookingData])
 
   if (!selectedRoute || !user || !authUser || !bookingData || !bookingData.seat_numbers?.length) {
     return (
@@ -77,10 +98,6 @@ export default function BookingScreen() {
     hour: '2-digit',
     minute: '2-digit',
   })
-
-  // Calcular precios
-  const serviceFee = Math.round(total_price * 0.15) // 15% de fee
-  const finalTotal = total_price + serviceFee
 
   // Determinar punto de desembarque
   const getDropoffPoint = () => {
@@ -123,7 +140,7 @@ export default function BookingScreen() {
 
       if (pendingBookingIds.length > 0) {
         // 📍 Primero actualizar dropoff_point en los bookings pending
-        console.log(`📍 Actualizando dropoff_point en ${pendingBookingIds.length} bookings antes de finalizar...`)
+        if (__DEV__) console.log(`📍 Actualizando dropoff_point en ${pendingBookingIds.length} bookings antes de finalizar...`)
         const { error: updateError } = await supabase
           .from('bookings')
           .update({
@@ -137,7 +154,7 @@ export default function BookingScreen() {
           console.error('❌ Error actualizando dropoff_point:', updateError)
           throw updateError
         }
-        console.log('✅ Dropoff point actualizado en bookings')
+        if (__DEV__) console.log('✅ Dropoff point actualizado en bookings')
 
         // Ahora finalizar con la RPC (preservará los dropoff_point que acabamos de establecer)
         results = await finalizePendingBookings(pendingBookingIds, 'cash')
@@ -165,6 +182,7 @@ export default function BookingScreen() {
       if (allSuccessful) {
         setBookingFinalized(true)
         setPendingBookingIds([])
+        setBookingData(null)
 
         try {
           await insertNotificationForUser(authUser.id, {
@@ -356,19 +374,46 @@ export default function BookingScreen() {
           end={{ x: 1, y: 1 }}
           style={styles.vehicleCardGradient}
         >
-          <View style={styles.vehicleRow}>
-            <Ionicons name="car" size={20} color={COLORS.primary} />
-            <View style={styles.vehicleInfo}>
-              <Text style={styles.vehicleName}>{selectedRoute.vehicle_make} {selectedRoute.vehicle_color}</Text>
-              <Text style={styles.vehiclePlate}>{selectedRoute.vehicle_plate}</Text>
+          <View style={styles.vehicleCardContent}>
+            {/* Izquierda: info */}
+            <View style={styles.vehicleCardLeft}>
+              <View style={styles.vehicleRow}>
+                <Ionicons name="car" size={20} color={COLORS.primary} />
+                <View style={styles.vehicleInfo}>
+                  <Text style={styles.vehicleName}>{selectedRoute.vehicle_make} {selectedRoute.vehicle_color}</Text>
+                  <Text style={styles.vehiclePlate}>{selectedRoute.vehicle_plate}</Text>
+                </View>
+              </View>
+              {selectedRoute.driver_name && (
+                <View style={styles.driverRow}>
+                  <Ionicons name="person" size={20} color={COLORS.textSecondary} />
+                  <Text style={styles.driverName}>Conductor: {selectedRoute.driver_name}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Derecha: foto conductor (arriba) + foto vehículo (abajo) */}
+            <View style={styles.vehiclePhotosColumn}>
+              <View style={styles.vehiclePhotoHalf}>
+                {driverPhotoUrl ? (
+                  <Image source={{ uri: driverPhotoUrl }} style={styles.vehiclePhotoImg} resizeMode="cover" />
+                ) : (
+                  <View style={styles.vehiclePhotoPlaceholder}>
+                    <Ionicons name="person" size={18} color={COLORS.textTertiary} />
+                  </View>
+                )}
+              </View>
+              <View style={[styles.vehiclePhotoHalf, { borderTopWidth: 1, borderTopColor: '#F3F4F6' }]}>
+                {vehiclePhotoUrl ? (
+                  <Image source={{ uri: vehiclePhotoUrl }} style={styles.vehiclePhotoImg} resizeMode="cover" />
+                ) : (
+                  <View style={styles.vehiclePhotoPlaceholder}>
+                    <Ionicons name="car-outline" size={18} color={COLORS.textTertiary} />
+                  </View>
+                )}
+              </View>
             </View>
           </View>
-          {selectedRoute.driver_name && (
-            <View style={styles.driverRow}>
-              <Ionicons name="person" size={20} color={COLORS.textSecondary} />
-              <Text style={styles.driverName}>Conductor: {selectedRoute.driver_name}</Text>
-            </View>
-          )}
         </LinearGradient>
 
         {/* Dropoff Point Card */}
@@ -470,21 +515,17 @@ export default function BookingScreen() {
         >
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>
-              Viaje ({seatsCount} × ${selectedRoute.price_per_seat.toLocaleString('es-CO')})
+              {seatsCount} {seatsCount === 1 ? 'asiento' : 'asientos'} × ${selectedRoute.price_per_seat.toLocaleString('es-CO')}
             </Text>
             <Text style={styles.priceValue}>
               ${total_price.toLocaleString('es-CO')}
             </Text>
           </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceLabel}>Fee de servicio (15%)</Text>
-            <Text style={styles.priceValue}>${serviceFee.toLocaleString('es-CO')}</Text>
-          </View>
           <View style={styles.divider} />
           <View style={styles.priceRow}>
             <Text style={styles.priceTotalLabel}>Total a pagar</Text>
             <Text style={styles.priceTotalValue}>
-              ${finalTotal.toLocaleString('es-CO')}
+              ${total_price.toLocaleString('es-CO')}
             </Text>
           </View>
         </LinearGradient>
@@ -810,6 +851,36 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 8,
+  },
+  vehicleCardContent: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: SPACING.md,
+  },
+  vehicleCardLeft: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  vehiclePhotosColumn: {
+    width: 84,
+    height: 120,
+    borderRadius: 10,
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  vehiclePhotoHalf: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  vehiclePhotoImg: {
+    width: '100%',
+    height: '100%',
+  },
+  vehiclePhotoPlaceholder: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   vehicleRow: {
     flexDirection: 'row',

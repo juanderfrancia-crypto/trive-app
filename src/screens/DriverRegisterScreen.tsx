@@ -101,7 +101,7 @@ export default function DriverRegisterScreen() {
         setVehicleData(data)
       }
     } catch (err) {
-      console.log('No hay rutas previas', err)
+      if (__DEV__) console.error('No hay rutas previas', err)
     } finally {
       setVehicleLoading(false)
     }
@@ -171,13 +171,15 @@ export default function DriverRegisterScreen() {
       const departure_time_str = toLocalISOString(departureDateTime)
       const arrival_time_str = toLocalISOString(arrivalDateTime)
 
-      console.log('📅 TRANSACCIONES DE TIEMPO (MODELO INFORMAL):')
-      console.log(`  Ahora (local): ${toLocalISOString(now)}`)
-      console.log(`  Ahora (UTC): ${now.toISOString()}`)
-      console.log(`  Espera de: ${departureDelayMinutes} minutos`)
-      console.log(`  Salida (local): ${departure_time_str}`)
-      console.log(`  Duración viaje: ${travelMinutes} minutos`)
-      console.log(`  Llegada (local): ${arrival_time_str}`)
+      if (__DEV__) {
+        console.log('📅 TRANSACCIONES DE TIEMPO (MODELO INFORMAL):')
+        console.log(`  Ahora (local): ${toLocalISOString(now)}`)
+        console.log(`  Ahora (UTC): ${now.toISOString()}`)
+        console.log(`  Espera de: ${departureDelayMinutes} minutos`)
+        console.log(`  Salida (local): ${departure_time_str}`)
+        console.log(`  Duración viaje: ${travelMinutes} minutos`)
+        console.log(`  Llegada (local): ${arrival_time_str}`)
+      }
 
       // ⚠️ Validación informal: permitir rutas desde hace 15 minutos
       const fifteenMinutesAgo = new Date(now.getTime() - 15 * 60000)
@@ -211,8 +213,10 @@ export default function DriverRegisterScreen() {
         description: routeVia.trim() || null,
       }
 
-      console.log('🚗 DATOS DE RUTA A CREAR:')
-      console.log(JSON.stringify(routeData, null, 2))
+      if (__DEV__) {
+        console.log('🚗 DATOS DE RUTA A CREAR:')
+        console.log(JSON.stringify(routeData, null, 2))
+      }
 
       const newRoute = await createRoute(routeData as any)
 

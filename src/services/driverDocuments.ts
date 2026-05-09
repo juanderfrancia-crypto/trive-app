@@ -399,7 +399,6 @@ export async function approveDocument(
       reason: null,
     })
 
-    console.log(`Document ${documentId} approved by admin ${user.id}`)
     return true
   } catch (error) {
     console.error('Error approving document:', error)
@@ -446,7 +445,6 @@ export async function rejectDocument(
       reason: rejectionReason,
     })
 
-    console.log(`Document ${documentId} rejected by admin ${user.id}: ${rejectionReason}`)
     return true
   } catch (error) {
     console.error('Error rejecting document:', error)

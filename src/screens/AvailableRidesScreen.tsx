@@ -27,7 +27,6 @@ export default function AvailableRidesScreen() {
   // 🔄 Refetch whenever the screen is focused (e.g., returning from SeatSelection)
   useFocusEffect(
     useCallback(() => {
-      console.log('📍 AvailableRidesScreen focused - refetching rides...')
       refetch()
     }, [refetch])
   )

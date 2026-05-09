@@ -4,6 +4,15 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
 
+// Silencia todos los logs en producción para evitar exponer datos de usuarios
+if (!__DEV__) {
+  console.log   = () => {}
+  console.warn  = () => {}
+  console.error = () => {}
+  console.info  = () => {}
+  console.debug = () => {}
+}
+
 configureNotificationHandler();
 
 export default function App() {

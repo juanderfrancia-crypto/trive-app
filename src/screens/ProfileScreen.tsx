@@ -116,7 +116,7 @@ export default function ProfileScreen() {
         .catch(() => {})
 
       if (!chatChannelsRef.current[b.routeId]) {
-        const unsub = subscribeTripMessages(b.routeId, () => {
+        const unsub = subscribeTripMessages(b.routeId, user!.id, b.driverId, () => {
           getTripUnreadCountFrom(b.routeId, user!.id, b.driverId)
             .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
             .catch(() => {})
@@ -247,16 +247,16 @@ export default function ProfileScreen() {
   // ── Avatar ─────────────────────────────────────────────────────────────────
   const AvatarCircle = ({ size = 80, showBadge = true }: { size?: number; showBadge?: boolean }) => (
     <TouchableOpacity
-      style={[s.avatarWrap, { width: size, height: size, borderRadius: size / 2 }]}
+      style={[s.avatarWrap, { width: size, height: size, borderRadius: RADIUS.lg }]}
       onPress={handleProfilePhotoUpload}
       disabled={uploadingPhoto}
       activeOpacity={0.85}
     >
       {uploadingPhoto
-        ? <View style={[s.avatarBg, { borderRadius: size / 2 }]}><ActivityIndicator color="#fff" /></View>
+        ? <View style={[s.avatarBg, { borderRadius: RADIUS.lg }]}><ActivityIndicator color="#fff" /></View>
         : avatarUri
-          ? <Image source={{ uri: avatarUri }} style={{ width: size, height: size, borderRadius: size / 2 }} />
-          : <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} style={[s.avatarBg, { borderRadius: size / 2 }]}>
+          ? <Image source={{ uri: avatarUri }} style={{ width: size, height: size, borderRadius: RADIUS.lg }} />
+          : <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} style={[s.avatarBg, { borderRadius: RADIUS.lg }]}>
               <Text style={[s.avatarInitial, { fontSize: size * 0.35 }]}>{initials}</Text>
             </LinearGradient>
       }
@@ -401,17 +401,17 @@ export default function ProfileScreen() {
       : '—'
     const totalTrips = earnings?.completedTrips ?? profile?.total_trips ?? 0
     const monthEarnings = earnings?.thisMonthEarnings ?? 0
-    const bars = earnings?.weeklyBars ?? [0.45, 0.7, 0.55, 0.88, 0.65, 0.92, 0.5]
-    const peakBar = earnings?.peakBarIndex ?? 5
+    const bars = earnings?.weeklyBars ?? [0, 0, 0, 0, 0, 0, 0]
+    const peakBar = earnings?.peakBarIndex ?? -1
 
     return (
       <>
         {/* Hero card */}
-        <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={dv.hero}>
+        <View style={dv.hero}>
           <View style={dv.heroAvatar}>
             <AvatarCircle size={90} showBadge={false} />
             <View style={dv.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={22} color={COLORS.accentLight} />
+              <Ionicons name="checkmark-circle" size={22} color="#FBBF24" />
             </View>
           </View>
           <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
@@ -425,16 +425,16 @@ export default function ProfileScreen() {
             </View>
             <View style={dv.heroStatSep} />
             <View style={dv.heroStat}>
-              <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="time-outline" size={14} color={COLORS.textSecondary} />
               <Text style={dv.heroStatVal}>{yearsOnApp} {yearsOnApp === 1 ? 'año' : 'años'} en Trive</Text>
             </View>
             <View style={dv.heroStatSep} />
             <View style={dv.heroStat}>
-              <Ionicons name="car-outline" size={14} color="rgba(255,255,255,0.7)" />
+              <Ionicons name="car-outline" size={14} color={COLORS.textSecondary} />
               <Text style={dv.heroStatVal}>{totalTrips} viajes</Text>
             </View>
           </View>
-        </LinearGradient>
+        </View>
 
         {/* Ganancias del mes */}
         <View style={s.section}>
@@ -447,7 +447,17 @@ export default function ProfileScreen() {
             <View style={dv.barsRow}>
               {bars.map((h, i) => (
                 <View key={i} style={dv.barWrap}>
-                  <View style={[dv.bar, { height: 40 * h, backgroundColor: i === peakBar ? COLORS.primaryDark : `${COLORS.primaryDark}55` }]} />
+                  <View style={[
+                    dv.bar,
+                    {
+                      height: Math.max(3, 40 * h),
+                      backgroundColor: h === 0
+                        ? `${COLORS.primaryDark}20`
+                        : i === peakBar
+                          ? COLORS.primaryDark
+                          : `${COLORS.primaryDark}55`,
+                    },
+                  ]} />
                 </View>
               ))}
             </View>
@@ -805,7 +815,7 @@ const pv = StyleSheet.create({
   profileRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.lg,
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.lg,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
   },
   profileInfo: { flex: 1 },
   name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4, marginBottom: 6 },
@@ -887,20 +897,21 @@ const pv = StyleSheet.create({
 
 // ── Driver view styles ────────────────────────────────────────────────────────
 const dv = StyleSheet.create({
-  hero: { padding: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl, alignItems: 'center' },
+  hero: { padding: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl, alignItems: 'center', backgroundColor: COLORS.background },
   heroAvatar: { position: 'relative', marginBottom: SPACING.md },
   verifiedBadge: { position: 'absolute', bottom: -4, right: -4 },
-  heroName: { fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.4, marginBottom: SPACING.sm },
+  heroName: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4, marginBottom: SPACING.sm },
   conductorBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: `${COLORS.primary}12`,
     paddingHorizontal: SPACING.md, paddingVertical: 5,
     borderRadius: RADIUS.full, marginBottom: SPACING.lg,
+    borderWidth: 1, borderColor: `${COLORS.primary}25`,
   },
-  conductorBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff', letterSpacing: 0.8 },
+  conductorBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.8 },
   heroStats: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   heroStat:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  heroStatVal: { fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
-  heroStatSep: { width: 1, height: 14, backgroundColor: 'rgba(255,255,255,0.25)' },
+  heroStatVal: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  heroStatSep: { width: 1, height: 14, backgroundColor: COLORS.borderLight },
 
   earningsCard: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.xl,
