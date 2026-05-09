@@ -228,8 +228,8 @@ export default function HomeScreen() {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
 
         {/* ══ GRADIENT HERO SECTION ═════════════════════════════════════════ */}
@@ -238,7 +238,7 @@ export default function HomeScreen() {
           colors={['#082D66', '#0D3A88', '#154AA8', '#1E5FBF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.heroBg, { paddingTop: insets.top }]}
+          style={styles.heroBg}
         >
           <View style={styles.decorCircle1} pointerEvents="none" />
           <View style={styles.decorCircle2} pointerEvents="none" />
@@ -556,7 +556,7 @@ export default function HomeScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#082D66' },
+  safe: { flex: 1, backgroundColor: '#FFFFFF' },
   scroll: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { paddingBottom: 32 },
 
