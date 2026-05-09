@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -12,198 +12,176 @@ import {
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { LinearGradient } from 'expo-linear-gradient'
+import { COLORS } from '../theme/theme'
 
 const { width, height } = Dimensions.get('window')
+const HERO_H = Math.round(height * 0.52)
 
-type OnboardingSlide = {
+type Slide = {
   id: string
+  eyebrow: string
   title: string
   description: string
   icon: keyof typeof Ionicons.glyphMap
+  colors: readonly [string, string, string]
   accent: string
-  badge?: {
-    icon: keyof typeof Ionicons.glyphMap
-    label: string
-    tone: 'blue' | 'gold'
-  }
+  stat: { value: string; label: string }
 }
 
-interface OnboardingScreenProps {
+const SLIDES: Slide[] = [
+  {
+    id: '1',
+    eyebrow: 'MOVILIDAD INTERMUNICIPAL',
+    title: 'Tu viaje,\na tu manera',
+    description:
+      'Conecta con conductores verificados y reserva tu cupo en segundos. Sin filas, sin intermediarios.',
+    icon: 'car-sport-outline',
+    colors: ['#050D1F', '#0A2860', '#154AA8'] as const,
+    accent: '#6DB8FF',
+    stat: { value: '+2.000', label: 'viajes realizados' },
+  },
+  {
+    id: '2',
+    eyebrow: 'SEGURIDAD GARANTIZADA',
+    title: 'Conductores\ncertificados',
+    description:
+      'Verificación de identidad, antecedentes y vehículo en cada conductor que se une a Trive.',
+    icon: 'shield-checkmark-outline',
+    colors: ['#041420', '#083040', '#0D5060'] as const,
+    accent: '#4FC3A1',
+    stat: { value: '100%', label: 'verificados' },
+  },
+  {
+    id: '3',
+    eyebrow: 'RESERVA DIGITAL',
+    title: 'Listo en\nmenos de un minuto',
+    description:
+      'Elige tu asiento, paga de forma segura y recibe tu confirmación al instante.',
+    icon: 'phone-portrait-outline',
+    colors: ['#08081E', '#101850', '#1A2888'] as const,
+    accent: '#FFB547',
+    stat: { value: '< 60s', label: 'para reservar' },
+  },
+]
+
+interface Props {
   onComplete: () => void
 }
 
-export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
+export default function OnboardingScreen({ onComplete }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
-  const listRef = useRef<FlatList<OnboardingSlide>>(null)
-
-  const slides = useMemo<OnboardingSlide[]>(
-    () => [
-      {
-        id: '1',
-        title: 'Viaja con\npropósito',
-        description: 'Conecta con conductores\nverificados y ahorra tiempo en\ntus trayectos intermunicipales.',
-        icon: 'car-sport-outline',
-        accent: COLORS.primary,
-        badge: { icon: 'shield-checkmark-outline', label: 'VERIFICADO', tone: 'blue' },
-      },
-      {
-        id: '2',
-        title: 'Seguridad en cada\nkilómetro',
-        description:
-          'Todos nuestros conductores pasan por un\nriguroso proceso de verificación para tu\ntranquilidad.',
-        icon: 'shield-checkmark-outline',
-        accent: COLORS.accent,
-      },
-      {
-        id: '3',
-        title: 'Dile adiós a las\nfilas',
-        description:
-          'Reserva tu cupo digitalmente y llega\ndirecto a tu punto de recogida sin\nesperas innecesarias.',
-        icon: 'ticket-outline',
-        accent: COLORS.primaryDark,
-        badge: { icon: 'ticket-outline', label: 'Cupo Reservado', tone: 'gold' },
-      },
-    ],
-    []
-  )
+  const listRef = useRef<FlatList<Slide>>(null)
+  const slide = SLIDES[currentIndex]
+  const isLast = currentIndex === SLIDES.length - 1
 
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const next = Math.round(e.nativeEvent.contentOffset.x / width)
-    setCurrentIndex(Math.max(0, Math.min(slides.length - 1, next)))
+    setCurrentIndex(Math.max(0, Math.min(SLIDES.length - 1, next)))
   }
 
   const handleNext = () => {
-    if (currentIndex < slides.length - 1) {
+    if (!isLast) {
       listRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
     } else {
       onComplete()
     }
   }
 
-  const handleSkip = () => {
-    onComplete()
-  }
-
-  const renderPagination = () => (
-    <View style={styles.pagination}>
-      {slides.map((_, idx) => {
-        const isActive = idx === currentIndex
-        return (
-          <View
-            key={idx}
-            style={[
-              styles.dot,
-              isActive ? styles.dotActive : styles.dotInactive,
-            ]}
-          />
-        )
-      })}
-    </View>
-  )
-
-  const isLastSlide = currentIndex === slides.length - 1
-
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
+      <StatusBar barStyle="light-content" backgroundColor="#050D1F" />
 
-      <View style={styles.header}>
-        <Text style={styles.brand}>Trive</Text>
+      {/* ── Hero oscuro ─────────────────────────────────────── */}
+      <View style={styles.heroArea}>
+        {/* Header fijo sobre el área oscura */}
+        <View style={styles.header}>
+          <Text style={styles.brand}>TRIVE</Text>
+          {!isLast && (
+            <TouchableOpacity onPress={onComplete} style={styles.skipBtn} activeOpacity={0.7}>
+              <Text style={styles.skipText}>Saltar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
 
-        <TouchableOpacity
-          onPress={handleSkip}
-          style={styles.skipBtn}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.skipText}>{isLastSlide ? '' : 'Saltar'}</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Slides visuales */}
+        <FlatList
+          ref={listRef}
+          data={SLIDES}
+          keyExtractor={(s) => s.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onMomentumEnd}
+          style={{ flex: 1 }}
+          renderItem={({ item }) => (
+            <LinearGradient
+              colors={item.colors}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.slideVisual}
+            >
+              {/* Glows decorativos */}
+              <View style={[styles.glow1, { backgroundColor: item.accent + '22' }]} />
+              <View style={[styles.glow2, { backgroundColor: item.accent + '10' }]} />
 
-      <FlatList
-        ref={listRef}
-        data={slides}
-        keyExtractor={(item) => item.id}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={onMomentumEnd}
-        renderItem={({ item }) => (
-          <View style={styles.slide}>
-            <View style={styles.heroCard} accessibilityRole="image">
-              <View style={[styles.heroGlow, { backgroundColor: item.accent + '18' }]} />
-              <View style={[styles.heroGlow2, { backgroundColor: item.accent + '10' }]} />
-
-              <View style={styles.heroIconWrap}>
-                <View style={[styles.heroIconBg, { backgroundColor: item.accent + '16' }]}>
-                  <Ionicons name={item.icon} size={56} color={item.accent} />
-                </View>
-                <View style={[styles.heroChip, { borderColor: item.accent + '35' }]}>
-                  <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-                  <Text style={styles.heroChipText}>Conductores verificados</Text>
+              {/* Icono con anillos de profundidad */}
+              <View style={styles.iconStack}>
+                <View style={[styles.iconRingOuter, { borderColor: item.accent + '18' }]} />
+                <View style={[styles.iconRingInner, { borderColor: item.accent + '30' }]} />
+                <View style={[styles.iconCore, { backgroundColor: item.accent + '25' }]}>
+                  <Ionicons name={item.icon} size={68} color="#FFFFFF" />
                 </View>
               </View>
 
-              {!!item.badge && (
-                <View
-                  style={[
-                    styles.badge,
-                    item.badge.tone === 'blue' ? styles.badgeBlue : styles.badgeGold,
-                  ]}
-                >
-                  <Ionicons
-                    name={item.badge.icon}
-                    size={16}
-                    color={item.badge.tone === 'blue' ? COLORS.primary : '#5A4A00'}
-                  />
-                  <Text
-                    style={[
-                      styles.badgeText,
-                      item.badge.tone === 'blue' ? styles.badgeTextBlue : styles.badgeTextGold,
-                    ]}
-                  >
-                    {item.badge.label}
-                  </Text>
-                </View>
-              )}
-            </View>
+              {/* Estadística / trust indicator */}
+              <View style={styles.statPill}>
+                <Text style={[styles.statValue, { color: item.accent }]}>
+                  {item.stat.value}
+                </Text>
+                <Text style={styles.statSep}>·</Text>
+                <Text style={styles.statLabel}>{item.stat.label}</Text>
+              </View>
+            </LinearGradient>
+          )}
+        />
+      </View>
 
-            <View style={styles.textBlock}>
-              <Text style={styles.title}>{item.title}</Text>
-              <Text style={styles.description}>{item.description}</Text>
-            </View>
-          </View>
-        )}
-      />
+      {/* ── Tarjeta de texto blanca ─────────────────────────── */}
+      <View style={styles.textCard}>
+        {/* Eyebrow */}
+        <Text style={styles.eyebrow}>{slide.eyebrow}</Text>
 
-      {/* Footer con paginación y botón */}
-      <View style={styles.footer}>
-        <View style={styles.paginationRow}>
-          {renderPagination()}
-          <Text style={styles.paginationText}>
-            {String(currentIndex + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}
-          </Text>
+        {/* Título */}
+        <Text style={styles.title}>{slide.title}</Text>
+
+        {/* Descripción */}
+        <Text style={styles.description}>{slide.description}</Text>
+
+        {/* Barra de progreso segmentada */}
+        <View style={styles.progressRow}>
+          {SLIDES.map((_, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.progressSeg,
+                { backgroundColor: idx <= currentIndex ? COLORS.primary : '#E5E7EB' },
+              ]}
+            />
+          ))}
         </View>
 
-        {/* Botón siguiente / comenzar */}
-        <TouchableOpacity
-          style={[
-            styles.nextBtn,
-            isLastSlide && styles.getStartedBtn,
-          ]}
-          onPress={handleNext}
-          activeOpacity={0.9}
-        >
-          <Text style={styles.nextBtnText}>{isLastSlide ? 'Comenzar' : 'Siguiente'}</Text>
-          <Ionicons
-            name="arrow-forward"
-            size={20}
-            color="#fff"
-          />
+        {/* CTA */}
+        <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.88}>
+          <Text style={styles.btnText}>
+            {isLast ? 'Comenzar ahora' : 'Continuar'}
+          </Text>
+          <Ionicons name={isLast ? 'checkmark' : 'arrow-forward'} size={18} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={styles.stepText}>
-          {isLastSlide ? `PASO ${slides.length} DE ${slides.length}` : '...'}
+        {/* Contador de pasos */}
+        <Text style={styles.stepLabel}>
+          {String(currentIndex + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
         </Text>
       </View>
     </SafeAreaView>
@@ -211,200 +189,203 @@ export default function OnboardingScreen({ onComplete }: OnboardingScreenProps) 
 }
 
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#050D1F',
+  },
+
+  // ── Hero área oscura ────────────────────────────────────────
+  heroArea: {
+    height: HERO_H,
+    overflow: 'hidden',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 12,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 10,
   },
   brand: {
-    fontSize: 22,
+    fontSize: 18,
     fontWeight: '900',
-    color: COLORS.primary,
-    letterSpacing: -0.3,
+    color: '#FFFFFF',
+    letterSpacing: 3,
   },
   skipBtn: {
-    padding: SPACING.sm,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   skipText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textSecondary,
+    fontSize: 13,
     fontWeight: '500',
+    color: 'rgba(255,255,255,0.7)',
+    letterSpacing: 0.3,
   },
-  slide: {
+
+  slideVisual: {
     width,
+    height: HERO_H,
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-  },
-  heroCard: {
-    width: '100%',
-    minHeight: Math.max(240, Math.floor(height * 0.34)),
-    backgroundColor: COLORS.surface,
-    borderRadius: 28,
-    overflow: 'hidden',
-    ...SHADOWS.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.04)',
-    padding: SPACING.lg,
     justifyContent: 'center',
+    gap: 32,
+    paddingTop: 60,
+    paddingBottom: 24,
   },
-  heroGlow: {
+  glow1: {
     position: 'absolute',
+    width: 280,
+    height: 280,
+    borderRadius: 140,
     top: -60,
-    right: -40,
-    width: 200,
-    height: 200,
-    borderRadius: 999,
+    right: -80,
   },
-  heroGlow2: {
+  glow2: {
     position: 'absolute',
-    bottom: -70,
-    left: -50,
-    width: 240,
-    height: 240,
-    borderRadius: 999,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
+    bottom: -40,
+    left: -60,
   },
-  heroIconWrap: {
+
+  iconStack: {
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.lg,
+    width: 180,
+    height: 180,
   },
-  heroIconBg: {
+  iconRingOuter: {
+    position: 'absolute',
+    width: 176,
+    height: 176,
+    borderRadius: 88,
+    borderWidth: 1,
+  },
+  iconRingInner: {
+    position: 'absolute',
     width: 140,
     height: 140,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.88)',
+    borderRadius: 70,
     borderWidth: 1,
   },
-  heroChipText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+  iconCore: {
+    width: 108,
+    height: 108,
+    borderRadius: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  badge: {
-    position: 'absolute',
-    right: 18,
-    top: 18,
+
+  statPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 14,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 999,
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
   },
-  badgeBlue: {
-    backgroundColor: 'rgba(255,255,255,0.75)',
-  },
-  badgeGold: {
-    backgroundColor: 'rgba(153, 122, 0, 0.86)',
-  },
-  badgeText: {
-    fontSize: 12,
+  statValue: {
+    fontSize: 15,
     fontWeight: '800',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
+    letterSpacing: -0.3,
   },
-  badgeTextBlue: {
+  statSep: {
+    color: 'rgba(255,255,255,0.35)',
+    fontSize: 14,
+  },
+  statLabel: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.65)',
+    fontWeight: '500',
+  },
+
+  // ── Tarjeta blanca ──────────────────────────────────────────
+  textCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 28,
+    paddingTop: 28,
+    paddingBottom: 12,
+    justifyContent: 'space-between',
+  },
+  eyebrow: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 2.5,
     color: COLORS.primary,
-  },
-  badgeTextGold: {
-    color: '#FFFFFF',
-  },
-  textBlock: {
-    width: '100%',
-    paddingTop: SPACING.xl,
+    marginBottom: 8,
   },
   title: {
-    fontSize: 34,
-    lineHeight: 38,
+    fontSize: 32,
+    lineHeight: 36,
     fontWeight: '800',
-    color: COLORS.primary,
-    letterSpacing: -0.5,
+    color: '#0A1628',
+    letterSpacing: -0.8,
+    marginBottom: 12,
   },
   description: {
-    marginTop: SPACING.md,
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    lineHeight: 26,
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#6B7280',
+    fontWeight: '400',
+    flex: 1,
   },
-  footer: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxxl,
-    paddingTop: SPACING.md,
-    alignItems: 'center',
-    width: '100%',
+
+  progressRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 20,
+    marginBottom: 16,
   },
-  paginationRow: {
+  progressSeg: {
+    flex: 1,
+    height: 3,
+    borderRadius: 99,
+  },
+
+  btn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 14,
-    marginBottom: SPACING.md,
-  },
-  pagination: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    borderRadius: 14,
+    height: 56,
     gap: 10,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
+    marginBottom: 12,
   },
-  dot: {
-    height: 6,
-    borderRadius: 999,
-    backgroundColor: COLORS.border,
-  },
-  dotInactive: {
-    width: 18,
-    opacity: 0.55,
-  },
-  dotActive: {
-    width: 44,
-    backgroundColor: COLORS.primary,
-    opacity: 1,
-  },
-  paginationText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textTertiary,
-  },
-  nextBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.primary,
-    borderRadius: 16,
-    height: 58,
-    gap: SPACING.sm,
-    width: '100%',
-    ...SHADOWS.lg,
-  },
-  nextBtnText: {
+  btnText: {
     fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
-  getStartedBtn: {
-    backgroundColor: COLORS.primary,
-  },
-  stepText: {
-    marginTop: SPACING.lg,
-    ...TYPOGRAPHY.label,
-    color: COLORS.textTertiary,
-    letterSpacing: 2,
+
+  stepLabel: {
+    textAlign: 'center',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#D1D5DB',
+    letterSpacing: 1.5,
+    paddingBottom: 4,
   },
 })
