@@ -279,6 +279,24 @@ export default function DriverPanelScreen() {
         }
       }
 
+      if (newStatus === 'completed') {
+        const route = routes.find((routeItem) => routeItem.id === routeId)
+        if (route?.passengers?.length) {
+          await Promise.all(
+            route.passengers.map((passenger) =>
+              insertNotificationForUser(passenger.passenger_id, {
+                user_id: passenger.passenger_id,
+                type: 'trip_update',
+                title: 'Viaje completado',
+                message: `El viaje ${route.origin} → ${route.destination} ha finalizado. ¡Gracias por viajar con Trive!`,
+                data: { route_id: route.id, audience: 'passengers_only' },
+                is_read: false,
+              })
+            )
+          ).catch((err) => console.error('Error notificando fin de viaje:', err))
+        }
+      }
+
       if (newStatus === 'cancelled') {
         const route = routes.find((routeItem) => routeItem.id === routeId)
         if (route && user?.id) {

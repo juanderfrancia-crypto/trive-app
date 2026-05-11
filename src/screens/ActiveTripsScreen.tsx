@@ -17,6 +17,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { notifyTripCancellation } from '../services/pushNotifications'
+import { insertNotificationForUser } from '../services/notificationInsert'
 import Toast from '../components/Toast'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
@@ -231,11 +232,23 @@ export default function ActiveTripsScreen() {
 
       if (error) throw error
 
-      // Enviar notificación al conductor (sin esperar respuesta)
+      // Notificar al conductor
       if (user?.id) {
         notifyTripCancellation(trip.bookingId, user.id, 'Cancelado por pasajero').catch(err => {
           console.warn('Error sending cancellation notification:', err)
         })
+      }
+
+      // Notificar al pasajero sobre el reembolso
+      if (user?.id) {
+        insertNotificationForUser(user.id, {
+          user_id: user.id,
+          type: 'refund',
+          title: 'Reembolso procesado',
+          message: `Tu reserva para ${trip.origin} → ${trip.destination} fue cancelada y el reembolso ha sido procesado.`,
+          data: { booking_id: trip.bookingId, route_id: trip.id },
+          is_read: false,
+        }).catch(() => {})
       }
 
       setToastConfig({

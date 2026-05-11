@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { insertNotificationForUser } from './notificationInsert'
 
 export interface Review {
   id: string
@@ -38,6 +39,17 @@ export const createReview = async (
 
     // Actualizar el promedio del usuario evaluado
     await updateUserAverageRating(revieweeId)
+
+    // Notificar al evaluado
+    const stars = '⭐'.repeat(rating)
+    insertNotificationForUser(revieweeId, {
+      user_id: revieweeId,
+      type: 'review_received',
+      title: 'Nueva calificación recibida',
+      message: `Recibiste una calificación de ${rating}/5 ${stars}${comment ? `: "${comment.slice(0, 60)}"` : ''}`,
+      data: { booking_id: bookingId, rating },
+      is_read: false,
+    }).catch(() => {})
 
     return data as Review
   } catch (error) {
