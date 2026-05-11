@@ -239,6 +239,7 @@ export default function HomeScreen() {
             source={require('../../assets/banners/banner.png')}
             style={styles.heroBg}
             resizeMode="cover"
+            imageStyle={{ transform: [{ scale: 1.3 }] }}
           >
             {/* ── Header ───────────────────────────────────────────────────── */}
             <View style={styles.header}>
