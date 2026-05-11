@@ -8,6 +8,7 @@ import {
   ScrollView,
   FlatList,
   Image,
+  ImageBackground,
   ActivityIndicator,
   Animated,
   Easing,
@@ -116,9 +117,9 @@ export default function HomeScreen() {
     const days   = expiry && expiry > new Date() ? Math.ceil((expiry.getTime() - Date.now()) / 86400000) : 0
     const cfg    = MEMBERSHIP_CFG[type] ?? MEMBERSHIP_CFG.free
     return (
-      <View style={styles.pillGlass}>
-        <Ionicons name={cfg.icon as any} size={13} color="rgba(255,255,255,0.9)" />
-        <Text style={styles.pillTextWhite}>
+      <View style={[styles.pillSolid, { backgroundColor: cfg.bg, borderColor: `${cfg.text}30` }]}>
+        <Ionicons name={cfg.icon as any} size={13} color={cfg.text} />
+        <Text style={[styles.pillTextDark, { color: cfg.text }]}>
           {cfg.label}{days > 0 ? ` · ${days}d` : ''}
         </Text>
       </View>
@@ -232,85 +233,73 @@ export default function HomeScreen() {
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
 
-        {/* ══ GRADIENT HERO SECTION ═════════════════════════════════════════ */}
+        {/* ══ BANNER HERO SECTION ═══════════════════════════════════════════ */}
         <View style={styles.heroBgWrap}>
-        <LinearGradient
-          colors={['#082D66', '#0D3A88', '#154AA8', '#1E5FBF']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.heroBg}
-        >
-          <View style={styles.decorCircle1} pointerEvents="none" />
-          <View style={styles.decorCircle2} pointerEvents="none" />
-          <View style={styles.decorCircle3} pointerEvents="none" />
-
-          {/* ── Header ─────────────────────────────────────────────────────── */}
-          <View style={styles.header}>
-            <Text style={[styles.wordmark, { color: '#fff' }]}>TRIVE</Text>
-            <View style={styles.headerActions}>
-              <TouchableOpacity style={styles.avatarBtnGlass} onPress={() => navigation.navigate('Profile' as never)} accessibilityLabel="Ver perfil">
-                {user?.avatar_url ? (
-                  <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
-                ) : (
-                  <Text style={[styles.avatarInitial, { color: '#fff' }]}>{user?.name?.charAt(0).toUpperCase() ?? 'U'}</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* ── Hero content ───────────────────────────────────────────────── */}
-          <View style={styles.heroContent}>
-            <View style={styles.heroTop}>
-              <Text style={styles.heroGreetingWhite}>
-                {getGreeting()},{' '}
-                <Text style={{ fontWeight: '700', color: '#fff' }}>{user?.name?.split(' ')[0] ?? 'Usuario'}</Text>
-              </Text>
-              {metricLoading && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />}
-            </View>
-            {metricLoading ? (
-              <>
-                <Animated.View style={[styles.skeletonAmountWhite, { opacity: skeletonAnim }]} />
-                <Animated.View style={[styles.skeletonLabelWhite,  { opacity: skeletonAnim }]} />
-              </>
-            ) : (
-              <>
-                <Text style={styles.heroAmountWhite}>{metricValue}</Text>
-                <Text style={styles.heroLabelWhite}>{metricLabel}</Text>
-              </>
-            )}
-
-            <View style={styles.pillRow}>
-              {!isDriver && (
-                <View style={styles.pillGlass}>
-                  <Ionicons name="calendar-outline" size={13} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.pillTextWhite}>Próx: {passengerStats?.nextTripTime ?? '--:--'}</Text>
-                </View>
-              )}
-              {!isDriver && membershipBadge()}
-              {isDriver && (
-                <>
-                  <View style={styles.pillGlass}>
-                    <Ionicons name="car-outline" size={13} color="rgba(255,255,255,0.9)" />
-                    <Text style={styles.pillTextWhite}>{driverEarnings?.completedTrips ?? driverProfile?.total_trips ?? 0} viajes</Text>
-                  </View>
-                  <View style={styles.pillGlass}>
-                    <Ionicons name="star" size={13} color="#FBBF24" />
-                    <Text style={styles.pillTextWhite}>{user?.rating ?? '--'}</Text>
-                  </View>
-                </>
-              )}
-            </View>
-          </View>
-
-          <Image
+          <ImageBackground
             source={isDriver
               ? require('../../assets/banners/conductor.png')
               : require('../../assets/banners/pasajero.png')
             }
-            style={styles.heroBanner}
+            style={styles.heroBg}
             resizeMode="cover"
-          />
-        </LinearGradient>
+          >
+            {/* ── Header ───────────────────────────────────────────────────── */}
+            <View style={styles.header}>
+              <Text style={[styles.wordmark, { color: '#fff' }]}>TRIVE</Text>
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.avatarBtnGlass} onPress={() => navigation.navigate('Profile' as never)} accessibilityLabel="Ver perfil">
+                  {user?.avatar_url ? (
+                    <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
+                  ) : (
+                    <Text style={[styles.avatarInitial, { color: '#fff' }]}>{user?.name?.charAt(0).toUpperCase() ?? 'U'}</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </ImageBackground>
+        </View>
+
+        {/* ══ STATS CARD ════════════════════════════════════════════════════ */}
+        <View style={styles.statsCard}>
+          <View style={styles.heroTop}>
+            <Text style={styles.heroGreetingDark}>
+              {getGreeting()},{' '}
+              <Text style={{ fontWeight: '700', color: COLORS.textPrimary }}>{user?.name?.split(' ')[0] ?? 'Usuario'}</Text>
+            </Text>
+            {metricLoading && <ActivityIndicator size="small" color={COLORS.primary} />}
+          </View>
+          {metricLoading ? (
+            <>
+              <Animated.View style={[styles.skeletonAmount, { opacity: skeletonAnim }]} />
+              <Animated.View style={[styles.skeletonLabel,  { opacity: skeletonAnim }]} />
+            </>
+          ) : (
+            <>
+              <Text style={styles.heroAmountDark}>{metricValue}</Text>
+              <Text style={styles.heroLabelDark}>{metricLabel}</Text>
+            </>
+          )}
+          <View style={styles.pillRow}>
+            {!isDriver && (
+              <View style={styles.pillSolid}>
+                <Ionicons name="calendar-outline" size={13} color={COLORS.primary} />
+                <Text style={styles.pillTextDark}>Próx: {passengerStats?.nextTripTime ?? '--:--'}</Text>
+              </View>
+            )}
+            {!isDriver && membershipBadge()}
+            {isDriver && (
+              <>
+                <View style={styles.pillSolid}>
+                  <Ionicons name="car-outline" size={13} color={COLORS.primary} />
+                  <Text style={styles.pillTextDark}>{driverEarnings?.completedTrips ?? driverProfile?.total_trips ?? 0} viajes</Text>
+                </View>
+                <View style={styles.pillSolid}>
+                  <Ionicons name="star" size={13} color="#FBBF24" />
+                  <Text style={styles.pillTextDark}>{user?.rating ?? '--'}</Text>
+                </View>
+              </>
+            )}
+          </View>
         </View>
 
         {/* ══ PRÓXIMO VIAJE (solo pasajeros) ════════════════════════════════ */}
@@ -571,19 +560,30 @@ const styles = StyleSheet.create({
 
   // ── Gradient Hero Background ─────────────────────────────────────────────────
   heroBgWrap: {
-    borderRadius: 32,
-    marginBottom: SPACING.lg,
+    borderRadius: 24,
+    marginBottom: 0,
     marginTop: SPACING.sm,
     marginHorizontal: SPACING.sm,
     overflow: 'hidden',
   },
   heroBg: {
-    paddingBottom: 0,
-  },
-  heroBanner: {
     width: '100%',
-    height: 160,
+    aspectRatio: 2.1,
+  },
+  statsCard: {
+    marginHorizontal: SPACING.lg,
     marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   decorCircle1: {
     position: 'absolute', width: 240, height: 240, borderRadius: 120,
@@ -627,8 +627,18 @@ const styles = StyleSheet.create({
   heroContent: { paddingHorizontal: SPACING.lg },
   heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
   heroGreetingWhite: { fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
+  heroGreetingDark: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
   heroAmountWhite: { fontSize: 36, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 2 },
+  heroAmountDark: { fontSize: 34, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 2 },
   heroLabelWhite: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: SPACING.md },
+  heroLabelDark: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
+  pillSolid: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    backgroundColor: `${COLORS.primary}10`,
+    paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: `${COLORS.primary}20`,
+  },
+  pillTextDark: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
   skeletonAmountWhite: {
     height: 40, width: 160, borderRadius: RADIUS.sm,
     backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 6,
