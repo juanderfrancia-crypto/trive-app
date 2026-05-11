@@ -301,6 +301,15 @@ export default function HomeScreen() {
               )}
             </View>
           </View>
+
+          <Image
+            source={isDriver
+              ? require('../../assets/banners/conductor.png')
+              : require('../../assets/banners/pasajero.png')
+            }
+            style={styles.heroBanner}
+            resizeMode="cover"
+          />
         </LinearGradient>
         </View>
 
@@ -569,7 +578,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   heroBg: {
-    paddingBottom: SPACING.xl,
+    paddingBottom: 0,
+  },
+  heroBanner: {
+    width: '100%',
+    height: 160,
+    marginTop: SPACING.md,
   },
   decorCircle1: {
     position: 'absolute', width: 240, height: 240, borderRadius: 120,
