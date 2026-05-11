@@ -178,9 +178,15 @@ function InfoCards() {
     <View style={info.row}>
       <View style={info.card}>
         <Image source={require('../../assets/banners/frecuente.png')} style={info.img} resizeMode="cover" />
+        <View style={info.overlay}>
+          <Text style={info.titleDark}>Salidas{'\n'}Frecuentes</Text>
+        </View>
       </View>
       <View style={info.card}>
         <Image source={require('../../assets/banners/pago.png')} style={info.img} resizeMode="cover" />
+        <View style={info.overlay}>
+          <Text style={info.titleDark}>Pago{'\n'}Digital</Text>
+        </View>
       </View>
     </View>
   )
@@ -618,6 +624,13 @@ const info = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    padding: SPACING.md,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  titleDark: { fontSize: 14, fontWeight: '800', color: '#fff', letterSpacing: -0.1, lineHeight: 18 },
   cardLight: {
     backgroundColor: '#EEF4FF',
     borderWidth: 1, borderColor: `${COLORS.primary}18`,
