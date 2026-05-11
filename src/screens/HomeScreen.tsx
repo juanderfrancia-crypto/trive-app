@@ -242,7 +242,7 @@ export default function HomeScreen() {
             }
             style={styles.heroBg}
             resizeMode="cover"
-            imageStyle={{ transform: [{ scale: 1.1 }] }}
+            imageStyle={{ transform: [{ scale: 1.1 }, { translateY: -20 }] }}
           >
             {/* ── Header ───────────────────────────────────────────────────── */}
             <View style={styles.header}>
