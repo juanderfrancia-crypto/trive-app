@@ -450,6 +450,7 @@ export default function ProfileScreen() {
         {/* Ganancias del mes */}
         <View style={s.section}>
           <ImageBackground source={require('../../assets/banners/Ganancias.png')} style={dv.earningsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
+            <View style={dv.cardOverlay} pointerEvents="none" />
             <Text style={dv.earningsLabel}>GANANCIAS DEL MES</Text>
             <Text style={dv.earningsAmount}>
               ${monthEarnings.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -520,7 +521,8 @@ export default function ProfileScreen() {
         {/* Viajes completados */}
         <View style={s.section}>
           <ImageBackground source={require('../../assets/banners/viajesc.png')} style={dv.tripsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
-            <View style={dv.tripsIcon}><Ionicons name="swap-horizontal-outline" size={22} color={COLORS.accentLight} /></View>
+            <View style={dv.cardOverlay} pointerEvents="none" />
+            <View style={dv.tripsIcon}><Ionicons name="swap-horizontal-outline" size={22} color="#fff" /></View>
             <Text style={dv.tripsLabel}>VIAJES COMPLETADOS</Text>
             <View style={dv.tripsCountRow}>
               <Text style={dv.tripsCount}>{totalTrips}</Text>
@@ -951,13 +953,18 @@ const dv = StyleSheet.create({
     overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
-  earningsLabel:  { fontSize: 11, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 1, marginBottom: SPACING.sm },
-  earningsAmount: { fontSize: 34, fontWeight: '900', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: SPACING.lg },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderRadius: RADIUS.xl,
+  },
+  earningsLabel:  { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.8)', letterSpacing: 1, marginBottom: SPACING.sm },
+  earningsAmount: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1, marginBottom: SPACING.lg },
   barsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 5, height: 44, marginBottom: SPACING.md },
   barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   bar:     { width: '100%', borderRadius: 4 },
   detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end' },
-  detailsText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  detailsText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
 
   actionRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   actionIcon: { width: 40, height: 40, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center' },
@@ -977,15 +984,15 @@ const dv = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: SPACING.sm,
   },
-  tripsLabel:    { fontSize: 11, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 1 },
+  tripsLabel:    { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.8)', letterSpacing: 1 },
   tripsCountRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginVertical: 4 },
-  tripsCount:    { fontSize: 36, fontWeight: '900', color: COLORS.textPrimary, letterSpacing: -1 },
+  tripsCount:    { fontSize: 36, fontWeight: '900', color: '#fff', letterSpacing: -1 },
   tripsTodayPill: {
-    backgroundColor: `${COLORS.success}15`, paddingHorizontal: SPACING.sm, paddingVertical: 3,
+    backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: SPACING.sm, paddingVertical: 3,
     borderRadius: RADIUS.full,
   },
-  tripsTodayText:    { fontSize: 11, fontWeight: '700', color: COLORS.success },
-  tripsMotivation:   { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18, marginTop: 4 },
+  tripsTodayText:    { fontSize: 11, fontWeight: '700', color: '#fff' },
+  tripsMotivation:   { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 18, marginTop: 4 },
 
   vehicleCard: {
     flexDirection: 'row', gap: SPACING.md,
