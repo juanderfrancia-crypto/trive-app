@@ -176,8 +176,12 @@ function DriverCard({
 function InfoCards() {
   return (
     <View style={info.row}>
-      <Image source={require('../../assets/banners/frecuente.png')} style={info.card} resizeMode="cover" />
-      <Image source={require('../../assets/banners/pago.png')} style={info.card} resizeMode="cover" />
+      <View style={info.card}>
+        <Image source={require('../../assets/banners/frecuente.png')} style={info.img} resizeMode="cover" />
+      </View>
+      <View style={info.card}>
+        <Image source={require('../../assets/banners/pago.png')} style={info.img} resizeMode="cover" />
+      </View>
     </View>
   )
 }
@@ -609,6 +613,10 @@ const info = StyleSheet.create({
     height: 120,
     overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
+  },
+  img: {
+    width: '100%',
+    height: '100%',
   },
   cardLight: {
     backgroundColor: '#EEF4FF',
