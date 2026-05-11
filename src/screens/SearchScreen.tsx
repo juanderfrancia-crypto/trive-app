@@ -176,26 +176,8 @@ function DriverCard({
 function InfoCards() {
   return (
     <View style={info.row}>
-      {/* Salidas Frecuentes */}
-      <LinearGradient
-        colors={[COLORS.primaryDark, '#0a2a6e']}
-        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-        style={info.card}
-      >
-        <View style={info.iconWrap}>
-          <Ionicons name="information-circle" size={28} color="#fff" />
-        </View>
-        <Text style={info.titleDark}>Salidas{'\n'}Frecuentes</Text>
-        <Text style={info.subDark}>Cada 15 minutos en hora pico.</Text>
-      </LinearGradient>
-
-      {/* Pago Digital */}
-      <View style={[info.card, info.cardLight]}>
-        <View style={[info.iconWrap, info.iconWrapLight]}>
-          <Ionicons name="card" size={32} color={COLORS.primary} />
-        </View>
-        <Text style={info.titleLight}>Pago{'\n'}Digital</Text>
-      </View>
+      <Image source={require('../../assets/banners/frecuente.png')} style={info.bannerImg} resizeMode="cover" />
+      <Image source={require('../../assets/banners/pago.png')} style={info.bannerImg} resizeMode="cover" />
     </View>
   )
 }
@@ -621,6 +603,12 @@ const info = StyleSheet.create({
     flexDirection: 'row', gap: SPACING.md,
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
     marginTop: SPACING.xl,
+  },
+  bannerImg: {
+    flex: 1,
+    height: 130,
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
   },
   card: {
     flex: 1, borderRadius: RADIUS.xl,
