@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, Modal,
+  ActivityIndicator, Image, ImageBackground, Modal,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -449,7 +449,7 @@ export default function ProfileScreen() {
 
         {/* Ganancias del mes */}
         <View style={s.section}>
-          <View style={dv.earningsCard}>
+          <ImageBackground source={require('../../assets/banners/Ganancias.png')} style={dv.earningsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
             <Text style={dv.earningsLabel}>GANANCIAS DEL MES</Text>
             <Text style={dv.earningsAmount}>
               ${monthEarnings.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -476,7 +476,7 @@ export default function ProfileScreen() {
               <Text style={dv.detailsText}>Ver detalles</Text>
               <Ionicons name="arrow-forward" size={14} color={COLORS.accentLight} />
             </TouchableOpacity>
-          </View>
+          </ImageBackground>
         </View>
 
         {/* Acciones del conductor (mover desde hamburguesa) */}
@@ -519,7 +519,7 @@ export default function ProfileScreen() {
 
         {/* Viajes completados */}
         <View style={s.section}>
-          <View style={dv.tripsCard}>
+          <ImageBackground source={require('../../assets/banners/viajesc.png')} style={dv.tripsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
             <View style={dv.tripsIcon}><Ionicons name="swap-horizontal-outline" size={22} color={COLORS.accentLight} /></View>
             <Text style={dv.tripsLabel}>VIAJES COMPLETADOS</Text>
             <View style={dv.tripsCountRow}>
@@ -535,7 +535,7 @@ export default function ProfileScreen() {
                 ? `Llevas ${totalTrips} viajes completados. ¡Sigue así!`
                 : 'Completa tu primer viaje para empezar a ganar.'}
             </Text>
-          </View>
+          </ImageBackground>
         </View>
 
         {/* Mi Vehículo */}
@@ -946,9 +946,9 @@ const dv = StyleSheet.create({
   heroStatSep: { width: 1, height: 14, backgroundColor: COLORS.borderLight },
 
   earningsCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
+    overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   earningsLabel:  { fontSize: 11, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 1, marginBottom: SPACING.sm },
@@ -966,9 +966,9 @@ const dv = StyleSheet.create({
   actionSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
 
   tripsCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.xl,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
+    overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
   },
   tripsIcon: {
