@@ -243,15 +243,6 @@ export default function HomeScreen() {
             {/* ── Header ───────────────────────────────────────────────────── */}
             <View style={styles.header}>
               <Text style={[styles.wordmark, { color: '#fff' }]}>TRIVE</Text>
-              <View style={styles.headerActions}>
-                <TouchableOpacity style={styles.avatarBtnGlass} onPress={() => navigation.navigate('Profile' as never)} accessibilityLabel="Ver perfil">
-                  {user?.avatar_url ? (
-                    <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
-                  ) : (
-                    <Text style={[styles.avatarInitial, { color: '#fff' }]}>{user?.name?.charAt(0).toUpperCase() ?? 'U'}</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
             </View>
 
             {/* ── Hero content ─────────────────────────────────────────────── */}
