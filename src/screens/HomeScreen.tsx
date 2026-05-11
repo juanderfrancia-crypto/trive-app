@@ -236,7 +236,10 @@ export default function HomeScreen() {
         {/* ══ BANNER HERO SECTION ═══════════════════════════════════════════ */}
         <View style={styles.heroBgWrap}>
           <ImageBackground
-            source={require('../../assets/banners/banner.png')}
+            source={isDriver
+              ? require('../../assets/banners/banner.png')
+              : require('../../assets/banners/bannerper.png')
+            }
             style={styles.heroBg}
             resizeMode="cover"
             imageStyle={{ transform: [{ scale: 1.1 }] }}
