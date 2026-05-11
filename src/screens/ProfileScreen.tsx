@@ -300,7 +300,8 @@ export default function ProfileScreen() {
       {/* CTA card */}
       <View style={s.section}>
         <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-          <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={pv.ctaCard}>
+          <ImageBackground source={require('../../assets/banners/modoc.png')} style={pv.ctaCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
+            <View style={pv.ctaOverlay} pointerEvents="none" />
             <View style={pv.ctaOportunidad}>
               <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
             </View>
@@ -309,8 +310,7 @@ export default function ProfileScreen() {
             <View style={pv.ctaBtn}>
               <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
             </View>
-            <Ionicons name="car-sport" size={100} color="rgba(255,255,255,0.1)" style={pv.ctaCar} />
-          </LinearGradient>
+          </ImageBackground>
         </TouchableOpacity>
       </View>
 
@@ -861,6 +861,7 @@ const pv = StyleSheet.create({
   premiumText: { fontSize: 11, fontWeight: '800', color: '#92400E', letterSpacing: 0.3 },
 
   ctaCard: { borderRadius: RADIUS.xl, overflow: 'hidden', padding: SPACING.xl, paddingBottom: SPACING.xxl },
+  ctaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: RADIUS.xl },
   ctaOportunidad: {
     alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: SPACING.md, paddingVertical: 4,
