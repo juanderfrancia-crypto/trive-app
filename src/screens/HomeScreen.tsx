@@ -556,6 +556,7 @@ const styles = StyleSheet.create({
   },
   heroBg: {
     width: '100%',
+    minHeight: 220,
     paddingBottom: SPACING.xl,
   },
   decorCircle1: {
