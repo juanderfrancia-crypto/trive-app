@@ -1,5 +1,4 @@
 import { supabase } from './supabase'
-import { sendPushNotificationToUser } from './pushNotifications'
 
 export interface TripMessage {
   id: string
@@ -98,37 +97,8 @@ export const sendTripMessage = async (
 
     if (error) throw error
 
-    // Enviar notificación push en background (no bloquear)
-    try {
-      const { data: recipientProfile } = await supabase
-        .from('profiles')
-        .select('push_token, name')
-        .eq('id', toUserId)
-        .single()
-
-      const { data: senderProfile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', fromUserId)
-        .single()
-
-      if (recipientProfile?.push_token) {
-        await sendPushNotificationToUser(
-          recipientProfile.push_token,
-          `Mensaje de ${senderProfile?.name || 'Usuario'}`,
-          message.substring(0, 100),
-          {
-            type: 'trip_message',
-            trip_id: tripId,
-            from_user_id: fromUserId,
-            message_id: data.id,
-          }
-        )
-      }
-    } catch (pushErr) {
-      console.error('Error sending push notification:', pushErr)
-      // No fallar el mensaje si la notificación falla
-    }
+    // La notificación push la envía la Edge Function notify-message
+    // vía database trigger — no se hace desde el cliente
 
     return data
   } catch (err: any) {
