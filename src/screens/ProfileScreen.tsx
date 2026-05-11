@@ -17,6 +17,7 @@ import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import Toast from '../components/Toast'
 import { uploadProfilePhoto, uploadVehiclePhoto } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
+import { getExpiryStatus } from '../utils/documentHelpers'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import AdminMenuButton from '../components/AdminMenuButton'
 import { TripMessagesModal } from '../components/TripMessagesModal'
@@ -41,6 +42,7 @@ export default function ProfileScreen() {
   const [toastType, setToastType]         = useState<'success' | 'error' | 'info'>('success')
   const [driverVehicle, setDriverVehicle] = useState<any>(null)
   const [recentRoutes, setRecentRoutes]   = useState<any[]>([])
+  const [driverDocs, setDriverDocs]       = useState<Record<string, any>>({})
 
   // Chat
   const { bookings: activeBookings, refetch: refetchActiveBookings } = useActiveBookingsWithChat(
@@ -134,7 +136,7 @@ export default function ProfileScreen() {
   // ── Driver vehicle + route history ─────────────────────────────────────────
   const loadDriverData = useCallback(async () => {
     if (!user?.id) return
-    const [{ data: route }, { data: routes }] = await Promise.all([
+    const [{ data: route }, { data: routes }, { data: docs }] = await Promise.all([
       supabase
         .from('routes')
         .select('id, vehicle_make, vehicle_model, vehicle_plate, vehicle_type, vehicle_photo_url')
@@ -149,9 +151,18 @@ export default function ProfileScreen() {
         .eq('status', 'completed')
         .order('departure_time', { ascending: false })
         .limit(4),
+      supabase
+        .from('driver_documents')
+        .select('document_type, status, expiry_date')
+        .eq('driver_id', user.id),
     ])
     if (route) setDriverVehicle(route)
     setRecentRoutes(routes ?? [])
+    if (docs) {
+      const docsMap: Record<string, any> = {}
+      docs.forEach((d) => { docsMap[d.document_type] = d })
+      setDriverDocs(docsMap)
+    }
   }, [user?.id])
 
   // ── Logout ─────────────────────────────────────────────────────────────────
@@ -582,23 +593,44 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <Text style={s.sectionTitle}>Documentos del Conductor</Text>
           <View style={s.menuCard}>
-            <View style={dv.docRow}>
-              <View style={dv.docIcon}><Ionicons name="document-text-outline" size={20} color={COLORS.accentLight} /></View>
-              <View style={dv.docInfo}>
-                <Text style={dv.docTitle}>SOAT Vigente</Text>
-                <Text style={dv.docSub}>{profile?.is_driver_verified ? 'Documento vigente' : 'Pendiente de verificación'}</Text>
-              </View>
-              <Ionicons name="checkmark-circle" size={22} color={profile?.is_driver_verified ? COLORS.success : COLORS.textTertiary} />
-            </View>
-            <View style={s.divider} />
-            <View style={dv.docRow}>
-              <View style={dv.docIcon}><Ionicons name="id-card-outline" size={20} color={COLORS.accentLight} /></View>
-              <View style={dv.docInfo}>
-                <Text style={dv.docTitle}>Licencia de Conducir</Text>
-                <Text style={dv.docSub}>{profile?.is_driver_verified ? 'Verificada' : 'En revisión'}</Text>
-              </View>
-              <Ionicons name="checkmark-circle" size={22} color={profile?.is_driver_verified ? COLORS.success : COLORS.textTertiary} />
-            </View>
+            {[
+              { type: 'soat',     label: 'SOAT',                  icon: 'document-text-outline' },
+              { type: 'licencia', label: 'Licencia de Conducir',  icon: 'id-card-outline'       },
+            ].map(({ type, label, icon }, idx) => {
+              const doc = driverDocs[type]
+              const expiry = doc ? getExpiryStatus(doc.expiry_date) : null
+              const isExpired = expiry?.isExpired || doc?.status === 'expired'
+              const statusLabel = !doc
+                ? 'Sin documento'
+                : doc.status === 'pending' || doc.status === 'verifying'
+                ? 'Pendiente de verificación'
+                : isExpired
+                ? 'VENCIDO'
+                : expiry
+                ? expiry.label
+                : 'Vigente'
+              const statusColor = !doc || doc.status === 'pending' || doc.status === 'verifying'
+                ? COLORS.textTertiary
+                : isExpired
+                ? COLORS.error
+                : expiry && expiry.daysLeft < 30
+                ? COLORS.warning
+                : COLORS.success
+              const statusIcon = isExpired ? 'alert-circle' : doc?.status === 'verified' ? 'checkmark-circle' : 'time-outline'
+              return (
+                <View key={type}>
+                  {idx > 0 && <View style={s.divider} />}
+                  <View style={dv.docRow}>
+                    <View style={dv.docIcon}><Ionicons name={icon as any} size={20} color={COLORS.accentLight} /></View>
+                    <View style={dv.docInfo}>
+                      <Text style={dv.docTitle}>{label}</Text>
+                      <Text style={[dv.docSub, { color: statusColor }]}>{statusLabel}</Text>
+                    </View>
+                    <Ionicons name={statusIcon as any} size={22} color={statusColor} />
+                  </View>
+                </View>
+              )
+            })}
           </View>
           <TouchableOpacity style={dv.updateDocBtn} onPress={() => navigation.navigate('DriverDocuments')} activeOpacity={0.8}>
             <Text style={dv.updateDocText}>Actualizar Documentación</Text>
