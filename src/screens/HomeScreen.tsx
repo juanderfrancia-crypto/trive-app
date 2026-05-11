@@ -237,7 +237,7 @@ export default function HomeScreen() {
         <View style={styles.heroBgWrap}>
           <ImageBackground
             source={isDriver
-              ? require('../../assets/banners/bannercon.png')
+              ? require('../../assets/banners/condu.png')
               : require('../../assets/banners/bannerper.png')
             }
             style={styles.heroBg}
