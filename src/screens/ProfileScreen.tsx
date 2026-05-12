@@ -422,7 +422,7 @@ export default function ProfileScreen() {
           </View>
           <TouchableOpacity style={dv.heroNameRow} onPress={openEditName} activeOpacity={0.7}>
             <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
-            <Ionicons name="pencil-outline" size={14} color="rgba(255,255,255,0.6)" />
+            <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
           <View style={dv.conductorBadge}>
             <Text style={dv.conductorBadgeText}>CONDUCTOR VERIFICADO</Text>
