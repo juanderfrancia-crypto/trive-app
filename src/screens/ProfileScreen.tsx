@@ -142,7 +142,7 @@ export default function ProfileScreen() {
     const [{ data: route }, { data: routes }, { data: docs }] = await Promise.all([
       supabase
         .from('routes')
-        .select('id, vehicle_make, vehicle_model, vehicle_plate, vehicle_type, vehicle_photo_url')
+        .select('id, vehicle_make, vehicle_model, vehicle_plate, vehicle_type, vehicle_photo_url, vehicle_year, vehicle_color')
         .eq('driver_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
@@ -551,7 +551,6 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <View style={s.sectionTitleRow}>
             <Text style={s.sectionTitle}>Mi Vehículo</Text>
-            <Ionicons name="car-outline" size={20} color={COLORS.textTertiary} />
           </View>
           <Text style={s.sectionSub}>Información técnica activa. Toca la foto para cambiarla.</Text>
 
@@ -587,9 +586,17 @@ export default function ProfileScreen() {
             </TouchableOpacity>
             <View style={dv.vehicleInfo}>
               <Text style={dv.vehicleName}>{vehicleName}</Text>
-              {driverVehicle?.vehicle_plate && (
-                <Text style={dv.vehiclePlate}>{driverVehicle.vehicle_plate}</Text>
-              )}
+              <View style={dv.vehicleMeta}>
+                {driverVehicle?.vehicle_plate && (
+                  <Text style={dv.vehiclePlate}>{driverVehicle.vehicle_plate}</Text>
+                )}
+                {driverVehicle?.vehicle_year && (
+                  <Text style={dv.vehicleMetaText}>{driverVehicle.vehicle_year}</Text>
+                )}
+                {driverVehicle?.vehicle_color && (
+                  <Text style={dv.vehicleMetaText}>{driverVehicle.vehicle_color}</Text>
+                )}
+              </View>
               <View style={dv.vehicleStatus}>
                 {(() => {
                   const docValues = Object.values(driverDocs)
@@ -607,6 +614,14 @@ export default function ProfileScreen() {
                 })()}
               </View>
             </View>
+            <TouchableOpacity
+              style={dv.editVehicleBtn}
+              onPress={() => navigation.navigate('EditVehicle', { vehicle: driverVehicle })}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="pencil-outline" size={13} color={COLORS.primary} />
+              <Text style={dv.editVehicleBtnText}>Editar</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -1091,10 +1106,28 @@ const dv = StyleSheet.create({
   },
   vehicleInfo:   { flex: 1, padding: SPACING.md, justifyContent: 'center', gap: 4 },
   vehicleName:   { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
+  vehicleMeta:   { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
   vehiclePlate:  { fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
+  vehicleMetaText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   vehicleStatus: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statusDot:     { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.success },
   statusText:    { fontSize: 11, fontWeight: '700', color: COLORS.success, letterSpacing: 0.3 },
+
+  editVehicleBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${COLORS.primary}15`,
+    borderRadius: RADIUS.full,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: `${COLORS.primary}35`,
+  },
+  editVehicleBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
 
   docRow:  { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   docIcon: { width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}10`, justifyContent: 'center', alignItems: 'center' },

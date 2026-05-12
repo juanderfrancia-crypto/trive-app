@@ -252,7 +252,7 @@ export default function HomeScreen() {
               <View style={styles.heroTop}>
                 <Text style={styles.heroGreetingWhite}>
                   {getGreeting()},{' '}
-                  <Text style={{ fontWeight: '700', color: '#fff' }}>{user?.name?.split(' ')[0] ?? 'Usuario'}</Text>
+                  <Text style={{ fontWeight: '700', color: '#fff' }}>{user?.name?.split(' ').slice(0, 2).join(' ') ?? 'Usuario'}</Text>
                 </Text>
                 {metricLoading && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />}
               </View>

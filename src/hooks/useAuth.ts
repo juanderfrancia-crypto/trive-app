@@ -141,7 +141,8 @@ export const useAuth = () => {
         )
       }
       if (event === 'SIGNED_OUT') {
-        _manualLogout = false
+        // Defer reset so all concurrent callbacks see _manualLogout = true
+        setTimeout(() => { _manualLogout = false }, 0)
         // Limpiar suscripción de perfil al cerrar sesión
         if (profileChannelRef.current) {
           supabase.removeChannel(profileChannelRef.current)
