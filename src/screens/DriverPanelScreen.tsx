@@ -25,6 +25,7 @@ import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_
 interface Passenger {
   booking_id: string
   passenger_id: string
+  payment_method?: string
   name: string
   email: string
   phone: string
@@ -108,6 +109,7 @@ export default function DriverPanelScreen() {
               passenger_id,
               seat_number,
               booking_status,
+              payment_method,
               created_at,
               dropoff_point,
               dropoff_point_custom
@@ -144,6 +146,7 @@ export default function DriverPanelScreen() {
                 phone: profile?.phone || '',
                 seat_number: b.seat_number,
                 booking_status: b.booking_status,
+                payment_method: b.payment_method || 'cash',
                 created_at: b.created_at,
                 dropoff_point: b.dropoff_point || route.destination,
                 dropoff_point_custom: b.dropoff_point_custom || false,
@@ -187,18 +190,38 @@ export default function DriverPanelScreen() {
   }, [fetchDriverRoutes])
 
 
-  // Polling con backoff exponencial: 10s base, hasta 60s al fallar consecutivamente
+  // Realtime: detecta nuevas reservas y cambios de estado en tiempo real
   useFocusEffect(
     useCallback(() => {
+      if (!user?.id) return
       failureCountRef.current = 0
       fetchDriverRoutes()
 
+      // Suscripción 1: cambios en rutas del conductor (cancelaciones, estado)
+      const routesChannel = supabase
+        .channel(`driver-routes:${user.id}:${Date.now()}`)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'routes', filter: `driver_id=eq.${user.id}` },
+          () => { fetchDriverRoutes() }
+        )
+        .subscribe()
+
+      // Suscripción 2: nuevas reservas o cambios en bookings
+      // No se puede filtrar por driver_id directamente en bookings, se verifica en el callback
+      const bookingsChannel = supabase
+        .channel(`driver-bookings:${user.id}:${Date.now()}`)
+        .on('postgres_changes',
+          { event: '*', schema: 'public', table: 'bookings' },
+          () => { fetchDriverRoutes() }
+        )
+        .subscribe()
+
+      // Polling de respaldo cada 60s (por si Realtime falla)
       const scheduleNext = () => {
-        const backoffMs = Math.min(10000 * Math.pow(2, failureCountRef.current), 60000)
         pollingIntervalRef.current = setTimeout(() => {
           fetchDriverRoutes()
           scheduleNext()
-        }, backoffMs)
+        }, 60000)
       }
       scheduleNext()
 
@@ -207,10 +230,12 @@ export default function DriverPanelScreen() {
           clearTimeout(pollingIntervalRef.current)
           pollingIntervalRef.current = null
         }
+        supabase.removeChannel(routesChannel)
+        supabase.removeChannel(bookingsChannel)
         msgChannelsRef.current.forEach((unsub) => unsub())
         msgChannelsRef.current.clear()
       }
-    }, [fetchDriverRoutes])
+    }, [fetchDriverRoutes, user?.id])
   )
 
   useEffect(() => {
@@ -654,9 +679,15 @@ export default function DriverPanelScreen() {
                               </View>
                               <View style={styles.passengerInfo}>
                                 <Text style={styles.passengerName}>{passenger.name}</Text>
-                                <Text style={styles.passengerSeat}>
-                                  Asiento {passenger.seat_number}
-                                </Text>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                                  <Text style={styles.passengerSeat}>Asiento {passenger.seat_number}</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: passenger.payment_method === 'digital' ? '#EDE9FE' : '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
+                                    <Ionicons name={passenger.payment_method === 'digital' ? 'phone-portrait-outline' : 'cash-outline'} size={11} color={passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A'} />
+                                    <Text style={{ fontSize: 11, fontWeight: '600', color: passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A' }}>
+                                      {passenger.payment_method === 'digital' ? 'Digital' : 'Efectivo'}
+                                    </Text>
+                                  </View>
+                                </View>
                               </View>
                               <TouchableOpacity
                                 style={styles.chatBtn}

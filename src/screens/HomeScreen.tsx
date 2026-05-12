@@ -22,7 +22,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { usePassengerHomeStats } from '../hooks/usePassengerHomeStats'
-import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import { useProfile } from '../hooks/useProfile'
 import { useRoutes, Route } from '../hooks/useRoutes'
 import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
@@ -65,7 +64,6 @@ export default function HomeScreen() {
   const isDriver = user?.role === 'driver'
 
   const { stats: passengerStats, loading: statsLoading }           = usePassengerHomeStats(isDriver ? undefined : user?.id)
-  const { earnings: driverEarnings, loading: earningsLoading }     = useDriverEarnings(isDriver ? user?.id : undefined)
   const { profile: driverProfile }                                  = useProfile(isDriver ? user?.id : undefined)
   const { trip: upcomingTrip, loading: tripLoading }               = useUpcomingTrip(isDriver ? undefined : user?.id)
   const { routes: recentRoutes }                                    = useRecentRoutes(isDriver ? undefined : user?.id)
@@ -127,10 +125,10 @@ export default function HomeScreen() {
   }
 
   const metricValue = isDriver
-    ? `$${(driverEarnings?.thisMonthEarnings ?? 0).toLocaleString('es-CO')}`
+    ? `$${(user?.balance ?? 0).toLocaleString('es-CO')}`
     : `$${(passengerStats?.spentThisMonth ?? 0).toLocaleString('es-CO')}`
-  const metricLabel = isDriver ? 'Ganancias este mes' : 'Gastado este mes'
-  const metricLoading = isDriver ? earningsLoading : statsLoading
+  const metricLabel = isDriver ? 'Mi billetera' : 'Gastado este mes'
+  const metricLoading = isDriver ? false : statsLoading
 
   // ── Navigate to upcoming trip ──────────────────────────────────────────────
   const goToTripStatus = () => {
@@ -265,23 +263,28 @@ export default function HomeScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={styles.heroAmountWhite}>{metricValue}</Text>
-                  <Text style={styles.heroLabelWhite}>{metricLabel}</Text>
+                  <TouchableOpacity activeOpacity={isDriver ? 0.8 : 1} onPress={isDriver ? () => navigation.navigate('Wallet' as never) : undefined}>
+                    <Text style={styles.heroAmountWhite}>{metricValue}</Text>
+                  </TouchableOpacity>
+                  <View style={styles.heroLabelRow}>
+                    <Text style={styles.heroLabelWhite}>{metricLabel}</Text>
+                    {isDriver && (
+                      <TouchableOpacity style={styles.walletShortcut} onPress={() => navigation.navigate('Wallet' as never)} activeOpacity={0.8}>
+                        <Ionicons name="wallet-outline" size={12} color="rgba(255,255,255,0.9)" />
+                        <Text style={styles.walletShortcutText}>Ver billetera</Text>
+                        <Ionicons name="chevron-forward" size={11} color="rgba(255,255,255,0.7)" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </>
               )}
               <View style={styles.pillRow}>
-                {!isDriver && (
-                  <View style={styles.pillGlass}>
-                    <Ionicons name="calendar-outline" size={13} color="rgba(255,255,255,0.9)" />
-                    <Text style={styles.pillTextWhite}>Próx: {passengerStats?.nextTripTime ?? '--:--'}</Text>
-                  </View>
-                )}
                 {!isDriver && membershipBadge()}
                 {isDriver && (
                   <>
                     <View style={styles.pillGlass}>
                       <Ionicons name="car-outline" size={13} color="rgba(255,255,255,0.9)" />
-                      <Text style={styles.pillTextWhite}>{driverEarnings?.completedTrips ?? driverProfile?.total_trips ?? 0} viajes</Text>
+                      <Text style={styles.pillTextWhite}>{driverProfile?.total_trips ?? 0} viajes</Text>
                     </View>
                     <View style={styles.pillGlass}>
                       <Ionicons name="star" size={13} color="#FBBF24" />
@@ -462,7 +465,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <LinearGradient
-                colors={['#082D66', '#0D3A88', '#154AA8', '#1E5FBF']}
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
@@ -608,7 +611,15 @@ const styles = StyleSheet.create({
   heroGreetingDark: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
   heroAmountWhite: { fontSize: 36, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 2 },
   heroAmountDark: { fontSize: 34, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 2 },
-  heroLabelWhite: { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginBottom: SPACING.md },
+  heroLabelWhite: { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
+  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.md },
+  walletShortcut: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
+  },
+  walletShortcutText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
   heroLabelDark: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
   pillSolid: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -775,7 +786,7 @@ const styles = StyleSheet.create({
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
     borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: '#082D66', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.55, shadowRadius: 24, elevation: 16,
+    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.45, shadowRadius: 20, elevation: 14,
   },
   ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md },
   ctaIconWrap: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },

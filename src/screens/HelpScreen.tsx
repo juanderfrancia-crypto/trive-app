@@ -45,7 +45,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Pasajeros',
     question: '¿Cuáles son los métodos de pago?',
     answer:
-      'Aceptamos tarjeta de crédito/débito, billetera digital, transferencia bancaria y efectivo (en algunos casos). Todos los pagos son seguros y cifrados.',
+      'Puedes pagar con Nequi, Daviplata o efectivo. El método de pago se coordina directamente con el conductor al momento de reservar. Todos los pagos son seguros.',
   },
   {
     id: '5',
@@ -73,7 +73,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Conductores',
     question: '¿Cuánto dinero puedo ganar?',
     answer:
-      'Esto depende de tus rutas, demanda y precio establecido. Trive no toma comisión fija. Recibes el 100% de lo que cobres por asientos (menos comisión de plataforma del 2%).',
+      'Depende de tus rutas, la demanda y el precio que establezcas por asiento. Cada vez que publicas un viaje se descuentan $2.000 de tu billetera Trive (costo de publicación). El resto del dinero que recaudas de los pasajeros es 100% tuyo.',
   },
   {
     id: '9',

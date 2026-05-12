@@ -44,6 +44,8 @@ import BugReportScreen from '../screens/BugReportScreen'
 import AvailableRidesScreen from '../screens/AvailableRidesScreen'
 import SavedAddressesScreen from '../screens/SavedAddressesScreen'
 import PaymentMethodsScreen from '../screens/PaymentMethodsScreen'
+import WalletScreen from '../screens/WalletScreen'
+import DriverPaymentMethodsScreen from '../screens/DriverPaymentMethodsScreen'
 import TripPreferencesScreen from '../screens/TripPreferencesScreen'
 import CancellationHistoryScreen from '../screens/CancellationHistoryScreen'
 import RatingAnalyticsDashboard from '../screens/RatingAnalyticsDashboard'
@@ -156,6 +158,8 @@ export default function AppNavigator() {
       <Stack.Screen name="FavoriteRoutes" component={FavoriteRoutesScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
+      <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverPaymentMethods" component={DriverPaymentMethodsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="TripPreferences" component={TripPreferencesScreen} />
       <Stack.Screen name="CancellationHistory" component={CancellationHistoryScreen} />
       <Stack.Screen name="RatingAnalytics" component={RatingAnalyticsDashboard} />

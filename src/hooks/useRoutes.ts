@@ -261,17 +261,19 @@ export const useRoutes = () => {
     }
   }, []);
 
+  const ROUTE_COMMISSION = 2000;
+
   const createRoute = async (routeData: Omit<Route, "id" | "created_at" | "updated_at">) => {
     try {
       setError(null);
 
-      // Validate driver approval status
       const driverId = routeData.driver_id;
+
+      // 1. Validate driver approval status
       const approvalStatus = await checkDriverApprovalStatus(driverId);
 
       if (!approvalStatus.canCreateRoutes) {
         let errorMsg = 'No puedes crear rutas. ';
-        
         if (!approvalStatus.isDriver) {
           errorMsg += 'Solo los conductores pueden crear rutas.';
         } else if (!approvalStatus.isVerified) {
@@ -279,11 +281,37 @@ export const useRoutes = () => {
         } else if (approvalStatus.pendingDocuments.length > 0) {
           errorMsg += `Faltan documentos por aprobar: ${approvalStatus.pendingDocuments.join(', ')}`;
         }
-
         throw new Error(errorMsg);
       }
 
-      // Create the route
+      // 2. Verificar saldo del conductor
+      const { data: profile, error: balanceError } = await supabase
+        .from('profiles')
+        .select('balance')
+        .eq('id', driverId)
+        .single();
+
+      if (balanceError) throw balanceError;
+
+      const currentBalance = profile?.balance ?? 0;
+      if (currentBalance < ROUTE_COMMISSION) {
+        const err = new Error(
+          `Necesitas $${ROUTE_COMMISSION.toLocaleString('es-CO')} para publicar un viaje.\nTu saldo actual es $${currentBalance.toLocaleString('es-CO')}.`
+        );
+        (err as any).code = 'INSUFFICIENT_BALANCE';
+        throw err;
+      }
+
+      // 3. Descontar comisión
+      const { error: deductError } = await supabase
+        .from('profiles')
+        .update({ balance: currentBalance - ROUTE_COMMISSION })
+        .eq('id', driverId)
+        .eq('balance', currentBalance);
+
+      if (deductError) throw deductError;
+
+      // 4. Crear la ruta
       const { data, error } = await supabase
         .from("routes")
         .insert([routeData])
@@ -291,20 +319,31 @@ export const useRoutes = () => {
         .single();
 
       if (error) {
+        // Reembolsar si falla la creación
+        await supabase
+          .from('profiles')
+          .update({ balance: currentBalance })
+          .eq('id', driverId);
+
         if (isMissingColumnError(error, 'vehicle_type')) {
           const { vehicle_type, ...routeDataWithoutType } = routeData as any;
+          // Volver a descontar y reintentar sin vehicle_type
+          await supabase.from('profiles').update({ balance: currentBalance - ROUTE_COMMISSION }).eq('id', driverId);
           const { data: fallbackData, error: fallbackInsertError } = await supabase
             .from("routes")
             .insert([routeDataWithoutType])
             .select()
             .single();
-
-          if (fallbackInsertError) throw fallbackInsertError;
+          if (fallbackInsertError) {
+            await supabase.from('profiles').update({ balance: currentBalance }).eq('id', driverId);
+            throw fallbackInsertError;
+          }
           return fallbackData;
         }
 
         throw error;
       }
+
       return data;
     } catch (err: any) {
       const message = err.message || "Error creating route";

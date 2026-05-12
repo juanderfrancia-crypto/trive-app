@@ -27,7 +27,7 @@ export default function BookingScreen() {
   const navigation = useNavigation<any>()
   const { selectedRoute, bookingData, user, authUser, setBookingData } = useAppStore()
   const { createBooking, reservePendingBookings, finalizePendingBookings, releasePendingBookings, loading } = useBookings()
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card'>('cash')
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'digital'>('cash')
   const [selectedDropoffOption, setSelectedDropoffOption] = useState<'final' | 'custom'>('final')
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])
@@ -37,6 +37,7 @@ export default function BookingScreen() {
   const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success')
   const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
   const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
+  const [driverPaymentMethods, setDriverPaymentMethods] = useState<any[]>([])
 
   useEffect(() => {
     if (!selectedRoute?.driver_id) return
@@ -52,6 +53,12 @@ export default function BookingScreen() {
         const vPhoto = (selectedRoute as any).vehicle_photo_url || data?.vehicle_photo_url
         if (vPhoto) setVehiclePhotoUrl(vPhoto)
       })
+    supabase
+      .from('driver_payment_methods')
+      .select('*')
+      .eq('driver_id', selectedRoute.driver_id)
+      .eq('is_active', true)
+      .then(({ data }) => { if (isMounted && data) setDriverPaymentMethods(data) })
     return () => { isMounted = false }
   }, [selectedRoute?.driver_id])
 
@@ -157,7 +164,7 @@ export default function BookingScreen() {
         if (__DEV__) console.log('✅ Dropoff point actualizado en bookings')
 
         // Ahora finalizar con la RPC (preservará los dropoff_point que acabamos de establecer)
-        results = await finalizePendingBookings(pendingBookingIds, 'cash')
+        results = await finalizePendingBookings(pendingBookingIds, paymentMethod)
       } else {
         const bookingPromises = seat_numbers.map((seatNum: number) =>
           createBooking(
@@ -490,20 +497,44 @@ export default function BookingScreen() {
             </View>
             <Ionicons name="cash-outline" size={24} color={paymentMethod === 'cash' ? COLORS.primary : COLORS.textSecondary} />
             <Text style={[styles.paymentText, paymentMethod === 'cash' && styles.paymentTextActive]}>
-              Pago en efectivo
+              Efectivo
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.paymentOption, styles.paymentOptionDisabled]}
-            disabled
+            style={[styles.paymentOption, paymentMethod === 'digital' && styles.paymentOptionActive, driverPaymentMethods.length === 0 && styles.paymentOptionDisabled]}
+            onPress={() => driverPaymentMethods.length > 0 && setPaymentMethod('digital')}
+            disabled={driverPaymentMethods.length === 0}
           >
-            <View style={styles.paymentRadio} />
-            <Ionicons name="card-outline" size={24} color={COLORS.textSecondary} />
-            <Text style={[styles.paymentText, styles.paymentTextDisabled]}>
-              Tarjeta (próximamente)
+            <View style={[styles.paymentRadio, paymentMethod === 'digital' && styles.paymentRadioSelected]}>
+              {paymentMethod === 'digital' && <View style={styles.paymentRadioInner} />}
+            </View>
+            <Ionicons name="phone-portrait-outline" size={24} color={paymentMethod === 'digital' ? COLORS.primary : COLORS.textSecondary} />
+            <Text style={[styles.paymentText, paymentMethod === 'digital' && styles.paymentTextActive, driverPaymentMethods.length === 0 && styles.paymentTextDisabled]}>
+              Pago digital{driverPaymentMethods.length === 0 ? ' (conductor sin configurar)' : ''}
             </Text>
           </TouchableOpacity>
+
+          {/* Info de pago digital del conductor */}
+          {paymentMethod === 'digital' && driverPaymentMethods.length > 0 && (
+            <View style={styles.digitalInfoBox}>
+              <Text style={styles.digitalInfoTitle}>Paga directamente al conductor:</Text>
+              {driverPaymentMethods.map((m: any) => {
+                const colors: Record<string, string> = { nequi: '#6C1FC6', daviplata: '#E31E24', bancolombia: '#B8970A' }
+                const labels: Record<string, string> = { nequi: 'Nequi', daviplata: 'Daviplata', bancolombia: 'Bancolombia' }
+                return (
+                  <View key={m.id} style={styles.digitalMethodRow}>
+                    <View style={[styles.digitalMethodDot, { backgroundColor: colors[m.type] ?? COLORS.primary }]} />
+                    <View>
+                      <Text style={styles.digitalMethodLabel}>{labels[m.type] ?? m.type}</Text>
+                      <Text style={styles.digitalMethodPhone}>{m.phone_number}</Text>
+                      <Text style={styles.digitalMethodHolder}>{m.account_holder}</Text>
+                    </View>
+                  </View>
+                )
+              })}
+            </View>
+          )}
         </LinearGradient>
 
         {/* Price Summary */}
@@ -976,6 +1007,16 @@ const styles = StyleSheet.create({
   paymentTextDisabled: {
     color: COLORS.textSecondary,
   },
+  digitalInfoBox: {
+    marginTop: 12, backgroundColor: '#F8F9FF', borderRadius: 10,
+    borderWidth: 1, borderColor: `${COLORS.primary}25`, padding: 12, gap: 10,
+  },
+  digitalInfoTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.3 },
+  digitalMethodRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  digitalMethodDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5 },
+  digitalMethodLabel: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  digitalMethodPhone: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
+  digitalMethodHolder: { fontSize: 12, color: COLORS.textSecondary },
 
   // Price Card
   priceCard: {

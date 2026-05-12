@@ -81,7 +81,7 @@ export default function AboutTriveScreen() {
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactLabel}>Correo Electrónico</Text>
-                <Text style={styles.contactValue}>info@trive.com</Text>
+                <Text style={styles.contactValue}>privacy@trive.co</Text>
               </View>
             </TouchableOpacity>
 
@@ -101,7 +101,7 @@ export default function AboutTriveScreen() {
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactLabel}>Teléfono</Text>
-                <Text style={styles.contactValue}>+57 1 2345 6789</Text>
+                <Text style={styles.contactValue}>+57 300 577 2967</Text>
               </View>
             </TouchableOpacity>
           </View>

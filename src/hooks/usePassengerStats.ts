@@ -29,7 +29,6 @@ export const usePassengerStats = (passengerId?: string) => {
 
     try {
       const now = Date.now();
-      if (loading) return;
       if (inFlightRef.current) return inFlightRef.current;
       if (lastLoadedAtRef.current && now - lastLoadedAtRef.current < STALE_MS) return;
 
@@ -81,7 +80,7 @@ export const usePassengerStats = (passengerId?: string) => {
       inFlightRef.current = null;
       setLoading(false);
     }
-  }, [passengerId, loading]);
+  }, [passengerId]);
 
   // Cargar stats cuando el componente monta o cuando cambia passengerId
   useEffect(() => {

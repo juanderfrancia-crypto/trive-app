@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, ImageBackground, Modal,
+  ActivityIndicator, Image, ImageBackground, Modal, TextInput, KeyboardAvoidingView, Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -34,6 +34,9 @@ export default function ProfileScreen() {
 
   const [isDriver, setIsDriver]           = useState(() => user?.role === 'driver')
   const [isLoading, setIsLoading]         = useState(false)
+  const [editNameVisible, setEditNameVisible] = useState(false)
+  const [newName, setNewName]             = useState('')
+  const [savingName, setSavingName]       = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadingVehiclePhoto, setUploadingVehiclePhoto] = useState(false)
   const [shouldLogout, setShouldLogout]   = useState(false)
@@ -194,6 +197,23 @@ export default function ProfileScreen() {
     finally { setIsLoading(false) }
   }
 
+  // ── Name edit ─────────────────────────────────────────────────────────────
+  const openEditName = () => { setNewName(user?.name || ''); setEditNameVisible(true) }
+
+  const handleSaveName = async () => {
+    if (!newName.trim() || newName.trim().length < 2) return
+    if (!user?.id) return
+    try {
+      setSavingName(true)
+      const { error } = await supabase.from('profiles').update({ name: newName.trim() }).eq('id', user.id)
+      if (error) throw error
+      useAppStore.getState().setUser({ ...user, name: newName.trim() })
+      setEditNameVisible(false)
+      showToast('Nombre actualizado')
+    } catch { showToast('No se pudo guardar el nombre', 'error') }
+    finally { setSavingName(false) }
+  }
+
   // ── Photo ──────────────────────────────────────────────────────────────────
   const handleProfilePhotoUpload = async () => {
     try {
@@ -264,19 +284,16 @@ export default function ProfileScreen() {
       activeOpacity={0.85}
     >
       {uploadingPhoto
-        ? <View style={[s.avatarBg, { borderRadius: RADIUS.lg }]}><ActivityIndicator color="#fff" /></View>
+        ? <View style={[s.avatarBg, { width: size, height: size, borderRadius: RADIUS.lg }]}><ActivityIndicator color="#fff" /></View>
         : avatarUri
           ? <Image source={{ uri: avatarUri }} style={{ width: size, height: size, borderRadius: RADIUS.lg }} />
-          : <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} style={[s.avatarBg, { borderRadius: RADIUS.lg }]}>
+          : <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} style={[s.avatarBg, { width: size, height: size, borderRadius: RADIUS.lg }]}>
               <Text style={[s.avatarInitial, { fontSize: size * 0.35 }]}>{initials}</Text>
             </LinearGradient>
       }
       {showBadge && (
         <View style={s.avatarBadge}>
-          {isDriver
-            ? <Ionicons name="checkmark-circle" size={18} color={COLORS.accentLight} />
-            : <Ionicons name="settings" size={13} color="#fff" />
-          }
+          <Ionicons name="camera" size={13} color="#fff" />
         </View>
       )}
     </TouchableOpacity>
@@ -289,7 +306,10 @@ export default function ProfileScreen() {
       <View style={pv.profileRow}>
         <AvatarCircle size={72} />
         <View style={pv.profileInfo}>
-          <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
+          <TouchableOpacity style={pv.nameRow} onPress={openEditName} activeOpacity={0.7}>
+            <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
+            <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
+          </TouchableOpacity>
           <View style={pv.premiumBadge}>
             <Ionicons name="star" size={11} color="#92400E" />
             <Text style={pv.premiumText}>{membershipLabel}</Text>
@@ -318,9 +338,12 @@ export default function ProfileScreen() {
       <View style={s.section}>
         <View style={pv.statsRow}>
           <TouchableOpacity style={pv.statCard} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.8}>
-            <View style={pv.statIcon}><Ionicons name="time-outline" size={24} color={COLORS.accentLight} /></View>
-            <Text style={pv.statTitle}>Mis Viajes</Text>
-            <Text style={pv.statSub}>{passengerStats?.totalTrips ?? 0} completados</Text>
+            <ImageBackground source={require('../../assets/banners/viajesp.png')} style={pv.statCardBg} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.lg }}>
+              <View style={pv.statCardOverlay} pointerEvents="none" />
+              <View style={pv.statIcon}><Ionicons name="time-outline" size={24} color="#fff" /></View>
+              <Text style={pv.statTitleW}>Mis Viajes</Text>
+              <Text style={pv.statSubW}>{passengerStats?.totalTrips ?? 0} completados</Text>
+            </ImageBackground>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -328,53 +351,27 @@ export default function ProfileScreen() {
             onPress={() => setChatsListVisible(true)}
             activeOpacity={0.8}
           >
-            <View style={[pv.statIcon, { position: 'relative' }]}>
-              <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.accentLight} />
-              {totalUnread > 0 && (
-                <View style={pv.chatBadge}>
-                  <Text style={pv.chatBadgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={pv.statTitle}>Mis Chats</Text>
-            <Text style={pv.statSub}>
-              {activeBookings.length > 0
-                ? `${activeBookings.length} activo${activeBookings.length !== 1 ? 's' : ''}`
-                : 'Sin chats activos'}
-            </Text>
+            <ImageBackground source={require('../../assets/banners/chats.png')} style={pv.statCardBg} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.lg }}>
+              <View style={pv.statCardOverlay} pointerEvents="none" />
+              <View style={[pv.statIcon, { position: 'relative' }]}>
+                <Ionicons name="chatbubble-ellipses-outline" size={24} color="#fff" />
+                {totalUnread > 0 && (
+                  <View style={pv.chatBadge}>
+                    <Text style={pv.chatBadgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={pv.statTitleW}>Mis Chats</Text>
+              <Text style={pv.statSubW}>
+                {activeBookings.length > 0
+                  ? `${activeBookings.length} activo${activeBookings.length !== 1 ? 's' : ''}`
+                  : 'Sin chats activos'}
+              </Text>
+            </ImageBackground>
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Métodos de pago */}
-      <View style={s.section}>
-        <Text style={s.sectionLabel}>MÉTODOS DE PAGO</Text>
-        <View style={s.menuCard}>
-          <TouchableOpacity style={pv.payRow} onPress={() => navigation.navigate('PaymentMethods')} activeOpacity={0.7}>
-            <View style={[pv.payIcon, { backgroundColor: '#FFE4EC' }]}>
-              <Ionicons name="wallet-outline" size={20} color="#E91E63" />
-            </View>
-            <View style={pv.payInfo}>
-              <Text style={pv.payName}>Nequi</Text>
-              <Text style={pv.paySub}>Principal</Text>
-            </View>
-            <Ionicons name="checkmark-circle" size={22} color={COLORS.accentLight} />
-          </TouchableOpacity>
-
-          <View style={s.divider} />
-
-          <TouchableOpacity style={pv.payRow} onPress={() => navigation.navigate('PaymentMethods')} activeOpacity={0.7}>
-            <View style={[pv.payIcon, { backgroundColor: '#F3F4F6' }]}>
-              <Ionicons name="cash-outline" size={20} color="#4B5563" />
-            </View>
-            <View style={pv.payInfo}>
-              <Text style={pv.payName}>Efectivo</Text>
-              <Text style={pv.paySub}>Pago al finalizar</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
-          </TouchableOpacity>
-        </View>
-      </View>
 
       {/* Centro de Ayuda */}
       <View style={s.section}>
@@ -412,8 +409,6 @@ export default function ProfileScreen() {
       : '—'
     const totalTrips = earnings?.completedTrips ?? profile?.total_trips ?? 0
     const monthEarnings = earnings?.thisMonthEarnings ?? 0
-    const bars = earnings?.weeklyBars ?? [0, 0, 0, 0, 0, 0, 0]
-    const peakBar = earnings?.peakBarIndex ?? -1
 
     return (
       <>
@@ -425,7 +420,10 @@ export default function ProfileScreen() {
               <Ionicons name="checkmark-circle" size={22} color="#FBBF24" />
             </View>
           </View>
-          <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
+          <TouchableOpacity style={dv.heroNameRow} onPress={openEditName} activeOpacity={0.7}>
+            <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
+            <Ionicons name="pencil-outline" size={14} color="rgba(255,255,255,0.6)" />
+          </TouchableOpacity>
           <View style={dv.conductorBadge}>
             <Text style={dv.conductorBadgeText}>CONDUCTOR VERIFICADO</Text>
           </View>
@@ -447,6 +445,33 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Billetera + Métodos de pago */}
+        <View style={s.section}>
+          <TouchableOpacity style={dv.walletBtn} onPress={() => navigation.navigate('Wallet' as never)} activeOpacity={0.8}>
+            <View style={dv.walletLeft}>
+              <Ionicons name="wallet-outline" size={20} color={COLORS.primary} />
+              <View>
+                <Text style={dv.walletLabel}>Mi Billetera</Text>
+                <Text style={dv.walletSub}>Saldo para publicar viajes</Text>
+              </View>
+            </View>
+            <View style={dv.walletRight}>
+              <Text style={dv.walletBalance}>${(user?.balance ?? 0).toLocaleString('es-CO')}</Text>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+            </View>
+          </TouchableOpacity>
+          <TouchableOpacity style={dv.walletBtn} onPress={() => navigation.navigate('DriverPaymentMethods' as never)} activeOpacity={0.8}>
+            <View style={dv.walletLeft}>
+              <Ionicons name="phone-portrait-outline" size={20} color="#6C1FC6" />
+              <View>
+                <Text style={dv.walletLabel}>Métodos de pago</Text>
+                <Text style={dv.walletSub}>Nequi y Daviplata</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+          </TouchableOpacity>
+        </View>
+
         {/* Ganancias del mes */}
         <View style={s.section}>
           <ImageBackground source={require('../../assets/banners/Ganancias.png')} style={dv.earningsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
@@ -455,24 +480,6 @@ export default function ProfileScreen() {
             <Text style={dv.earningsAmount}>
               ${monthEarnings.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Text>
-            {/* Bar chart */}
-            <View style={dv.barsRow}>
-              {bars.map((h, i) => (
-                <View key={i} style={dv.barWrap}>
-                  <View style={[
-                    dv.bar,
-                    {
-                      height: Math.max(3, 40 * h),
-                      backgroundColor: h === 0
-                        ? `${COLORS.primaryDark}20`
-                        : i === peakBar
-                          ? COLORS.primaryDark
-                          : `${COLORS.primaryDark}55`,
-                    },
-                  ]} />
-                </View>
-              ))}
-            </View>
             <TouchableOpacity style={dv.detailsBtn} onPress={() => navigation.navigate('Earnings')} activeOpacity={0.7}>
               <Text style={dv.detailsText}>Ver detalles</Text>
               <Ionicons name="arrow-forward" size={14} color={COLORS.accentLight} />
@@ -584,8 +591,20 @@ export default function ProfileScreen() {
                 <Text style={dv.vehiclePlate}>{driverVehicle.vehicle_plate}</Text>
               )}
               <View style={dv.vehicleStatus}>
-                <View style={dv.statusDot} />
-                <Text style={dv.statusText}>ESTADO: ÓPTIMO</Text>
+                {(() => {
+                  const docValues = Object.values(driverDocs)
+                  const hasExpired = docValues.some((d: any) => d.status === 'expired' || getExpiryStatus(d.expiry_date)?.isExpired)
+                  const hasPending = docValues.some((d: any) => d.status === 'pending' || d.status === 'verifying')
+                  const allVerified = docValues.length > 0 && docValues.every((d: any) => d.status === 'verified')
+                  const color = hasExpired ? COLORS.error : hasPending ? COLORS.warning : allVerified ? COLORS.success : COLORS.textTertiary
+                  const label = hasExpired ? 'DOC. VENCIDO' : hasPending ? 'EN VERIFICACIÓN' : allVerified ? 'ESTADO: ÓPTIMO' : 'SIN DOCUMENTOS'
+                  return (
+                    <>
+                      <View style={[dv.statusDot, { backgroundColor: color }]} />
+                      <Text style={[dv.statusText, { color }]}>{label}</Text>
+                    </>
+                  )
+                })()}
               </View>
             </View>
           </View>
@@ -717,6 +736,38 @@ export default function ProfileScreen() {
 
       <Toast visible={toastVisible} message={toastMessage} type={toastType} onHide={() => setToastVisible(false)} />
 
+      {/* Modal editar nombre */}
+      <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
+          <View style={nm.sheet}>
+            <Text style={nm.title}>Editar nombre</Text>
+            <TextInput
+              style={nm.input}
+              value={newName}
+              onChangeText={setNewName}
+              placeholder="Tu nombre completo"
+              placeholderTextColor={COLORS.textTertiary}
+              autoCapitalize="words"
+              autoFocus
+              maxLength={60}
+            />
+            <View style={nm.btnRow}>
+              <TouchableOpacity style={nm.cancelBtn} onPress={() => setEditNameVisible(false)}>
+                <Text style={nm.cancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[nm.saveBtn, (savingName || newName.trim().length < 2) && nm.saveBtnDisabled]}
+                onPress={handleSaveName}
+                disabled={savingName || newName.trim().length < 2}
+              >
+                {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={nm.saveText}>Guardar</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Modal lista de chats */}
       <Modal visible={chatsListVisible} animationType="slide" transparent onRequestClose={() => setChatsListVisible(false)}>
         <View style={cm.overlay}>
@@ -815,7 +866,7 @@ const s = StyleSheet.create({
   },
   divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 56 },
 
-  avatarWrap: { position: 'relative', borderWidth: 3, borderColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
+  avatarWrap: { position: 'relative', borderWidth: 3, borderColor: '#fff', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
   avatarBg:   { justifyContent: 'center', alignItems: 'center' },
   avatarInitial: { fontWeight: '800', color: '#fff' },
   avatarBadge: {
@@ -852,7 +903,8 @@ const pv = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   profileInfo: { flex: 1 },
-  name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4, marginBottom: 6 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
+  name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
   premiumBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
     backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4,
@@ -876,10 +928,8 @@ const pv = StyleSheet.create({
 
   statsRow: { flexDirection: 'row', gap: SPACING.md },
   statCard: {
-    flex: 1, backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
-    padding: SPACING.lg, gap: 6,
-    borderWidth: 1, borderColor: COLORS.borderLight,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3,
   },
   statIcon: {
     width: 44, height: 44, borderRadius: RADIUS.md,
@@ -887,8 +937,12 @@ const pv = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 4,
   },
+  statCardBg: { flex: 1, padding: SPACING.lg, gap: 6, minHeight: 120 },
+  statCardOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.42)', borderRadius: RADIUS.lg },
   statTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   statSub:   { fontSize: 12, color: COLORS.textSecondary },
+  statTitleW: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  statSubW:   { fontSize: 12, color: 'rgba(255,255,255,0.8)' },
 
   payRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   payIcon: { width: 44, height: 44, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center' },
@@ -935,7 +989,8 @@ const dv = StyleSheet.create({
   hero: { padding: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl, alignItems: 'center', backgroundColor: COLORS.background },
   heroAvatar: { position: 'relative', marginBottom: SPACING.md },
   verifiedBadge: { position: 'absolute', bottom: -4, right: -4 },
-  heroName: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4, marginBottom: SPACING.sm },
+  heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.sm },
+  heroName: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
   conductorBadge: {
     backgroundColor: `${COLORS.primary}12`,
     paddingHorizontal: SPACING.md, paddingVertical: 5,
@@ -961,10 +1016,7 @@ const dv = StyleSheet.create({
   },
   earningsLabel:  { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.8)', letterSpacing: 1, marginBottom: SPACING.sm },
   earningsAmount: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1, marginBottom: SPACING.lg },
-  barsRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 5, height: 44, marginBottom: SPACING.md },
-  barWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  bar:     { width: '100%', borderRadius: 4 },
-  detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end' },
+  detailsBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-end', marginTop: SPACING.lg },
   detailsText: { fontSize: 13, fontWeight: '700', color: 'rgba(255,255,255,0.9)' },
 
   actionRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
@@ -1055,6 +1107,16 @@ const dv = StyleSheet.create({
     paddingVertical: 12, alignItems: 'center',
   },
   updateDocText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  walletBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    borderWidth: 1, borderColor: COLORS.borderLight,
+  },
+  walletLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  walletRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  walletLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  walletSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
+  walletBalance: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
   settingsBtn: {
     marginTop: SPACING.sm,
     borderRadius: RADIUS.md,
@@ -1082,6 +1144,28 @@ const dv = StyleSheet.create({
   routeStatusTextDone: { color: COLORS.success },
   emptyRoutes: { alignItems: 'center', paddingVertical: SPACING.xl, gap: SPACING.sm },
   emptyRoutesText: { fontSize: 14, color: COLORS.textSecondary },
+})
+
+// ── Edit name modal styles ────────────────────────────────────────────────────
+const nm = StyleSheet.create({
+  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
+  sheet: {
+    position: 'absolute', bottom: 0, left: 0, right: 0,
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
+    padding: SPACING.xl, paddingBottom: 40, gap: SPACING.lg,
+  },
+  title:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  input:  {
+    height: 52, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight,
+    paddingHorizontal: SPACING.lg, fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surface,
+  },
+  btnRow: { flexDirection: 'row', gap: SPACING.md },
+  cancelBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight, justifyContent: 'center', alignItems: 'center' },
+  cancelText: { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary },
+  saveBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+  saveBtnDisabled: { opacity: 0.45 },
+  saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 })
 
 // ── Chats modal styles ────────────────────────────────────────────────────────

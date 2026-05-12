@@ -21,7 +21,7 @@ export default function TermsOfServiceScreen() {
           <View style={{ width: 28 }} />
         </View>
 
-        <Text style={s.company}>Trive Mobility Colombia SAS</Text>
+        <Text style={s.company}>Trive Technologies SAS</Text>
         <Text style={s.date}>Última actualización: 3 de mayo de 2026</Text>
 
         <Section title="1. Aceptación de los términos">
@@ -29,7 +29,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="2. Naturaleza del servicio">
-          Trive Mobility Colombia SAS opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
+          Trive Technologies SAS opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
           Trive no es una empresa de transporte público, privado colectivo ni individual, ni presta servicios de taxi o similares. Los trayectos publicados corresponden a viajes que los conductores ya tienen planeado realizar, en los cuales ofrecen puestos disponibles a otros usuarios para compartir gastos de desplazamiento.
         </Section>
 
@@ -63,7 +63,8 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="7. Tarifas y pagos">
-          Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. La forma de pago se acuerda entre conductor y pasajero según las opciones disponibles en la Plataforma. Trive no cobra comisión por los trayectos en la versión actual del servicio.
+          Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. El pago se acuerda entre conductor y pasajero a través de los métodos disponibles en la Plataforma (Nequi, Daviplata o efectivo).{'\n\n'}
+          La publicación de cada viaje tiene un costo fijo de $2.000 que se descuenta automáticamente de la billetera del conductor dentro de la Plataforma. Dicho valor cubre el servicio de intermediación tecnológica y no constituye comisión sobre el precio del trayecto.
         </Section>
 
         <Section title="8. Cancelaciones">
@@ -89,7 +90,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="11. Propiedad intelectual">
-          Todos los derechos sobre la marca Trive, su diseño, código fuente y contenidos de la Plataforma pertenecen a Trive Mobility Colombia SAS. Queda prohibida su reproducción, distribución o uso no autorizado.
+          Todos los derechos sobre la marca Trive, su diseño, código fuente y contenidos de la Plataforma pertenecen a Trive Technologies SAS. Queda prohibida su reproducción, distribución o uso no autorizado.
         </Section>
 
         <Section title="12. Modificaciones">

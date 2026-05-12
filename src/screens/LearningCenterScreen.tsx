@@ -86,26 +86,25 @@ export default function LearningCenterScreen() {
         '4. Establece el precio por pasajero',
         '5. Selecciona el número de asientos disponibles',
         '6. Añade detalles especiales (paradas, preferencias, etc)',
-        '7. Publica el viaje',
+        '7. Publica el viaje (se descuentan $2.000 de tu billetera automáticamente)',
         '8. Espera a que se confirmen los pasajeros'
       ],
       expanded: false
     },
     {
       id: '5',
-      title: 'Métodos de Pago Seguros',
+      title: 'Métodos de Pago Disponibles',
       category: 'Seguridad',
-      duration: '6 min',
-      icon: 'card-outline',
-      description: 'Conoce las formas seguras de pagar en Trive',
+      duration: '4 min',
+      icon: 'cash-outline',
+      description: 'Conoce las formas de pago aceptadas en Trive',
       steps: [
-        '1. Todos los pagos se procesan a través de Stripe',
-        '2. Puedes pagar con tarjeta de crédito o débito',
-        '3. Online Banking: Transferencia bancaria en tiempo real',
-        '4. Billetera Digital: Saldo acumulado en tu cuenta',
-        '5. Todos los datos están encriptados (PCI DSS)',
-        '6. No guardamos información completa de tarjetas',
-        '7. Puedes descargar comprobantes de pago'
+        '1. Los métodos de pago disponibles son: Nequi, Daviplata y efectivo',
+        '2. El método se acuerda directamente con el conductor al reservar',
+        '3. Nequi y Daviplata: el pasajero transfiere al número del conductor',
+        '4. Efectivo: se paga al inicio o al final del trayecto según acuerdo',
+        '5. Guarda el comprobante de transferencia como respaldo del pago',
+        '6. Ante cualquier duda sobre el pago, contacta a soporte Trive'
       ],
       expanded: false
     },
@@ -303,7 +302,7 @@ export default function LearningCenterScreen() {
 
           <View style={styles.tipCard}>
             <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Como conductor, recibe pagos semanales automáticos en tu cuenta bancaria</Text>
+            <Text style={styles.tipText}>Como conductor, recuerda que publicar cada viaje descuenta $2.000 de tu billetera Trive. Mantén saldo suficiente para publicar rutas sin interrupciones</Text>
           </View>
         </View>
 

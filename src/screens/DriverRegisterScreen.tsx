@@ -257,7 +257,18 @@ export default function DriverRegisterScreen() {
       setPricePerSeat('')
       setRouteVia('')
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Error al crear la ruta. Intenta de nuevo.')
+      if ((err as any).code === 'INSUFFICIENT_BALANCE') {
+        Alert.alert(
+          'Saldo insuficiente 💳',
+          err.message + '\n\nRecarga tu billetera para poder publicar viajes.',
+          [
+            { text: 'Ahora no', style: 'cancel' },
+            { text: 'Recargar saldo', onPress: () => navigation.navigate('Wallet' as never) },
+          ]
+        )
+      } else {
+        Alert.alert('Error', err.message || 'Error al crear la ruta. Intenta de nuevo.')
+      }
     } finally {
       setSubmittingRoute(false)
     }

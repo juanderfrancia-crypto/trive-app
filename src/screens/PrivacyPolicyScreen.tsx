@@ -21,12 +21,12 @@ export default function PrivacyPolicyScreen() {
           <View style={{ width: 28 }} />
         </View>
 
-        <Text style={s.company}>Trive Mobility Colombia SAS</Text>
+        <Text style={s.company}>Trive Technologies SAS</Text>
         <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
         <Text style={s.date}>Última actualización: 3 de mayo de 2026</Text>
 
         <Section title="1. Responsable del tratamiento">
-          <B>Trive Mobility Colombia SAS</B>{'\n'}
+          <B>Trive Technologies SAS</B>{'\n'}
           Ciudad: Cali, Colombia{'\n'}
           Correo: privacy@trive.co
         </Section>

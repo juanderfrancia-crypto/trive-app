@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Alert } from "react-native";
+import { useState, useEffect, useRef } from "react";
+import { Alert, AppState, AppStateStatus } from "react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore } from "../store/useAppStore";
@@ -17,8 +17,11 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { setUser: setAppUser, setAuthUser } = useAppStore();
+  const profileChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const currentSessionRef = useRef<Session | null>(null)
 
   const restoreSession = async (currentSession: Session | null) => {
+    currentSessionRef.current = currentSession
     setSession(currentSession);
     setAuthUser(currentSession?.user ?? null);
     setUser(currentSession?.user ?? null);
@@ -51,6 +54,7 @@ export const useAuth = () => {
           avatar_url: profile.avatar_url,
           membership_type: profile.membership_type || 'free',
           membership_expiry: profile.membership_expiry,
+          balance: profile.balance ?? 0,
         });
       } else {
         const userName = currentSession.user.user_metadata?.full_name || "Usuario";
@@ -89,6 +93,9 @@ export const useAuth = () => {
 
       await registerUserSession(currentSession.user.id);
 
+      // Suscripción Realtime al perfil del usuario
+      subscribeToProfile(currentSession.user.id)
+
       // Registrar push token en background — no bloquea ni falla el login
       getPushNotificationToken()
         .then((token) => {
@@ -124,7 +131,7 @@ export const useAuth = () => {
 
     initializeSession();
 
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' && !_manualLogout && !_sessionExpiredAlertPending) {
         _sessionExpiredAlertPending = true
         Alert.alert(
@@ -135,14 +142,64 @@ export const useAuth = () => {
       }
       if (event === 'SIGNED_OUT') {
         _manualLogout = false
+        // Limpiar suscripción de perfil al cerrar sesión
+        if (profileChannelRef.current) {
+          supabase.removeChannel(profileChannelRef.current)
+          profileChannelRef.current = null
+        }
+      }
+      if (event === 'SIGNED_IN' && session?.user) {
+        subscribeToProfile(session.user.id)
       }
       restoreSession(session);
     });
 
+    // Realtime: recarga perfil cuando la app vuelve del background
+    const handleAppState = (next: AppStateStatus) => {
+      if (next === 'active' && currentSessionRef.current?.user) {
+        restoreSession(currentSessionRef.current)
+      }
+    }
+    const appStateSub = AppState.addEventListener('change', handleAppState)
+
     return () => {
       data?.subscription?.unsubscribe();
+      appStateSub.remove()
+      if (profileChannelRef.current) {
+        supabase.removeChannel(profileChannelRef.current)
+        profileChannelRef.current = null
+      }
     };
   }, []);
+
+  const subscribeToProfile = (userId: string) => {
+    // Si ya hay un canal activo para este usuario, no crear otro
+    if (profileChannelRef.current) return
+
+    const channel = supabase
+      .channel(`profile-live:${userId}:${Date.now()}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
+        (payload) => {
+          const p = payload.new as any
+          setAppUser({
+            id: p.id,
+            name: p.name,
+            email: p.email,
+            phone: p.phone,
+            role: p.role,
+            rating: p.rating,
+            avatar_url: p.avatar_url,
+            membership_type: p.membership_type || 'free',
+            membership_expiry: p.membership_expiry,
+            balance: p.balance ?? 0,
+          })
+        }
+      )
+      .subscribe()
+    profileChannelRef.current = channel
+  }
 
   const signInWithOTP = async (phone: string) => {
     try {

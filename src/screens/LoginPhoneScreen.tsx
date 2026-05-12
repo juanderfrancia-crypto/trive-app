@@ -25,7 +25,7 @@ import OfflineBanner from '../components/OfflineBanner'
 import Toast from '../components/Toast'
 
 type Method = 'phone' | 'email'
-type Step = 'input' | 'otp'
+type Step = 'input' | 'otp' | 'name'
 
 export default function LoginPhoneScreen() {
   const navigation = useNavigation()
@@ -37,9 +37,11 @@ export default function LoginPhoneScreen() {
 
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [tempUser, setTempUser] = useState<any>(null)
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -110,26 +112,21 @@ export default function LoginPhoneScreen() {
       setIsSubmitting(true)
       const data = await verifyOTP(formatPhone(phone), otp)
       if (data?.user) {
-        const { data: profile, error: fetchError } = await (await import('../services/supabase')).supabase
+        const { data: profile } = await (await import('../services/supabase')).supabase
           .from('profiles').select('*').eq('id', data.user.id).maybeSingle()
 
-        if (fetchError && fetchError.code !== 'PGRST116') {
-          errorHandler.handleSupabaseError(fetchError, 'fetch_profile_phone', { userId: data.user.id })
-          return
-        }
-
-        if (profile) {
+        if (profile && profile.name && profile.name !== 'Usuario') {
+          // Usuario existente con nombre real → loguear directamente
           setUser({ id: profile.id, name: profile.name, email: profile.email, phone: profile.phone, role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
+          setAuthUser(data.user)
+          otpGuard.recordSuccess()
+          await logLogin(data.user.id)
         } else {
-          const userEmail = data.user.email || `${formatPhone(phone)}@sms.local`
-          const { data: insertedProfile, error: insertError } = await (await import('../services/supabase')).supabase
-            .from('profiles').insert([{ id: data.user.id, name: data.user.user_metadata?.full_name || 'Usuario', email: userEmail, phone: formatPhone(phone), role: 'passenger' }]).select().single()
-          if (insertError) { errorHandler.handleSupabaseError(insertError, 'create_profile_phone', {}); return }
-          setUser({ id: insertedProfile.id, name: insertedProfile.name, email: insertedProfile.email, phone: insertedProfile.phone, role: insertedProfile.role, rating: insertedProfile.rating || 0, balance: insertedProfile.balance || 0, membership_type: insertedProfile.membership_type || 'free', membership_expiry: insertedProfile.membership_expiry || null })
+          // Usuario nuevo (sin perfil o sin nombre real) → pedir nombre
+          setTempUser(data.user)
+          otpGuard.recordSuccess()
+          setStep('name')
         }
-        setAuthUser(data.user)
-        otpGuard.recordSuccess()
-        await logLogin(data.user.id)
       }
     } catch (err: any) {
       if (err.message?.includes('Network') || err.message?.includes('Failed to fetch')) {
@@ -141,6 +138,28 @@ export default function LoginPhoneScreen() {
         otpGuard.recordFailure()
         errorHandler.handle(err, ErrorType.AUTH, ErrorSeverity.MEDIUM, true, { context: 'otp_verify_error' })
       }
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleCompleteName = async () => {
+    if (!name.trim() || name.trim().length < 2) { setErrors({ name: 'Ingresa tu nombre completo' }); return }
+    try {
+      setIsSubmitting(true)
+      const supabaseClient = (await import('../services/supabase')).supabase
+      const userEmail = tempUser?.email || `${formatPhone(phone)}@sms.local`
+      const { data: savedProfile, error } = await supabaseClient
+        .from('profiles')
+        .upsert({ id: tempUser.id, name: name.trim(), email: userEmail, phone: formatPhone(phone), role: 'passenger' }, { onConflict: 'id' })
+        .select()
+        .single()
+      if (error) { errorHandler.handleSupabaseError(error, 'create_profile_name', {}); return }
+      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email, phone: savedProfile.phone, role: savedProfile.role, rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: savedProfile.membership_type || 'free', membership_expiry: savedProfile.membership_expiry || null })
+      setAuthUser(tempUser)
+      await logLogin(tempUser.id)
+    } catch (err: any) {
+      errorHandler.handle(err, ErrorType.UNKNOWN, ErrorSeverity.MEDIUM, true, { context: 'complete_profile_name' })
     } finally {
       setIsSubmitting(false)
     }
@@ -206,8 +225,49 @@ export default function LoginPhoneScreen() {
             <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           </View>
 
-          {/* ── OTP step ── */}
-          {step === 'otp' ? (
+          {/* ── Name step ── */}
+          {step === 'name' ? (
+            <View style={s.section}>
+              <View style={s.otpHeader}>
+                <View style={s.otpIconCircle}>
+                  <Ionicons name="person-outline" size={28} color={COLORS.primary} />
+                </View>
+                <Text style={s.heading}>¿Cómo te llamas?</Text>
+                <Text style={s.subheading}>Ingresa tu nombre para completar tu registro en Trive</Text>
+              </View>
+
+              <View style={s.inputGroup}>
+                <Text style={s.label}>Nombre completo</Text>
+                <View style={[s.input, errors.name && s.inputError]}>
+                  <Ionicons name="person-outline" size={20} color={errors.name ? COLORS.error : COLORS.textSecondary} />
+                  <TextInput
+                    style={s.inputText}
+                    placeholder="Ej: Carlos Rodríguez"
+                    placeholderTextColor={COLORS.textTertiary}
+                    autoCapitalize="words"
+                    value={name}
+                    onChangeText={(t) => { setName(t); if (errors.name) setErrors({}) }}
+                    editable={!isSubmitting}
+                    autoFocus
+                  />
+                </View>
+                {errors.name && <Text style={s.errorText}>{errors.name}</Text>}
+              </View>
+
+              <TouchableOpacity
+                style={[s.btn, isSubmitting && s.btnDisabled]}
+                onPress={handleCompleteName}
+                disabled={isSubmitting}
+                activeOpacity={0.88}
+              >
+                {isSubmitting
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={s.btnText}>Continuar</Text>
+                }
+              </TouchableOpacity>
+            </View>
+
+          ) : step === 'otp' ? (
             <View style={s.section}>
               <View style={s.otpHeader}>
                 <View style={s.otpIconCircle}>
