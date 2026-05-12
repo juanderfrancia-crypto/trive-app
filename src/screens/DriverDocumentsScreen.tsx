@@ -78,8 +78,10 @@ const getStatusInfo = (status: string) => {
       return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'time-outline', bgOpacity: '20' }
     case 'rejected':
       return { label: 'Rechazado', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
+    case 'expired':
+      return { label: 'Vencido', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
     default:
-      return { label: 'Desconocido', color: COLORS.textSecondary, icon: 'help-circle-outline', bgOpacity: '20' }
+      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'time-outline', bgOpacity: '20' }
   }
 }
 
@@ -509,7 +511,7 @@ export default function DriverDocumentsScreen() {
                       </Text>
                     </View>
 
-                    {(status === 'pending' || status === 'rejected' || status === 'verified') && (
+                    {(status === 'pending' || status === 'rejected' || status === 'verified' || status === 'expired') && (
                       <TouchableOpacity
                         style={[
                           styles.uploadBtn, 
@@ -535,7 +537,7 @@ export default function DriverDocumentsScreen() {
                 </View>
 
                 {/* Expiry Date Info for Verified Documents */}
-                {status === 'verified' && !DOCUMENTS_WITHOUT_EXPIRY.includes(doc.documentType) && (
+                {(status === 'verified' || status === 'expired') && !DOCUMENTS_WITHOUT_EXPIRY.includes(doc.documentType) && (
                   <View style={styles.expiryInfoContainer}>
                     {(() => {
                       const expiryDate = getDocumentExpiryDate(doc.documentType)

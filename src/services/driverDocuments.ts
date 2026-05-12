@@ -451,3 +451,61 @@ export async function rejectDocument(
     throw error
   }
 }
+
+/**
+ * Conteo rápido de documentos pendientes — para el badge del admin
+ */
+export async function getPendingDocumentsCount(): Promise<number> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return 0
+    const { data } = await supabase.rpc('get_pending_documents_for_admin')
+    return (data as any[])?.length ?? 0
+  } catch {
+    return 0
+  }
+}
+
+/**
+ * Documentos ya procesados (verificados / rechazados) — para el historial admin
+ */
+export async function getProcessedDocumentsForAdmin(): Promise<(DriverDocument & { driver_name?: string })[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Usuario no autenticado')
+
+    const { data: adminProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (adminProfile?.role !== 'support') {
+      throw new Error('No tienes permiso para acceder a esta información')
+    }
+
+    const { data, error } = await supabase.rpc('get_processed_documents_for_admin')
+    if (error) throw error
+
+    return (data as any[])?.map((doc) => ({
+      id:               doc.id,
+      driver_id:        doc.driver_id,
+      document_type:    doc.document_type,
+      file_path:        doc.file_path,
+      file_name:        doc.file_name,
+      file_size:        doc.file_size,
+      file_type:        doc.file_type,
+      status:           doc.status,
+      rejection_reason: doc.rejection_reason,
+      expiry_date:      doc.expiry_date,
+      uploaded_at:      doc.uploaded_at,
+      verified_at:      doc.verified_at,
+      updated_at:       doc.updated_at,
+      created_at:       doc.created_at || doc.uploaded_at,
+      driver_name:      doc.driver_name || 'Desconocido',
+    })) || []
+  } catch (error) {
+    console.error('Error in getProcessedDocumentsForAdmin:', error)
+    throw error
+  }
+}
