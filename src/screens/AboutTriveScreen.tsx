@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -25,9 +25,7 @@ export default function AboutTriveScreen() {
 
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <View style={styles.logoContainer}>
-            <Ionicons name="car-sport" size={64} color={COLORS.primary} />
-          </View>
+          <Image source={require('../../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
           <Text style={styles.appName}>Trive</Text>
           <Text style={styles.version}>Versión 1.0.0</Text>
         </View>
@@ -151,22 +149,18 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xxxl,
     gap: SPACING.md,
   },
-  logoContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.md,
+  logoImage: {
+    width: 200,
+    height: 200,
   },
   appName: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.textPrimary,
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
   version: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
+    fontSize: 11,
+    color: COLORS.textTertiary,
   },
 
   // Sections
