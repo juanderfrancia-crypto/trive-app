@@ -55,6 +55,7 @@ export const useAuth = () => {
           membership_type: profile.membership_type || 'free',
           membership_expiry: profile.membership_expiry,
           balance: profile.balance ?? 0,
+          is_admin: profile.is_admin ?? false,
         });
       } else {
         const userName = currentSession.user.user_metadata?.full_name || "Usuario";
@@ -195,6 +196,7 @@ export const useAuth = () => {
             membership_type: p.membership_type || 'free',
             membership_expiry: p.membership_expiry,
             balance: p.balance ?? 0,
+            is_admin: p.is_admin ?? false,
           })
         }
       )
