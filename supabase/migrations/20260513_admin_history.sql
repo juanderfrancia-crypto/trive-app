@@ -22,9 +22,9 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  -- Solo usuarios con role = 'support' pueden llamar esta función
+  -- Solo usuarios con is_admin = true pueden llamar esta función
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'support'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.is_admin = true
   ) THEN
     RAISE EXCEPTION 'Acceso denegado';
   END IF;

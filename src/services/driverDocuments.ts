@@ -320,11 +320,11 @@ export async function getPendingDocumentsForVerification(): Promise<(DriverDocum
     // Check if user is admin/support
     const { data: adminProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('is_admin')
       .eq('id', user.id)
       .single()
 
-    if (adminProfile?.role !== 'support') {
+    if (!adminProfile?.is_admin) {
       throw new Error('No tienes permiso para acceder a esta información')
     }
 
@@ -374,11 +374,11 @@ export async function approveDocument(
     // Check if user is admin/support
     const { data: adminProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('is_admin')
       .eq('id', user.id)
       .single()
 
-    if (adminProfile?.role !== 'support') {
+    if (!adminProfile?.is_admin) {
       throw new Error('No tienes permiso para verificar documentos')
     }
 
@@ -420,11 +420,11 @@ export async function rejectDocument(
     // Check if user is admin/support
     const { data: adminProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('is_admin')
       .eq('id', user.id)
       .single()
 
-    if (adminProfile?.role !== 'support') {
+    if (!adminProfile?.is_admin) {
       throw new Error('No tienes permiso para rechazar documentos')
     }
 
@@ -476,11 +476,11 @@ export async function getProcessedDocumentsForAdmin(): Promise<(DriverDocument &
 
     const { data: adminProfile } = await supabase
       .from('profiles')
-      .select('role')
+      .select('is_admin')
       .eq('id', user.id)
       .single()
 
-    if (adminProfile?.role !== 'support') {
+    if (!adminProfile?.is_admin) {
       throw new Error('No tienes permiso para acceder a esta información')
     }
 
