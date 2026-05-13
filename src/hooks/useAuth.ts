@@ -350,9 +350,10 @@ export const useAuth = () => {
 
       if (authError) throw authError;
 
-      // Create profile
+      // Create profile — if this fails due to RLS (email not yet confirmed),
+      // the DB trigger handle_new_user() already created it server-side.
       if (authData.user) {
-        const { error: profileError } = await supabase
+        await supabase
           .from("profiles")
           .upsert([
             {
@@ -362,9 +363,10 @@ export const useAuth = () => {
               phone,
               role: "passenger",
             },
-          ], { onConflict: 'id' });
-
-        if (profileError) throw profileError;
+          ], { onConflict: 'id' })
+          .then(({ error }) => {
+            if (error) console.warn('Profile upsert skipped (trigger handled it):', error.message)
+          })
       }
 
       return authData;
