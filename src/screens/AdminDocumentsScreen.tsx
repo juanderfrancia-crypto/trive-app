@@ -477,15 +477,15 @@ export default function AdminDocumentsScreen() {
               <ActivityIndicator size="large" color={COLORS.primary} />
               <Text style={s.loadingText}>Cargando documento...</Text>
             </View>
-          ) : documentUrl ? (
-            isPdf(selectedDoc!) ? (
+          ) : (documentUrl && selectedDoc) ? (
+            isPdf(selectedDoc) ? (
               <View style={s.pdfPreview}>
                 <Ionicons name="document-text" size={72} color={COLORS.primary} />
                 <Text style={s.pdfPreviewTitle}>Documento PDF</Text>
-                <Text style={s.pdfPreviewSub}>{selectedDoc?.file_name}</Text>
+                <Text style={s.pdfPreviewSub}>{selectedDoc.file_name}</Text>
                 <TouchableOpacity
                   style={s.pdfOpenBtn}
-                  onPress={() => WebBrowser.openBrowserAsync(documentUrl!)}
+                  onPress={() => WebBrowser.openBrowserAsync(documentUrl)}
                   activeOpacity={0.8}
                 >
                   <Ionicons name="open-outline" size={18} color="#fff" />
