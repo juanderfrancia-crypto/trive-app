@@ -310,6 +310,12 @@ export default function ProfileScreen() {
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
+          {user?.email && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{user.email}</Text>
+          )}
+          {user?.phone && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
+          )}
           <View style={pv.premiumBadge}>
             <Ionicons name="star" size={11} color="#92400E" />
             <Text style={pv.premiumText}>{membershipLabel}</Text>
@@ -424,6 +430,12 @@ export default function ProfileScreen() {
             <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
+          {user?.email && (
+            <Text style={dv.heroContact}>{user.email}</Text>
+          )}
+          {user?.phone && (
+            <Text style={dv.heroContact}>{user.phone}</Text>
+          )}
           <View style={dv.conductorBadge}>
             <Text style={dv.conductorBadgeText}>CONDUCTOR VERIFICADO</Text>
           </View>
@@ -920,6 +932,7 @@ const pv = StyleSheet.create({
   profileInfo: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
   name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
+  contactInfo: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   premiumBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
     backgroundColor: '#FEF3C7', paddingHorizontal: 10, paddingVertical: 4,
@@ -1006,6 +1019,7 @@ const dv = StyleSheet.create({
   verifiedBadge: { position: 'absolute', bottom: -4, right: -4 },
   heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.sm },
   heroName: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
+  heroContact: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   conductorBadge: {
     backgroundColor: `${COLORS.primary}12`,
     paddingHorizontal: SPACING.md, paddingVertical: 5,

@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   FlatList,
   RefreshControl,
+  Linking,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -354,7 +355,11 @@ export default function ActiveTripsScreen() {
           <TouchableOpacity
             style={styles.callButton}
             onPress={() => {
-              // TODO: Implementar llamada/WhatsApp
+              if (trip.driverPhone) {
+                Linking.openURL(`tel:${trip.driverPhone}`)
+              } else {
+                Alert.alert('Sin teléfono', 'El conductor no tiene número de teléfono registrado.')
+              }
             }}
           >
             <Ionicons name="call" size={16} color={COLORS.primary} />
