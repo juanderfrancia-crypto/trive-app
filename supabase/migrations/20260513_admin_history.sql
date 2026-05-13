@@ -31,9 +31,9 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    dd.id,
+    dd.id AS id,
     dd.driver_id,
-    COALESCE(p.full_name, p.email, 'Desconocido')::text AS driver_name,
+    COALESCE(p.name, p.email, 'Desconocido')::text AS driver_name,
     dd.document_type,
     dd.file_path,
     dd.file_name,
