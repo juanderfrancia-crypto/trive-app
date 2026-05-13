@@ -24,7 +24,7 @@ AS $$
 BEGIN
   -- Solo usuarios con role = 'support' pueden llamar esta función
   IF NOT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'support'
+    SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role = 'support'
   ) THEN
     RAISE EXCEPTION 'Acceso denegado';
   END IF;
