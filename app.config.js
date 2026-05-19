@@ -1,5 +1,3 @@
-const { withAndroidGoogleServicesFile } = require('@expo/config-plugins');
-
 module.exports = ({ config }) => {
   return {
     ...config,
@@ -10,6 +8,8 @@ module.exports = ({ config }) => {
     plugins: [
       ...(config.plugins ?? []),
       'expo-secure-store',
+      '@react-native-firebase/app',
+      '@react-native-firebase/crashlytics',
     ],
   };
 };

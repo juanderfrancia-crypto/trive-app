@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useMemo, useState } from 'react'
 import {
   View,
   Text,
@@ -8,8 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Image,
 } from 'react-native'
+import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -21,7 +21,8 @@ import { useAppStore } from '../store/useAppStore'
 export default function AvailableRidesScreen() {
   const navigation = useNavigation()
   const { rides, loading, error, refetch } = useAvailableRides()
-  const { setSelectedRoute, authUser } = useAppStore()
+  const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
+  const authUser         = useAppStore((s) => s.authUser)
   const [refreshing, setRefreshing] = useState(false)
 
   // 🔄 Refetch whenever the screen is focused (e.g., returning from SeatSelection)
@@ -52,21 +53,16 @@ export default function AvailableRidesScreen() {
     navigation.navigate('SeatSelection' as never)
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-  }
+  const formatTime = useCallback((dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+  }, [])
 
-  const getMinutesUntilDeparture = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = date.getTime() - now.getTime()
-    const diffMins = Math.round(diffMs / 60000)
-    
+  const getMinutesUntilDeparture = useCallback((dateString: string) => {
+    const diffMins = Math.round((new Date(dateString).getTime() - Date.now()) / 60000)
     if (diffMins < 60) return `en ${diffMins} min`
     if (diffMins < 1440) return `en ${Math.round(diffMins / 60)}h`
     return `en ${Math.round(diffMins / 1440)}d`
-  }
+  }, [])
 
   const renderRideCard = ({ item: ride }: any) => (
     <View style={styles.rideCard}>
@@ -116,7 +112,7 @@ export default function AvailableRidesScreen() {
       {/* Driver Info */}
       <View style={styles.driverInfo}>
         {ride.driver_photo ? (
-          <Image source={{ uri: ride.driver_photo }} style={styles.driverPhoto} />
+          <Image source={{ uri: ride.driver_photo }} style={styles.driverPhoto} contentFit="cover" cachePolicy="memory-disk" />
         ) : (
           <View style={[styles.driverPhoto, styles.driverPhotoPlaceholder]}>
             <Ionicons name="person" size={24} color={COLORS.textTertiary} />

@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar,
+  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar, Modal, ScrollView,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useNotificationCenter } from '../context/NotificationsContext'
@@ -31,6 +32,7 @@ export default function NotificationsScreen() {
   const [selectedCategory, setSelectedCategory] = useState<NotificationCategory>('all')
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [detailNotif, setDetailNotif] = useState<NotificationWithSender | null>(null)
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -161,101 +163,118 @@ export default function NotificationsScreen() {
     const isUnread = !item.is_read
     const isSelected = selectedIds.includes(item.id)
     const isChat = item.type === 'message'
+    const isBooking = ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(item.type)
 
     const handlePress = () => {
-      if (selectionMode) {
-        toggleSelect(item.id)
-        return
-      }
+      if (selectionMode) { toggleSelect(item.id); return }
       if (isUnread) markAsRead(item.id)
-
-      const audience = item.data?.audience
-      const isDriverNotif = audience === 'drivers_only'
-      const isPassengerNotif = audience === 'passengers_only'
-
-      switch (item.type) {
-        case 'booking':
-        case 'trip_update':
-          if (isDriverNotif) {
-            navigation.navigate('DriverPanel' as never)
-          } else if (isPassengerNotif) {
-            navigation.navigate('Main' as never, { screen: 'Search' } as never)
-          }
-          break
-        case 'review_pending':
-          navigation.navigate('Profile' as never)
-          break
-        default:
-          break
-      }
+      setDetailNotif(item)
     }
+
+    const origin      = item.data?.origin      as string | undefined
+    const destination = item.data?.destination as string | undefined
+    const seatNumbers = item.data?.seat_numbers as number[] | undefined
+    const driverName  = item.data?.driver_name  as string | undefined
 
     return (
       <TouchableOpacity
-        style={[
-          styles.notificationCard,
-          isUnread && styles.notificationCardUnread,
-          isSelected && styles.notificationCardSelected,
-        ]}
+        style={[styles.card, isUnread && styles.cardUnread, isSelected && styles.cardSelected]}
         onPress={handlePress}
-        onLongPress={() => {
-          if (!selectionMode) setSelectionMode(true)
-          toggleSelect(item.id)
-        }}
-        activeOpacity={0.8}
+        onLongPress={() => { if (!selectionMode) setSelectionMode(true); toggleSelect(item.id) }}
+        activeOpacity={0.92}
       >
-        {isUnread && <View style={styles.leftUnreadBar} />}
+        {/* Unread dot */}
+        {isUnread && <View style={styles.unreadDot} />}
+
+        {/* Selection checkbox */}
         {selectionMode && (
           <View style={styles.selectIndicator}>
             <Ionicons
               name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
               size={20}
-              color={isSelected ? COLORS.primary : COLORS.textTertiary}
+              color={isSelected ? '#1230B8' : COLORS.textTertiary}
             />
           </View>
         )}
 
-        <View style={styles.cardBody}>
-          <View style={[styles.iconContainer, { backgroundColor: style.bgColor }]}>
-            {isChat ? (
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{style.initials || 'U'}</Text>
-              </View>
-            ) : (
-              <Ionicons name={style.icon as any} size={20} color={style.color} />
-            )}
-          </View>
+        <View style={styles.cardRow}>
+          {/* Icon */}
+          {isBooking ? (
+            <LinearGradient
+              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={styles.iconWrap}
+            >
+              <Ionicons name={style.icon as any} size={18} color="#fff" />
+            </LinearGradient>
+          ) : isChat ? (
+            <LinearGradient
+              colors={['#1535BE', '#1230B8']}
+              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              style={styles.iconWrap}
+            >
+              <Text style={styles.avatarText}>{style.initials || 'U'}</Text>
+            </LinearGradient>
+          ) : (
+            <View style={[styles.iconWrap, { backgroundColor: style.bgColor }]}>
+              <Ionicons name={style.icon as any} size={18} color={style.color} />
+            </View>
+          )}
 
-          <View style={styles.headerContent}>
-            <View style={styles.titleRow}>
-              <Text style={[styles.categoryBadge, !isUnread && styles.categoryBadgeRead]}>
-                {style.category.toUpperCase()}
-              </Text>
+          {/* Content */}
+          <View style={styles.content}>
+            <View style={styles.contentTop}>
+              <View style={[styles.categoryPill, isBooking && styles.categoryPillBlue]}>
+                <Text style={[styles.categoryText, isBooking && styles.categoryTextBlue]}>
+                  {style.category.toUpperCase()}
+                </Text>
+              </View>
               <Text style={styles.timeText}>{formatDate(item.created_at)}</Text>
             </View>
 
-            {item.type === 'message' && item.senderName ? (
-              <Text style={styles.messageBlock}>
-                <Text style={[styles.senderName, !isUnread && styles.senderNameRead]}>{item.senderName}: </Text>
-                <Text style={[styles.messageBody, isUnread ? styles.messageBodyUnread : styles.messageBodyRead]}>
-                  {item.message}
-                </Text>
+            {isChat && item.senderName ? (
+              <Text style={styles.messageText} numberOfLines={2}>
+                <Text style={styles.senderName}>{item.senderName}: </Text>
+                {item.message}
               </Text>
             ) : (
-              <Text style={[styles.messageBody, isUnread ? styles.messageBodyUnread : styles.messageBodyRead]}>
+              <Text style={[styles.messageText, !isUnread && styles.messageTextRead]} numberOfLines={3}>
                 {item.message}
               </Text>
             )}
 
+            {/* Info de reserva si está disponible */}
+            {isBooking && (origin || seatNumbers || driverName) && (
+              <View style={styles.bookingInfo}>
+                {origin && destination && (
+                  <View style={styles.routeMiniRow}>
+                    <Ionicons name="navigate-outline" size={11} color="#1230B8" />
+                    <Text style={styles.routeMiniText} numberOfLines={1}>
+                      {origin} → {destination}
+                    </Text>
+                  </View>
+                )}
+                {seatNumbers && seatNumbers.length > 0 && (
+                  <View style={styles.routeMiniRow}>
+                    <Ionicons name="person-outline" size={11} color="#1230B8" />
+                    <Text style={styles.routeMiniText}>
+                      Asiento{seatNumbers.length > 1 ? 's' : ''}: {seatNumbers.join(', ')}
+                    </Text>
+                  </View>
+                )}
+                {driverName && (
+                  <View style={styles.routeMiniRow}>
+                    <Ionicons name="car-outline" size={11} color="#1230B8" />
+                    <Text style={styles.routeMiniText}>{driverName}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             {item.type === 'review_pending' && (
-              <View style={styles.ratingRow}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Ionicons
-                    key={star}
-                    name={star <= 4 ? 'star-outline' : 'star-outline'}
-                    size={16}
-                    color={star <= 4 ? '#D4AF37' : '#D1D5DB'}
-                  />
+              <View style={styles.starsRow}>
+                {[1,2,3,4,5].map((s) => (
+                  <Ionicons key={s} name="star-outline" size={14} color="#D4AF37" />
                 ))}
               </View>
             )}
@@ -264,21 +283,16 @@ export default function NotificationsScreen() {
 
         {!selectionMode && (
           <TouchableOpacity
-            style={styles.inlineDelete}
+            style={styles.deleteBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => {
               Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
                 { text: 'Cancelar', style: 'cancel' },
-                {
-                  text: 'Eliminar',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await deleteNotifications([item.id])
-                  },
-                },
+                { text: 'Eliminar', style: 'destructive', onPress: async () => { await deleteNotifications([item.id]) } },
               ])
             }}
           >
-            <Ionicons name="trash-outline" size={18} color={COLORS.textTertiary} />
+            <Ionicons name="trash-outline" size={15} color={COLORS.textTertiary} />
           </TouchableOpacity>
         )}
       </TouchableOpacity>
@@ -291,14 +305,14 @@ export default function NotificationsScreen() {
         <View style={styles.headerRight}>
           {!!unreadCount && (
             <TouchableOpacity style={styles.headerIconBtn} onPress={markAllAsRead}>
-              <Ionicons name="checkmark-done-outline" size={20} color={COLORS.primary} />
+              <Ionicons name="checkmark-done-outline" size={20} color="#1230B8" />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-            <Ionicons name="trash-outline" size={20} color={COLORS.primary} />
+            <Ionicons name="trash-outline" size={20} color="#1230B8" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => setSelectionMode(true)}>
-            <Ionicons name="checkbox-outline" size={20} color={COLORS.primary} />
+            <Ionicons name="checkbox-outline" size={20} color="#1230B8" />
           </TouchableOpacity>
         </View>
       )
@@ -317,7 +331,7 @@ export default function NotificationsScreen() {
           <Ionicons name="trash-bin-outline" size={20} color={COLORS.error} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={exitSelection}>
-          <Ionicons name="close-outline" size={22} color={COLORS.textSecondary} />
+          <Ionicons name="close-outline" size={22} color="#1230B8" />
         </TouchableOpacity>
       </View>
     )
@@ -333,25 +347,30 @@ export default function NotificationsScreen() {
 
     return (
       <View style={styles.filterContainer}>
-        {categories.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.filterButton,
-              selectedCategory === cat.id && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedCategory(cat.id)}
-          >
-            <Text
-              style={[
-                styles.filterText,
-                selectedCategory === cat.id && styles.filterTextActive,
-              ]}
+        {categories.map((cat) => {
+          const isActive = selectedCategory === cat.id
+          return (
+            <TouchableOpacity
+              key={cat.id}
+              onPress={() => setSelectedCategory(cat.id)}
+              style={styles.filterButtonWrap}
             >
-              {cat.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              {isActive ? (
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={styles.filterButton}
+                >
+                  <Text style={[styles.filterText, styles.filterTextActive]}>{cat.label}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={styles.filterButton}>
+                  <Text style={styles.filterText}>{cat.label}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )
+        })}
       </View>
     )
   }
@@ -371,6 +390,22 @@ export default function NotificationsScreen() {
       <Text style={styles.footerEmptyText}>No hay más notificaciones</Text>
     </View>
   )
+
+  // Variables para el modal de detalle (calculadas en el componente, no en un sub-componente)
+  const _dStyle       = detailNotif ? getCategoryStyle(detailNotif.type, detailNotif.senderName) : null
+  const _dIsBooking   = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(detailNotif.type) : false
+  const _dIsChat      = detailNotif?.type === 'message'
+  const _dOrigin      = detailNotif?.data?.origin        as string | undefined
+  const _dDest        = detailNotif?.data?.destination   as string | undefined
+  const _dSeats       = detailNotif?.data?.seat_numbers  as number[] | undefined
+  const _dDriver      = detailNotif?.data?.driver_name   as string | undefined
+  const _dPassenger   = detailNotif?.data?.passenger_name as string | undefined
+  const _dPrice       = detailNotif?.data?.price         as number | undefined
+  const _dTripDate    = detailNotif?.data?.trip_date     as string | undefined
+  const _dBookingId   = detailNotif?.data?.booking_id    as string | undefined
+  const _dFmtDate     = _dTripDate
+    ? new Date(_dTripDate).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+    : null
 
   /** Desde pestaña Alertas: ir al Inicio. Desde pantalla apilada (ej. Viajes→alertas): volver atrás. */
   const headerCanGoBack = navigation.canGoBack()
@@ -392,7 +427,7 @@ export default function NotificationsScreen() {
           <Ionicons
             name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
             size={24}
-            color={COLORS.primary}
+            color="#1230B8"
           />
         </TouchableOpacity>
 
@@ -431,6 +466,140 @@ export default function NotificationsScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+      <Modal
+        visible={!!detailNotif}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDetailNotif(null)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setDetailNotif(null)}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
+            <View style={styles.modalHandle} />
+
+            {detailNotif && _dStyle && (
+              <>
+                <View style={styles.modalHeader}>
+                  {_dIsBooking ? (
+                    <LinearGradient
+                      colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      style={styles.modalIcon}
+                    >
+                      <Ionicons name={_dStyle.icon as any} size={22} color="#fff" />
+                    </LinearGradient>
+                  ) : _dIsChat ? (
+                    <LinearGradient
+                      colors={['#1535BE', '#1230B8']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      style={styles.modalIcon}
+                    >
+                      <Text style={styles.modalAvatarText}>{_dStyle.initials || 'U'}</Text>
+                    </LinearGradient>
+                  ) : (
+                    <View style={[styles.modalIcon, { backgroundColor: _dStyle.bgColor }]}>
+                      <Ionicons name={_dStyle.icon as any} size={22} color={_dStyle.color} />
+                    </View>
+                  )}
+                  <View style={styles.modalHeaderText}>
+                    <View style={[styles.categoryPill, _dIsBooking && styles.categoryPillBlue]}>
+                      <Text style={[styles.categoryText, _dIsBooking && styles.categoryTextBlue]}>
+                        {_dStyle.category.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={styles.modalTime}>{formatDate(detailNotif.created_at)}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setDetailNotif(null)}>
+                    <Ionicons name="close" size={18} color={COLORS.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} style={styles.modalBody}>
+                  <Text style={styles.modalMessage}>
+                    {_dIsChat && detailNotif.senderName
+                      ? <><Text style={styles.modalSenderName}>{detailNotif.senderName}: </Text>{detailNotif.message}</>
+                      : detailNotif.message}
+                  </Text>
+
+                  {(_dIsBooking || _dIsChat) && (_dOrigin || _dDest || _dSeats || _dDriver || _dPassenger || _dPrice !== undefined || _dFmtDate) && (
+                    <LinearGradient
+                      colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                      style={styles.modalInfoCard}
+                    >
+                      {_dPassenger && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="person-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Pasajero</Text>
+                          <Text style={styles.modalInfoValue}>{_dPassenger}</Text>
+                        </View>
+                      )}
+                      {_dDriver && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="car-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Conductor</Text>
+                          <Text style={styles.modalInfoValue}>{_dDriver}</Text>
+                        </View>
+                      )}
+                      {_dOrigin && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="radio-button-on-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Origen</Text>
+                          <Text style={styles.modalInfoValue}>{_dOrigin}</Text>
+                        </View>
+                      )}
+                      {_dDest && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="location-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Destino</Text>
+                          <Text style={styles.modalInfoValue}>{_dDest}</Text>
+                        </View>
+                      )}
+                      {_dSeats && _dSeats.length > 0 && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="grid-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Asiento{_dSeats.length > 1 ? 's' : ''}</Text>
+                          <Text style={styles.modalInfoValue}>{_dSeats.join(', ')}</Text>
+                        </View>
+                      )}
+                      {_dPrice !== undefined && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="cash-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Valor</Text>
+                          <Text style={styles.modalInfoValue}>${_dPrice.toLocaleString('es-CO')}</Text>
+                        </View>
+                      )}
+                      {_dFmtDate && (
+                        <View style={styles.modalInfoRow}>
+                          <Ionicons name="calendar-outline" size={15} color="#1230B8" />
+                          <Text style={styles.modalInfoLabel}>Fecha</Text>
+                          <Text style={styles.modalInfoValue}>{_dFmtDate}</Text>
+                        </View>
+                      )}
+                      {_dBookingId && (
+                        <View style={[styles.modalInfoRow, { marginTop: 4, borderTopWidth: 1, borderTopColor: '#D6E0FF', paddingTop: 8 }]}>
+                          <Ionicons name="receipt-outline" size={13} color={COLORS.textTertiary} />
+                          <Text style={[styles.modalInfoLabel, { color: COLORS.textTertiary, fontSize: 10 }]}>ID reserva</Text>
+                          <Text style={[styles.modalInfoValue, { color: COLORS.textTertiary, fontSize: 10 }]}>{_dBookingId}</Text>
+                        </View>
+                      )}
+                    </LinearGradient>
+                  )}
+
+                  {detailNotif.type === 'review_pending' && (
+                    <View style={styles.starsRow}>
+                      {[1,2,3,4,5].map((s) => (
+                        <Ionicons key={s} name="star-outline" size={20} color="#D4AF37" />
+                      ))}
+                    </View>
+                  )}
+
+                  <View style={{ height: 24 }} />
+                </ScrollView>
+              </>
+            )}
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   )
 }
@@ -438,7 +607,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#F8F9FC',
+    backgroundColor: '#F4F6FF',
   },
   header: {
     flexDirection: 'row',
@@ -446,9 +615,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#F8F9FC',
+    backgroundColor: '#F4F6FF',
     borderBottomWidth: 1,
-    borderBottomColor: '#E9EBF2',
+    borderBottomColor: '#D6E0FF',
   },
   headerRight: {
     flexDirection: 'row',
@@ -461,29 +630,37 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
   },
   title: {
     ...TYPOGRAPHY.h4,
-    color: COLORS.primary,
+    color: '#0E2699',
     fontWeight: '800',
   },
+  // Filter chips
   filterContainer: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     gap: SPACING.sm,
   },
+  filterButtonWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   filterButton: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    ...SHADOWS.xs,
+    paddingVertical: 9,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  filterButtonActive: {
-    backgroundColor: COLORS.primary,
-  },
+  filterButtonActive: {},
   filterText: {
     ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textSecondary,
@@ -493,17 +670,20 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
   },
+  // Selection bar
   selectionBar: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.sm,
     borderRadius: 10,
-    backgroundColor: '#E7EEFF',
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   selectionText: {
     ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary,
+    color: '#0E2699',
     fontWeight: '700',
   },
   listContent: {
@@ -511,31 +691,33 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
     gap: SPACING.sm,
   },
-  notificationCard: {
-    backgroundColor: '#F9F9FA',
+  // Cards
+  card: {
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: SPACING.sm + 2,
+    padding: SPACING.md,
     borderWidth: 1,
-    borderColor: '#ECEDEF',
+    borderColor: '#E9EBF2',
     ...SHADOWS.xs,
     position: 'relative',
   },
-  notificationCardUnread: {
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
+  cardUnread: {
+    backgroundColor: '#F4F6FF',
+    borderColor: '#D6E0FF',
   },
-  notificationCardSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: '#EEF4FF',
+  cardSelected: {
+    borderColor: '#1230B8',
+    backgroundColor: '#EEF2FF',
   },
-  leftUnreadBar: {
+  unreadDot: {
     position: 'absolute',
-    left: -1,
-    top: 10,
-    bottom: 10,
-    width: 4,
-    borderRadius: 999,
-    backgroundColor: COLORS.primary,
+    top: 12,
+    right: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#1230B8',
+    zIndex: 2,
   },
   selectIndicator: {
     position: 'absolute',
@@ -543,68 +725,63 @@ const styles = StyleSheet.create({
     right: 12,
     zIndex: 3,
   },
-  cardBody: {
+  cardRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    paddingRight: 20,
+    paddingRight: 18,
   },
-  iconContainer: {
-    width: 42,
-    height: 42,
+  iconWrap: {
+    width: 44,
+    height: 44,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  avatarCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
   avatarText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 12,
   },
-  headerContent: {
+  content: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
-  titleRow: {
+  contentTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  categoryBadge: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.primary,
-    fontWeight: '800',
-    fontSize: 11,
-    lineHeight: 14,
+  categoryPill: {
+    backgroundColor: '#F0F0F5',
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
   },
-  categoryBadgeRead: {
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+  categoryPillBlue: {
+    backgroundColor: '#E4EBFF',
+  },
+  categoryText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textTertiary,
+    letterSpacing: 0.5,
+  },
+  categoryTextBlue: {
+    color: '#1230B8',
   },
   timeText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
   },
-  messageBlock: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  messageBody: {
-    fontSize: 15,
-    lineHeight: 22,
+  messageText: {
+    fontSize: 13,
+    lineHeight: 19,
     color: COLORS.textPrimary,
+    fontWeight: '600',
+    marginTop: 2,
   },
-  messageBodyUnread: {
-    fontWeight: '700',
-  },
-  messageBodyRead: {
+  messageTextRead: {
     fontWeight: '400',
     color: COLORS.textSecondary,
   },
@@ -612,21 +789,37 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.textPrimary,
   },
-  senderNameRead: {
-    fontWeight: '500',
-    color: COLORS.textSecondary,
+  bookingInfo: {
+    marginTop: 6,
+    gap: 3,
+    backgroundColor: '#F0F4FF',
+    borderRadius: 8,
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
   },
-  ratingRow: {
+  routeMiniRow: {
     flexDirection: 'row',
     gap: 4,
+    alignItems: 'center',
+  },
+  routeMiniText: {
+    fontSize: 11,
+    color: '#1230B8',
+    flex: 1,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 2,
     marginTop: 4,
   },
-  inlineDelete: {
+  deleteBtn: {
     position: 'absolute',
-    right: 8,
     bottom: 8,
-    padding: 8,
+    right: 8,
+    padding: 6,
   },
+  // States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -656,5 +849,101 @@ const styles = StyleSheet.create({
   footerEmptyText: {
     ...TYPOGRAPHY.body,
     color: COLORS.textTertiary,
+  },
+  // Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(10,18,60,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    maxHeight: '82%',
+  },
+  modalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D6E0FF',
+    alignSelf: 'center',
+    marginBottom: SPACING.md,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  modalIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  modalAvatarText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  modalHeaderText: {
+    flex: 1,
+    gap: 4,
+  },
+  modalTime: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
+  },
+  modalCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBody: {
+    marginBottom: SPACING.sm,
+  },
+  modalMessage: {
+    fontSize: 15,
+    lineHeight: 23,
+    color: COLORS.textPrimary,
+    fontWeight: '500',
+    marginBottom: SPACING.md,
+  },
+  modalSenderName: {
+    fontWeight: '700',
+    color: '#0E2699',
+  },
+  modalInfoCard: {
+    borderRadius: 14,
+    padding: SPACING.md,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
+    marginBottom: SPACING.md,
+  },
+  modalInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  modalInfoLabel: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    width: 68,
+  },
+  modalInfoValue: {
+    fontSize: 13,
+    color: COLORS.textPrimary,
+    fontWeight: '500',
+    flex: 1,
   },
 })

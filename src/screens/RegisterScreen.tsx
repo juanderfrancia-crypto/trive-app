@@ -21,7 +21,8 @@ import { useAuth } from '../hooks/useAuth'
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const { setUser, setAuthUser } = useAppStore()
+  const setUser     = useAppStore((s) => s.setUser)
+  const setAuthUser = useAppStore((s) => s.setAuthUser)
   const { register, loading: authLoading, error: authError } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

@@ -30,7 +30,7 @@ const VEHICLE_TYPES = [
 export default function DriverRegisterScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
   const { createRoute, loading: routeLoading, error: routeError } = useRoutes()
 
   // Ruta campos - FECHA POR DEFECTO: MAÑANA

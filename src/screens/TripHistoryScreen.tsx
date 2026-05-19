@@ -47,7 +47,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default function TripHistoryScreen() {
   const navigation = useNavigation<any>()
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
 
   const [trips, setTrips] = useState<TripItem[]>([])
   const [loading, setLoading] = useState(false)

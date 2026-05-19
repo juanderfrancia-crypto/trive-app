@@ -11,6 +11,9 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "~2.2.0",
     "@react-native-community/netinfo": "~11.4.1",
+    "@react-native-firebase/analytics": "^24.0.0",
+    "@react-native-firebase/app": "^24.0.0",
+    "@react-native-firebase/crashlytics": "^24.0.0",
     "@react-navigation/bottom-tabs": "^7.15.9",
     "@react-navigation/drawer": "^7.1.4",
     "@react-navigation/native": "^7.2.2",
@@ -26,6 +29,7 @@
     "expo-device": "~8.0.10",
     "expo-document-picker": "~14.0.8",
     "expo-file-system": "~19.0.22",
+    "expo-image": "~3.0.11",
     "expo-image-picker": "~17.0.11",
     "expo-linear-gradient": "~15.0.8",
     "expo-local-authentication": "~17.0.8",

@@ -27,7 +27,8 @@ interface WalletTx {
 
 export default function WalletScreen() {
   const navigation = useNavigation()
-  const { user, setUser } = useAppStore()
+  const user    = useAppStore((s) => s.user)
+  const setUser = useAppStore((s) => s.setUser)
 
   const [balance, setBalance]         = useState<number>(user?.balance ?? 0)
   const [transactions, setTransactions] = useState<WalletTx[]>([])

@@ -101,8 +101,6 @@ export default function TravelPreferencesScreen() {
             setMusicPreference('quiet')
             setAcPreference('normal')
             setLuggageRestriction('moderate')
-            setNotificationsEnabled(true)
-            setPriceAlert('50000')
           },
         },
       ]

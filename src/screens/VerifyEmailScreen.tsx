@@ -33,7 +33,8 @@ export default function VerifyEmailScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const route = useRoute<RouteProp<RootParamList, 'VerifyEmail'>>()
-  const { setUser, setAuthUser } = useAppStore()
+  const setUser     = useAppStore((s) => s.setUser)
+  const setAuthUser = useAppStore((s) => s.setAuthUser)
   const { clearPendingVerification } = useAppStore.getState()
   const { confirmEmail, sendEmailVerification, loading: authLoading, error: authError } = useAuth()
 

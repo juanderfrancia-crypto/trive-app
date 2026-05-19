@@ -13,7 +13,8 @@ import { TripMessagesModal } from '../components/TripMessagesModal'
 
 export default function ScheduledTripsScreen() {
   const navigation = useNavigation<any>()
-  const { user, setSelectedRoute } = useAppStore()
+  const user             = useAppStore((s) => s.user)
+  const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const { getPassengerBookings, cancelBooking, loading: bookingsLoading } = useBookings()
   const [trips, setTrips] = useState<any[]>([])
   const [selectedTrip, setSelectedTrip] = useState<any>(null)

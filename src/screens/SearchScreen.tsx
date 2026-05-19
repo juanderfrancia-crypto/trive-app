@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  FlatList,
   ActivityIndicator,
   Image,
   Modal,
@@ -72,103 +73,122 @@ function DriverCard({
   const vehicleName   = [route.vehicle_make, route.vehicle_model].filter(Boolean).join(' ') || route.vehicle_type || 'Vehículo'
 
   return (
-    <View style={card.wrap}>
-      {/* Top row: foto (izq) | verificado + rating (der) */}
+    <LinearGradient
+      colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={card.wrap}
+    >
+      {/* Top row: [foto+nombre] | info central | rating */}
       <View style={card.topRow}>
-        <TouchableOpacity style={card.photoWrap} onPress={() => onDetails(route.driver_id)} activeOpacity={0.85}>
-          {route.driver_avatar_url ? (
-            <Image source={{ uri: route.driver_avatar_url }} style={card.photo} />
-          ) : (
-            <LinearGradient
-              colors={[COLORS.primaryDark, '#0a2a6e']}
-              style={card.photoPlaceholder}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            >
-              <Text style={card.photoInitials}>{initials}</Text>
-            </LinearGradient>
-          )}
-        </TouchableOpacity>
+        {/* Columna izquierda: foto arriba, nombre abajo */}
+        <View style={card.photoCol}>
+          <TouchableOpacity style={card.photoWrap} onPress={() => onDetails(route.driver_id)} activeOpacity={0.85}>
+            {route.driver_avatar_url ? (
+              <Image source={{ uri: route.driver_avatar_url }} style={card.photo} />
+            ) : (
+              <LinearGradient
+                colors={[COLORS.primaryDark, '#0a2a6e']}
+                style={card.photoPlaceholder}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <Text style={card.photoInitials}>{initials}</Text>
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
+          <Text style={card.driverName} numberOfLines={2} textBreakStrategy="simple">
+            {route.driver_name ?? 'Conductor'}
+          </Text>
+        </View>
 
-        {/* Centro: nombre + modelo + placa + preparando */}
+        {/* Centro: ruta + verificado + vehículo + rating */}
         <View style={card.topCenter}>
-          <Text style={card.driverName} numberOfLines={1}>{route.driver_name ?? 'Conductor'}</Text>
-          <View style={card.vehicleRow}>
+          <View style={card.routeRow}>
+            <Ionicons name="navigate" size={11} color={COLORS.primary} style={{ marginTop: 1 }} />
+            <Text style={card.routeText} numberOfLines={1}>
+              {route.origin} → {route.destination}
+            </Text>
+          </View>
+          <View style={card.verifiedBadge}>
+            <Ionicons name="checkmark-circle" size={10} color="#1D4ED8" />
+            <Text style={card.verifiedText}>VERIFICADO</Text>
+          </View>
+          <View style={card.vehicleRatingRow}>
             <Text style={card.vehicleName} numberOfLines={1}>{vehicleName}</Text>
             {route.vehicle_plate ? (
               <>
-                <Text style={card.vehicleDot}> • </Text>
+                <Text style={card.vehicleDot}>·</Text>
                 <View style={card.platePill}>
                   <Text style={card.plateText}>{route.vehicle_plate}</Text>
                 </View>
               </>
             ) : null}
-          </View>
-          {isPreparing && (
-            <View style={card.preparingBadge}>
-              <Text style={card.preparingText}>PREPARANDO SALIDA</Text>
+            <View style={card.ratingPill}>
+              <Ionicons name="star" size={11} color="#FBBF24" />
+              <Text style={card.ratingText}>{(route.driver_rating ?? 0).toFixed(1)}</Text>
             </View>
-          )}
-        </View>
-
-        {/* Derecha: verificado encima, rating debajo */}
-        <View style={card.topRight}>
-          <View style={card.verifiedBadge}>
-            <Ionicons name="checkmark-circle" size={12} color="#1D4ED8" />
-            <Text style={card.verifiedText}>VERIFICADO</Text>
-          </View>
-          <View style={card.ratingPill}>
-            <Ionicons name="star" size={13} color="#FBBF24" />
-            <Text style={card.ratingText}>{(route.driver_rating ?? 0).toFixed(1)}</Text>
           </View>
         </View>
       </View>
 
-      {/* Ocupación */}
-      <View style={card.info}>
-        {isAlmostFull && (
-          <Text style={card.almostFull}>¡CASI LLENO!</Text>
-        )}
-        <View style={card.occupancyRow}>
-          <Text style={card.occupancyLabel}>OCUPACIÓN</Text>
-          <Text style={card.occupancyCount}>
-            <Text style={[card.occupancyFraction, isFull && { color: COLORS.error }]}>
-              {occupied}/{total}
-            </Text>
-            {' '}cupos
-          </Text>
-        </View>
-        <View style={card.progressBg}>
-          <View
-            style={[
-              card.progressFill,
-              { width: `${pct}%` as any },
-              isAlmostFull && { backgroundColor: '#D97706' },
-              isFull && { backgroundColor: COLORS.error },
-            ]}
-          />
-        </View>
-      </View>
-
-      {/* Nota de ruta */}
-      {!!route.description && (
-        <View style={card.viaRow}>
-          <Ionicons name="git-branch-outline" size={13} color={COLORS.accent} />
-          <Text style={card.viaText} numberOfLines={2}>{route.description}</Text>
+      {/* Preparando salida — encima de la fila inferior */}
+      {isPreparing && (
+        <View style={card.preparingBadge}>
+          <Ionicons name="time-outline" size={11} color="#4B5563" />
+          <Text style={card.preparingText}>PREPARANDO SALIDA</Text>
         </View>
       )}
 
-      {/* Reserve button */}
-      <TouchableOpacity
-        style={[card.reserveBtn, isFull && card.reserveBtnDisabled]}
-        onPress={() => onReserve(route)}
-        disabled={isFull}
-        activeOpacity={0.85}
-      >
-        <Text style={[card.reserveText, isFull && card.reserveTextDisabled]}>
-          {isFull ? 'Sin puestos disponibles' : 'Reservar Cupo'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+      {/* Fila inferior: ocupación (izq) + [via + botón] (der) */}
+      <View style={card.bottomRow}>
+        <View style={card.occupancyWrap}>
+          {isAlmostFull && <Text style={card.almostFull}>¡CASI LLENO!</Text>}
+          <View style={card.occupancyRow}>
+            <Text style={card.occupancyLabel}>OCUPACIÓN</Text>
+            <Text style={card.occupancyCount}>
+              <Text style={[card.occupancyFraction, isFull && { color: COLORS.error }]}>
+                {occupied}/{total}
+              </Text>
+              {' '}cupos
+            </Text>
+          </View>
+          <View style={card.progressBg}>
+            <View
+              style={[
+                card.progressFill,
+                { width: `${pct}%` as any },
+                isAlmostFull && { backgroundColor: '#D97706' },
+                isFull && { backgroundColor: COLORS.error },
+              ]}
+            />
+          </View>
+        </View>
+
+        <View style={card.rightCol}>
+          {!!route.description && (
+            <View style={card.viaRow}>
+              <Ionicons name="git-branch-outline" size={11} color={COLORS.accent} />
+              <Text style={card.viaText} numberOfLines={2}>{route.description}</Text>
+            </View>
+          )}
+          <TouchableOpacity
+            style={[card.reserveBtn, isFull && card.reserveBtnDisabled]}
+            onPress={() => onReserve(route)}
+            disabled={isFull}
+            activeOpacity={0.85}
+          >
+            {isFull ? (
+              <Text style={[card.reserveText, card.reserveTextDisabled]}>Lleno</Text>
+            ) : (
+              <>
+                <Text style={card.reserveText}>Reservar</Text>
+                <Ionicons name="arrow-forward" size={12} color="#fff" />
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      </View>
+    </LinearGradient>
   )
 }
 
@@ -197,7 +217,8 @@ export default function SearchScreen() {
   const navigation = useNavigation()
   const routeNav   = useRoute()
   const { routes, loading, error, fetchRoutes } = useRoutes()
-  const { setSelectedRoute, user } = useAppStore()
+  const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
+  const user             = useAppStore((s) => s.user)
 
   const routeTransportType = useMemo(() => {
     if (routeNav.params && typeof routeNav.params === 'object' && 'transportType' in routeNav.params)
@@ -307,6 +328,44 @@ export default function SearchScreen() {
 
   const showLoading = loading && routes.length === 0
 
+  const renderCard = useCallback(({ item }: { item: Route }) => (
+    <DriverCard route={item} onReserve={handleSelectRoute} onDetails={handleOpenDetails} />
+  ), [handleSelectRoute, handleOpenDetails])
+
+  const listHeader = useMemo(() => (
+    showLoading ? (
+      <View style={s.center}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={s.centerText}>Buscando vehículos...</Text>
+      </View>
+    ) : error ? (
+      <View style={s.center}>
+        <View style={s.errorIcon}><Ionicons name="alert-circle-outline" size={40} color={COLORS.error} /></View>
+        <Text style={s.centerText}>{error}</Text>
+        <TouchableOpacity style={s.retryBtn} onPress={() => loadRoutes()}>
+          <Ionicons name="refresh" size={16} color="#fff" />
+          <Text style={s.retryText}>Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    ) : displayRoutes.length > 0 ? (
+      <Text style={s.resultCount}>{displayRoutes.length} vehículo{displayRoutes.length !== 1 ? 's' : ''} disponible{displayRoutes.length !== 1 ? 's' : ''}</Text>
+    ) : null
+  ), [showLoading, error, displayRoutes.length, loadRoutes])
+
+  const listEmpty = useMemo(() => (
+    !showLoading && !error ? (
+      <View style={s.center}>
+        <View style={s.emptyIcon}><Ionicons name="car-outline" size={48} color={COLORS.primary} /></View>
+        <Text style={s.emptyTitle}>No hay vehículos disponibles</Text>
+        <Text style={s.emptySub}>
+          {search || filter === 'available'
+            ? 'Intenta con otros criterios de búsqueda'
+            : 'Revisa de nuevo en unos minutos'}
+        </Text>
+      </View>
+    ) : null
+  ), [showLoading, error, search, filter])
+
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
@@ -360,7 +419,7 @@ export default function SearchScreen() {
             style={[s.chip, filter === 'available' && s.chipActive]}
             onPress={() => setFilter(filter === 'available' ? 'all' : 'available')}
           >
-            <Ionicons name="checkmark-circle" size={14} color={filter === 'available' ? '#fff' : COLORS.primary} />
+            <Ionicons name="checkmark-circle" size={14} color={filter === 'available' ? '#fff' : '#1230B8'} />
             <Text style={[s.chipText, filter === 'available' && s.chipTextActive]}>Con puestos</Text>
           </TouchableOpacity>
 
@@ -370,8 +429,8 @@ export default function SearchScreen() {
             const icons: Record<TransportFilter, string> = { all: 'grid', auto: 'car-sport', taxi: 'car', busetica: 'bus', buseta: 'bus' }
             const labels: Record<TransportFilter, string> = { all: 'Todos', auto: 'Auto', taxi: 'Taxi', busetica: 'Busetica', buseta: 'Buseta' }
             const activeColors: Record<TransportFilter, string> = {
-              all:      COLORS.primary,
-              auto:     COLORS.primary,
+              all:      '#1230B8',
+              auto:     '#1230B8',
               taxi:     '#F5C518',
               busetica: '#111111',
               buseta:   '#111111',
@@ -395,48 +454,19 @@ export default function SearchScreen() {
       </View>
 
       {/* ══ LIST ════════════════════════════════════════════════════════════ */}
-      <ScrollView
+      <FlatList
+        data={showLoading || error ? [] : displayRoutes}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCard}
         style={s.scroll}
         contentContainerStyle={s.scrollContent}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={listEmpty}
+        ListFooterComponent={<InfoCards />}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} colors={[COLORS.primary]} />}
-      >
-        {showLoading ? (
-          <View style={s.center}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={s.centerText}>Buscando vehículos...</Text>
-          </View>
-        ) : error ? (
-          <View style={s.center}>
-            <View style={s.errorIcon}><Ionicons name="alert-circle-outline" size={40} color={COLORS.error} /></View>
-            <Text style={s.centerText}>{error}</Text>
-            <TouchableOpacity style={s.retryBtn} onPress={() => loadRoutes()}>
-              <Ionicons name="refresh" size={16} color="#fff" />
-              <Text style={s.retryText}>Reintentar</Text>
-            </TouchableOpacity>
-          </View>
-        ) : displayRoutes.length === 0 ? (
-          <View style={s.center}>
-            <View style={s.emptyIcon}><Ionicons name="car-outline" size={48} color={COLORS.primary} /></View>
-            <Text style={s.emptyTitle}>No hay vehículos disponibles</Text>
-            <Text style={s.emptySub}>
-              {search || filter === 'available'
-                ? 'Intenta con otros criterios de búsqueda'
-                : 'Revisa de nuevo en unos minutos'}
-            </Text>
-          </View>
-        ) : (
-          <>
-            <Text style={s.resultCount}>{displayRoutes.length} vehículo{displayRoutes.length !== 1 ? 's' : ''} disponible{displayRoutes.length !== 1 ? 's' : ''}</Text>
-            {displayRoutes.map((r) => (
-              <DriverCard key={r.id} route={r} onReserve={handleSelectRoute} onDetails={handleOpenDetails} />
-            ))}
-          </>
-        )}
-
-        {/* Bottom info cards */}
-        <InfoCards />
-      </ScrollView>
+      />
 
       {/* ══ SORT MODAL ══════════════════════════════════════════════════════ */}
       <Modal visible={showSortModal} transparent animationType="fade" onRequestClose={() => setShowSortModal(false)}>
@@ -485,23 +515,27 @@ export default function SearchScreen() {
 // ── Card styles ───────────────────────────────────────────────────────────────
 const card = StyleSheet.create({
   wrap: {
-    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.xl,
     marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.09,
-    shadowRadius: 18,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: SPACING.lg,
-    paddingBottom: SPACING.sm,
+    padding: SPACING.md,
+    paddingBottom: SPACING.xs,
+    position: 'relative',
+  },
+  photoCol: {
+    alignItems: 'center',
+    width: 66,
+    gap: 4,
   },
   topCenter: {
     flex: 1,
@@ -509,101 +543,113 @@ const card = StyleSheet.create({
     gap: 3,
     paddingHorizontal: SPACING.sm,
   },
-  topRight: {
-    alignItems: 'flex-end',
-    gap: SPACING.sm,
-  },
+  topRight: {},
   photoWrap: {
-    width: 82, height: 82,
-    borderRadius: RADIUS.lg,
+    width: 62, height: 62,
+    borderRadius: RADIUS.md,
     overflow: 'hidden',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  photo: { width: 82, height: 82 },
+  photo: { width: 62, height: 62 },
   photoPlaceholder: {
-    width: 82, height: 82,
+    width: 62, height: 62,
     justifyContent: 'center', alignItems: 'center',
   },
   photoInitials: {
-    fontSize: 28, fontWeight: '800', color: '#fff', letterSpacing: -0.5,
+    fontSize: 22, fontWeight: '800', color: '#fff', letterSpacing: -0.5,
+  },
+  vehicleRatingRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 3, flex: 1,
   },
   ratingPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    marginLeft: 'auto',
     backgroundColor: COLORS.surface,
-    paddingHorizontal: SPACING.sm, paddingVertical: 5,
+    paddingHorizontal: 6, paddingVertical: 2,
     borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: COLORS.borderLight,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  ratingText: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary },
 
-  info: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md },
+  info: { paddingHorizontal: SPACING.md, paddingBottom: SPACING.sm },
 
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: 3, flexWrap: 'wrap' },
-  driverName: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3 },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
+  routeText: { flex: 1, fontSize: 13, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.2 },
+
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 2 },
+  driverName: { fontSize: 10, fontWeight: '600', color: COLORS.textSecondary, textAlign: 'center' },
   verifiedBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#EFF6FF', paddingHorizontal: 7, paddingVertical: 3,
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    alignSelf: 'flex-end',
+    backgroundColor: '#EFF6FF', paddingHorizontal: 5, paddingVertical: 2,
     borderRadius: RADIUS.full,
   },
-  verifiedText: { fontSize: 10, fontWeight: '700', color: '#1D4ED8', letterSpacing: 0.3 },
+  verifiedText: { fontSize: 9, fontWeight: '700', color: '#1D4ED8', letterSpacing: 0.2 },
 
-  vehicleRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 5, marginBottom: 0 },
-  vehicleName: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
-  vehicleDot: { fontSize: 13, color: COLORS.textTertiary },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  vehicleName: { fontSize: 11, color: COLORS.textTertiary, fontWeight: '500' },
+  vehicleDot: { fontSize: 11, color: COLORS.textTertiary },
   platePill: {
-    backgroundColor: '#EFF6FF', paddingHorizontal: 7, paddingVertical: 3,
+    backgroundColor: '#EFF6FF', paddingHorizontal: 5, paddingVertical: 1,
     borderRadius: RADIUS.sm,
   },
-  plateText: { fontSize: 12, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
+  plateText: { fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
   preparingBadge: {
-    backgroundColor: '#F3F4F6', paddingHorizontal: 7, paddingVertical: 3,
-    borderRadius: RADIUS.sm,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: SPACING.md, paddingVertical: 5,
+    borderLeftWidth: 3, borderLeftColor: '#9CA3AF',
+    marginBottom: 2,
   },
-  preparingText: { fontSize: 10, fontWeight: '700', color: '#4B5563', letterSpacing: 0.3, textAlign: 'center' },
+  preparingText: { fontSize: 10, fontWeight: '700', color: '#4B5563', letterSpacing: 0.4 },
 
+  bottomRow: {
+    flexDirection: 'row', alignItems: 'flex-end',
+    paddingHorizontal: SPACING.md, paddingBottom: SPACING.md, paddingTop: SPACING.xs,
+    gap: SPACING.sm,
+  },
+  occupancyWrap: { flex: 1 },
+  rightCol: { width: '42%', gap: 6 },
+  viaRow: {
+    flexDirection: 'row', alignItems: 'flex-start', gap: 4,
+    backgroundColor: `${COLORS.accent}12`,
+    paddingHorizontal: 7, paddingVertical: 5,
+    borderRadius: 6,
+    borderLeftWidth: 2, borderLeftColor: COLORS.accent,
+  },
+  viaText: { flex: 1, fontSize: 10, color: COLORS.accent, lineHeight: 13 },
   almostFull: {
-    fontSize: 12, fontWeight: '800', color: '#92400E',
-    letterSpacing: 0.4, marginBottom: SPACING.sm,
+    fontSize: 10, fontWeight: '800', color: '#92400E',
+    letterSpacing: 0.4, marginBottom: 3,
   },
-
   occupancyRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    marginBottom: 7,
+    marginBottom: 4,
   },
-  occupancyLabel: { fontSize: 10, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 1 },
-  occupancyCount: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
-  occupancyFraction: { fontSize: 15, fontWeight: '800', color: COLORS.primary },
+  occupancyLabel: { fontSize: 9, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 0.8 },
+  occupancyCount: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  occupancyFraction: { fontSize: 12, fontWeight: '800', color: COLORS.primary },
 
   progressBg: {
-    height: 6, backgroundColor: COLORS.borderLight, borderRadius: RADIUS.full,
-    overflow: 'hidden', marginBottom: SPACING.lg,
+    height: 4, backgroundColor: 'rgba(0,0,0,0.1)', borderRadius: RADIUS.full,
+    overflow: 'hidden',
   },
   progressFill: {
     height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
   },
 
-  viaRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    backgroundColor: `${COLORS.accent}10`,
-    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
-    marginHorizontal: SPACING.lg, marginBottom: SPACING.md,
-    borderLeftWidth: 3, borderLeftColor: COLORS.accent,
-  },
-  viaText: { flex: 1, fontSize: 12, color: COLORS.accent, lineHeight: 16 },
-
   reserveBtn: {
-    backgroundColor: COLORS.primary, marginHorizontal: SPACING.lg, marginBottom: SPACING.lg,
-    borderRadius: RADIUS.md, paddingVertical: 14,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.35, shadowRadius: 10, elevation: 7,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 3,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md, paddingVertical: 7, paddingHorizontal: SPACING.sm,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6, elevation: 4,
   },
   reserveBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
-  reserveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  reserveText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   reserveTextDisabled: { color: COLORS.textTertiary },
 })
 
@@ -692,7 +738,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.full, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1, borderColor: COLORS.borderLight,
   },
-  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipActive: { backgroundColor: '#1230B8', borderColor: '#1230B8' },
   chipText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   chipTextActive: { color: '#fff' },
   chipSep: { width: 1, height: 20, backgroundColor: COLORS.borderLight },

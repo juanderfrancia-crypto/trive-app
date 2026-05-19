@@ -21,7 +21,7 @@ interface AdminMenuButtonProps {
 export default function AdminMenuButton({ onAdminDocumentsPress }: AdminMenuButtonProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
   const insets = useSafeAreaInsets()
 
   const isAdmin = user?.is_admin === true

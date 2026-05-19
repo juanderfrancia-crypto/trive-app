@@ -6,6 +6,9 @@
 import Toast from 'react-native-toast-message';
 import { supabase } from './supabase';
 
+let _crashlytics: any = null
+try { _crashlytics = require('@react-native-firebase/crashlytics').default } catch {}
+
 export enum ErrorSeverity {
   LOW = 'low',
   MEDIUM = 'medium',
@@ -67,17 +70,26 @@ class ErrorHandler {
 
     // Registrar en consola en desarrollo
     if (__DEV__) {
-      console.error(`[${type}]`, {
-        message: errorMessage,
-        severity,
-        context,
-        stack,
-      });
+      const payload = { message: errorMessage, severity, context, stack }
+      if (severity === ErrorSeverity.HIGH || severity === ErrorSeverity.CRITICAL) {
+        console.error(`[${type}]`, payload)
+      } else if (severity === ErrorSeverity.MEDIUM && type !== ErrorType.VALIDATION) {
+        console.warn(`[${type}]`, payload)
+      }
     }
 
-    // Reportar errores críticos a logging service
+    // Reportar errores críticos a Crashlytics
     if (severity === ErrorSeverity.CRITICAL || severity === ErrorSeverity.HIGH) {
       this.reportError(errorLog);
+      try {
+        if (_crashlytics) {
+          _crashlytics().recordError(
+            typeof error === 'string' ? new Error(error) : error,
+            `[${type}] ${errorMessage}`
+          )
+          if (context) _crashlytics().log(JSON.stringify(context))
+        }
+      } catch {}
     }
 
     // Mostrar toast al usuario

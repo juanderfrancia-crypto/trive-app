@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import { View, StyleSheet } from 'react-native'
+import { View, StyleSheet, Platform } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
@@ -47,20 +47,22 @@ export default function TabNavigator() {
 
           return <Ionicons name={iconName} size={size} color={color} />
         },
-        tabBarActiveTintColor: COLORS.primary,
+        tabBarActiveTintColor: '#1230B8',
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarStyle: {
           backgroundColor: COLORS.surface,
           borderTopWidth: 1,
+          borderTopColor: COLORS.borderLight,
           height: 65 + insets.bottom,
           paddingBottom: SPACING.md + insets.bottom,
           paddingTop: SPACING.sm,
-          elevation: 10,
+          // Android: elevation baja para sombra sutil, no la franja negra de elevation alta
+          elevation: Platform.OS === 'android' ? 8 : 0,
+          // iOS: sombra suave hacia arriba
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -3 },
-          shadowOpacity: 0.1,
-          shadowRadius: 10,
-          borderTopColor: COLORS.borderLight,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -96,20 +98,26 @@ export default function TabNavigator() {
 
 const styles = StyleSheet.create({
   tabActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     borderRadius: RADIUS.full,
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     justifyContent: 'center',
     alignItems: 'center',
     borderTopWidth: 2,
-    borderTopColor: COLORS.shadowWhiteMid,
+    borderTopColor: 'rgba(255,255,255,0.28)',
     borderLeftWidth: 1,
-    borderLeftColor: COLORS.shadowWhiteDark,
-    elevation: 6,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
+    borderLeftColor: 'rgba(255,255,255,0.18)',
+    borderBottomWidth: 3,
+    borderBottomColor: '#0a1a7a',
+    borderRightWidth: 1,
+    borderRightColor: '#0a1a7a',
+    // Android: elevation baja, shadowColor no se aplica en Android (siempre gris oscuro)
+    elevation: Platform.OS === 'android' ? 4 : 0,
+    // iOS: sombra azul del color del botón
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.45,
+    shadowRadius: 8,
   },
 })

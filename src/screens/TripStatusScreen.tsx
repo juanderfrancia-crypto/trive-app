@@ -14,7 +14,10 @@ import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_mess
 
 export default function TripStatusScreen() {
   const navigation = useNavigation<any>()
-  const { selectedRoute, bookingData, user, setBookingData } = useAppStore()
+  const selectedRoute  = useAppStore((s) => s.selectedRoute)
+  const bookingData    = useAppStore((s) => s.bookingData)
+  const user           = useAppStore((s) => s.user)
+  const setBookingData = useAppStore((s) => s.setBookingData)
   const { getRouteBookings, loading, cancelBooking } = useBookings()
   const [bookings, setBookings] = useState<any[]>([])
   const [cancelLoading, setCancelLoading] = useState(false)
@@ -175,9 +178,9 @@ export default function TripStatusScreen() {
           <>
             {/* Status Card */}
             <LinearGradient
-              colors={[COLORS.primary + 'F5', COLORS.primary + 'A0']}
+              colors={['#0E2699', '#1230B8', '#1A3FCC']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.statusCardGradient}
             >
               <View style={styles.statusHeader}>
@@ -207,7 +210,7 @@ export default function TripStatusScreen() {
 
             {/* Seats Card */}
             <LinearGradient
-              colors={['#FFFFFF', COLORS.primary + '1A']}
+              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.seatsCardGradient}
@@ -267,7 +270,7 @@ export default function TripStatusScreen() {
 
             {/* Vehicle Card */}
             <LinearGradient
-              colors={['#FFFFFF', COLORS.primary + '12']}
+              colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.vehicleCardGradient}
@@ -323,32 +326,39 @@ export default function TripStatusScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity
+              <LinearGradient
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
                 style={styles.quickChatBtn}
-                onPress={() => {
-                  setChatUnreadCount(0)
-                  setSelectedTripForChat({
-                    id: selectedRoute.id,
-                    driverId: selectedRoute.driver_id,
-                    driverName: selectedRoute.driver_name,
-                  })
-                }}
               >
-                <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
-                <Text style={styles.quickChatBtnText}>Contactar conductor</Text>
-                {chatUnreadCount > 0 && (
-                  <View style={styles.chatBadge}>
-                    <Text style={styles.chatBadgeText}>
-                      {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.quickChatBtnInner}
+                  onPress={() => {
+                    setChatUnreadCount(0)
+                    setSelectedTripForChat({
+                      id: selectedRoute.id,
+                      driverId: selectedRoute.driver_id,
+                      driverName: selectedRoute.driver_name,
+                    })
+                  }}
+                >
+                  <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+                  <Text style={styles.quickChatBtnText}>Contactar conductor</Text>
+                  {chatUnreadCount > 0 && (
+                    <View style={styles.chatBadge}>
+                      <Text style={styles.chatBadgeText}>
+                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </LinearGradient>
             </LinearGradient>
 
             {/* Trip Info Card */}
             <LinearGradient
-              colors={['#FFFFFF', COLORS.primary + '0D']}
+              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tripInfoCardGradient}
@@ -376,9 +386,9 @@ export default function TripStatusScreen() {
 
             {/* Action Buttons */}
             <LinearGradient
-              colors={[COLORS.primary, COLORS.primary + 'E0']}
+              colors={['#0E2699', '#1230B8', '#1A3FCC']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.newTripBtnGradient}
             >
               <TouchableOpacity
@@ -658,7 +668,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.textSecondary,
   },
   seatAvailable: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
   },
   seatSelected: {
     backgroundColor: COLORS.success,
@@ -689,7 +699,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     borderRadius: 4,
   },
   progressLabels: {
@@ -742,7 +752,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: 'rgba(18,48,184,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -752,13 +762,13 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLORS.primary + '20',
+    borderTopColor: 'rgba(18,48,184,0.15)',
   },
   driverAvatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -808,7 +818,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: 'rgba(18,48,184,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -887,15 +897,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   quickChatBtn: {
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.sm,
+    overflow: 'hidden',
+  },
+  quickChatBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
-    marginTop: SPACING.sm,
-    overflow: 'visible',
   },
   quickChatBtnText: {
     ...TYPOGRAPHY.bodyMedium,

@@ -15,7 +15,10 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
 export default function SeatSelectionScreen() {
   const navigation = useNavigation()
-  const { selectedRoute, setBookingData, authUser, user } = useAppStore()
+  const selectedRoute  = useAppStore((s) => s.selectedRoute)
+  const setBookingData = useAppStore((s) => s.setBookingData)
+  const authUser       = useAppStore((s) => s.authUser)
+  const user           = useAppStore((s) => s.user)
   const { getRouteBookings, reservePendingBookings, loading } = useBookings()
   const { getRouteById } = useRoutes()
   const [bookings, setBookings] = useState<any[]>([])
@@ -409,7 +412,12 @@ export default function SeatSelectionScreen() {
         ) : (
           <>
             {/* Vehicle Card */}
-            <View style={styles.vehicleCardGradient}>
+            <LinearGradient
+              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.vehicleCardGradient}
+            >
               <View style={styles.vehicleHeader}>
                 <View>
                   <Text style={styles.vehicleName}>{selectedRoute.vehicle_make || 'Vehículo'}</Text>
@@ -417,9 +425,14 @@ export default function SeatSelectionScreen() {
                     {selectedRoute.vehicle_year} · {selectedRoute.vehicle_color}
                   </Text>
                 </View>
-                <View style={styles.plateBadge}>
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.plateBadge}
+                >
                   <Text style={styles.plateText}>{selectedRoute.vehicle_plate || '---'}</Text>
-                </View>
+                </LinearGradient>
               </View>
 
               {/* Seats Grid - Real Car Layout */}
@@ -513,7 +526,7 @@ export default function SeatSelectionScreen() {
                     <Text style={styles.legendText}>Disponible</Text>
                   </View>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                    <View style={[styles.legendDot, { backgroundColor: '#1230B8' }]} />
                     <Text style={styles.legendText}>Seleccionado</Text>
                   </View>
                   <View style={styles.legendItem}>
@@ -522,7 +535,7 @@ export default function SeatSelectionScreen() {
                   </View>
                 </View>
               </View>
-            </View>
+            </LinearGradient>
 
             {/* Selected Seats Counter */}
             <View style={styles.selectionCardGradient}>
@@ -567,7 +580,12 @@ export default function SeatSelectionScreen() {
             </View>
 
             {/* Trip Card */}
-            <View style={styles.tripCardGradient}>
+            <LinearGradient
+              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.tripCardGradient}
+            >
               <View style={styles.routeRow}>
                 <View style={styles.routePoint}>
                   <View style={styles.routeDotStart} />
@@ -596,7 +614,7 @@ export default function SeatSelectionScreen() {
                   <Text style={[styles.infoText, { color: COLORS.textPrimary }]}>{formattedDate}</Text>
                 </View>
               </View>
-            </View>
+            </LinearGradient>
 
             {/* Driver Card */}
             <View style={styles.driverCardGradient}>
@@ -663,7 +681,12 @@ export default function SeatSelectionScreen() {
             </View>
 
             {/* Continue Button */}
-            <View style={styles.continueBtnGradient}>
+            <LinearGradient
+              colors={selectedSeats.length === 0 ? [COLORS.surfaceAlt, COLORS.surfaceAlt] : ['#0E2699', '#1230B8', '#1A3FCC']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.continueBtnGradient}
+            >
               <TouchableOpacity
                 style={styles.continueBtnInner}
                 disabled={selectedSeats.length === 0 || loading}
@@ -693,7 +716,7 @@ export default function SeatSelectionScreen() {
                     : `Continuar - $${(selectedSeats.length * selectedRoute.price_per_seat).toLocaleString('es-CO')}`}
                 </Text>
               </TouchableOpacity>
-            </View>
+            </LinearGradient>
           </>
         )}
       </ScrollView>
@@ -765,9 +788,8 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#D6E0FF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
@@ -790,10 +812,10 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   plateBadge: {
-    backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.md,
+    overflow: 'hidden',
   },
   plateText: {
     ...TYPOGRAPHY.label,
@@ -868,9 +890,9 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   seatSelected: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     borderWidth: 2,
-    borderColor: COLORS.primary,
+    borderColor: '#0E2699',
   },
   seatText: {
     ...TYPOGRAPHY.labelMedium,
@@ -980,9 +1002,8 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#D6E0FF',
     ...SHADOWS.md,
   },
   routeRow: {
@@ -997,7 +1018,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     marginBottom: SPACING.xs,
   },
   routeDotEnd: {
@@ -1195,7 +1216,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginBottom: 16,
-    backgroundColor: COLORS.primary,
   },
   continueBtnInner: {
     flexDirection: 'row',

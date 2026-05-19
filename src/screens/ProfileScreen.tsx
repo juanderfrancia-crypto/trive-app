@@ -28,7 +28,8 @@ import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
   const navigation   = useNavigation<any>()
-  const { user, logout: logoutStore } = useAppStore()
+  const user        = useAppStore((s) => s.user)
+  const logoutStore = useAppStore((s) => s.logout)
   const { logout: logoutAuth } = useAuth()
   const { profile, loading: profileLoading, switchRole, fetchProfile } = useProfile(user?.id)
 
@@ -101,17 +102,6 @@ export default function ProfileScreen() {
     if (!profile && user?.role) setIsDriver(user.role === 'driver')
   }, [user?.role, profile])
 
-  // ── Focus refresh ──────────────────────────────────────────────────────────
-  useFocusEffect(useCallback(() => {
-    if (isDriver && user?.id) {
-      loadEarnings()
-      loadDriverData()
-    } else {
-      refetchStats()
-      refetchActiveBookings()
-    }
-  }, [isDriver, user?.id]))
-
   useEffect(() => {
     if (!user || !activeBookings.length) return
 
@@ -167,6 +157,22 @@ export default function ProfileScreen() {
       setDriverDocs(docsMap)
     }
   }, [user?.id])
+
+  // ── Focus refresh ──────────────────────────────────────────────────────────
+  // isDriverRef lets useFocusEffect read the current value without being a dep,
+  // preventing the loop: profile loads → isDriver changes → effect re-fires → loads again.
+  const isDriverRef = useRef(isDriver)
+  isDriverRef.current = isDriver
+
+  useFocusEffect(useCallback(() => {
+    if (isDriverRef.current && user?.id) {
+      loadEarnings()
+      loadDriverData()
+    } else {
+      refetchStats()
+      refetchActiveBookings()
+    }
+  }, [user?.id, loadEarnings, loadDriverData, refetchStats, refetchActiveBookings]))
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -264,6 +270,10 @@ export default function ProfileScreen() {
   }
 
   // ── Derived ────────────────────────────────────────────────────────────────
+  const isFakeEmail = (email?: string | null) =>
+    !email || /^[0-9a-f-]{36}@/i.test(email) || email.includes('@sms.local') || email.includes('@trive.local')
+  const displayEmail = isFakeEmail(user?.email) ? null : user?.email
+
   const avatarUri  = user?.avatar_url || profile?.avatar_url
   const initials   = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const rating     = (profile?.rating ?? 0).toFixed(1)
@@ -310,8 +320,8 @@ export default function ProfileScreen() {
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {user?.email && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{user.email}</Text>
+          {displayEmail && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{displayEmail}</Text>
           )}
           {user?.phone && (
             <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
@@ -430,8 +440,8 @@ export default function ProfileScreen() {
             <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {user?.email && (
-            <Text style={dv.heroContact}>{user.email}</Text>
+          {displayEmail && (
+            <Text style={dv.heroContact}>{displayEmail}</Text>
           )}
           {user?.phone && (
             <Text style={dv.heroContact}>{user.phone}</Text>

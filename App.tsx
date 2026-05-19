@@ -4,6 +4,10 @@ import Toast from "react-native-toast-message";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { ErrorBoundary } from "./src/components/ErrorBoundary";
+import { initAnalytics } from "./src/services/analytics";
+
+let _crashlytics: any = null
+try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
 
 // Silencia todos los logs en producción para evitar exponer datos de usuarios
 if (!__DEV__) {
@@ -15,6 +19,8 @@ if (!__DEV__) {
 }
 
 configureNotificationHandler();
+initAnalytics();
+try { if (_crashlytics) _crashlytics().setCrashlyticsCollectionEnabled(!__DEV__) } catch {}
 
 export default function App() {
   return (

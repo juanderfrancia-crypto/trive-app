@@ -95,7 +95,8 @@ const getDaysUntilExpiry = (expiryDate?: string) => {
 
 export default function DriverDocumentsScreen() {
   const navigation = useNavigation()
-  const { user, authUser } = useAppStore()
+  const user     = useAppStore((s) => s.user)
+  const authUser = useAppStore((s) => s.authUser)
   const [loading, setLoading] = useState(true)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
   const [uploadProgress, setUploadProgress] = useState(0)

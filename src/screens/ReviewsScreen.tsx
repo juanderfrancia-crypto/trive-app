@@ -32,7 +32,7 @@ interface ReviewWithDetails {
 
 export default function ReviewsScreen() {
   const navigation = useNavigation<any>()
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
   const [reviews, setReviews] = useState<ReviewWithDetails[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)

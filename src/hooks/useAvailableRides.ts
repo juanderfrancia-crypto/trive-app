@@ -1,7 +1,6 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../services/supabase'
-import { RealtimeChannel } from '@supabase/supabase-js'
 
 export interface AvailableRide {
   id: string
@@ -19,7 +18,6 @@ export interface AvailableRide {
   vehicle_plate: string
   status: string
   description: string | null
-  // Driver info
   driver_user_id: string
   driver_name: string
   driver_phone: string
@@ -31,76 +29,63 @@ export interface AvailableRide {
 }
 
 export const useAvailableRides = () => {
-  const [rides, setRides] = useState<AvailableRide[]>([])
+  const [rides, setRides]   = useState<AvailableRide[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [subscription, setSubscription] = useState<RealtimeChannel | null>(null)
+  const [error, setError]   = useState<string | null>(null)
 
-  // Fetch initial data
+  // Refs para canales — evitan re-renders y garantizan limpieza correcta
+  const bookingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const routeChannelRef   = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const debounceRef       = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const fetchAvailableRides = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-
       const { data, error: fetchError } = await supabase
         .from('available_rides')
         .select('*')
         .order('departure_time', { ascending: true })
-
-      if (fetchError) {
-        setError(fetchError.message)
-        return
-      }
-
+      if (fetchError) { setError(fetchError.message); return }
       setRides((data as AvailableRide[]) || [])
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Unknown error'
-      setError(message)
+      setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
       setLoading(false)
     }
   }, [])
 
-  // Subscriptions only active while screen is focused
+  const debouncedFetch = useCallback(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => fetchAvailableRides(), 500)
+  }, [fetchAvailableRides])
+
   useFocusEffect(
     useCallback(() => {
       fetchAvailableRides()
 
-      const bookingChannel = supabase
-        .channel('available-rides-bookings')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'bookings' },
-          () => { setTimeout(() => fetchAvailableRides(), 500) },
-        )
+      // Nombres únicos por sesión para evitar conflictos en Supabase
+      const sessionId = Date.now()
+
+      bookingChannelRef.current = supabase
+        .channel(`rides-bookings-${sessionId}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, debouncedFetch)
         .subscribe()
 
-      const routeChannel = supabase
-        .channel('available-rides-routes')
-        .on(
-          'postgres_changes',
-          { event: 'UPDATE', schema: 'public', table: 'routes', filter: `status=eq.scheduled` },
-          () => { fetchAvailableRides() },
-        )
+      routeChannelRef.current = supabase
+        .channel(`rides-routes-${sessionId}`)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'routes', filter: 'status=eq.scheduled' }, fetchAvailableRides)
         .subscribe()
-
-      setSubscription(bookingChannel)
 
       return () => {
-        supabase.removeChannel(bookingChannel)
-        supabase.removeChannel(routeChannel)
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        if (bookingChannelRef.current) { supabase.removeChannel(bookingChannelRef.current); bookingChannelRef.current = null }
+        if (routeChannelRef.current)   { supabase.removeChannel(routeChannelRef.current);   routeChannelRef.current = null }
       }
-    }, [fetchAvailableRides]),
+    }, [fetchAvailableRides, debouncedFetch]),
   )
 
-  const refetch = useCallback(() => {
-    fetchAvailableRides()
-  }, [fetchAvailableRides])
+  const refetch = useCallback(() => fetchAvailableRides(), [fetchAvailableRides])
 
-  return {
-    rides,
-    loading,
-    error,
-    refetch,
-  }
+  return { rides, loading, error, refetch }
 }

@@ -15,7 +15,9 @@ import { useAppStore } from '../store/useAppStore'
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const { user, setUser, setAuthUser } = useAppStore()
+  const user        = useAppStore((s) => s.user)
+  const setUser     = useAppStore((s) => s.setUser)
+  const setAuthUser = useAppStore((s) => s.setAuthUser)
   const [isExporting, setIsExporting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useCallback, useRef, useState } from 'react'
 import {
   View,
   Text,
@@ -31,12 +31,15 @@ export default function LoginPhoneScreen() {
   const navigation = useNavigation()
   const { setUser, setAuthUser } = useAppStore()
   const { signInWithOTP, verifyOTP, login, loading: authLoading } = useAuth()
+  const scrollRef = useRef<ScrollView>(null)
+  const otpRefs = useRef<(TextInput | null)[]>([])
 
   const [method, setMethod] = useState<Method>('phone')
   const [step, setStep] = useState<Step>('input')
 
   const [phone, setPhone] = useState('')
   const [otp, setOtp] = useState('')
+  const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', ''])
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -63,6 +66,7 @@ export default function LoginPhoneScreen() {
     setStep('input')
     setErrors({})
     setOtp('')
+    setOtpDigits(['', '', '', '', '', ''])
   }
 
   // ─── Phone flow ───────────────────────────────────────────────────────────
@@ -106,16 +110,28 @@ export default function LoginPhoneScreen() {
     }
   }
 
-  const handleVerifyOTP = async () => {
-    if (otpGuard.isLocked || !validateOTP()) return
+  const handleVerifyOTP = async (code?: string) => {
+    const codeToVerify = code ?? otp
+    if (otpGuard.isLocked) return
+    if (!codeToVerify || codeToVerify.length < 6) { setErrors({ otp: 'El código debe tener 6 dígitos' }); return }
+    setErrors({})
     try {
       setIsSubmitting(true)
-      const data = await verifyOTP(formatPhone(phone), otp)
+      const data = await verifyOTP(formatPhone(phone), codeToVerify)
       if (data?.user) {
         const { data: profile } = await (await import('../services/supabase')).supabase
           .from('profiles').select('*').eq('id', data.user.id).maybeSingle()
 
-        if (profile && profile.name && profile.name !== 'Usuario') {
+        const isRealName = (name: string | null) => {
+          if (!name || name.trim().length < 2) return false
+          if (name === 'Usuario') return false
+          if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(name)) return false // UUID
+          if (/^\+?\d{7,}$/.test(name.trim())) return false // número de teléfono
+          if (name.includes('@')) return false // parece email o derivado de email
+          return true
+        }
+
+        if (profile && isRealName(profile.name)) {
           // Usuario existente con nombre real → loguear directamente
           setUser({ id: profile.id, name: profile.name, email: profile.email, phone: profile.phone, role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
           setAuthUser(data.user)
@@ -143,12 +159,40 @@ export default function LoginPhoneScreen() {
     }
   }
 
+  const handleOtpDigitChange = useCallback((value: string, index: number) => {
+    const digit = value.replace(/[^\d]/g, '').slice(-1)
+    const newDigits = [...otpDigits]
+    newDigits[index] = digit
+    setOtpDigits(newDigits)
+    const joined = newDigits.join('')
+    setOtp(joined)
+    setErrors({})
+    if (digit && index < 5) {
+      otpRefs.current[index + 1]?.focus()
+    }
+    if (joined.length === 6 && !otpGuard.isLocked) {
+      handleVerifyOTP(joined)
+    }
+  }, [otpDigits, otpGuard.isLocked])
+
+  const handleOtpKeyPress = useCallback((e: any, index: number) => {
+    if (e.nativeEvent.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      const newDigits = [...otpDigits]
+      newDigits[index - 1] = ''
+      setOtpDigits(newDigits)
+      setOtp(newDigits.join(''))
+      otpRefs.current[index - 1]?.focus()
+    }
+  }, [otpDigits])
+
   const handleCompleteName = async () => {
     if (!name.trim() || name.trim().length < 2) { setErrors({ name: 'Ingresa tu nombre completo' }); return }
     try {
       setIsSubmitting(true)
       const supabaseClient = (await import('../services/supabase')).supabase
-      const userEmail = tempUser?.email || `${formatPhone(phone)}@sms.local`
+      const rawEmail = tempUser?.email ?? null
+      const isFakeEmail = !rawEmail || /^[0-9a-f-]{36}@/i.test(rawEmail) || rawEmail.includes('@sms.local')
+      const userEmail = isFakeEmail ? null : rawEmail
       const { data: savedProfile, error } = await supabaseClient
         .from('profiles')
         .upsert({ id: tempUser.id, name: name.trim(), email: userEmail, phone: formatPhone(phone), role: 'passenger' }, { onConflict: 'id' })
@@ -213,11 +257,17 @@ export default function LoginPhoneScreen() {
       <OfflineBanner />
       <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
 
-      <KeyboardAvoidingView style={s.kav} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView
+        style={s.kav}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={s.scroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
         >
 
           {/* Logo + encabezado */}
@@ -280,31 +330,43 @@ export default function LoginPhoneScreen() {
                 </Text>
                 <TouchableOpacity
                   style={s.changeBtn}
-                  onPress={() => { setStep('input'); setOtp(''); setErrors({}) }}
+                  onPress={() => { setStep('input'); setOtp(''); setOtpDigits(['','','','','','']); setErrors({}) }}
                 >
                   <Ionicons name="arrow-back" size={14} color={COLORS.primary} />
                   <Text style={s.changeBtnText}>Cambiar número</Text>
                 </TouchableOpacity>
               </View>
 
-              <View style={s.inputGroup}>
-                <Text style={s.label}>Código de verificación</Text>
-                <View style={[s.input, errors.otp && s.inputError]}>
-                  <Ionicons name="keypad-outline" size={20} color={errors.otp ? COLORS.error : COLORS.textSecondary} />
+              <View style={s.otpBoxRow}>
+                {otpDigits.map((digit, i) => (
                   <TextInput
-                    style={s.inputText}
-                    placeholder="● ● ● ● ● ●"
-                    placeholderTextColor={COLORS.textTertiary}
+                    key={i}
+                    ref={(r) => { otpRefs.current[i] = r }}
+                    style={[
+                      s.otpBox,
+                      digit ? s.otpBoxFilled : null,
+                      errors.otp ? s.otpBoxError : null,
+                    ]}
+                    value={digit}
+                    onChangeText={(v) => handleOtpDigitChange(v, i)}
+                    onKeyPress={(e) => handleOtpKeyPress(e, i)}
                     keyboardType="number-pad"
-                    maxLength={6}
-                    value={otp}
-                    onChangeText={(t) => { setOtp(t); if (errors.otp) setErrors({}) }}
+                    maxLength={1}
                     editable={!isSubmitting}
                     textAlign="center"
+                    autoFocus={i === 0}
+                    selectTextOnFocus
                   />
-                </View>
-                {errors.otp && <Text style={s.errorText}>{errors.otp}</Text>}
+                ))}
               </View>
+              {errors.otp && <Text style={[s.errorText, { textAlign: 'center', marginTop: 8 }]}>{errors.otp}</Text>}
+
+              {isSubmitting || authLoading ? (
+                <View style={s.otpLoadingRow}>
+                  <ActivityIndicator color={COLORS.primary} size="small" />
+                  <Text style={s.otpLoadingText}>Verificando...</Text>
+                </View>
+              ) : null}
 
               {otpGuard.isLocked && (
                 <View style={s.lockBanner}>
@@ -312,18 +374,6 @@ export default function LoginPhoneScreen() {
                   <Text style={s.lockText}>Demasiados intentos. Espera {otpGuard.formatCountdown()}</Text>
                 </View>
               )}
-
-              <TouchableOpacity
-                style={[s.btn, (isSubmitting || otpGuard.isLocked) && s.btnDisabled]}
-                onPress={handleVerifyOTP}
-                disabled={isSubmitting || authLoading || otpGuard.isLocked}
-                activeOpacity={0.88}
-              >
-                {isSubmitting || authLoading
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.btnText}>{otpGuard.isLocked ? `Bloqueado ${otpGuard.formatCountdown()}` : 'Verificar código'}</Text>
-                }
-              </TouchableOpacity>
 
               <TouchableOpacity style={s.resendRow} onPress={handleSendOTP} disabled={isSubmitting}>
                 <Text style={s.resendText}>¿No recibiste el código? </Text>
@@ -354,6 +404,7 @@ export default function LoginPhoneScreen() {
                     value={phone}
                     onChangeText={(t) => { setPhone(t); if (errors.phone) setErrors({}) }}
                     editable={!isSubmitting}
+                    onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)}
                   />
                 </View>
                 {errors.phone
@@ -376,15 +427,8 @@ export default function LoginPhoneScreen() {
 
               <TermsText />
 
-              <View style={s.dividerRow}>
-                <View style={s.dividerLine} />
-                <Text style={s.dividerLabel}>o continúa con</Text>
-                <View style={s.dividerLine} />
-              </View>
-
-              <TouchableOpacity style={s.altBtn} onPress={() => switchMethod('email')} disabled={isSubmitting}>
-                <Ionicons name="mail-outline" size={18} color={COLORS.primary} />
-                <Text style={s.altBtnText}>Correo electrónico</Text>
+              <TouchableOpacity style={s.emailLink} onPress={() => switchMethod('email')} disabled={isSubmitting}>
+                <Text style={s.emailLinkText}>Iniciar sesión con correo electrónico</Text>
               </TouchableOpacity>
             </View>
 
@@ -466,14 +510,6 @@ export default function LoginPhoneScreen() {
             </View>
           )}
 
-          {/* Footer */}
-          <View style={s.footer}>
-            <Text style={s.footerText}>¿No tienes cuenta? </Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Register' as never)} disabled={isSubmitting}>
-              <Text style={s.footerLink}>Regístrate</Text>
-            </TouchableOpacity>
-          </View>
-
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -511,11 +547,13 @@ const s = StyleSheet.create({
 
   // Header
   header: {
-    paddingTop: 20,
-    paddingBottom: 8,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingTop: 32,
+    paddingBottom: 24,
   },
-  logo: { width: 200, height: 80 },
+  logo: { width: 220, height: 100 },
 
   // Section
   section: {
@@ -523,22 +561,22 @@ const s = StyleSheet.create({
   },
 
   heading: {
-    fontSize: 26,
+    fontSize: 28,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    marginBottom: 8,
+    marginBottom: 10,
     letterSpacing: -0.3,
   },
   subheading: {
     fontSize: 15,
     color: COLORS.textSecondary,
     lineHeight: 22,
-    marginBottom: 32,
+    marginBottom: 36,
   },
 
   // Inputs
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   label: {
     fontSize: 13,
@@ -553,7 +591,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     paddingHorizontal: 16,
-    height: 58,
+    height: 62,
     gap: 12,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
@@ -587,7 +625,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     paddingHorizontal: 16,
-    height: 58,
+    height: 62,
     borderWidth: 1.5,
     borderColor: '#E5E7EB',
   },
@@ -620,10 +658,10 @@ const s = StyleSheet.create({
   btn: {
     backgroundColor: COLORS.primary,
     borderRadius: 14,
-    height: 58,
+    height: 62,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 8,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
@@ -640,7 +678,7 @@ const s = StyleSheet.create({
 
   // Terms
   termsWrap: {
-    marginTop: 20,
+    marginTop: 24,
     marginBottom: 8,
     paddingHorizontal: 8,
   },
@@ -655,47 +693,22 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Divider
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // Email link (secondary, low prominence)
+  emailLink: {
+    alignSelf: 'center',
     marginTop: 24,
-    marginBottom: 16,
-    gap: 10,
+    paddingVertical: 8,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E7EB',
-  },
-  dividerLabel: {
+  emailLinkText: {
     fontSize: 12.5,
     color: COLORS.textTertiary,
-    fontWeight: '500',
-  },
-
-  // Alt button (email)
-  altBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    borderRadius: 14,
-    height: 52,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary + '40',
-    backgroundColor: COLORS.primary + '08',
-  },
-  altBtnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.primary,
+    textDecorationLine: 'underline',
   },
 
   // OTP header
   otpHeader: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 36,
   },
   otpIconCircle: {
     width: 68,
@@ -761,6 +774,45 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
 
+  // OTP boxes
+  otpBoxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+    marginBottom: 4,
+  },
+  otpBox: {
+    flex: 1,
+    height: 62,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#fff',
+    fontSize: 24,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+  },
+  otpBoxFilled: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '08',
+  },
+  otpBoxError: {
+    borderColor: COLORS.error,
+  },
+  otpLoadingRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 20,
+    marginBottom: 4,
+  },
+  otpLoadingText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+
   // Lock banner
   lockBanner: {
     flexDirection: 'row',
@@ -781,12 +833,4 @@ const s = StyleSheet.create({
     flex: 1,
   },
 
-  // Footer
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 36,
-  },
-  footerText: { fontSize: 14, color: COLORS.textSecondary },
-  footerLink: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
 })

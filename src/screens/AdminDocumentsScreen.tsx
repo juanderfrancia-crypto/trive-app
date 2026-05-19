@@ -4,7 +4,7 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
   Alert,
   Image,
@@ -52,6 +52,28 @@ const STATUS_INFO: Record<string, { label: string; color: string; icon: string }
 
 const isPdf = (doc: DocumentWithDriver) =>
   doc.file_type === 'application/pdf' || (doc.file_name?.toLowerCase().endsWith('.pdf') ?? false)
+
+const DOCS_WITH_EXPIRY = ['licencia', 'soat', 'tecnomecanica']
+
+const formatFileSize = (bytes: number | null) => {
+  if (!bytes) return 'N/A'
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+const formatDate = (dateString: string) =>
+  new Date(dateString).toLocaleDateString('es-CO', {
+    year: 'numeric', month: 'short', day: 'numeric',
+    hour: '2-digit', minute: '2-digit',
+  })
+
+const formatDateShort = (dateString?: string | null) => {
+  if (!dateString) return '—'
+  return new Date(dateString).toLocaleDateString('es-CO', {
+    year: 'numeric', month: 'short', day: 'numeric',
+  })
+}
 
 export default function AdminDocumentsScreen() {
   const navigation = useNavigation()
@@ -140,7 +162,6 @@ export default function AdminDocumentsScreen() {
   }
 
   // ── Approve ───────────────────────────────────────────────────────────────
-  const DOCS_WITH_EXPIRY = ['licencia', 'soat', 'tecnomecanica']
 
   const handleApprove = (documentId: string) => {
     setDocToApprove(documentId)
@@ -201,14 +222,14 @@ export default function AdminDocumentsScreen() {
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   const validateAndFormatDate = (input: string): string | null => {
-    const s = input.trim()
-    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)) {
-      const [y, m, d] = s.split('-')
+    const str = input.trim()
+    if (/^\d{4}-\d{1,2}-\d{1,2}$/.test(str)) {
+      const [y, m, d] = str.split('-')
       const date = new Date(+y, +m - 1, +d)
       if (!isNaN(date.getTime()) && date >= new Date())
         return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`
     }
-    const alt = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+    const alt = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
     if (alt) {
       const [, d, m, y] = alt
       const date = new Date(+y, +m - 1, +d)
@@ -218,25 +239,118 @@ export default function AdminDocumentsScreen() {
     return null
   }
 
-  const formatFileSize = (bytes: number | null) => {
-    if (!bytes) return 'N/A'
-    if (bytes < 1024) return `${bytes} B`
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  }
+  // ── Render items ─────────────────────────────────────────────────────────
+  const renderPendingDoc = useCallback(({ item: doc }: { item: DocumentWithDriver }) => (
+    <TouchableOpacity
+      style={[s.card, SHADOWS.md]}
+      onPress={() => handleViewDocument(doc)}
+      activeOpacity={0.7}
+    >
+      <View style={s.cardHeader}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.docType}>{DOCUMENT_LABELS[doc.document_type] ?? doc.document_type}</Text>
+          <Text style={s.driverName}>{doc.driver_name}</Text>
+        </View>
+        <View style={s.cardHeaderRight}>
+          {isPdf(doc) && (
+            <View style={s.pdfBadge}>
+              <Text style={s.pdfBadgeText}>PDF</Text>
+            </View>
+          )}
+          <View style={[s.statusBadge, { backgroundColor: COLORS.warning + '20' }]}>
+            <Ionicons name="time-outline" size={14} color={COLORS.warning} />
+            <Text style={[s.statusText, { color: COLORS.warning }]}>Pendiente</Text>
+          </View>
+          <Ionicons name="eye-outline" size={20} color={COLORS.primary} />
+        </View>
+      </View>
 
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('es-CO', {
-      year: 'numeric', month: 'short', day: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
+      <View style={s.metaRow}>
+        <View style={s.metaItem}>
+          <Ionicons name="document-outline" size={14} color={COLORS.textSecondary} />
+          <Text style={s.metaText} numberOfLines={1}>{doc.file_name}</Text>
+        </View>
+        <View style={s.metaItem}>
+          <Ionicons name="albums-outline" size={14} color={COLORS.textSecondary} />
+          <Text style={s.metaText}>{formatFileSize(doc.file_size)}</Text>
+        </View>
+      </View>
+      <View style={s.metaRow}>
+        <View style={s.metaItem}>
+          <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
+          <Text style={s.metaText}>{formatDate(doc.uploaded_at)}</Text>
+        </View>
+      </View>
 
-  const formatDateShort = (dateString?: string | null) => {
-    if (!dateString) return '—'
-    return new Date(dateString).toLocaleDateString('es-CO', {
-      year: 'numeric', month: 'short', day: 'numeric',
-    })
-  }
+      <Text style={s.tapHint}>
+        {isPdf(doc) ? 'Toca para abrir el PDF' : 'Toca para ver el documento'}
+      </Text>
+
+      <View style={s.actionRow}>
+        <TouchableOpacity
+          style={[s.btn, s.rejectBtn]}
+          onPress={() => { setSelectedDoc(doc); setShowRejectModal(true) }}
+          disabled={processingId === doc.id}
+        >
+          {processingId === doc.id
+            ? <ActivityIndicator size="small" color={COLORS.error} />
+            : <><Ionicons name="close-circle-outline" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[s.btn, s.approveBtn]}
+          onPress={() => handleApprove(doc.id)}
+          disabled={processingId === doc.id}
+        >
+          {processingId === doc.id
+            ? <ActivityIndicator size="small" color={COLORS.success} />
+            : <><Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
+        </TouchableOpacity>
+      </View>
+    </TouchableOpacity>
+  ), [processingId, handleViewDocument, handleApprove, setSelectedDoc, setShowRejectModal])
+
+  const renderHistoryDoc = useCallback(({ item: doc }: { item: DocumentWithDriver }) => {
+    const info = STATUS_INFO[doc.status] ?? STATUS_INFO.verifying
+    return (
+      <View style={[s.histCard, SHADOWS.sm]}>
+        <View style={s.histCardHeader}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.docType}>{DOCUMENT_LABELS[doc.document_type] ?? doc.document_type}</Text>
+            <Text style={s.driverName}>{doc.driver_name}</Text>
+          </View>
+          <View style={[s.statusBadge, { backgroundColor: info.color + '20' }]}>
+            <Ionicons name={info.icon as any} size={14} color={info.color} />
+            <Text style={[s.statusText, { color: info.color }]}>{info.label}</Text>
+          </View>
+        </View>
+
+        <View style={s.histMeta}>
+          <View style={s.histMetaItem}>
+            <Text style={s.histMetaLabel}>Procesado</Text>
+            <Text style={s.histMetaValue}>{formatDateShort(doc.verified_at ?? doc.updated_at)}</Text>
+          </View>
+          {doc.expiry_date && (
+            <View style={s.histMetaItem}>
+              <Text style={s.histMetaLabel}>Vence</Text>
+              <Text style={s.histMetaValue}>{formatDateShort(doc.expiry_date)}</Text>
+            </View>
+          )}
+          <View style={s.histMetaItem}>
+            <Text style={s.histMetaLabel}>Subido</Text>
+            <Text style={s.histMetaValue}>{formatDateShort(doc.uploaded_at)}</Text>
+          </View>
+        </View>
+
+        {doc.status === 'rejected' && doc.rejection_reason && (
+          <View style={s.rejectionBanner}>
+            <Ionicons name="alert-circle-outline" size={14} color={COLORS.error} />
+            <Text style={s.rejectionText} numberOfLines={2}>{doc.rejection_reason}</Text>
+          </View>
+        )}
+      </View>
+    )
+  }, [])
 
   // ── Loading ───────────────────────────────────────────────────────────────
   if (loading) {
@@ -317,79 +431,15 @@ export default function AdminDocumentsScreen() {
             <Text style={s.emptyText}>No hay documentos pendientes de verificación</Text>
           </View>
         ) : (
-          <ScrollView style={s.list} showsVerticalScrollIndicator={false}>
-            {pendingDocs.map((doc) => (
-              <TouchableOpacity
-                key={doc.id}
-                style={[s.card, SHADOWS.md]}
-                onPress={() => handleViewDocument(doc)}
-                activeOpacity={0.7}
-              >
-                <View style={s.cardHeader}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={s.docType}>{DOCUMENT_LABELS[doc.document_type] ?? doc.document_type}</Text>
-                    <Text style={s.driverName}>{doc.driver_name}</Text>
-                  </View>
-                  <View style={s.cardHeaderRight}>
-                    {isPdf(doc) && (
-                      <View style={s.pdfBadge}>
-                        <Text style={s.pdfBadgeText}>PDF</Text>
-                      </View>
-                    )}
-                    <View style={[s.statusBadge, { backgroundColor: COLORS.warning + '20' }]}>
-                      <Ionicons name="time-outline" size={14} color={COLORS.warning} />
-                      <Text style={[s.statusText, { color: COLORS.warning }]}>Pendiente</Text>
-                    </View>
-                    <Ionicons name="eye-outline" size={20} color={COLORS.primary} />
-                  </View>
-                </View>
-
-                <View style={s.metaRow}>
-                  <View style={s.metaItem}>
-                    <Ionicons name="document-outline" size={14} color={COLORS.textSecondary} />
-                    <Text style={s.metaText} numberOfLines={1}>{doc.file_name}</Text>
-                  </View>
-                  <View style={s.metaItem}>
-                    <Ionicons name="albums-outline" size={14} color={COLORS.textSecondary} />
-                    <Text style={s.metaText}>{formatFileSize(doc.file_size)}</Text>
-                  </View>
-                </View>
-                <View style={s.metaRow}>
-                  <View style={s.metaItem}>
-                    <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
-                    <Text style={s.metaText}>{formatDate(doc.uploaded_at)}</Text>
-                  </View>
-                </View>
-
-                <Text style={s.tapHint}>
-                  {isPdf(doc) ? 'Toca para abrir el PDF' : 'Toca para ver el documento'}
-                </Text>
-
-                <View style={s.actionRow}>
-                  <TouchableOpacity
-                    style={[s.btn, s.rejectBtn]}
-                    onPress={() => { setSelectedDoc(doc); setShowRejectModal(true) }}
-                    disabled={processingId === doc.id}
-                  >
-                    {processingId === doc.id
-                      ? <ActivityIndicator size="small" color={COLORS.error} />
-                      : <><Ionicons name="close-circle-outline" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={[s.btn, s.approveBtn]}
-                    onPress={() => handleApprove(doc.id)}
-                    disabled={processingId === doc.id}
-                  >
-                    {processingId === doc.id
-                      ? <ActivityIndicator size="small" color={COLORS.success} />
-                      : <><Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
-                  </TouchableOpacity>
-                </View>
-              </TouchableOpacity>
-            ))}
-            <View style={{ height: SPACING.lg }} />
-          </ScrollView>
+          <FlatList
+            data={pendingDocs}
+            keyExtractor={(item) => item.id}
+            renderItem={renderPendingDoc}
+            style={s.list}
+            contentContainerStyle={s.listContent}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews
+          />
         )
       )}
 
@@ -407,50 +457,15 @@ export default function AdminDocumentsScreen() {
             <Text style={s.emptyText}>Los documentos procesados aparecerán aquí</Text>
           </View>
         ) : (
-          <ScrollView style={s.list} showsVerticalScrollIndicator={false}>
-            {historyDocs.map((doc) => {
-              const info = STATUS_INFO[doc.status] ?? STATUS_INFO.verifying
-              return (
-                <View key={doc.id} style={[s.histCard, SHADOWS.sm]}>
-                  <View style={s.histCardHeader}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.docType}>{DOCUMENT_LABELS[doc.document_type] ?? doc.document_type}</Text>
-                      <Text style={s.driverName}>{doc.driver_name}</Text>
-                    </View>
-                    <View style={[s.statusBadge, { backgroundColor: info.color + '20' }]}>
-                      <Ionicons name={info.icon as any} size={14} color={info.color} />
-                      <Text style={[s.statusText, { color: info.color }]}>{info.label}</Text>
-                    </View>
-                  </View>
-
-                  <View style={s.histMeta}>
-                    <View style={s.histMetaItem}>
-                      <Text style={s.histMetaLabel}>Procesado</Text>
-                      <Text style={s.histMetaValue}>{formatDateShort(doc.verified_at ?? doc.updated_at)}</Text>
-                    </View>
-                    {doc.expiry_date && (
-                      <View style={s.histMetaItem}>
-                        <Text style={s.histMetaLabel}>Vence</Text>
-                        <Text style={s.histMetaValue}>{formatDateShort(doc.expiry_date)}</Text>
-                      </View>
-                    )}
-                    <View style={s.histMetaItem}>
-                      <Text style={s.histMetaLabel}>Subido</Text>
-                      <Text style={s.histMetaValue}>{formatDateShort(doc.uploaded_at)}</Text>
-                    </View>
-                  </View>
-
-                  {doc.status === 'rejected' && doc.rejection_reason && (
-                    <View style={s.rejectionBanner}>
-                      <Ionicons name="alert-circle-outline" size={14} color={COLORS.error} />
-                      <Text style={s.rejectionText} numberOfLines={2}>{doc.rejection_reason}</Text>
-                    </View>
-                  )}
-                </View>
-              )
-            })}
-            <View style={{ height: SPACING.lg }} />
-          </ScrollView>
+          <FlatList
+            data={historyDocs}
+            keyExtractor={(item) => item.id}
+            renderItem={renderHistoryDoc}
+            style={s.list}
+            contentContainerStyle={s.listContent}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews
+          />
         )
       )}
 
@@ -647,7 +662,8 @@ const s = StyleSheet.create({
   tabBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
 
   // Cards (pending)
-  list: { flex: 1, paddingHorizontal: SPACING.md, paddingTop: SPACING.md },
+  list: { flex: 1 },
+  listContent: { paddingHorizontal: SPACING.md, paddingTop: SPACING.md, paddingBottom: SPACING.lg },
   card: { backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.md, marginBottom: SPACING.md },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.md },
   cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },

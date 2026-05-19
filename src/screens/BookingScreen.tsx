@@ -25,7 +25,11 @@ import OfflineBanner from '../components/OfflineBanner'
 
 export default function BookingScreen() {
   const navigation = useNavigation<any>()
-  const { selectedRoute, bookingData, user, authUser, setBookingData } = useAppStore()
+  const selectedRoute = useAppStore((s) => s.selectedRoute)
+  const bookingData   = useAppStore((s) => s.bookingData)
+  const user          = useAppStore((s) => s.user)
+  const authUser      = useAppStore((s) => s.authUser)
+  const setBookingData = useAppStore((s) => s.setBookingData)
   const { createBooking, reservePendingBookings, finalizePendingBookings, releasePendingBookings, loading } = useBookings()
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'digital'>('cash')
   const [selectedDropoffOption, setSelectedDropoffOption] = useState<'final' | 'custom'>('final')
@@ -294,7 +298,7 @@ export default function BookingScreen() {
 
         {/* Route Card */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.tripCardGradient}
@@ -336,7 +340,7 @@ export default function BookingScreen() {
 
         {/* Seats Card */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.seatsCardGradient}
@@ -356,7 +360,7 @@ export default function BookingScreen() {
 
         {/* Passenger Card */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.passengerCardGradient}
@@ -376,7 +380,7 @@ export default function BookingScreen() {
 
         {/* Vehicle Card */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.vehicleCardGradient}
@@ -425,7 +429,7 @@ export default function BookingScreen() {
 
         {/* Dropoff Point Card */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.dropoffCardGradient}
@@ -481,7 +485,7 @@ export default function BookingScreen() {
 
         {/* Payment Method */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.paymentCardGradient}
@@ -563,13 +567,9 @@ export default function BookingScreen() {
 
         {/* Action Buttons */}
         <LinearGradient
-          colors={
-            loading
-              ? [COLORS.border, COLORS.border]
-              : [COLORS.primary, COLORS.primary + 'E0']
-          }
+          colors={loading ? [COLORS.border, COLORS.border] : ['#0E2699', '#1230B8', '#1A3FCC']}
           start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+          end={{ x: 1, y: 0 }}
           style={styles.confirmBtnGradient}
         >
           <TouchableOpacity

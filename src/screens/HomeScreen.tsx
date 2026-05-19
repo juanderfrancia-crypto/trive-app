@@ -145,7 +145,7 @@ export default function HomeScreen() {
       onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
     >
       <LinearGradient
-        colors={[COLORS.primaryDark, '#0a2a6e']}
+        colors={['#1535BE', '#1130B0', '#0C2490']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.routeCardInner}
@@ -200,11 +200,18 @@ export default function HomeScreen() {
         {/* Driver */}
         <View style={styles.routeDriver}>
           <View style={styles.driverAvatar}>
-            <Text style={styles.driverInitials}>
-              {route.driver_name
-                ? route.driver_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-                : 'DR'}
-            </Text>
+            {route.driver_avatar_url ? (
+              <Image
+                source={{ uri: route.driver_avatar_url }}
+                style={styles.driverAvatarImg}
+              />
+            ) : (
+              <Text style={styles.driverInitials}>
+                {route.driver_name
+                  ? route.driver_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+                  : 'DR'}
+              </Text>
+            )}
           </View>
           <View style={styles.driverInfo}>
             <Text style={styles.driverName} numberOfLines={1}>{route.driver_name ?? 'Conductor'}</Text>
@@ -442,9 +449,9 @@ export default function HomeScreen() {
           >
             {origin && destination && (
               <LinearGradient
-                colors={[COLORS.primaryDark, COLORS.primaryLight]}
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
                 start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+                end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
               />
             )}
@@ -774,9 +781,9 @@ const styles = StyleSheet.create({
   recentChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
 
   searchBtn: {
-    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 50,
+    backgroundColor: '#1230B8', borderRadius: RADIUS.md, height: 50,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: SPACING.sm,
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.5, shadowRadius: 18, elevation: 10,
+    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 10,
     overflow: 'hidden',
   },
   searchBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
@@ -804,31 +811,60 @@ const styles = StyleSheet.create({
   routeCardInner: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
   routeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm },
   routeRouteWrap: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm, marginRight: SPACING.sm },
-  routeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', marginTop: 5 },
+  routeDot: {
+    width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', marginTop: 5,
+    shadowColor: '#fff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.7, shadowRadius: 5,
+  },
   routeNames: { flex: 1 },
-  routeOrigin: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  routeDest:   { fontSize: 13, color: 'rgba(255,255,255,0.75)', marginTop: 2 },
+  routeOrigin: {
+    fontSize: 15, fontWeight: '700', color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5,
+  },
+  routeDest: {
+    fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 2,
+    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+  },
   seatPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
     paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full,
   },
   seatPillText: { fontSize: 11, fontWeight: '600', color: '#fff' },
   routeMeta: { flexDirection: 'row', gap: SPACING.lg, marginBottom: SPACING.sm },
   routeMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  routeMetaText: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
-  routeDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.15)', marginBottom: SPACING.sm },
+  routeMetaText: {
+    fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.88)',
+    textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
+  routeDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.22)', marginBottom: SPACING.sm },
   routeViaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5, marginBottom: SPACING.sm },
   routeViaText: { flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 15 },
   routeDriver: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  driverAvatar: { width: 34, height: 34, borderRadius: RADIUS.sm, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
-  driverInitials: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  driverAvatar: {
+    width: 34, height: 34, borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.32)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  driverAvatarImg: { width: 34, height: 34, borderRadius: RADIUS.sm },
+  driverInitials: {
+    fontSize: 13, fontWeight: '700', color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
   driverInfo: { flex: 1 },
-  driverName: { fontSize: 13, fontWeight: '600', color: '#fff' },
+  driverName: {
+    fontSize: 13, fontWeight: '600', color: '#fff',
+    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+  },
   ratingRow:  { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
   ratingText: { fontSize: 11, fontWeight: '600', color: '#FBBF24' },
-  vehicleTag: { backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: SPACING.sm, paddingVertical: 3, borderRadius: RADIUS.full },
-  vehicleTagText: { fontSize: 11, fontWeight: '600', color: '#fff' },
+  vehicleTag: {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: SPACING.sm, paddingVertical: 3, borderRadius: RADIUS.full,
+  },
+  vehicleTagText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.92)' },
 
   // Dots
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginBottom: SPACING.md },

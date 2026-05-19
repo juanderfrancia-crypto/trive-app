@@ -17,7 +17,7 @@ const HIDDEN_CHATS_KEY = 'hidden_active_chats'
 
 export default function ActiveChatsScreen() {
   const navigation = useNavigation<any>()
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
   const { bookings, loading, refetch } = useActiveBookingsWithChat(user?.id)
 
   const [hiddenChatIds, setHiddenChatIds] = useState<Set<string>>(new Set())

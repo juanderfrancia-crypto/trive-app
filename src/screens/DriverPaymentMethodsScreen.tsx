@@ -28,7 +28,7 @@ const METHOD_CONFIG: Record<MethodType, { label: string; color: string; icon: st
 
 export default function DriverPaymentMethodsScreen() {
   const navigation = useNavigation()
-  const { user } = useAppStore()
+  const user = useAppStore((s) => s.user)
 
   const [methods, setMethods]     = useState<DriverPaymentMethod[]>([])
   const [loading, setLoading]     = useState(false)
