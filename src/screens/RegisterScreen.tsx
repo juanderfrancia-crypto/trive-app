@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS } from '../theme/colors'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
@@ -222,11 +223,18 @@ export default function RegisterScreen() {
             onPress={handleRegister}
             disabled={isSubmitting || authLoading}
           >
-            {isSubmitting || authLoading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text style={styles.registerBtnText}>Crear Cuenta</Text>
-            )}
+            <LinearGradient
+              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.registerBtnGradient}
+            >
+              {isSubmitting || authLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.registerBtnText}>Crear Cuenta</Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
         </View>
 
@@ -299,12 +307,19 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   registerBtn: {
-    backgroundColor: COLORS.primary,
     borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  registerBtnGradient: {
     height: 56,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
   },
   registerBtnText: {
     color: '#fff',

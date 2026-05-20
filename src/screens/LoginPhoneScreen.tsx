@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
@@ -302,10 +303,17 @@ export default function LoginPhoneScreen() {
                 disabled={isSubmitting}
                 activeOpacity={0.88}
               >
-                {isSubmitting
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.btnText}>Continuar</Text>
-                }
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.btnGradient}
+                >
+                  {isSubmitting
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={s.btnText}>Continuar</Text>
+                  }
+                </LinearGradient>
               </TouchableOpacity>
             </View>
 
@@ -411,10 +419,17 @@ export default function LoginPhoneScreen() {
                 disabled={isSubmitting || authLoading}
                 activeOpacity={0.88}
               >
-                {isSubmitting || authLoading
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.btnText}>Enviar código</Text>
-                }
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.btnGradient}
+                >
+                  {isSubmitting || authLoading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={s.btnText}>Enviar código</Text>
+                  }
+                </LinearGradient>
               </TouchableOpacity>
 
               <TermsText />
@@ -494,10 +509,17 @@ export default function LoginPhoneScreen() {
                 disabled={isSubmitting || authLoading || emailGuard.isLocked}
                 activeOpacity={0.88}
               >
-                {isSubmitting || authLoading
-                  ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.btnText}>{emailGuard.isLocked ? `Bloqueado ${emailGuard.formatCountdown()}` : 'Iniciar sesión'}</Text>
-                }
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={s.btnGradient}
+                >
+                  {isSubmitting || authLoading
+                    ? <ActivityIndicator color="#fff" />
+                    : <Text style={s.btnText}>{emailGuard.isLocked ? `Bloqueado ${emailGuard.formatCountdown()}` : 'Iniciar sesión'}</Text>
+                  }
+                </LinearGradient>
               </TouchableOpacity>
             </View>
           )}
@@ -647,17 +669,19 @@ const s = StyleSheet.create({
 
   // Button
   btn: {
-    backgroundColor: COLORS.primary,
     borderRadius: 14,
+    overflow: 'hidden',
+    marginTop: 8,
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  btnGradient: {
     height: 62,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 6,
   },
   btnDisabled: { opacity: 0.55 },
   btnText: {

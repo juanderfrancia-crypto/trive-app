@@ -207,13 +207,20 @@ export default function LoginEmailScreen() {
               disabled={isSubmitting || authLoading || isLocked}
               activeOpacity={0.85}
             >
-              {isSubmitting || authLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.loginBtnText}>
-                  {isLocked ? `Bloqueado ${formatCountdown()}` : 'Iniciar Sesión'}
-                </Text>
-              )}
+              <LinearGradient
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.loginBtnGradient}
+              >
+                {isSubmitting || authLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.loginBtnText}>
+                    {isLocked ? `Bloqueado ${formatCountdown()}` : 'Iniciar Sesión'}
+                  </Text>
+                )}
+              </LinearGradient>
             </TouchableOpacity>
 
             {authError && <Text style={styles.errorText}>{authError}</Text>}
@@ -339,16 +346,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   loginBtn: {
-    backgroundColor: COLORS.primary,
     borderRadius: 12,
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: COLORS.primary,
+    overflow: 'hidden',
+    shadowColor: '#1230B8',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
     elevation: 8,
+  },
+  loginBtnGradient: {
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   loginBtnText: {
     ...TYPOGRAPHY.bodyMedium,
