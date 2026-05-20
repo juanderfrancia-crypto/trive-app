@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\)\\); const deps={...d.dependencies,...d.devDependencies}; console.log\\('expo-secure-store' in deps ? 'INSTALADO: ' + deps['expo-secure-store'] : 'NO INSTALADO'\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; console.log\\('expo-secure-store:', d['expo-secure-store'] || 'NO'\\); console.log\\('expo-crypto:', d['expo-crypto'] || 'NO'\\);\")",
+      "Bash(findstr \"SeatSelection\")",
+      "Bash(mkdir \"c:\\\\Users\\\\T460s\\\\Desktop\\\\codigo cursor\\\\triveupp-main\\\\supabase\\\\functions\\\\notify-message\")",
+      "Bash(eas build:cancel)",
+      "Bash(npx supabase@2.98.2 functions deploy check-document-expiry --project-ref iksenkkaxlmdiyeezoym)"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\T460s\\Desktop\\codigo cursor\\triveupp-main\\supabase\\functions"
+    ]
+  }
+}

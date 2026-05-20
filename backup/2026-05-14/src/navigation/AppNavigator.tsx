@@ -31,7 +31,7 @@ import FavoriteRoutesScreen from '../screens/FavoriteRoutesScreen'
 import TripHistoryScreen from '../screens/TripHistoryScreen'
 import { VehicleInfoScreen } from '../screens/VehicleInfoScreen'
 import { EditVehicleScreen } from '../screens/EditVehicleScreen'
-import DriverEarningsScreen from '../screens/DriverEarningsScreen'
+import { EarningsScreen } from '../screens/EarningsScreen'
 import { StatsScreen } from '../screens/StatsScreen'
 import AboutTriveScreen from '../screens/AboutTriveScreen'
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen'
@@ -53,8 +53,6 @@ import TravelPreferencesScreen from '../screens/TravelPreferencesScreen'
 import ActiveTripsScreen from '../screens/ActiveTripsScreen'
 import ActiveChatsScreen from '../screens/ActiveChatsScreen'
 import ReviewsScreen from '../screens/ReviewsScreen'
-import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
-import ReferralScreen from '../screens/ReferralScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import { NotificationsProvider } from '../context/NotificationsContext'
@@ -170,11 +168,9 @@ export default function AppNavigator() {
       <Stack.Screen name="ActiveTrips" component={ActiveTripsScreen} />
       <Stack.Screen name="ActiveChats" component={ActiveChatsScreen} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} />
-      <Stack.Screen name="RecurringRoutes" component={RecurringRoutesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleInfo" component={VehicleInfoScreen} />
       <Stack.Screen name="EditVehicle" component={EditVehicleScreen} />
-      <Stack.Screen name="Earnings" component={DriverEarningsScreen} />
+      <Stack.Screen name="Earnings" component={EarningsScreen} />
       <Stack.Screen name="Stats" component={StatsScreen} />
       <Stack.Screen name="AboutTrive" component={AboutTriveScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />

@@ -5,10 +5,6 @@ import { Session, User } from "@supabase/supabase-js";
 import { useAppStore } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
 import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
-import { setUserId } from "../services/analytics";
-
-let _crashlytics: any = null
-try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
 
 // Flag de módulo: evita mostrar el alert de sesión expirada cuando el logout es manual
 let _manualLogout = false
@@ -26,21 +22,14 @@ export const useAuth = () => {
 
   const restoreSession = async (currentSession: Session | null) => {
     currentSessionRef.current = currentSession
+    setSession(currentSession);
     setAuthUser(currentSession?.user ?? null);
     setUser(currentSession?.user ?? null);
 
     if (!currentSession?.user) {
       setAppUser(null);
-      setSession(null);
       setLoading(false);
       return;
-    }
-
-    // Show LoadingScreen while profile loads when it's a new/different user.
-    // Token refreshes (same user ID) skip this to avoid an unnecessary loading flash.
-    const prevUserId = useAppStore.getState().user?.id
-    if (!prevUserId || prevUserId !== currentSession.user.id) {
-      setLoading(true)
     }
 
     try {
@@ -88,7 +77,9 @@ export const useAuth = () => {
           .select()
           .single();
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          throw insertError;
+        }
 
         setAppUser({
           id: insertedProfile.id,
@@ -101,17 +92,12 @@ export const useAuth = () => {
         });
       }
 
-      // Session is set AFTER the profile is ready — AppNavigator only transitions
-      // to TabNavigator once both session and complete user data are available.
-      // This eliminates the flash of wrong role/content during login.
-      setSession(currentSession);
-
       await registerUserSession(currentSession.user.id);
-      setUserId(currentSession.user.id);
-      try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
 
+      // Suscripción Realtime al perfil del usuario
       subscribeToProfile(currentSession.user.id)
 
+      // Registrar push token en background — no bloquea ni falla el login
       getPushNotificationToken()
         .then((token) => {
           if (token) registerPushToken(currentSession.user.id, token)
@@ -120,7 +106,6 @@ export const useAuth = () => {
     } catch (err: any) {
       console.error("Error restoring profile from session:", err);
       setAppUser(null);
-      setSession(null);
     } finally {
       setLoading(false);
     }
@@ -289,6 +274,14 @@ export const useAuth = () => {
     }
   };
 
+  const signInWithApple = async () => {
+    throw new Error('Apple Sign-In no está disponible');
+  }
+
+  const handleGoogleLogin = async () => {
+    throw new Error('Google Sign-In no está disponible');
+  }
+
   const sendEmailVerification = async (email: string) => {
     try {
       setError(null);
@@ -339,8 +332,7 @@ export const useAuth = () => {
     email: string,
     password: string,
     name: string,
-    phone: string,
-    referredBy?: string
+    phone: string
   ) => {
     try {
       setError(null);
@@ -363,19 +355,17 @@ export const useAuth = () => {
       // Create profile — if this fails due to RLS (email not yet confirmed),
       // the DB trigger handle_new_user() already created it server-side.
       if (authData.user) {
-        const profileData: Record<string, any> = {
-          id: authData.user.id,
-          name,
-          email,
-          phone,
-          role: 'passenger',
-        }
-        if (referredBy?.trim()) {
-          profileData.referred_by = referredBy.trim().toUpperCase()
-        }
         await supabase
-          .from('profiles')
-          .upsert([profileData], { onConflict: 'id' })
+          .from("profiles")
+          .upsert([
+            {
+              id: authData.user.id,
+              name,
+              email,
+              phone,
+              role: "passenger",
+            },
+          ], { onConflict: 'id' })
           .then(({ error }) => {
             if (error) console.warn('Profile upsert skipped (trigger handled it):', error.message)
           })
@@ -398,8 +388,6 @@ export const useAuth = () => {
       _manualLogout = true
       await deactivateCurrentSession();
       await clearLocalSessionKey();
-      setUserId(null);
-      try { if (_crashlytics) _crashlytics().setUserId('') } catch {}
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       
@@ -430,6 +418,8 @@ export const useAuth = () => {
     verifyOTP,
     sendEmailVerification,
     confirmEmail,
+    signInWithApple,
+    handleGoogleLogin,
     isAuthenticated: !!session,
   };
 };

@@ -26,8 +26,7 @@ import OfflineBanner from '../components/OfflineBanner'
 
 export default function LoginScreen() {
   const navigation = useNavigation()
-  const setUser     = useAppStore((s) => s.setUser)
-  const setAuthUser = useAppStore((s) => s.setAuthUser)
+  const { setUser, setAuthUser } = useAppStore()
   const { login, loading: authLoading, error: authError } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

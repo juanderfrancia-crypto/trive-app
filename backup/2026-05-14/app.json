@@ -1,0 +1,74 @@
+{
+  "expo": {
+    "name": "Trive",
+    "slug": "trive-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF",
+      "dark": {
+        "image": "./assets/logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "edgeToEdgeEnabled": true,
+      "statusBar": {
+        "style": "dark",
+        "translucent": true
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
+      "package": "com.traive.triveapp"
+    },
+    "web": {
+      "favicon": "./assets/logo.png"
+    },
+    "description": "Trive es la app de viajes compartidos para conductores y pasajeros en Colombia. Reserva rutas, chatea con usuarios, gestiona viajes y accede a métricas en tiempo real.",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/logo.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF",
+          "dark": {
+            "image": "./assets/logo.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#FFFFFF"
+          }
+        }
+      ],
+      "expo-web-browser",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Trive necesita tu ubicación para mostrar el progreso del viaje"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a763f0a7-fdb7-4f3c-aee4-3b42a42aa93d"
+      }
+    },
+    "owner": "trive"
+  }
+}
