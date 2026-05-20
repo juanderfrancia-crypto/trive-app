@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -67,7 +66,7 @@ export function EarningsScreen() {
           <View style={styles.mainCardIcon}>
             <Ionicons name="wallet-outline" size={36} color={COLORS.primary} />
           </View>
-          <Text style={styles.mainCardLabel}>GANANCIAS TOTALES</Text>
+          <Text style={styles.mainCardLabel}>ESTIMADO DE INGRESOS</Text>
           <Text style={styles.mainCardAmount}>
             {formatCOP(earnings?.totalEarnings ?? 0)}
           </Text>
@@ -89,7 +88,7 @@ export function EarningsScreen() {
           </View>
         </View>
 
-        {/* Este mes */}
+        {/* Este mes + Próximos */}
         <View style={styles.row}>
           <View style={[styles.statCard, { borderLeftColor: COLORS.primary }]}>
             <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
@@ -98,45 +97,84 @@ export function EarningsScreen() {
               {formatCOP(earnings?.thisMonthEarnings ?? 0)}
             </Text>
           </View>
-          {(earnings?.pendingAmount ?? 0) > 0 && (
-            <View style={[styles.statCard, { borderLeftColor: '#FF9500' }]}>
-              <Ionicons name="time-outline" size={20} color="#FF9500" style={{ marginBottom: 6 }} />
-              <Text style={styles.statCardLabel}>Por cobrar</Text>
-              <Text style={[styles.statCardValue, { color: '#FF9500' }]}>
-                {formatCOP(earnings?.pendingAmount ?? 0)}
+          {(earnings?.upcomingAmount ?? 0) > 0 && (
+            <View style={[styles.statCard, { borderLeftColor: '#0EA5E9' }]}>
+              <Ionicons name="time-outline" size={20} color="#0EA5E9" style={{ marginBottom: 6 }} />
+              <Text style={styles.statCardLabel}>Próximos</Text>
+              <Text style={[styles.statCardValue, { color: '#0EA5E9' }]}>
+                {formatCOP(earnings?.upcomingAmount ?? 0)}
               </Text>
-              <Text style={styles.statCardHint}>Al completar el viaje</Text>
+              <Text style={styles.statCardHint}>Viajes pendientes</Text>
             </View>
           )}
         </View>
 
-        {/* Retiro */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Retiros</Text>
-          <Text style={styles.cardSub}>
-            Saldo disponible:{' '}
-            <Text style={{ fontWeight: '700', color: COLORS.primary }}>
-              {formatCOP(earnings?.totalEarnings ?? 0)}
-            </Text>
-            {(earnings?.pendingAmount ?? 0) > 0 && (
-              <Text style={{ color: COLORS.textTertiary }}>
-                {`  +${formatCOP(earnings?.pendingAmount ?? 0)} por cobrar`}
-              </Text>
-            )}
+        {/* Nota aclaratoria */}
+        <View style={styles.disclaimerBox}>
+          <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+          <Text style={styles.disclaimerText}>
+            Los pagos son directos entre conductor y pasajero. Este resumen es un estimado basado en tus reservas.
           </Text>
-          <TouchableOpacity
-            style={styles.withdrawBtn}
-            onPress={() => Alert.alert('Próximamente', 'Los retiros estarán disponibles en la próxima versión.')}
-          >
-            <Ionicons name="cash-outline" size={18} color="#fff" />
-            <Text style={styles.withdrawBtnText}>Solicitar Retiro</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Historial de transacciones */}
+        {/* Balance Mensual */}
+        {(earnings?.monthlyBalances?.length ?? 0) > 0 && (
+          <View style={styles.monthlySection}>
+            <Text style={styles.monthlySectionTitle}>Balance Mensual</Text>
+            {earnings!.monthlyBalances.map((month) => (
+              <View
+                key={month.key}
+                style={[styles.monthCard, month.isCurrentMonth && styles.monthCardCurrent]}
+              >
+                <View style={styles.monthHeader}>
+                  <Text style={[styles.monthLabel, month.isCurrentMonth && styles.monthLabelCurrent]}>
+                    {month.label.charAt(0).toUpperCase() + month.label.slice(1)}
+                  </Text>
+                  {month.isCurrentMonth && (
+                    <View style={styles.currentBadge}>
+                      <Text style={styles.currentBadgeText}>MES ACTUAL</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.monthStats}>
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Ingresos</Text>
+                    <Text style={[styles.monthStatValue, { color: COLORS.success }]}>
+                      {formatCOP(month.earned)}
+                    </Text>
+                    <Text style={styles.monthStatSub}>{month.tripsCompleted} viaje{month.tripsCompleted !== 1 ? 's' : ''}</Text>
+                  </View>
+
+                  <View style={styles.monthDivider} />
+
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Cancelaciones</Text>
+                    <Text style={[styles.monthStatValue, { color: month.cancelledCount > 0 ? COLORS.error : COLORS.textTertiary }]}>
+                      {month.cancelledCount > 0 ? `-${formatCOP(month.cancelledAmount)}` : '$0'}
+                    </Text>
+                    <Text style={styles.monthStatSub}>{month.cancelledCount} cancelac.</Text>
+                  </View>
+
+                  <View style={styles.monthDivider} />
+
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Balance</Text>
+                    <Text style={[styles.monthStatValue, { color: COLORS.primary }]}>
+                      {formatCOP(month.earned)}
+                    </Text>
+                    <Text style={styles.monthStatSub}>neto</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Resumen de Reservas */}
         <View style={styles.card}>
           <View style={styles.txHeader}>
-            <Text style={styles.cardTitle}>Historial de Pagos</Text>
+            <Text style={styles.cardTitle}>Resumen de Reservas</Text>
             {transactions.length > 0 && (
               <Text style={styles.txCount}>{transactions.length} total</Text>
             )}
@@ -154,25 +192,41 @@ export function EarningsScreen() {
                   <View style={styles.txRow}>
                     <View style={[
                       styles.txIcon,
-                      { backgroundColor: tx.status === 'completed' ? `${COLORS.success}15` : '#FF950015' }
+                      {
+                        backgroundColor:
+                          tx.type === 'cancellation' ? `${COLORS.error}15`
+                          : tx.type === 'upcoming' ? '#0EA5E915'
+                          : `${COLORS.success}15`
+                      }
                     ]}>
                       <Ionicons
-                        name={tx.status === 'completed' ? 'checkmark-circle-outline' : 'time-outline'}
+                        name={
+                          tx.type === 'cancellation' ? 'close-circle-outline'
+                          : tx.type === 'upcoming' ? 'time-outline'
+                          : 'checkmark-circle-outline'
+                        }
                         size={20}
-                        color={tx.status === 'completed' ? COLORS.success : '#FF9500'}
+                        color={
+                          tx.type === 'cancellation' ? COLORS.error
+                          : tx.type === 'upcoming' ? '#0EA5E9'
+                          : COLORS.success
+                        }
                       />
                     </View>
                     <View style={styles.txInfo}>
-                      <Text style={styles.txDesc}>
-                        {tx.status === 'completed' ? 'Pago recibido' : 'Pago pendiente'}
-                      </Text>
+                      <Text style={styles.txDesc}>{tx.description}</Text>
                       <Text style={styles.txDate}>{formatDate(tx.date)}</Text>
                     </View>
                     <Text style={[
                       styles.txAmount,
-                      { color: tx.status === 'completed' ? COLORS.success : '#FF9500' }
+                      {
+                        color:
+                          tx.type === 'cancellation' ? COLORS.error
+                          : tx.type === 'upcoming' ? '#0EA5E9'
+                          : COLORS.success
+                      }
                     ]}>
-                      +{formatCOP(tx.amount)}
+                      {tx.type === 'cancellation' ? '-' : '+'}{formatCOP(tx.amount)}
                     </Text>
                   </View>
                   {idx < Math.min(visibleCount, transactions.length) - 1 && (
@@ -344,19 +398,23 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
   },
-  withdrawBtn: {
+  disclaimerBox: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'flex-start',
     gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    backgroundColor: COLORS.primary + '08',
+    padding: SPACING.md,
     borderRadius: RADIUS.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
   },
-  withdrawBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: '#fff',
-    fontWeight: '600',
+  disclaimerText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+    flex: 1,
+    lineHeight: 18,
   },
   txHeader: {
     flexDirection: 'row',
@@ -427,5 +485,85 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.borderLight,
     marginLeft: 56,
+  },
+
+  // Balance Mensual
+  monthlySection: {
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  monthlySectionTitle: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.textPrimary,
+    fontWeight: '700',
+    marginBottom: SPACING.md,
+  },
+  monthCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.sm,
+  },
+  monthCardCurrent: {
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  },
+  monthLabel: {
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: '700',
+    fontSize: 15,
+    color: COLORS.textPrimary,
+  },
+  monthLabelCurrent: {
+    color: COLORS.primary,
+  },
+  currentBadge: {
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+  },
+  currentBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
+  },
+  monthStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  monthStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  monthDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.borderLight,
+  },
+  monthStatLabel: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  monthStatValue: {
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: '700',
+    fontSize: 13,
+  },
+  monthStatSub: {
+    fontSize: 10,
+    color: COLORS.textTertiary,
+    marginTop: 2,
   },
 });

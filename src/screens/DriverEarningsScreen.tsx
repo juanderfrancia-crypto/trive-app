@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useDriverEarnings } from '../hooks/useDriverEarnings'
 interface Transaction {
   id: string
   date: string
-  type: 'trip' | 'withdrawal' | 'bonus' | 'refund'
+  type: 'trip' | 'cancellation' | 'upcoming' | 'withdrawal' | 'bonus' | 'refund'
   amount: number
   description: string
   tripId?: string
@@ -30,8 +30,6 @@ interface Transaction {
 export default function DriverEarningsScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore(s => s.user)
-  const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month')
-
   // ✅ USAR HOOK REAL PARA GANANCIAS
   const {
     earnings,
@@ -65,31 +63,19 @@ export default function DriverEarningsScreen() {
   // Funciones helper para iconos y colores de transacciones
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'trip':
-        return 'car-outline'
-      case 'withdrawal':
-        return 'arrow-down-circle-outline'
-      case 'bonus':
-        return 'gift-outline'
-      case 'refund':
-        return 'return-up-back-outline'
-      default:
-        return 'wallet-outline'
+      case 'trip':       return 'checkmark-circle-outline'
+      case 'cancellation': return 'close-circle-outline'
+      case 'upcoming':   return 'time-outline'
+      default:           return 'wallet-outline'
     }
   }
 
   const getTransactionColor = (type: string) => {
     switch (type) {
-      case 'trip':
-        return COLORS.success
-      case 'withdrawal':
-        return COLORS.error
-      case 'bonus':
-        return COLORS.warning
-      case 'refund':
-        return COLORS.primary
-      default:
-        return COLORS.textSecondary
+      case 'trip':         return COLORS.success
+      case 'cancellation': return COLORS.error
+      case 'upcoming':     return '#0EA5E9'
+      default:             return COLORS.textSecondary
     }
   }
 
@@ -189,7 +175,7 @@ export default function DriverEarningsScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Ganancias</Text>
-          <Text style={styles.subtitle}>Tu historial de ingresos</Text>
+          <Text style={styles.subtitle}>Resumen de tu actividad</Text>
         </View>
       </View>
 
@@ -203,7 +189,7 @@ export default function DriverEarningsScreen() {
         >
           <View style={styles.balanceTop}>
             <View>
-              <Text style={styles.balanceLabel}>Ganancias Totales</Text>
+              <Text style={styles.balanceLabel}>Estimado de Ingresos</Text>
               <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
             </View>
             <View style={styles.walletIcon}>
@@ -218,13 +204,25 @@ export default function DriverEarningsScreen() {
               <Text style={styles.balanceItemLabel}>Este Mes</Text>
               <Text style={styles.balanceItemValue}>{formatCOP(earnings?.thisMonthEarnings || 0)}</Text>
             </View>
-            <View style={styles.balanceItemDivider} />
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceItemLabel}>Pendiente</Text>
-              <Text style={styles.balanceItemValue}>{formatCOP(earnings?.pendingAmount || 0)}</Text>
-            </View>
+            {(earnings?.upcomingAmount || 0) > 0 && (
+              <>
+                <View style={styles.balanceItemDivider} />
+                <View style={styles.balanceItem}>
+                  <Text style={styles.balanceItemLabel}>Próximos</Text>
+                  <Text style={styles.balanceItemValue}>{formatCOP(earnings?.upcomingAmount || 0)}</Text>
+                </View>
+              </>
+            )}
           </View>
         </LinearGradient>
+
+        {/* Nota aclaratoria */}
+        <View style={styles.disclaimerBox}>
+          <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+          <Text style={styles.disclaimerText}>
+            Los pagos son directos entre conductor y pasajero. Este resumen es un estimado basado en tus reservas.
+          </Text>
+        </View>
 
         {/* Stats Grid */}
         <View style={styles.statsGrid}>
@@ -253,39 +251,63 @@ export default function DriverEarningsScreen() {
           </View>
         </View>
 
-        {/* Period Selector */}
-        <View style={styles.periodSelector}>
-          <TouchableOpacity
-            style={[styles.periodBtn, selectedPeriod === 'week' && styles.periodBtnActive]}
-            onPress={() => setSelectedPeriod('week')}
-          >
-            <Text style={[styles.periodBtnText, selectedPeriod === 'week' && styles.periodBtnTextActive]}>
-              Semana
-            </Text>
-          </TouchableOpacity>
+        {/* Balance Mensual */}
+        {(earnings?.monthlyBalances?.length ?? 0) > 0 && (
+          <View style={styles.monthlySection}>
+            <Text style={styles.sectionTitle}>Balance Mensual</Text>
+            {earnings!.monthlyBalances.map((month) => (
+              <View
+                key={month.key}
+                style={[styles.monthCard, month.isCurrentMonth && styles.monthCardCurrent]}
+              >
+                <View style={styles.monthHeader}>
+                  <Text style={[styles.monthLabel, month.isCurrentMonth && styles.monthLabelCurrent]}>
+                    {month.label.charAt(0).toUpperCase() + month.label.slice(1)}
+                  </Text>
+                  {month.isCurrentMonth && (
+                    <View style={styles.currentBadge}>
+                      <Text style={styles.currentBadgeText}>MES ACTUAL</Text>
+                    </View>
+                  )}
+                </View>
 
-          <TouchableOpacity
-            style={[styles.periodBtn, selectedPeriod === 'month' && styles.periodBtnActive]}
-            onPress={() => setSelectedPeriod('month')}
-          >
-            <Text style={[styles.periodBtnText, selectedPeriod === 'month' && styles.periodBtnTextActive]}>
-              Mes
-            </Text>
-          </TouchableOpacity>
+                <View style={styles.monthStats}>
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Ingresos</Text>
+                    <Text style={[styles.monthStatValue, { color: COLORS.success }]}>
+                      {formatCOP(month.earned)}
+                    </Text>
+                    <Text style={styles.monthStatSub}>{month.tripsCompleted} viaje{month.tripsCompleted !== 1 ? 's' : ''}</Text>
+                  </View>
 
-          <TouchableOpacity
-            style={[styles.periodBtn, selectedPeriod === 'year' && styles.periodBtnActive]}
-            onPress={() => setSelectedPeriod('year')}
-          >
-            <Text style={[styles.periodBtnText, selectedPeriod === 'year' && styles.periodBtnTextActive]}>
-              Año
-            </Text>
-          </TouchableOpacity>
-        </View>
+                  <View style={styles.monthDivider} />
+
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Cancelaciones</Text>
+                    <Text style={[styles.monthStatValue, { color: month.cancelledCount > 0 ? COLORS.error : COLORS.textTertiary }]}>
+                      {month.cancelledCount > 0 ? `-${formatCOP(month.cancelledAmount)}` : '$0'}
+                    </Text>
+                    <Text style={styles.monthStatSub}>{month.cancelledCount} cancelac.</Text>
+                  </View>
+
+                  <View style={styles.monthDivider} />
+
+                  <View style={styles.monthStat}>
+                    <Text style={styles.monthStatLabel}>Balance</Text>
+                    <Text style={[styles.monthStatValue, { color: COLORS.primary }]}>
+                      {formatCOP(month.earned)}
+                    </Text>
+                    <Text style={styles.monthStatSub}>neto</Text>
+                  </View>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Transactions */}
         <View style={styles.transactionsSection}>
-          <Text style={styles.sectionTitle}>Movimientos Recientes</Text>
+          <Text style={styles.sectionTitle}>Resumen de Reservas</Text>
 
           {transactions.map((transaction, index) => {
             const color = getTransactionColor(transaction.type)
@@ -312,10 +334,10 @@ export default function DriverEarningsScreen() {
                   <Text
                     style={[
                       styles.transactionAmount,
-                      { color: transaction.amount > 0 ? COLORS.success : COLORS.error },
+                      { color: getTransactionColor(transaction.type) },
                     ]}
                   >
-                    {transaction.amount > 0 ? '+' : ''}{formatCOP(transaction.amount)}
+                    {transaction.type === 'cancellation' ? '-' : '+'}{formatCOP(transaction.amount)}
                   </Text>
                 </View>
 
@@ -325,34 +347,7 @@ export default function DriverEarningsScreen() {
           })}
         </View>
 
-        {/* Withdrawal Info */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoIconContainer}>
-            <Ionicons name="information-circle" size={24} color={COLORS.primary} />
-          </View>
-          <View style={styles.infoContent}>
-            <Text style={styles.infoTitle}>Retiros</Text>
-            <Text style={styles.infoText}>
-              Puedes retirar tus ganancias cada semana. Los retiros se procesan en 2-3 días hábiles.
-            </Text>
-          </View>
-        </View>
-
-        {/* Withdrawal Button */}
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primary + 'E0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.withdrawalGradient}
-        >
-          <TouchableOpacity
-            style={styles.withdrawalButton}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="arrow-down-circle-outline" size={22} color="#fff" />
-            <Text style={styles.withdrawalButtonText}>Solicitar Retiro</Text>
-          </TouchableOpacity>
-        </LinearGradient>
+        <View style={{ height: SPACING.lg }} />
       </ScrollView>
     </SafeAreaView>
   )
@@ -648,51 +643,91 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginVertical: SPACING.sm,
   },
-  infoCard: {
+  disclaimerBox: {
     flexDirection: 'row',
-    backgroundColor: COLORS.primary + '15',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
     marginBottom: SPACING.lg,
+    backgroundColor: COLORS.primary + '08',
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.primary,
   },
-  infoIconContainer: {
-    width: 32,
-    height: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.md,
-  },
-  infoContent: {
-    flex: 1,
-  },
-  infoTitle: {
-    ...TYPOGRAPHY.semibold,
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  infoText: {
+  disclaimerText: {
     ...TYPOGRAPHY.regular,
     fontSize: 12,
     color: COLORS.textSecondary,
+    flex: 1,
+    lineHeight: 18,
   },
-  withdrawalGradient: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+
+  // Balance Mensual
+  monthlySection: {
+    marginBottom: SPACING.lg,
   },
-  withdrawalButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
+  monthCard: {
+    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    ...SHADOWS.sm,
   },
-  withdrawalButtonText: {
+  monthCardCurrent: {
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+  },
+  monthHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.md,
+  },
+  monthLabel: {
     ...TYPOGRAPHY.bold,
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 15,
+    color: COLORS.textPrimary,
+  },
+  monthLabelCurrent: {
+    color: COLORS.primary,
+  },
+  currentBadge: {
+    backgroundColor: COLORS.primary + '15',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.sm,
+  },
+  currentBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.primary,
+    letterSpacing: 0.5,
+  },
+  monthStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  monthStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  monthDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.borderLight,
+  },
+  monthStatLabel: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  monthStatValue: {
+    ...TYPOGRAPHY.bold,
+    fontSize: 13,
+  },
+  monthStatSub: {
+    fontSize: 10,
+    color: COLORS.textTertiary,
+    marginTop: 2,
   },
 })
