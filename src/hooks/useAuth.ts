@@ -127,10 +127,26 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    const isRefreshTokenError = (msg?: string) =>
+      !!msg && (
+        msg.includes('Refresh Token Not Found') ||
+        msg.includes('Invalid Refresh Token') ||
+        msg.includes('refresh_token_not_found') ||
+        msg.includes('Token expired')
+      )
+
     const initializeSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
         if (error) {
+          if (isRefreshTokenError(error.message)) {
+            // Token inválido: limpiar sesión y redirigir al login sin alert
+            _manualLogout = true
+            try { await supabase.auth.signOut() } catch {}
+            _manualLogout = false
+            setLoading(false);
+            return;
+          }
           console.error('Error getting auth session:', error);
           setError('Error de red al restaurar la sesión');
           setLoading(false);
@@ -139,6 +155,13 @@ export const useAuth = () => {
 
         restoreSession(data.session);
       } catch (err: any) {
+        if (isRefreshTokenError(err?.message)) {
+          _manualLogout = true
+          try { await supabase.auth.signOut() } catch {}
+          _manualLogout = false
+          setLoading(false);
+          return;
+        }
         console.error('Error getting auth session:', err);
         setError('Error de red al restaurar la sesión');
         setLoading(false);

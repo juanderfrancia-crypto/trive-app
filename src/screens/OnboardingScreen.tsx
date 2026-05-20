@@ -80,7 +80,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a1a5c" />
+      <StatusBar barStyle="light-content" backgroundColor="#0a1a5c" translucent={false} />
 
       {/* ── Hero: imagen a pantalla completa ─────────────────── */}
       <View style={styles.heroArea}>
