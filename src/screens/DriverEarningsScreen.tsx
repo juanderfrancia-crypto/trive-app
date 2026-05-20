@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { formatCOP } from '../utils/currency'
@@ -31,6 +30,9 @@ export default function DriverEarningsScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore(s => s.user)
   // ✅ USAR HOOK REAL PARA GANANCIAS
+  const PAGE_SIZE = 20
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
+
   const {
     earnings,
     transactions: earningsTransactions,
@@ -181,40 +183,51 @@ export default function DriverEarningsScreen() {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Main Balance Card */}
-        <LinearGradient
-          colors={[COLORS.primary, COLORS.primary + 'CC']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.balanceCard}
-        >
+        <View style={styles.balanceCard}>
           <View style={styles.balanceTop}>
-            <View>
-              <Text style={styles.balanceLabel}>Estimado de Ingresos</Text>
-              <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
+            <View style={styles.balanceCardIcon}>
+              <Ionicons name="wallet-outline" size={36} color={COLORS.primary} />
             </View>
-            <View style={styles.walletIcon}>
-              <Ionicons name="wallet" size={40} color="#fff" />
+            <Text style={styles.balanceLabel}>ESTIMADO DE INGRESOS</Text>
+            <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
+            <View style={styles.balanceStats}>
+              <View style={styles.balanceStat}>
+                <Text style={styles.balanceStatValue}>{earnings?.completedTrips || 0}</Text>
+                <Text style={styles.balanceStatLabel}>Viajes</Text>
+              </View>
+              <View style={styles.balanceStatDivider} />
+              <View style={styles.balanceStat}>
+                <Text style={styles.balanceStatValue}>{earnings?.completedPassengers || 0}</Text>
+                <Text style={styles.balanceStatLabel}>Pasajeros</Text>
+              </View>
+              <View style={styles.balanceStatDivider} />
+              <View style={styles.balanceStat}>
+                <Text style={styles.balanceStatValue}>{formatCOP(earnings?.averagePerTrip || 0)}</Text>
+                <Text style={styles.balanceStatLabel}>Promedio/viaje</Text>
+              </View>
             </View>
           </View>
+        </View>
 
-          <View style={styles.balanceDivider} />
-
-          <View style={styles.balanceBottom}>
-            <View style={styles.balanceItem}>
-              <Text style={styles.balanceItemLabel}>Este Mes</Text>
-              <Text style={styles.balanceItemValue}>{formatCOP(earnings?.thisMonthEarnings || 0)}</Text>
-            </View>
-            {(earnings?.upcomingAmount || 0) > 0 && (
-              <>
-                <View style={styles.balanceItemDivider} />
-                <View style={styles.balanceItem}>
-                  <Text style={styles.balanceItemLabel}>Próximos</Text>
-                  <Text style={styles.balanceItemValue}>{formatCOP(earnings?.upcomingAmount || 0)}</Text>
-                </View>
-              </>
-            )}
+        {/* Este mes + Próximos */}
+        <View style={styles.subCardsRow}>
+          <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
+            <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
+            <Text style={styles.subCardLabel}>Este mes</Text>
+            <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
+              {formatCOP(earnings?.thisMonthEarnings || 0)}
+            </Text>
           </View>
-        </LinearGradient>
+          {(earnings?.upcomingAmount || 0) > 0 && (
+            <View style={[styles.subCard, { borderLeftColor: '#0EA5E9' }]}>
+              <Ionicons name="time-outline" size={20} color="#0EA5E9" style={{ marginBottom: 6 }} />
+              <Text style={styles.subCardLabel}>Próximos</Text>
+              <Text style={[styles.subCardValue, { color: '#0EA5E9' }]}>
+                {formatCOP(earnings?.upcomingAmount || 0)}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* Nota aclaratoria */}
         <View style={styles.disclaimerBox}>
@@ -222,33 +235,6 @@ export default function DriverEarningsScreen() {
           <Text style={styles.disclaimerText}>
             Los pagos son directos entre conductor y pasajero. Este resumen es un estimado basado en tus reservas.
           </Text>
-        </View>
-
-        {/* Stats Grid */}
-        <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Ionicons name="car-outline" size={24} color={COLORS.primary} />
-            </View>
-            <Text style={styles.statValue}>{earnings?.completedTrips || 0}</Text>
-            <Text style={styles.statLabel}>Viajes</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Ionicons name="cash-outline" size={24} color={COLORS.primary} />
-            </View>
-            <Text style={styles.statValue}>{formatCOP(earnings?.averagePerTrip || 0)}</Text>
-            <Text style={styles.statLabel}>Por Viaje</Text>
-          </View>
-
-          <View style={styles.statCard}>
-            <View style={styles.statIcon}>
-              <Ionicons name="time-outline" size={24} color={COLORS.primary} />
-            </View>
-            <Text style={styles.statValue}>{earnings?.totalRideHours || 0}h</Text>
-            <Text style={styles.statLabel}>Conducción</Text>
-          </View>
         </View>
 
         {/* Balance Mensual */}
@@ -309,42 +295,61 @@ export default function DriverEarningsScreen() {
         <View style={styles.transactionsSection}>
           <Text style={styles.sectionTitle}>Resumen de Reservas</Text>
 
-          {transactions.map((transaction, index) => {
-            const color = getTransactionColor(transaction.type)
-            const date = new Date(transaction.date)
-
-            return (
-              <View key={transaction.id}>
-                <View style={styles.transactionItem}>
-                  <View style={[styles.transactionIcon, { backgroundColor: color + '20' }]}>
-                    <Ionicons
-                      name={getTransactionIcon(transaction.type) as any}
-                      size={20}
-                      color={color}
-                    />
+          {transactions.length === 0 ? (
+            <View style={styles.emptyTx}>
+              <Ionicons name="receipt-outline" size={40} color={COLORS.textTertiary} />
+              <Text style={styles.emptyTxText}>Sin transacciones aún</Text>
+            </View>
+          ) : (
+            <>
+              {transactions.slice(0, visibleCount).map((transaction, index) => {
+                const color = getTransactionColor(transaction.type)
+                const date = new Date(transaction.date)
+                return (
+                  <View key={transaction.id}>
+                    <View style={styles.transactionItem}>
+                      <View style={[styles.transactionIcon, { backgroundColor: color + '20' }]}>
+                        <Ionicons name={getTransactionIcon(transaction.type) as any} size={20} color={color} />
+                      </View>
+                      <View style={styles.transactionInfo}>
+                        <Text style={styles.transactionDesc}>{transaction.description}</Text>
+                        <Text style={styles.transactionDate}>
+                          {date.toLocaleDateString('es-CO')} · {date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </View>
+                      <Text style={[styles.transactionAmount, { color }]}>
+                        {transaction.type === 'cancellation' ? '-' : '+'}{formatCOP(transaction.amount)}
+                      </Text>
+                    </View>
+                    {index < Math.min(visibleCount, transactions.length) - 1 && <View style={styles.divider} />}
                   </View>
+                )
+              })}
 
-                  <View style={styles.transactionInfo}>
-                    <Text style={styles.transactionDesc}>{transaction.description}</Text>
-                    <Text style={styles.transactionDate}>
-                      {date.toLocaleDateString('es-CO')} · {date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-
-                  <Text
-                    style={[
-                      styles.transactionAmount,
-                      { color: getTransactionColor(transaction.type) },
-                    ]}
+              <View style={styles.loadMoreRow}>
+                {visibleCount > PAGE_SIZE && (
+                  <TouchableOpacity
+                    style={[styles.loadMoreBtn, styles.loadMoreBtnHalf]}
+                    onPress={() => setVisibleCount(PAGE_SIZE)}
+                    activeOpacity={0.7}
                   >
-                    {transaction.type === 'cancellation' ? '-' : '+'}{formatCOP(transaction.amount)}
-                  </Text>
-                </View>
-
-                {index < transactions.length - 1 && <View style={styles.divider} />}
+                    <Ionicons name="chevron-up" size={16} color={COLORS.textSecondary} />
+                    <Text style={[styles.loadMoreText, { color: COLORS.textSecondary }]}>Mostrar menos</Text>
+                  </TouchableOpacity>
+                )}
+                {visibleCount < transactions.length && (
+                  <TouchableOpacity
+                    style={[styles.loadMoreBtn, styles.loadMoreBtnHalf]}
+                    onPress={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.loadMoreText}>Ver más ({transactions.length - visibleCount})</Text>
+                    <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+                  </TouchableOpacity>
+                )}
               </View>
-            )
-          })}
+            </>
+          )}
         </View>
 
         <View style={{ height: SPACING.lg }} />
@@ -478,63 +483,89 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   balanceCard: {
-    padding: SPACING.lg,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.lg,
+    margin: SPACING.lg,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.md,
   },
   balanceTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.lg,
+    alignItems: 'center',
+    width: '100%',
   },
-  balanceLabel: {
-    ...TYPOGRAPHY.regular,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: SPACING.xs,
-  },
-  balanceAmount: {
-    ...TYPOGRAPHY.bold,
-    fontSize: 28,
-    color: '#fff',
-  },
-  walletIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.1)',
+  balanceCardIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.primary + '15',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: SPACING.md,
   },
-  balanceDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+  balanceLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.textSecondary,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+  },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: '900',
+    color: COLORS.textPrimary,
+    letterSpacing: -1,
     marginBottom: SPACING.lg,
   },
-  balanceBottom: {
+  balanceStats: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: SPACING.lg,
   },
-  balanceItem: {
-    flex: 1,
+  balanceStat: {
     alignItems: 'center',
   },
-  balanceItemLabel: {
-    ...TYPOGRAPHY.regular,
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-    marginBottom: SPACING.xs,
+  balanceStatValue: {
+    ...TYPOGRAPHY.h4,
+    color: COLORS.textPrimary,
+    fontWeight: '700',
   },
-  balanceItemValue: {
-    ...TYPOGRAPHY.semibold,
-    fontSize: 14,
-    color: '#fff',
+  balanceStatLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    marginTop: 2,
   },
-  balanceItemDivider: {
+  balanceStatDivider: {
     width: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    marginHorizontal: SPACING.md,
+    height: 32,
+    backgroundColor: COLORS.borderLight,
+  },
+  subCardsRow: {
+    flexDirection: 'row',
+    gap: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+  },
+  subCard: {
+    flex: 1,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderLeftWidth: 3,
+    ...SHADOWS.sm,
+  },
+  subCardLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  subCardValue: {
+    ...TYPOGRAPHY.h4,
+    fontWeight: '800',
   },
   statsGrid: {
     flexDirection: 'row',
@@ -662,6 +693,37 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     flex: 1,
     lineHeight: 18,
+  },
+
+  emptyTx: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+    gap: SPACING.sm,
+  },
+  emptyTxText: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textTertiary,
+  },
+  loadMoreRow: {
+    flexDirection: 'row',
+    marginTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  loadMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+  },
+  loadMoreBtnHalf: {
+    flex: 1,
+  },
+  loadMoreText: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.primary,
+    fontWeight: '600',
   },
 
   // Balance Mensual
