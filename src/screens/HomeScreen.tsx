@@ -14,11 +14,15 @@ import {
   Easing,
   Dimensions,
   StatusBar,
+  Alert,
+  Linking,
 } from 'react-native'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { usePassengerHomeStats } from '../hooks/usePassengerHomeStats'
@@ -129,6 +133,79 @@ export default function HomeScreen() {
     : `$${(passengerStats?.spentThisMonth ?? 0).toLocaleString('es-CO')}`
   const metricLabel = isDriver ? 'Mi billetera' : 'Gastado este mes'
   const metricLoading = isDriver ? false : statsLoading
+
+  // ── SOS ────────────────────────────────────────────────────────────────────
+  const handleSOS = () => {
+    if (!upcomingTrip) return
+    Alert.alert(
+      '🆘 Enviar SOS',
+      '¿Enviar tu ubicación y datos del viaje a tu contacto de emergencia por WhatsApp?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Enviar SOS',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const raw = await AsyncStorage.getItem('emergency_contact')
+              if (!raw) {
+                Alert.alert(
+                  'Sin contacto de emergencia',
+                  'Configura un contacto en Ajustes → Privacidad y Seguridad.',
+                  [
+                    { text: 'Ir a Ajustes', onPress: () => navigation.navigate('Settings' as never) },
+                    { text: 'Cancelar', style: 'cancel' },
+                  ]
+                )
+                return
+              }
+              const contact: { name: string; phone: string } = JSON.parse(raw)
+
+              let lat = 3.4372
+              let lng = -76.5197
+              let hasLocation = false
+              try {
+                const { status } = await Location.requestForegroundPermissionsAsync()
+                if (status === 'granted') {
+                  const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+                  lat = pos.coords.latitude
+                  lng = pos.coords.longitude
+                  hasLocation = true
+                }
+              } catch {}
+
+              const route = upcomingTrip.routeObj as any
+              const parts = [route?.vehicle_color, route?.vehicle_make, route?.vehicle_plate].filter(Boolean)
+              const vehicleStr = parts.length ? parts.join(' · ') : 'sin datos'
+              const mapsLink = `https://maps.google.com/?q=${lat},${lng}`
+
+              const message =
+                `🆘 *EMERGENCIA — Estoy en un viaje con Trive*\n\n` +
+                `Conductor: ${upcomingTrip.driverName}\n` +
+                `Vehículo: ${vehicleStr}\n` +
+                `Ruta: ${upcomingTrip.origin} → ${upcomingTrip.destination}\n` +
+                `Asiento: ${upcomingTrip.seatNumber}\n\n` +
+                `📍 Mi ubicación${hasLocation ? '' : ' (aprox.)'}:\n${mapsLink}\n\n` +
+                `Por favor contáctame o reporta esta situación.`
+
+              const digits = contact.phone.replace(/\D/g, '')
+              const fullPhone = digits.length === 10 ? `57${digits}` : digits
+              const waUrl = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(message)}`
+
+              const canOpen = await Linking.canOpenURL(waUrl)
+              if (canOpen) {
+                await Linking.openURL(waUrl)
+              } else {
+                Alert.alert('WhatsApp no disponible', 'Instala WhatsApp para usar esta función.')
+              }
+            } catch {
+              Alert.alert('Error', 'No se pudo enviar el SOS. Intenta de nuevo.')
+            }
+          },
+        },
+      ]
+    )
+  }
 
   // ── Navigate to upcoming trip ──────────────────────────────────────────────
   const goToTripStatus = () => {
@@ -352,6 +429,15 @@ export default function HomeScreen() {
                   <Text style={styles.seatBadgeText}>Asiento {upcomingTrip.seatNumber}</Text>
                 </View>
               </View>
+
+              {/* SOS row */}
+              <TouchableOpacity style={styles.sosRow} onPress={handleSOS} activeOpacity={0.75}>
+                <View style={styles.sosIconWrap}>
+                  <Ionicons name="alert-circle" size={16} color="#EF4444" />
+                </View>
+                <Text style={styles.sosRowText}>SOS · Enviar mi ubicación</Text>
+                <Ionicons name="chevron-forward" size={13} color="#EF4444" />
+              </TouchableOpacity>
 
               <View style={styles.upcomingCta}>
                 <Text style={styles.upcomingCtaText}>Ver detalles del viaje</Text>
@@ -715,6 +801,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
   },
   seatBadgeText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  sosRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: SPACING.lg, paddingVertical: 10,
+    borderTopWidth: 1, borderTopColor: '#FEE2E2',
+    backgroundColor: '#FFF5F5',
+  },
+  sosIconWrap: {
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  sosRowText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#EF4444' },
   upcomingCta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
     backgroundColor: `${COLORS.primary}08`,

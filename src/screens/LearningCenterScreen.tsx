@@ -28,11 +28,11 @@ export default function LearningCenterScreen() {
       icon: 'person-add-outline',
       description: 'Aprende el proceso paso a paso para crear tu cuenta',
       steps: [
-        '1. Abre la aplicación y toca "Registrarse"',
-        '2. Ingresa tu número de teléfono y verifica con el código enviado',
-        '3. Crea tu contraseña segura',
-        '4. Completa tu perfil con nombre, foto y datos personales',
-        '5. ¡Listo! Ya puedes usar Trive como pasajero'
+        '1. Abre la aplicación y toca "Crear Cuenta"',
+        '2. Ingresa tu nombre completo, correo electrónico, número de teléfono y contraseña',
+        '3. Revisa tu bandeja de entrada y confirma tu correo con el enlace que recibirás',
+        '4. Una vez verificado el correo, inicia sesión con tus datos',
+        '5. ¡Listo! Ya puedes usar Trive como pasajero',
       ],
       expanded: false
     },
@@ -49,8 +49,8 @@ export default function LearningCenterScreen() {
         '3. Toca "Buscar Viajes"',
         '4. Revisa los viajes disponibles con precio, duración y conductor',
         '5. Elige tu viaje y toca "Reservar"',
-        '6. Selecciona tu asiento preferido',
-        '7. Confirma el pago y ¡listo!'
+        '6. Selecciona el asiento que deseas ocupar',
+        '7. Acuerda el pago con el conductor (Nequi, Daviplata o efectivo) y coordina el punto de encuentro'
       ],
       expanded: false
     },
@@ -85,7 +85,7 @@ export default function LearningCenterScreen() {
         '3. Selecciona fecha y hora de salida',
         '4. Establece el precio por pasajero',
         '5. Selecciona el número de asientos disponibles',
-        '6. Añade detalles especiales (paradas, preferencias, etc)',
+        '6. Añade notas adicionales si lo deseas (preferencias del viaje, etc)',
         '7. Publica el viaje (se descuentan $2.000 de tu billetera automáticamente)',
         '8. Espera a que se confirmen los pasajeros'
       ],
@@ -120,47 +120,64 @@ export default function LearningCenterScreen() {
         '2. Escala de 1-5 estrellas (5 es excelente)',
         '3. Los conductores ven calificación promedio en su perfil',
         '4. Los pasajeros pueden dejar comentarios escritos',
-        '5. Conductores con baja calificación (<4.0) pueden ser desactivados',
-        '6. Sé respetuoso y profesional para mantener buena reputación',
-        '7. Responde comentarios negativos de manera constructiva'
+        '5. Mantener una calificación ≥4.0 desbloquea el badge "Conductor Confiable"',
+        '6. Con ≥4.5 obtienes el badge "Conductor Excelente", visible en tu perfil',
+        '7. Sé puntual y respetuoso para mantener buena reputación en la comunidad'
       ],
       expanded: false
     },
     {
       id: '7',
-      title: 'Rutas Favoritas y Viajes Recurrentes',
+      title: 'Rutas Favoritas',
       category: 'Pasajero',
-      duration: '5 min',
+      duration: '3 min',
       icon: 'heart-outline',
-      description: 'Guarda tus rutas frecuentes para ahorrar tiempo',
+      description: 'Guarda rutas que usas frecuentemente para buscarlas más rápido',
       steps: [
-        '1. En la pantalla de búsqueda, crea una ruta habitualmente',
-        '2. Toca el icono de corazón para guardarla como favorita',
-        '3. Accede a tus rutas favoritas desde el menú principal',
-        '4. Recibe notificaciones de viajes en tus rutas favoritas',
-        '5. Ahorra tiempo buscando viajes en las mismas rutas',
-        '6. Puedes tener hasta 5 rutas favoritas'
+        '1. En los resultados de búsqueda, toca el ícono ♡ en la esquina superior derecha de cualquier card',
+        '2. La ruta quedará guardada en tu lista de favoritos',
+        '3. Para ver tus favoritas, ve a Configuración > Mis Rutas Favoritas',
+        '4. Desde ahí toca "Buscar esta ruta" para buscar esa ruta directamente',
+        '5. Para eliminar una favorita, toca el ícono de papelera en la tarjeta',
+        '6. Las rutas favoritas se guardan en tu dispositivo y se sincronizan con tu cuenta'
       ],
       expanded: false
     },
     {
       id: '8',
-      title: 'Rastreo en Tiempo Real',
+      title: 'Chat durante el Viaje',
       category: 'Pasajero',
-      duration: '6 min',
-      icon: 'location-outline',
-      description: 'Cómo seguir tu viaje en tiempo real',
+      duration: '4 min',
+      icon: 'chatbubble-outline',
+      description: 'Cómo comunicarte con el conductor o los pasajeros',
       steps: [
-        '1. Una vez confirmado el viaje, verás el mapa en vivo',
-        '2. Puedes ver la ubicación del conductor en tiempo real',
-        '3. El mapa muestra la ruta estimada y tiempo de llegada',
-        '4. Puedes contactar al conductor directamente via chat',
-        '5. El conductor también te ve en el mapa',
-        '6. Los datos de ubicación se eliminan después del viaje',
-        '7. Tu privacidad está protegida en todo momento'
+        '1. Una vez confirmada tu reserva, accede a la tarjeta del viaje',
+        '2. Toca el ícono de chat para abrir la conversación',
+        '3. Puedes escribir mensajes al conductor para coordinar el punto de encuentro',
+        '4. Los conductores también pueden escribirle a sus pasajeros',
+        '5. Recibirás una notificación en Alertas cuando llegue un mensaje nuevo',
+        '6. Desde Alertas puedes responder mensajes directamente sin abrir el chat',
       ],
       expanded: false
-    }
+    },
+    {
+      id: '9',
+      title: 'Billetera y Programa de Referidos',
+      category: 'Conductor',
+      duration: '6 min',
+      icon: 'wallet-outline',
+      description: 'Gestiona tu saldo y gana créditos invitando conductores',
+      steps: [
+        '1. Ve a tu Perfil y toca "Billetera" para ver tu saldo actual',
+        '2. Cada publicación de ruta descuenta $2.000 automáticamente',
+        '3. Para recargar saldo, toca "Recargar" y elige el monto',
+        '4. Tu código de referido único está en Perfil > Referidos',
+        '5. Comparte tu código con otros conductores',
+        '6. Cuando el conductor referido publique su primer viaje, recibes $2.000 en tu billetera',
+        '7. El conductor nuevo obtiene $1.000 de descuento en esa primera publicación',
+      ],
+      expanded: false
+    },
   ])
 
   const toggleTutorial = (id: string) => {
@@ -296,13 +313,13 @@ export default function LearningCenterScreen() {
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="shield-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Tus datos de ubicación se borran automáticamente después de cada viaje</Text>
+            <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.tipText}>Como conductor, recuerda que publicar cada viaje descuenta $2.000 de tu billetera Trive. Mantén saldo suficiente para publicar rutas sin interrupciones</Text>
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Como conductor, recuerda que publicar cada viaje descuenta $2.000 de tu billetera Trive. Mantén saldo suficiente para publicar rutas sin interrupciones</Text>
+            <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+            <Text style={styles.tipText}>Configura tu contacto de emergencia en Configuración {'>'} Seguridad. El botón SOS en tu viaje activo enviará tu ubicación GPS en tiempo real junto con los datos del conductor por WhatsApp</Text>
           </View>
         </View>
 

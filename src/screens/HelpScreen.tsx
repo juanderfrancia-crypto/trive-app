@@ -24,7 +24,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'General',
     question: '¿Qué es Trive?',
     answer:
-      'Trive es una plataforma de viajes compartidos que conecta conductores y pasajeros. Permite compartir viajes de forma segura, asequible y sustentable.',
+      'Trive es una plataforma colombiana de viajes compartidos que conecta conductores y pasajeros. No somos una empresa de transporte público ni de taxis: somos tecnología que permite a conductores compartir sus trayectos con otros usuarios y dividir los gastos del recorrido.',
   },
   {
     id: '2',
@@ -38,14 +38,14 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Pasajeros',
     question: '¿Cómo realizo una reserva?',
     answer:
-      'Una vez encuentres un viaje que te interese, haz clic en la opción y selecciona el número de asientos. Confirma tu reserva y realiza el pago. Recibirás una confirmación con datos del conductor.',
+      'Encuentra un viaje disponible, toca la opción y selecciona los asientos que necesitas. Confirma la reserva y recibirás una notificación con los datos del conductor. El pago lo acuerdas directamente con el conductor antes o durante el trayecto.',
   },
   {
     id: '4',
     category: 'Pasajeros',
     question: '¿Cuáles son los métodos de pago?',
     answer:
-      'Puedes pagar con Nequi, Daviplata o efectivo. El método de pago se coordina directamente con el conductor al momento de reservar. Todos los pagos son seguros.',
+      'Los métodos de pago disponibles son Nequi, Daviplata y efectivo. El pago se realiza directamente entre pasajero y conductor; Trive no intermedia ni procesa cobros. Al reservar, coordina con el conductor la forma y el momento del pago.',
   },
   {
     id: '5',
@@ -80,7 +80,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Seguridad',
     question: '¿Es seguro viajar en Trive?',
     answer:
-      'Sí, implementamos verificación de identidad para todos los usuarios, calificaciones de conductores y pasajeros, y soporte 24/7. Además, todos los pagos son seguros.',
+      'Sí. Todos los conductores pasan por verificación de documentos (cédula, licencia, SOAT). El sistema de calificaciones y reseñas mantiene la comunidad responsable. Además, puedes configurar un contacto de emergencia y usar el botón SOS en tu viaje activo para enviar tu ubicación GPS por WhatsApp.',
   },
   {
     id: '10',
@@ -102,6 +102,27 @@ const FAQ_DATA: FAQItem[] = [
     question: '¿Cómo elimino mi cuenta?',
     answer:
       'Ve a Configuración > Privacidad > Eliminar Cuenta. Sigue el proceso de confirmación. Ten en cuenta que esto es irreversible y perderás acceso a tu historial.',
+  },
+  {
+    id: '13',
+    category: 'Conductores',
+    question: '¿Cómo funciona la billetera de conductor?',
+    answer:
+      'La billetera virtual de Trive almacena el saldo que usas para publicar rutas. Cada publicación descuenta $2.000 automáticamente. Puedes recargar saldo desde la sección "Billetera" en tu perfil. Los créditos del programa de referidos también se acreditan aquí.',
+  },
+  {
+    id: '14',
+    category: 'Conductores',
+    question: '¿Qué es el programa de referidos?',
+    answer:
+      'Cada conductor activo tiene un código de referido único. Cuando otro conductor se registra en modo conductor usando tu código y publica su primer viaje, tú recibes $2.000 en tu billetera y él obtiene $1.000 de descuento en esa primera publicación. El beneficio aplica una sola vez por conductor nuevo.',
+  },
+  {
+    id: '15',
+    category: 'Seguridad',
+    question: '¿Para qué sirve el botón SOS?',
+    answer:
+      'El botón SOS aparece en la tarjeta de tu viaje activo. Al tocarlo, la app abre WhatsApp con un mensaje pre-llenado para tu contacto de emergencia, incluyendo tu ubicación GPS en tiempo real, nombre del conductor y datos del vehículo (color, marca, placa). Configura tu contacto de emergencia en Configuración > Seguridad.',
   },
 ]
 

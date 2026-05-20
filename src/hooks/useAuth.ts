@@ -347,7 +347,8 @@ export const useAuth = () => {
     email: string,
     password: string,
     name: string,
-    phone: string
+    phone: string,
+    referredBy?: string
   ) => {
     try {
       setError(null);
@@ -370,17 +371,19 @@ export const useAuth = () => {
       // Create profile — if this fails due to RLS (email not yet confirmed),
       // the DB trigger handle_new_user() already created it server-side.
       if (authData.user) {
+        const profileData: Record<string, any> = {
+          id: authData.user.id,
+          name,
+          email,
+          phone,
+          role: 'passenger',
+        }
+        if (referredBy?.trim()) {
+          profileData.referred_by = referredBy.trim().toUpperCase()
+        }
         await supabase
-          .from("profiles")
-          .upsert([
-            {
-              id: authData.user.id,
-              name,
-              email,
-              phone,
-              role: "passenger",
-            },
-          ], { onConflict: 'id' })
+          .from('profiles')
+          .upsert([profileData], { onConflict: 'id' })
           .then(({ error }) => {
             if (error) console.warn('Profile upsert skipped (trigger handled it):', error.message)
           })

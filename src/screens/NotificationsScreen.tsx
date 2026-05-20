@@ -1,6 +1,7 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar, Modal, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar, Modal,
+  ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -12,6 +13,8 @@ import { Notification } from '../hooks/useNotifications'
 import { useAppStore } from '../store/useAppStore'
 import RatingModal from '../components/RatingModal'
 import { createReview } from '../services/reviews'
+import { sendTripMessage } from '../services/trip_messages'
+import { insertNotificationForUser } from '../services/notificationInsert'
 
 type NotificationCategory = 'all' | 'chat' | 'ruta' | 'feed'
 
@@ -37,12 +40,48 @@ export default function NotificationsScreen() {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailNotif, setDetailNotif] = useState<NotificationWithSender | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [replySending, setReplySending] = useState(false)
+  const [replySent, setReplySent] = useState(false)
   const [ratingTarget, setRatingTarget] = useState<{
     bookingId: string
     driverId: string
     driverName: string
     notifId: string
   } | null>(null)
+
+  useEffect(() => {
+    setReplyText('')
+    setReplySending(false)
+    setReplySent(false)
+  }, [detailNotif?.id])
+
+  const handleReply = async () => {
+    if (!replyText.trim() || replySending || !detailNotif || !currentUser?.id) return
+    const tripId = detailNotif.data?.trip_id as string | undefined
+    const senderId = detailNotif.data?.sender_id as string | undefined
+    if (!tripId || !senderId) return
+
+    setReplySending(true)
+    try {
+      await sendTripMessage(tripId, currentUser.id, senderId, replyText.trim())
+      insertNotificationForUser(senderId, {
+        user_id: senderId,
+        type: 'message' as const,
+        title: `Mensaje de ${currentUser.name || 'Usuario'}`,
+        message: replyText.trim(),
+        is_read: false,
+        data: { sender_id: currentUser.id, sender_name: currentUser.name, trip_id: tripId },
+      }).catch(() => {})
+      setReplyText('')
+      setReplySent(true)
+      setTimeout(() => setDetailNotif(null), 800)
+    } catch {
+      Alert.alert('Error', 'No se pudo enviar el mensaje. Intenta de nuevo.')
+    } finally {
+      setReplySending(false)
+    }
+  }
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -315,14 +354,14 @@ export default function NotificationsScreen() {
         <View style={styles.headerRight}>
           {!!unreadCount && (
             <TouchableOpacity style={styles.headerIconBtn} onPress={markAllAsRead}>
-              <Ionicons name="checkmark-done-outline" size={20} color="#1230B8" />
+              <Ionicons name="checkmark-done-outline" size={16} color="#1230B8" />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-            <Ionicons name="trash-outline" size={20} color="#1230B8" />
+            <Ionicons name="trash-outline" size={16} color="#1230B8" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => setSelectionMode(true)}>
-            <Ionicons name="checkbox-outline" size={20} color="#1230B8" />
+            <Ionicons name="checkbox-outline" size={16} color="#1230B8" />
           </TouchableOpacity>
         </View>
       )
@@ -333,15 +372,15 @@ export default function NotificationsScreen() {
         <TouchableOpacity style={styles.headerIconBtn} onPress={deleteSelected} disabled={!selectedIds.length}>
           <Ionicons
             name="trash-outline"
-            size={20}
+            size={16}
             color={selectedIds.length ? COLORS.error : COLORS.textTertiary}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-          <Ionicons name="trash-bin-outline" size={20} color={COLORS.error} />
+          <Ionicons name="trash-bin-outline" size={16} color={COLORS.error} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={exitSelection}>
-          <Ionicons name="close-outline" size={22} color="#1230B8" />
+          <Ionicons name="close-outline" size={18} color="#1230B8" />
         </TouchableOpacity>
       </View>
     )
@@ -403,9 +442,10 @@ export default function NotificationsScreen() {
 
   // Variables para el modal de detalle (calculadas en el componente, no en un sub-componente)
   const _dStyle             = detailNotif ? getCategoryStyle(detailNotif.type, detailNotif.senderName) : null
-  const _dIsBooking         = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(detailNotif.type) : false
+  const _dIsBooking         = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending'].includes(detailNotif.type) : false
   const _dIsChat            = detailNotif?.type === 'message'
   const _dIsTripCompleted   = detailNotif?.type === 'trip_completed'
+  const _dIsReviewPending   = detailNotif?.type === 'review_pending'
   const _dOrigin            = detailNotif?.data?.origin        as string | undefined
   const _dDest              = detailNotif?.data?.destination   as string | undefined
   const _dSeats             = detailNotif?.data?.seat_numbers  as number[] | undefined
@@ -438,7 +478,7 @@ export default function NotificationsScreen() {
         >
           <Ionicons
             name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
-            size={24}
+            size={18}
             color="#1230B8"
           />
         </TouchableOpacity>
@@ -485,6 +525,10 @@ export default function NotificationsScreen() {
         onRequestClose={() => setDetailNotif(null)}
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setDetailNotif(null)}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ width: '100%' }}
+          >
           <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
 
@@ -597,44 +641,84 @@ export default function NotificationsScreen() {
                     </LinearGradient>
                   )}
 
-                  {detailNotif.type === 'review_pending' && (
-                    <View style={styles.starsRow}>
-                      {[1,2,3,4,5].map((s) => (
-                        <Ionicons key={s} name="star-outline" size={20} color="#D4AF37" />
-                      ))}
-                    </View>
-                  )}
-
-                  {_dIsTripCompleted && _dBookingId && _dDriverId && (
-                    <TouchableOpacity
-                      style={styles.rateDriverBtn}
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        setRatingTarget({
-                          bookingId: _dBookingId!,
-                          driverId: _dDriverId!,
-                          driverName: _dDriver || 'Conductor',
-                          notifId: detailNotif.id,
-                        })
-                        setDetailNotif(null)
-                      }}
-                    >
-                      <LinearGradient
-                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                        style={styles.rateDriverBtnInner}
+                  {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
+                    <>
+                      {_dIsReviewPending && (
+                        <View style={styles.starsPreviewRow}>
+                          {[1,2,3,4,5].map((s) => (
+                            <Ionicons key={s} name="star" size={22} color="#FBBF24" />
+                          ))}
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        style={styles.rateDriverBtn}
+                        activeOpacity={0.85}
+                        onPress={() => {
+                          setRatingTarget({
+                            bookingId: _dBookingId!,
+                            driverId: _dDriverId!,
+                            driverName: _dDriver || 'Conductor',
+                            notifId: detailNotif.id,
+                          })
+                          setDetailNotif(null)
+                        }}
                       >
-                        <Ionicons name="star" size={16} color="#FBBF24" />
-                        <Text style={styles.rateDriverBtnText}>Calificar conductor</Text>
-                      </LinearGradient>
-                    </TouchableOpacity>
+                        <LinearGradient
+                          colors={_dIsReviewPending ? ['#D97706', '#F59E0B'] : ['#0E2699', '#1230B8', '#1A3FCC']}
+                          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                          style={styles.rateDriverBtnInner}
+                        >
+                          <Ionicons name="star" size={16} color="#fff" />
+                          <Text style={styles.rateDriverBtnText}>
+                            {_dIsReviewPending ? 'Calificar ahora' : 'Calificar conductor'}
+                          </Text>
+                        </LinearGradient>
+                      </TouchableOpacity>
+                    </>
                   )}
 
                   <View style={{ height: 24 }} />
                 </ScrollView>
               </>
             )}
+
+            {/* Reply bar — solo visible para notificaciones de chat */}
+            {detailNotif && _dIsChat && (
+              <View style={styles.replyBar}>
+                {replySent ? (
+                  <View style={styles.replySentRow}>
+                    <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                    <Text style={styles.replySentText}>Mensaje enviado</Text>
+                  </View>
+                ) : (
+                  <>
+                    <TextInput
+                      style={styles.replyInput}
+                      value={replyText}
+                      onChangeText={setReplyText}
+                      placeholder={`Responder a ${detailNotif.senderName ?? 'Usuario'}…`}
+                      placeholderTextColor={COLORS.textTertiary}
+                      multiline
+                      maxLength={500}
+                      editable={!replySending}
+                    />
+                    <TouchableOpacity
+                      style={[styles.replySendBtn, (!replyText.trim() || replySending) && styles.replySendBtnDisabled]}
+                      onPress={handleReply}
+                      disabled={!replyText.trim() || replySending}
+                      activeOpacity={0.8}
+                    >
+                      {replySending
+                        ? <ActivityIndicator size="small" color="#fff" />
+                        : <Ionicons name="send" size={16} color="#fff" />
+                      }
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            )}
           </TouchableOpacity>
+          </KeyboardAvoidingView>
         </TouchableOpacity>
       </Modal>
 
@@ -684,9 +768,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   headerIconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#EEF2FF',
@@ -706,13 +790,13 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   filterButtonWrap: {
-    borderRadius: 14,
+    borderRadius: 10,
     overflow: 'hidden',
   },
   filterButton: {
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#D6E0FF',
@@ -721,7 +805,7 @@ const styles = StyleSheet.create({
   },
   filterButtonActive: {},
   filterText: {
-    ...TYPOGRAPHY.bodyMedium,
+    fontSize: 12,
     color: COLORS.textSecondary,
     fontWeight: '600',
   },
@@ -871,6 +955,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 2,
     marginTop: 4,
+  },
+  starsPreviewRow: {
+    flexDirection: 'row',
+    gap: 4,
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
+    marginTop: SPACING.sm,
   },
   deleteBtn: {
     position: 'absolute',
@@ -1022,5 +1113,54 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#fff',
+  },
+
+  // Reply bar (chat notifications)
+  replyBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#D6E0FF',
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.lg,
+    backgroundColor: '#fff',
+  },
+  replyInput: {
+    flex: 1,
+    minHeight: 42,
+    maxHeight: 100,
+    backgroundColor: '#F4F6FF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: COLORS.textPrimary,
+  },
+  replySendBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    backgroundColor: '#1230B8',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  replySendBtnDisabled: {
+    backgroundColor: '#C5CEF0',
+  },
+  replySentRow: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+  },
+  replySentText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.success,
   },
 })

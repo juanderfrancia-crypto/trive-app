@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { checkDriverApprovalStatus } from "../services/driverApproval";
+import { insertNotificationForUser } from "../services/notificationInsert";
 
 export interface Route {
   id: string;
@@ -343,6 +344,64 @@ export const useRoutes = () => {
 
         throw error;
       }
+
+      // 5. Referral reward — solo en la primera ruta del conductor
+      try {
+        const { count } = await supabase
+          .from('routes')
+          .select('id', { count: 'exact', head: true })
+          .eq('driver_id', driverId)
+
+        if (count === 1) {
+          const { data: driverProf } = await supabase
+            .from('profiles')
+            .select('referred_by')
+            .eq('id', driverId)
+            .single()
+
+          if (driverProf?.referred_by) {
+            const { data: referrer } = await supabase
+              .from('profiles')
+              .select('id, balance, name')
+              .eq('referral_code', driverProf.referred_by)
+              .single()
+
+            if (referrer) {
+              // Acreditar $2.000 al referidor
+              await supabase
+                .from('profiles')
+                .update({ balance: (referrer.balance ?? 0) + 2000 })
+                .eq('id', referrer.id)
+
+              // Notificar al referidor
+              insertNotificationForUser(referrer.id, {
+                user_id: referrer.id,
+                type: 'trip_update',
+                title: '¡Referido activo! +$2.000',
+                message: 'Tu conductor referido publicó su primera ruta. Te acreditamos $2.000 en tu billetera.',
+                data: {},
+                is_read: false,
+              }).catch(() => {})
+
+              // Devolver $1.000 al conductor nuevo (descuento primera ruta)
+              await supabase.rpc('increment_balance', { user_id: driverId, amount: 1000 }).catch(async () => {
+                // fallback si el RPC no existe
+                const { data: d } = await supabase.from('profiles').select('balance').eq('id', driverId).single()
+                await supabase.from('profiles').update({ balance: (d?.balance ?? 0) + 1000 }).eq('id', driverId)
+              })
+
+              insertNotificationForUser(driverId, {
+                user_id: driverId,
+                type: 'trip_update',
+                title: 'Bienvenido a Trive · $1.000 de regalo',
+                message: 'Usaste un código de referido. Te devolvimos $1.000 como descuento en tu primera publicación.',
+                data: {},
+                is_read: false,
+              }).catch(() => {})
+            }
+          }
+        }
+      } catch { /* referral errors never block route creation */ }
 
       return data;
     } catch (err: any) {

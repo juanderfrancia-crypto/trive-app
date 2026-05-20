@@ -25,6 +25,7 @@ import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler
 import OfflineBanner from '../components/OfflineBanner'
 import DriverDetailsBottomSheet from '../components/DriverDetailsBottomSheet'
 import { useDriverReputation } from '../hooks/useDriverReputation'
+import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
 
 type SortOption = 'departure' | 'price' | 'rating' | 'available'
 type TransportFilter = 'all' | 'auto' | 'taxi' | 'busetica' | 'buseta'
@@ -58,10 +59,14 @@ function DriverCard({
   route,
   onReserve,
   onDetails,
+  onToggleFavorite,
+  isFav,
 }: {
   route: Route
   onReserve: (r: Route) => void
   onDetails: (driverId: string) => void
+  onToggleFavorite?: (r: Route) => void
+  isFav?: boolean
 }) {
   const occupied      = (route.total_seats ?? 0) - (route.available_seats ?? 0)
   const total         = route.total_seats ?? 1
@@ -79,6 +84,20 @@ function DriverCard({
       end={{ x: 1, y: 1 }}
       style={card.wrap}
     >
+      {onToggleFavorite && (
+        <TouchableOpacity
+          style={card.favBtn}
+          onPress={() => onToggleFavorite(route)}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          activeOpacity={0.7}
+        >
+          <Ionicons
+            name={isFav ? 'heart' : 'heart-outline'}
+            size={17}
+            color={isFav ? '#E03131' : 'rgba(30,40,80,0.35)'}
+          />
+        </TouchableOpacity>
+      )}
       {/* Top row: [foto+nombre] | info central | rating */}
       <View style={card.topRow}>
         {/* Columna izquierda: foto arriba, nombre abajo */}
@@ -219,6 +238,7 @@ export default function SearchScreen() {
   const { routes, loading, error, fetchRoutes } = useRoutes()
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const user             = useAppStore((s) => s.user)
+  const { isFavorite, addFavorite, removeFavorite } = useFavoriteRoutes(user?.id)
 
   const routeTransportType = useMemo(() => {
     if (routeNav.params && typeof routeNav.params === 'object' && 'transportType' in routeNav.params)
@@ -326,11 +346,25 @@ export default function SearchScreen() {
     if (selectedDriver?.route) { setSelectedRoute(selectedDriver.route); setBottomSheetVisible(false); navigation.navigate('SeatSelection' as never) }
   }
 
+  const handleToggleFavorite = useCallback(async (route: Route) => {
+    if (isFavorite(route.id)) {
+      await removeFavorite(route.id)
+    } else {
+      await addFavorite(route)
+    }
+  }, [isFavorite, addFavorite, removeFavorite])
+
   const showLoading = loading && routes.length === 0
 
   const renderCard = useCallback(({ item }: { item: Route }) => (
-    <DriverCard route={item} onReserve={handleSelectRoute} onDetails={handleOpenDetails} />
-  ), [handleSelectRoute, handleOpenDetails])
+    <DriverCard
+      route={item}
+      onReserve={handleSelectRoute}
+      onDetails={handleOpenDetails}
+      onToggleFavorite={handleToggleFavorite}
+      isFav={isFavorite(item.id)}
+    />
+  ), [handleSelectRoute, handleOpenDetails, handleToggleFavorite, isFavorite])
 
   const listHeader = useMemo(() => (
     showLoading ? (
@@ -651,6 +685,18 @@ const card = StyleSheet.create({
   reserveBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
   reserveText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   reserveTextDisabled: { color: COLORS.textTertiary },
+  favBtn: {
+    position: 'absolute',
+    top: SPACING.sm,
+    right: SPACING.sm,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255,255,255,0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
 })
 
 // ── Info card styles ──────────────────────────────────────────────────────────

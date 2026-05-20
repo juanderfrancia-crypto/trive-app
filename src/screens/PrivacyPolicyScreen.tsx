@@ -35,9 +35,10 @@ export default function PrivacyPolicyScreen() {
           <B>a) Datos de identificación:</B> nombre completo, número de teléfono celular, correo electrónico.{'\n\n'}
           <B>b) Datos del vehículo (conductores):</B> marca, modelo, color, placa y fotografía del vehículo.{'\n\n'}
           <B>c) Datos de ubicación:</B> coordenadas GPS durante el uso de la Plataforma, para facilitar la conexión entre conductor y pasajero.{'\n\n'}
-          <B>d) Datos de uso:</B> historial de trayectos, calificaciones y mensajes internos en la Plataforma.{'\n\n'}
+          <B>d) Datos de uso:</B> historial de trayectos, calificaciones, reseñas y mensajes internos en la Plataforma.{'\n\n'}
           <B>e) Datos técnicos:</B> token del dispositivo para notificaciones push, sistema operativo y versión de la aplicación.{'\n\n'}
-          <B>f) Fotografía de perfil:</B> de forma opcional, cargada por el usuario.
+          <B>f) Fotografía de perfil:</B> de forma opcional, cargada por el usuario.{'\n\n'}
+          <B>g) Datos del programa de referidos (conductores):</B> código de referido generado por la Plataforma para cada conductor activo y, en caso de aplicar, el código del conductor que lo refirió. Estos datos se utilizan exclusivamente para calcular y acreditar los beneficios del programa de referidos.
         </Section>
 
         <Section title="3. Finalidades del tratamiento">
@@ -46,8 +47,9 @@ export default function PrivacyPolicyScreen() {
           • Facilitar la conexión entre conductores y pasajeros.{'\n'}
           • Mostrar tu ubicación aproximada para la planificación del trayecto.{'\n'}
           • Enviarte notificaciones relacionadas con el servicio.{'\n'}
-          • Verificar la identidad de los conductores.{'\n'}
+          • Verificar la identidad de los conductores mediante revisión de documentos.{'\n'}
           • Calcular calificaciones y reputación de usuarios.{'\n'}
+          • Gestionar el programa de referidos entre conductores y acreditar los beneficios correspondientes.{'\n'}
           • Mejorar la Plataforma mediante análisis estadísticos anonimizados.{'\n'}
           • Cumplir obligaciones legales vigentes.
         </Section>

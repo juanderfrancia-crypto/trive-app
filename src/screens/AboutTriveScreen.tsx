@@ -35,14 +35,14 @@ export default function AboutTriveScreen() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>¿Qué es Trive?</Text>
             <Text style={styles.cardText}>
-              Trive es una plataforma moderna de viajes compartidos que conecta conductores y pasajeros para hacer los desplazamientos más convenientes, económicos y sostenibles.
+              Trive es una plataforma colombiana de viajes compartidos que conecta conductores y pasajeros para hacer los desplazamientos más convenientes, económicos y sostenibles. No somos una empresa de transporte: somos tecnología que facilita que personas compartan el costo de un trayecto que ya iban a realizar.
             </Text>
           </View>
 
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Nuestra Misión</Text>
+            <Text style={styles.cardTitle}>¿Cómo funciona?</Text>
             <Text style={styles.cardText}>
-              Facilitar la conexión entre conductores y pasajeros, reduciendo costos de transporte, contaminación y creando una comunidad de usuarios comprometidos.
+              El conductor publica su ruta con origen, destino, hora y precio por puesto. El pasajero la encuentra, reserva y acuerda el pago directamente con el conductor (Nequi, Daviplata o efectivo). Trive cobra $2.000 al conductor por cada publicación como tarifa de intermediación tecnológica.
             </Text>
           </View>
 
@@ -51,19 +51,27 @@ export default function AboutTriveScreen() {
             <View style={styles.featureList}>
               <View style={styles.featureItem}>
                 <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Precios competitivos y transparentes</Text>
+                <Text style={styles.featureText}>Precios transparentes: el pasajero paga directamente al conductor</Text>
               </View>
               <View style={styles.featureItem}>
                 <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Conductores verificados y seguros</Text>
+                <Text style={styles.featureText}>Conductores verificados con documentos revisados por el equipo Trive</Text>
               </View>
               <View style={styles.featureItem}>
                 <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Sistema de calificación y reseñas</Text>
+                <Text style={styles.featureText}>Sistema de calificación y reseñas tras cada viaje</Text>
               </View>
               <View style={styles.featureItem}>
                 <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Soporte 24/7 disponible</Text>
+                <Text style={styles.featureText}>Chat integrado entre conductor y pasajero para cada trayecto</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Text style={styles.featureText}>Billetera virtual para gestionar el saldo de publicaciones</Text>
+              </View>
+              <View style={styles.featureItem}>
+                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Text style={styles.featureText}>Programa de referidos: invita conductores y gana créditos</Text>
               </View>
             </View>
           </View>

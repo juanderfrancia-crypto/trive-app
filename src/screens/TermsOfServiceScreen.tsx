@@ -49,8 +49,9 @@ export default function TermsOfServiceScreen() {
           Los usuarios que publiquen rutas deben:{'\n\n'}
           • Poseer licencia de conducción vigente y válida en Colombia.{'\n'}
           • Ser propietarios del vehículo o contar con autorización expresa para conducirlo.{'\n'}
-          • Mantener documentos del vehículo al día: SOAT y revisión técnico-mecánica.{'\n'}
+          • Mantener documentos del vehículo al día: SOAT y revisión técnico-mecánica vigentes.{'\n'}
           • Publicar únicamente trayectos que efectivamente vayan a realizar.{'\n'}
+          • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
           • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.
         </Section>
 
@@ -63,8 +64,9 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="7. Tarifas y pagos">
-          Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. El pago se acuerda entre conductor y pasajero a través de los métodos disponibles en la Plataforma (Nequi, Daviplata o efectivo).{'\n\n'}
-          La publicación de cada viaje tiene un costo fijo de $2.000 que se descuenta automáticamente de la billetera del conductor dentro de la Plataforma. Dicho valor cubre el servicio de intermediación tecnológica y no constituye comisión sobre el precio del trayecto.
+          Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. El pago se acuerda y realiza directamente entre conductor y pasajero mediante los métodos que ellos acuerden (Nequi, Daviplata, efectivo u otros). Trive no intermedia ni procesa dichos pagos.{'\n\n'}
+          La publicación de cada trayecto tiene un costo fijo de $2.000 que se descuenta automáticamente del saldo de la billetera virtual del conductor en Trive. Este valor cubre el servicio de intermediación tecnológica y no constituye comisión sobre el precio del trayecto. El saldo de la billetera puede recargarse a través de los métodos habilitados en la Plataforma.{'\n\n'}
+          <B>Programa de referidos:</B> los conductores cuentan con un código personal de referido. Cuando un conductor nuevo se registra usando ese código y publica su primer trayecto, el conductor referidor recibe un crédito de $2.000 en su billetera y el conductor nuevo obtiene un descuento de $1.000 en esa primera publicación. Este beneficio aplica una sola vez por conductor nuevo.
         </Section>
 
         <Section title="8. Cancelaciones">
@@ -112,6 +114,10 @@ export default function TermsOfServiceScreen() {
       </ScrollView>
     </View>
   )
+}
+
+function B({ children }: { children: React.ReactNode }) {
+  return <Text style={{ fontWeight: '700' }}>{children}</Text>
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {

@@ -58,6 +58,7 @@ const STATUS_BG: Record<string, string> = {
 export default function TripHistoryScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
+  const isDriver = user?.role === 'driver'
 
   const [trips, setTrips] = useState<TripItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -70,8 +71,11 @@ export default function TripHistoryScreen() {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
       setHiddenIds(raw ? new Set(JSON.parse(raw)) : new Set())
     })
-    if (user?.id) loadTrips(user.id)
-  }, [user?.id]))
+    if (user?.id) {
+      if (isDriver) loadDriverRoutes(user.id)
+      else loadTrips(user.id)
+    }
+  }, [user?.id, isDriver]))
 
   const loadTrips = async (passengerId: string) => {
     setLoading(true)
@@ -126,6 +130,55 @@ export default function TripHistoryScreen() {
           status: b.booking_status,
           routeStatus: route.status || 'scheduled',
           hasRated: ratedSet.has(b.id),
+        }
+      })
+
+      setTrips(formatted)
+    } catch {
+      setTrips([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadDriverRoutes = async (driverId: string) => {
+    setLoading(true)
+    try {
+      const { data: routes, error } = await supabase
+        .from('routes')
+        .select('id, origin, destination, departure_time, status, price_per_seat')
+        .eq('driver_id', driverId)
+        .in('status', ['completed', 'cancelled'])
+        .order('departure_time', { ascending: false })
+
+      if (error || !routes) { setTrips([]); return }
+
+      // Obtener conteo real de pasajeros desde bookings para cada ruta
+      const routeIds = routes.map((r: any) => r.id)
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('route_id, booking_status')
+        .in('route_id', routeIds)
+        .in('booking_status', ['completed', 'confirmed'])
+
+      const passengersByRoute: Record<string, number> = {}
+      ;(bookings ?? []).forEach((b: any) => {
+        passengersByRoute[b.route_id] = (passengersByRoute[b.route_id] ?? 0) + 1
+      })
+
+      const formatted: TripItem[] = routes.map((r: any) => {
+        const count = passengersByRoute[r.id] ?? 0
+        return {
+          id:            r.id,
+          origin:        r.origin,
+          destination:   r.destination,
+          departureTime: r.departure_time,
+          driverName:    `${count} pasajero${count !== 1 ? 's' : ''}`,
+          driverId:      null,
+          price:         r.price_per_seat * count,
+          status:        r.status,
+          routeStatus:   r.status,
+          hasRated:      false,
         }
       })
 
@@ -261,12 +314,14 @@ export default function TripHistoryScreen() {
                 <Text style={s.routeText} numberOfLines={1}>{item.destination}</Text>
               </View>
             </View>
-            <Text style={s.price}>${item.price.toLocaleString('es-CO')}</Text>
+            <Text style={s.price}>
+              {isDriver && item.price === 0 ? '—' : `$${item.price.toLocaleString('es-CO')}`}
+            </Text>
           </View>
 
           {/* Meta info */}
           <View style={s.metaRow}>
-            <Ionicons name="person-outline" size={12} color={COLORS.textTertiary} />
+            <Ionicons name={isDriver ? 'people-outline' : 'person-outline'} size={12} color={COLORS.textTertiary} />
             <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
             {item.departureTime ? (
               <>
@@ -289,7 +344,7 @@ export default function TripHistoryScreen() {
               </Text>
             </View>
 
-            {canRate ? (
+            {!isDriver && canRate ? (
               <TouchableOpacity onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
                 <LinearGradient
                   colors={['#0E2699', '#1230B8', '#1A3FCC']}
@@ -300,7 +355,7 @@ export default function TripHistoryScreen() {
                   <Text style={s.rateBtnText}>Calificar conductor</Text>
                 </LinearGradient>
               </TouchableOpacity>
-            ) : item.hasRated ? (
+            ) : !isDriver && item.hasRated ? (
               <View style={s.ratedBadge}>
                 <Ionicons name="checkmark-circle" size={12} color="#10B981" />
                 <Text style={s.ratedText}>Calificado</Text>
@@ -330,7 +385,7 @@ export default function TripHistoryScreen() {
         <TouchableOpacity style={s.headerIconBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="chevron-back" size={24} color="#1230B8" />
         </TouchableOpacity>
-        <Text style={s.title}>Historial de Viajes</Text>
+        <Text style={s.title}>{isDriver ? 'Historial de Rutas' : 'Historial de Viajes'}</Text>
         {filtered.length > 0 ? (
           <TouchableOpacity style={s.deleteAllBtn} onPress={hideAll}>
             <Ionicons name="trash-outline" size={16} color={COLORS.error} />

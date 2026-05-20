@@ -163,7 +163,7 @@ export default function SupportScreen() {
           <View style={styles.infoBox}>
             <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
             <Text style={styles.infoText}>
-              Para consultas sobre cuentas, seguridad o pagos, por favor contacta directamente con nuestro equipo de soporte.
+              Para consultas sobre tu cuenta, verificación de documentos o incidentes ocurridos durante un trayecto, contacta directamente con nuestro equipo. Recuerda que los pagos entre conductor y pasajero son directos y no los gestionamos nosotros.
             </Text>
           </View>
         </View>

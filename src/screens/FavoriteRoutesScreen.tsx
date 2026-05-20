@@ -5,30 +5,33 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { useSuggestedRoutes } from '../hooks/useSuggestedRoutes'
+import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
 
 export default function FavoriteRoutesScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore(s => s.user)
-  const { suggestedRoutes, loading, fetchSuggestedRoutes } = useSuggestedRoutes(user?.id)
+  const { favorites, loading, removeFavorite, reloadFavorites } = useFavoriteRoutes(user?.id)
 
   useEffect(() => {
-    if (user?.id) {
-      fetchSuggestedRoutes()
-    }
-  }, [user?.id, fetchSuggestedRoutes])
+    if (user?.id) reloadFavorites()
+  }, [user?.id, reloadFavorites])
+
+  const handleSearch = (origin: string, destination: string) => {
+    navigation.navigate('Main', { screen: 'Search', params: { origin, destination } })
+  }
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
-            <Text style={styles.title}>Rutas Frecuentes</Text>
-            <Text style={styles.subtitle}>Basadas en tu historial de viajes</Text>
+            <Text style={styles.title}>Mis Rutas Favoritas</Text>
+            <Text style={styles.subtitle}>Rutas guardadas desde los resultados de búsqueda</Text>
           </View>
         </View>
 
@@ -38,69 +41,68 @@ export default function FavoriteRoutesScreen() {
           </View>
         )}
 
-        {!loading && suggestedRoutes.length === 0 && (
+        {!loading && favorites.length === 0 && (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-              <Ionicons name="map-outline" size={64} color={COLORS.textTertiary} />
+              <Ionicons name="heart-outline" size={64} color={COLORS.textTertiary} />
             </View>
-            <Text style={styles.emptyTitle}>Sin rutas frecuentes</Text>
+            <Text style={styles.emptyTitle}>Sin rutas favoritas</Text>
             <Text style={styles.emptyText}>
-              Completa al menos 2 viajes en la misma ruta para verla aquí
+              Toca el ícono ♡ en la esquina de cualquier card en la búsqueda para guardar una ruta aquí
             </Text>
             <TouchableOpacity
               style={styles.searchBtn}
               onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
             >
               <Ionicons name="search" size={20} color={COLORS.textInverse} />
-              <Text style={styles.searchBtnText}>Buscar rutas</Text>
+              <Text style={styles.searchBtnText}>Ir a buscar rutas</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {!loading && suggestedRoutes.length > 0 && (
+        {!loading && favorites.length > 0 && (
           <View style={styles.content}>
-            {suggestedRoutes.map((route, index) => (
-              <View key={`${route.origin}|${route.destination}`} style={styles.routeCard}>
+            {favorites.map((fav) => (
+              <View key={fav.route_id} style={styles.routeCard}>
                 <View style={styles.routeRow}>
                   <View style={styles.routePoint}>
                     <View style={styles.routeDot} />
-                    <Text style={styles.routeText}>{route.origin}</Text>
+                    <Text style={styles.routeText} numberOfLines={1}>{fav.origin}</Text>
                   </View>
-                  <View style={styles.routeArrow}>
-                    <Ionicons name="arrow-forward" size={16} color={COLORS.textTertiary} />
-                  </View>
+                  <Ionicons name="arrow-forward" size={16} color={COLORS.textTertiary} style={{ paddingHorizontal: SPACING.sm }} />
                   <View style={styles.routePoint}>
                     <View style={[styles.routeDot, styles.routeDotEnd]} />
-                    <Text style={styles.routeText}>{route.destination}</Text>
+                    <Text style={styles.routeText} numberOfLines={1}>{fav.destination}</Text>
                   </View>
                 </View>
 
-                <View style={styles.routeDetails}>
-                  <View style={styles.detailItem}>
-                    <Ionicons name="repeat-outline" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.detailText}>{route.frequency} viajes</Text>
-                  </View>
-                  {route.avgPrice ? (
-                    <View style={styles.detailItem}>
-                      <Ionicons name="cash-outline" size={16} color={COLORS.textSecondary} />
-                      <Text style={styles.detailText}>
-                        ${route.avgPrice.toLocaleString('es-CO', { maximumFractionDigits: 0 })} prom.
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
+                <Text style={styles.savedDate}>
+                  Guardada el {new Date(fav.saved_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
+                </Text>
 
-                <TouchableOpacity
-                  style={styles.bookBtn}
-                  onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
-                >
-                  <Ionicons name="search" size={18} color={COLORS.textInverse} />
-                  <Text style={styles.bookBtnText}>Buscar esta ruta</Text>
-                </TouchableOpacity>
+                <View style={styles.cardActions}>
+                  <TouchableOpacity
+                    style={styles.bookBtn}
+                    onPress={() => handleSearch(fav.origin, fav.destination)}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons name="search" size={16} color={COLORS.textInverse} />
+                    <Text style={styles.bookBtnText}>Buscar esta ruta</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.removeBtn}
+                    onPress={() => removeFavorite(fav.route_id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
         )}
+
       </ScrollView>
     </SafeAreaView>
   )
@@ -173,6 +175,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: SPACING.xl,
+    lineHeight: 22,
   },
   searchBtn: {
     flexDirection: 'row',
@@ -192,6 +195,7 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: SPACING.xxxl,
+    paddingTop: SPACING.sm,
   },
   routeCard: {
     backgroundColor: COLORS.surface,
@@ -203,7 +207,7 @@ const styles = StyleSheet.create({
   routeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   routePoint: {
     flexDirection: 'row',
@@ -224,25 +228,20 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textPrimary,
     fontWeight: '600',
+    flex: 1,
   },
-  routeArrow: {
-    paddingHorizontal: SPACING.sm,
-  },
-  routeDetails: {
-    flexDirection: 'row',
-    gap: SPACING.lg,
+  savedDate: {
+    ...TYPOGRAPHY.labelMedium,
+    color: COLORS.textTertiary,
     marginBottom: SPACING.lg,
   },
-  detailItem: {
+  cardActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  detailText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
+    gap: SPACING.md,
   },
   bookBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -256,5 +255,13 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textInverse,
     fontWeight: '600',
+  },
+  removeBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: `${COLORS.error}12`,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 })

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput } from 'react-native'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -18,6 +19,27 @@ export default function SettingsScreen() {
   const { user } = useAuth()
   const [pushNotifications, setPushNotifications] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
+  const [emergencyContact, setEmergencyContact] = useState<{name: string; phone: string} | null>(null)
+  const [sosModalVisible, setSosModalVisible] = useState(false)
+  const [sosName, setSosName] = useState('')
+  const [sosPhone, setSosPhone] = useState('')
+
+  useEffect(() => {
+    AsyncStorage.getItem('emergency_contact').then((raw) => {
+      if (raw) setEmergencyContact(JSON.parse(raw))
+    })
+  }, [])
+
+  const saveEmergencyContact = async () => {
+    if (!sosPhone.trim()) {
+      Alert.alert('Error', 'El número de teléfono es obligatorio')
+      return
+    }
+    const contact = { name: sosName.trim() || 'Contacto SOS', phone: sosPhone.trim() }
+    await AsyncStorage.setItem('emergency_contact', JSON.stringify(contact))
+    setEmergencyContact(contact)
+    setSosModalVisible(false)
+  }
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -170,7 +192,7 @@ export default function SettingsScreen() {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.settingCard}
           onPress={() => navigation.navigate('SessionHistory' as never)}
           activeOpacity={0.7}
@@ -182,6 +204,29 @@ export default function SettingsScreen() {
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Sesiones Activas</Text>
               <Text style={styles.settingDescription}>Dispositivos conectados a tu cuenta</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingCard}
+          onPress={() => {
+            setSosName(emergencyContact?.name || '')
+            setSosPhone(emergencyContact?.phone || '')
+            setSosModalVisible(true)
+          }}
+          activeOpacity={0.7}
+        >
+          <View style={styles.settingHeader}>
+            <View style={[styles.settingIcon, { backgroundColor: '#FEF2F2' }]}>
+              <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingLabel}>Contacto de Emergencia</Text>
+              <Text style={styles.settingDescription}>
+                {emergencyContact ? emergencyContact.phone : 'No configurado — se usa para el botón SOS'}
+              </Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
           </View>
@@ -319,9 +364,59 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+      {/* Modal contacto de emergencia */}
+      <Modal visible={sosModalVisible} transparent animationType="fade" onRequestClose={() => setSosModalVisible(false)}>
+        <View style={sosStyles.overlay}>
+          <View style={sosStyles.sheet}>
+            <View style={sosStyles.header}>
+              <Ionicons name="alert-circle" size={22} color={COLORS.error} />
+              <Text style={sosStyles.title}>Contacto de Emergencia</Text>
+            </View>
+            <Text style={sosStyles.sub}>Este contacto recibirá tu ubicación al presionar el botón SOS durante un viaje.</Text>
+            <TextInput
+              style={sosStyles.input}
+              placeholder="Nombre (ej. Mamá)"
+              placeholderTextColor="#999"
+              value={sosName}
+              onChangeText={setSosName}
+            />
+            <TextInput
+              style={sosStyles.input}
+              placeholder="Número WhatsApp (ej. 3001234567)"
+              placeholderTextColor="#999"
+              value={sosPhone}
+              onChangeText={setSosPhone}
+              keyboardType="phone-pad"
+            />
+            <View style={sosStyles.btnRow}>
+              <TouchableOpacity style={sosStyles.cancelBtn} onPress={() => setSosModalVisible(false)}>
+                <Text style={sosStyles.cancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={sosStyles.saveBtn} onPress={saveEmergencyContact}>
+                <Text style={sosStyles.saveText}>Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   )
 }
+
+const sosStyles = StyleSheet.create({
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
+  sheet: { backgroundColor: '#fff', borderRadius: 20, padding: SPACING.lg, width: '100%', gap: SPACING.md },
+  header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  title: { fontSize: 16, fontWeight: '800', color: '#0E1A4A' },
+  sub: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  input: { borderWidth: 1, borderColor: '#D6E0FF', borderRadius: 12, padding: 12, fontSize: 14, color: '#0E1A4A', backgroundColor: '#F8F9FF' },
+  btnRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: 4 },
+  cancelBtn: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: '#F4F6FF', alignItems: 'center' },
+  cancelText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
+  saveBtn: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: COLORS.error, alignItems: 'center' },
+  saveText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+})
 
 const styles = StyleSheet.create({
   safeContainer: {

@@ -8,6 +8,8 @@ import {
   getTripUnreadCount,
   TripMessage,
 } from '../services/trip_messages'
+import { insertNotificationForUser } from '../services/notificationInsert'
+import { useAppStore } from '../store/useAppStore'
 
 interface UseTripMessagesOptions {
   autoMarkAsRead?: boolean
@@ -18,6 +20,7 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
+  const currentUser = useAppStore((s) => s.user)
 
   const messagesChannelRef = useRef<(() => void) | null>(null)
   const updatesChannelRef = useRef<(() => void) | null>(null)
@@ -171,13 +174,24 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
         const sent = await sendTripMessage(tripId, userId, otherUserId, message)
         // Reemplazar temp con el mensaje real del servidor
         setMessages((prev) => prev.map((m) => (m.id === tempId ? sent : m)))
+
+        // Insertar notificación en la tabla para que aparezca en Alertas → Chat
+        const senderName = currentUser?.name || 'Usuario'
+        insertNotificationForUser(otherUserId, {
+          user_id: otherUserId,
+          type: 'message' as const,
+          title: `Mensaje de ${senderName}`,
+          message: message.trim(),
+          is_read: false,
+          data: { sender_id: userId, sender_name: senderName, trip_id: tripId },
+        }).catch(() => {})
       } catch (err: any) {
         // Revertir optimistic update
         setMessages((prev) => prev.filter((m) => m.id !== tempId))
         setError(err.message)
       }
     },
-    [tripId, userId, otherUserId]
+    [tripId, userId, otherUserId, currentUser]
   )
 
   return {

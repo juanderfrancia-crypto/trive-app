@@ -1,9 +1,12 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ImageBackground } from 'react-native'
+import { useState } from 'react'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ImageBackground, TextInput, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { useAppStore } from '../store/useAppStore'
+import { supabase } from '../services/supabase'
 
 const STEPS = [
   {
@@ -38,7 +41,36 @@ const REQUIREMENTS = [
 ]
 
 export default function DriverOnboardingScreen() {
-  const navigation = useNavigation()
+  const navigation  = useNavigation()
+  const user        = useAppStore((s) => s.user)
+  const [referralCode, setReferralCode] = useState('')
+  const [saving,       setSaving]       = useState(false)
+
+  const handleStart = async () => {
+    const code = referralCode.trim().toUpperCase()
+    if (code && user?.id) {
+      setSaving(true)
+      // Verify the code exists before saving
+      const { data: referrer } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('referral_code', code)
+        .single()
+      setSaving(false)
+
+      if (!referrer) {
+        // Code not found — let them proceed anyway, just clear it
+        setReferralCode('')
+        // Proceed without saving — don't block onboarding
+      } else {
+        await supabase
+          .from('profiles')
+          .update({ referred_by: code })
+          .eq('id', user.id)
+      }
+    }
+    navigation.navigate('DriverDocuments' as never)
+  }
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
@@ -116,6 +148,26 @@ export default function DriverOnboardingScreen() {
           </View>
         </View>
 
+        {/* Código de referido */}
+        <View style={s.referralBlock}>
+          <View style={s.referralHeader}>
+            <Ionicons name="gift-outline" size={18} color="#7C3AED" />
+            <Text style={s.referralTitle}>¿Tienes un código de referido?</Text>
+          </View>
+          <Text style={s.referralSub}>Si un conductor te invitó, ingresa su código y tu primera publicación costará solo $1.000</Text>
+          <View style={s.referralInputWrap}>
+            <TextInput
+              style={s.referralInput}
+              placeholder="Ej: TRVAB12C3"
+              placeholderTextColor={COLORS.textTertiary}
+              value={referralCode}
+              onChangeText={setReferralCode}
+              autoCapitalize="characters"
+              maxLength={10}
+            />
+          </View>
+        </View>
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -126,16 +178,23 @@ export default function DriverOnboardingScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={s.primaryBtn}
-          onPress={() => navigation.navigate('DriverDocuments' as never)}
+          onPress={handleStart}
           activeOpacity={0.85}
+          disabled={saving}
         >
           <LinearGradient
             colors={[COLORS.primaryDark, COLORS.primary]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
             style={s.primaryBtnGrad}
           >
-            <Ionicons name="arrow-forward-circle-outline" size={20} color="#fff" />
-            <Text style={s.primaryBtnText}>Comenzar ahora</Text>
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="arrow-forward-circle-outline" size={20} color="#fff" />
+                <Text style={s.primaryBtnText}>Comenzar ahora</Text>
+              </>
+            )}
           </LinearGradient>
         </TouchableOpacity>
       </View>
@@ -226,6 +285,28 @@ const s = StyleSheet.create({
   reqIcon: { flexShrink: 0 },
   reqText: { flex: 1, fontSize: 14, color: COLORS.textPrimary, fontWeight: '500' },
   reqDivider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: SPACING.lg + 22 + SPACING.md },
+
+  // Referral block
+  referralBlock: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
+    backgroundColor: 'rgba(124,58,237,0.06)',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(124,58,237,0.18)',
+  },
+  referralHeader: {
+    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6,
+  },
+  referralTitle: { fontSize: 14, fontWeight: '700', color: '#5B21B6' },
+  referralSub:   { fontSize: 12, color: COLORS.textSecondary, lineHeight: 17, marginBottom: SPACING.md },
+  referralInputWrap: {
+    backgroundColor: '#fff', borderRadius: 10,
+    borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)',
+    paddingHorizontal: 14,
+  },
+  referralInput: { fontSize: 16, fontWeight: '700', color: '#5B21B6', height: 46, letterSpacing: 2 },
 
   // Footer
   footer: {

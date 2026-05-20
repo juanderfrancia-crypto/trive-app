@@ -53,6 +53,8 @@ import TravelPreferencesScreen from '../screens/TravelPreferencesScreen'
 import ActiveTripsScreen from '../screens/ActiveTripsScreen'
 import ActiveChatsScreen from '../screens/ActiveChatsScreen'
 import ReviewsScreen from '../screens/ReviewsScreen'
+import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
+import ReferralScreen from '../screens/ReferralScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import { NotificationsProvider } from '../context/NotificationsContext'
@@ -168,6 +170,8 @@ export default function AppNavigator() {
       <Stack.Screen name="ActiveTrips" component={ActiveTripsScreen} />
       <Stack.Screen name="ActiveChats" component={ActiveChatsScreen} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} />
+      <Stack.Screen name="RecurringRoutes" component={RecurringRoutesScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />
       <Stack.Screen name="VehicleInfo" component={VehicleInfoScreen} />
       <Stack.Screen name="EditVehicle" component={EditVehicleScreen} />
       <Stack.Screen name="Earnings" component={EarningsScreen} />

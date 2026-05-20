@@ -31,6 +31,7 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const lastRegisterAttempt = useRef<number>(0)
 
@@ -216,8 +217,8 @@ export default function RegisterScreen() {
 
           {authError && <Text style={styles.errorText}>{authError}</Text>}
 
-          <TouchableOpacity 
-            style={[styles.registerBtn, (isSubmitting || authLoading) && styles.buttonDisabled]} 
+          <TouchableOpacity
+            style={[styles.registerBtn, (isSubmitting || authLoading) && styles.buttonDisabled]}
             onPress={handleRegister}
             disabled={isSubmitting || authLoading}
           >

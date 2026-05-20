@@ -568,6 +568,23 @@ export default function ProfileScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
+
+            <View style={s.divider} />
+
+            <TouchableOpacity
+              style={dv.actionRow}
+              onPress={() => navigation.navigate('Referral' as never)}
+              activeOpacity={0.7}
+            >
+              <View style={[dv.actionIcon, { backgroundColor: 'rgba(168,85,247,0.10)' }]}>
+                <Ionicons name="gift-outline" size={20} color="#7C3AED" />
+              </View>
+              <View style={dv.actionInfo}>
+                <Text style={dv.actionTitle}>Referidos</Text>
+                <Text style={dv.actionSub}>Gana $2.000 por cada conductor que traigas</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -734,7 +751,7 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <View style={s.sectionTitleRow}>
             <Text style={s.sectionTitle}>Historial de Rutas</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('DriverPanel')} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.7}>
               <Text style={dv.seeAll}>Ver todo</Text>
             </TouchableOpacity>
           </View>
@@ -795,7 +812,7 @@ export default function ProfileScreen() {
           <View style={s.section}>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
               <View style={s.logoutIconWrap}>
-                <Ionicons name="log-out-outline" size={18} color={COLORS.error} />
+                <Ionicons name="log-out-outline" size={18} color="#fff" />
               </View>
               <Text style={s.logoutBtnText}>Cerrar Sesión</Text>
             </TouchableOpacity>
@@ -975,32 +992,29 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.md,
-    backgroundColor: '#FFF5F5',
-    borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
-    borderColor: `${COLORS.error}40`,
-    paddingVertical: 14,
-    paddingHorizontal: SPACING.lg,
+    gap: 8,
+    alignSelf: 'center',
+    backgroundColor: COLORS.error,
+    borderRadius: RADIUS.full,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
     marginBottom: SPACING.xl,
     shadowColor: COLORS.error,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.35,
     shadowRadius: 10,
-    elevation: 4,
+    elevation: 5,
   },
   logoutIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: `${COLORS.error}15`,
+    width: 22,
+    height: 22,
     justifyContent: 'center',
     alignItems: 'center',
   },
   logoutBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: COLORS.error,
+    color: '#fff',
   },
 })
 

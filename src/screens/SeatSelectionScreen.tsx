@@ -8,6 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { useRoutes } from '../hooks/useRoutes'
+import { useDriverReviews } from '../hooks/useDriverReviews'
 import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import OfflineBanner from '../components/OfflineBanner'
@@ -28,6 +29,7 @@ export default function SeatSelectionScreen() {
   const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
   const { isOnline } = useNetworkStatus()
   const isMountedRef = useRef(true)
+  const { reviews } = useDriverReviews(selectedRoute?.driver_id)
   const isFetchingRef = useRef(false)
   const navTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
@@ -659,6 +661,33 @@ export default function SeatSelectionScreen() {
               </View>
             </View>
 
+            {/* Reseñas del conductor */}
+            {reviews.length > 0 && (
+              <View style={styles.reviewsSection}>
+                <Text style={styles.reviewsTitle}>Reseñas del conductor</Text>
+                {reviews.map((r) => (
+                  <View key={r.id} style={styles.reviewCard}>
+                    <View style={styles.reviewTop}>
+                      <View style={styles.reviewStars}>
+                        {[1,2,3,4,5].map((s) => (
+                          <Ionicons
+                            key={s}
+                            name={s <= r.rating ? 'star' : 'star-outline'}
+                            size={13}
+                            color="#FBBF24"
+                          />
+                        ))}
+                      </View>
+                      <Text style={styles.reviewAuthor}>{r.reviewer_name || 'Pasajero'}</Text>
+                    </View>
+                    {!!r.comment && (
+                      <Text style={styles.reviewComment} numberOfLines={2}>{r.comment}</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+
             {/* Summary */}
             <View style={styles.summaryCardGradient}>
               <View style={styles.summaryRow}>
@@ -1152,6 +1181,53 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+
+  // Reviews
+  reviewsSection: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E9EBF2',
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
+    gap: SPACING.sm,
+  },
+  reviewsTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0E1A4A',
+    marginBottom: 4,
+  },
+  reviewCard: {
+    gap: 4,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F2FF',
+  },
+  reviewTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  reviewStars: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  reviewAuthor: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  reviewComment: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    lineHeight: 17,
   },
 
   // Summary

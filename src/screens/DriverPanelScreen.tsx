@@ -8,6 +8,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  Share,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
@@ -315,7 +316,7 @@ export default function DriverPanelScreen() {
             .in('id', bookingIds)
 
           await Promise.all(
-            route.passengers.map((passenger) =>
+            route.passengers.flatMap((passenger) => [
               insertNotificationForUser(passenger.passenger_id, {
                 user_id: passenger.passenger_id,
                 type: 'trip_completed',
@@ -331,8 +332,24 @@ export default function DriverPanelScreen() {
                   audience: 'passengers_only',
                 },
                 is_read: false,
-              })
-            )
+              }),
+              insertNotificationForUser(passenger.passenger_id, {
+                user_id: passenger.passenger_id,
+                type: 'review_pending',
+                title: '¿Cómo estuvo tu viaje?',
+                message: `Califica a ${user?.name || 'tu conductor'} en el viaje ${route.origin} → ${route.destination}`,
+                data: {
+                  route_id: route.id,
+                  booking_id: passenger.booking_id,
+                  driver_id: user?.id,
+                  driver_name: user?.name,
+                  origin: route.origin,
+                  destination: route.destination,
+                  audience: 'passengers_only',
+                },
+                is_read: false,
+              }),
+            ])
           ).catch((err) => console.error('Error notificando fin de viaje:', err))
         }
       }
@@ -449,6 +466,24 @@ export default function DriverPanelScreen() {
     return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
   }
 
+  const shareRoute = async (route: DriverRoute) => {
+    const date = formatDate(route.departure_time)
+    const time = formatTime(route.departure_time)
+    const seats = route.available_seats
+    const price = route.price_per_seat.toLocaleString('es-CO')
+    const message =
+      `🚗 *Viaje disponible — Trive*\n\n` +
+      `📍 ${route.origin} → ${route.destination}\n` +
+      `🗓 ${date}  🕐 ${time}\n` +
+      `💺 ${seats} cupo${seats !== 1 ? 's' : ''} disponible${seats !== 1 ? 's' : ''}\n` +
+      `💵 $${price} por persona\n` +
+      `🚘 ${route.vehicle_color} · ${route.vehicle_make} · ${route.vehicle_plate}\n\n` +
+      `Reserva tu cupo en la app *Trive* 👇`
+    try {
+      await Share.share({ message })
+    } catch (_e) {}
+  }
+
   const handleCreateRoute = () => {
     if (!approvalStatus) {
       Alert.alert('Error', 'Verificando estado de aprobación...')
@@ -539,6 +574,13 @@ export default function DriverPanelScreen() {
           <Text style={styles.title}>Panel del Conductor</Text>
           <Text style={styles.subtitle}>Gestiona tus viajes</Text>
         </View>
+        <TouchableOpacity
+          style={styles.recurringBtn}
+          onPress={() => navigation.navigate('RecurringRoutes' as never)}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="repeat" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => navigation.navigate('DriverRegister' as never)}
@@ -755,6 +797,14 @@ export default function DriverPanelScreen() {
                 {route.status === 'scheduled' && (
                   <View style={styles.actionsSection}>
                     <TouchableOpacity
+                      style={[styles.actionBtn, styles.shareBtn]}
+                      onPress={() => shareRoute(route)}
+                    >
+                      <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                      <Text style={[styles.actionBtnText, { color: '#25D366' }]}>Compartir</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
                       style={[styles.actionBtn, styles.startBtn]}
                       onPress={() => updateRouteStatus(route.id, 'in_progress')}
                       disabled={isUpdating || seatsFilled === 0}
@@ -892,6 +942,16 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.labelMedium,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
+  },
+  recurringBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.lg,
+    backgroundColor: `${COLORS.primary}12`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: `${COLORS.primary}25`,
   },
   addBtn: {
     width: 48,
@@ -1189,6 +1249,11 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     height: 48,
     gap: SPACING.sm,
+  },
+  shareBtn: {
+    backgroundColor: '#F0FFF4',
+    borderWidth: 1,
+    borderColor: '#25D36640',
   },
   startBtn: {
     backgroundColor: COLORS.primary,
