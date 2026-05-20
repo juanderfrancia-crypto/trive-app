@@ -19,7 +19,7 @@ import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { notifyTripCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
-import Toast from '../components/Toast'
+import { showSuccess, showError } from '../utils/showError'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
@@ -48,11 +48,6 @@ export default function ActiveTripsScreen() {
   const [activeTrips, setActiveTrips] = useState<ActiveTrip[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [toastConfig, setToastConfig] = useState({
-    visible: false,
-    message: '',
-    type: 'info' as 'success' | 'error' | 'info' | 'warning',
-  })
   const [selectedTripForChat, setSelectedTripForChat] = useState<ActiveTrip | null>(null)
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
@@ -193,11 +188,7 @@ export default function ActiveTripsScreen() {
 
     } catch (error) {
       console.error('Error loading active trips:', error)
-      setToastConfig({
-        visible: true,
-        message: 'Error cargando viajes activos',
-        type: 'error',
-      })
+      showError('Error cargando viajes activos')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -252,21 +243,13 @@ export default function ActiveTripsScreen() {
         }).catch(() => {})
       }
 
-      setToastConfig({
-        visible: true,
-        message: 'Viaje cancelado exitosamente',
-        type: 'success',
-      })
+      showSuccess('Viaje cancelado exitosamente')
 
       // Recargar lista
       await loadActiveTrips()
     } catch (error) {
       console.error('Error cancelling trip:', error)
-      setToastConfig({
-        visible: true,
-        message: 'Error al cancelar viaje',
-        type: 'error',
-      })
+      showError('Error al cancelar viaje')
     }
   }
 
@@ -476,12 +459,6 @@ export default function ActiveTripsScreen() {
         />
       )}
 
-      <Toast
-        visible={toastConfig.visible}
-        message={toastConfig.message}
-        type={toastConfig.type}
-        onHide={() => setToastConfig({ ...toastConfig, visible: false })}
-      />
     </SafeAreaView>
   )
 }

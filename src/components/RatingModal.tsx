@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
-import Toast from './Toast'
+import { showSuccess, showError } from '../utils/showError'
 
 interface RatingModalProps {
   visible: boolean
@@ -29,19 +29,10 @@ export default function RatingModal({
   const [comment, setComment] = useState(initialComment)
   const [recommend, setRecommend] = useState(initialRecommend)
   const [loading, setLoading] = useState(false)
-  const [toastConfig, setToastConfig] = useState({
-    visible: false,
-    message: '',
-    type: 'info' as 'success' | 'error' | 'info' | 'warning',
-  })
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      setToastConfig({
-        visible: true,
-        message: 'Por favor selecciona una calificación',
-        type: 'error',
-      })
+      showError('Por favor selecciona una calificación')
       return
     }
 
@@ -49,11 +40,7 @@ export default function RatingModal({
       setLoading(true)
       await onSubmit(rating, comment, recommend)
       
-      setToastConfig({
-        visible: true,
-        message: '✓ Calificación enviada',
-        type: 'success',
-      })
+      showSuccess('Calificación enviada')
       
       // Reiniciar formulario
       setRating(0)
@@ -65,11 +52,7 @@ export default function RatingModal({
         onClose()
       }, 1000)
     } catch (error: any) {
-      setToastConfig({
-        visible: true,
-        message: error.message || 'Error al enviar calificación',
-        type: 'error',
-      })
+      showError(error.message || 'Error al enviar calificación')
     } finally {
       setLoading(false)
     }
@@ -224,12 +207,6 @@ export default function RatingModal({
         </View>
       </Modal>
 
-      <Toast
-        visible={toastConfig.visible}
-        message={toastConfig.message}
-        type={toastConfig.type}
-        onHide={() => setToastConfig((prev) => ({ ...prev, visible: false }))}
-      />
     </>
   )
 }

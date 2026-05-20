@@ -49,7 +49,29 @@
       "Bash(mv docs/logs docs/archive/logs)",
       "Bash(Select-Object -ExpandProperty Name)",
       "Bash(grep -E \"\\\\.tsx$\")",
-      "Bash(grep -r \"// const\\\\|/\\\\* const\\\\|const.*=.*{\\\\s*$\" \"c:/Users/T460s/Desktop/codigo cursor/triveupp-main/src/screens/\" --include=\"*.tsx\")"
+      "Bash(grep -r \"// const\\\\|/\\\\* const\\\\|const.*=.*{\\\\s*$\" \"c:/Users/T460s/Desktop/codigo cursor/triveupp-main/src/screens/\" --include=\"*.tsx\")",
+      "Bash(sed -n '49,55p' src/screens/ActiveTripsScreen.tsx)",
+      "Bash(sed -n '193,200p' src/screens/ActiveTripsScreen.tsx)",
+      "Bash(sed -n '252,268p' src/screens/ActiveTripsScreen.tsx)",
+      "Bash(sed -n '476,486p' src/screens/ActiveTripsScreen.tsx)",
+      "Bash(sed -n '228,237p' src/screens/BookingScreen.tsx)",
+      "Bash(sed -n '599,609p' src/screens/BookingScreen.tsx)",
+      "Bash(sed -n '95,102p' src/screens/LoginPhoneScreen.tsx)",
+      "Bash(sed -n '512,518p' src/screens/LoginPhoneScreen.tsx)",
+      "Bash(sed -n '63,70p' src/screens/ScheduledTripsScreen.tsx)",
+      "Bash(sed -n '143,152p' src/screens/ScheduledTripsScreen.tsx)",
+      "Bash(sed -n '172,178p' src/screens/ScheduledTripsScreen.tsx)",
+      "Bash(sed -n '362,367p' src/screens/ScheduledTripsScreen.tsx)",
+      "Bash(sed -n '573,584p' src/screens/ScheduledTripsScreen.tsx)",
+      "Bash(sed -n '75,87p' src/screens/TravelPreferencesScreen.tsx)",
+      "Bash(sed -n '252,259p' src/screens/TravelPreferencesScreen.tsx)",
+      "Bash(sed -n '242,252p' src/screens/TripHistoryScreen.tsx)",
+      "Bash(sed -n '464,473p' src/screens/TripHistoryScreen.tsx)",
+      "Bash(sed -n '89,131p' src/screens/TripStatusScreen.tsx)",
+      "Bash(sed -n '291,300p' src/screens/TripStatusScreen.tsx)",
+      "Bash(sed -n '451,463p' src/screens/TripStatusScreen.tsx)",
+      "Bash(sed -n '28,75p' src/components/RatingModal.tsx)",
+      "Bash(sed -n '223,235p' src/components/RatingModal.tsx)"
     ]
   }
 }

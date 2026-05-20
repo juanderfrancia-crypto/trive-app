@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
+import { toastConfig } from "./src/components/toastConfig";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
@@ -24,7 +25,7 @@ export default function App() {
     <>
       <StatusBar style="dark" />
       <AppNavigator />
-      <Toast />
+      <Toast config={toastConfig} topOffset={54} />
     </>
   );
 }

@@ -8,7 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
-import Toast from '../components/Toast'
+import { showSuccess, showError } from '../utils/showError'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
@@ -22,11 +22,6 @@ export default function TripStatusScreen() {
   const [bookings, setBookings] = useState<any[]>([])
   const [cancelLoading, setCancelLoading] = useState(false)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [toastConfig, setToastConfig] = useState<{
-    visible: boolean
-    message: string
-    type: 'success' | 'error' | 'info' | 'warning'
-  }>({ visible: false, message: '', type: 'info' })
   const [userBooking, setUserBooking] = useState<any>(null)
   const [selectedTripForChat, setSelectedTripForChat] = useState<any>(null)
   const [chatUnreadCount, setChatUnreadCount] = useState(0)
@@ -90,14 +85,14 @@ export default function TripStatusScreen() {
 
   const handleCancelBooking = () => {
     if (!user) {
-      setToastConfig({ visible: true, message: 'Debes iniciar sesión primero', type: 'error' })
+      showError('Debes iniciar sesión primero')
       return
     }
 
     // Find user's booking
     const booking = bookings.find(b => b.passenger_id === user.id)
     if (!booking) {
-      setToastConfig({ visible: true, message: 'No se encontró tu reserva', type: 'error' })
+      showError('No se encontró tu reserva')
       return
     }
 
@@ -120,12 +115,12 @@ export default function TripStatusScreen() {
         })
       }
 
-      setToastConfig({ visible: true, message: '✓ Reserva cancelada exitosamente', type: 'success' })
+      showSuccess('Reserva cancelada exitosamente')
       setTimeout(() => {
         navigation.navigate('Main' as never, { screen: 'Home' } as never)
       }, 2000)
     } catch (error) {
-      setToastConfig({ visible: true, message: 'Error al cancelar. Intenta más tarde.', type: 'error' })
+      showError('Error al cancelar. Intenta más tarde.')
       if (__DEV__) console.error('Cancel error:', error)
     } finally {
       setCancelLoading(false)
@@ -292,11 +287,7 @@ export default function TripStatusScreen() {
                       style={styles.messageBtn}
                       onPress={() => {
                         if (!selectedRoute?.driver_id) {
-                          setToastConfig({
-                            visible: true,
-                            message: 'No está disponible el chat con el conductor',
-                            type: 'error',
-                          })
+                          showError('No está disponible el chat con el conductor')
                           return
                         }
                         setSelectedTripForChat({
@@ -451,14 +442,6 @@ export default function TripStatusScreen() {
               </View>
             </Modal>
 
-            {/* Toast */}
-            <Toast
-              visible={toastConfig.visible}
-              message={toastConfig.message}
-              type={toastConfig.type as any}
-              onHide={() => setToastConfig({ ...toastConfig, visible: false })}
-              duration={toastConfig.type === 'error' ? 4000 : 3000}
-            />
 
             {/* Trip Messages Modal */}
             {selectedTripForChat && user && (

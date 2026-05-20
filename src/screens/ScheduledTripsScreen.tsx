@@ -8,7 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
-import Toast from '../components/Toast'
+import { showSuccess, showError, showInfo, showWarning } from '../utils/showError'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 
 export default function ScheduledTripsScreen() {
@@ -20,11 +20,6 @@ export default function ScheduledTripsScreen() {
   const [selectedTrip, setSelectedTrip] = useState<any>(null)
   const [modalVisible, setModalVisible] = useState(false)
   const [cancellationLoading, setCancellationLoading] = useState(false)
-  const [toastConfig, setToastConfig] = useState<{
-    visible: boolean
-    message: string
-    type: 'success' | 'error' | 'info' | 'warning'
-  }>({ visible: false, message: '', type: 'info' })
 
   const [selectedTripForChat, setSelectedTripForChat] = useState<any>(null)
 
@@ -65,9 +60,9 @@ export default function ScheduledTripsScreen() {
       setTrips(formattedTrips)
     } catch (error) {
       console.error('Error loading bookings:', error)
-      setToastConfig({ visible: true, message: 'Error al cargar tus viajes', type: 'error' })
+      showError('Error al cargar tus viajes')
     }
-  }, [getPassengerBookings, setToastConfig, user])
+  }, [getPassengerBookings, user])
 
   useFocusEffect(
     useCallback(() => {
@@ -143,10 +138,10 @@ export default function ScheduledTripsScreen() {
       setSelectedTrip(null)
       
       // Mostrar confirmación
-      setToastConfig({ visible: true, message: '✓ Reserva cancelada exitosamente', type: 'success' })
+      showSuccess('Reserva cancelada exitosamente')
     } catch (error) {
       setCancellationLoading(false)
-      setToastConfig({ visible: true, message: 'Error al cancelar la reserva', type: 'error' })
+      showError('Error al cancelar la reserva')
       console.error('Error:', error)
     }
   }
@@ -172,7 +167,7 @@ export default function ScheduledTripsScreen() {
 
   const handleChat = (tripData: any) => {
     if (!tripData?.driverId) {
-      setToastConfig({ visible: true, message: 'No hay conductor asignado para chatear aún', type: 'warning' })
+      showWarning('No hay conductor asignado para chatear aún')
       return
     }
     setSelectedTripForChat({
@@ -361,7 +356,7 @@ export default function ScheduledTripsScreen() {
 
                     <View style={styles.driverActionsImproved}>
                       <TouchableOpacity style={styles.contactBtnLarge} onPress={() => {
-                        setToastConfig({ visible: true, message: 'Función de llamada aún no disponible', type: 'info' })
+                        showInfo('Función de llamada aún no disponible')
                       }}>
                         <Ionicons name="call" size={20} color={COLORS.primary} />
                         <Text style={styles.contactBtnText}>Llamar</Text>
@@ -573,14 +568,6 @@ export default function ScheduledTripsScreen() {
           </View>
         )}
 
-        {/* Toast */}
-        <Toast
-          visible={toastConfig.visible}
-          message={toastConfig.message}
-          type={toastConfig.type}
-          onHide={() => setToastConfig({ ...toastConfig, visible: false })}
-          duration={toastConfig.type === 'error' ? 4000 : 3000}
-        />
 
         {/* Trip Messages Modal */}
         {selectedTripForChat && user && (

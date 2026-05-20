@@ -20,7 +20,7 @@ import { insertNotificationForUser } from '../services/notificationInsert'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { supabase } from '../services/supabase'
-import Toast from '../components/Toast'
+import { showSuccess } from '../utils/showError'
 import OfflineBanner from '../components/OfflineBanner'
 
 export default function BookingScreen() {
@@ -36,9 +36,6 @@ export default function BookingScreen() {
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])
   const [bookingFinalized, setBookingFinalized] = useState(false)
-  const [toastVisible, setToastVisible] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success')
   const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
   const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
   const [driverPaymentMethods, setDriverPaymentMethods] = useState<any[]>([])
@@ -229,9 +226,7 @@ export default function BookingScreen() {
           console.error('Error creando notificación:', notifError)
         }
 
-        setToastType('success')
-        setToastMessage(`✅ Reserva confirmada. Asientos: ${seat_numbers.join(', ')}`)
-        setToastVisible(true)
+        showSuccess(`Reserva confirmada. Asientos: ${seat_numbers.join(', ')}`)
         setTimeout(() => navigation.navigate('TripStatus' as never), 1500)
       } else {
         errorHandler.handle(
@@ -599,12 +594,6 @@ export default function BookingScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <Toast
-        visible={toastVisible}
-        message={toastMessage}
-        type={toastType}
-        onHide={() => setToastVisible(false)}
-      />
     </SafeAreaView>
   )
 }

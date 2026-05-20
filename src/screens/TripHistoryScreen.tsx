@@ -13,7 +13,7 @@ import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { createReview } from '../services/reviews'
 import RatingModal from '../components/RatingModal'
-import Toast from '../components/Toast'
+import { showSuccess, showError } from '../utils/showError'
 
 const HIDDEN_KEY = 'hidden_trip_history'
 
@@ -65,7 +65,6 @@ export default function TripHistoryScreen() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
   const [ratingTrip, setRatingTrip] = useState<TripItem | null>(null)
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'info' as any })
 
   useFocusEffect(useCallback(() => {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
@@ -243,10 +242,10 @@ export default function TripHistoryScreen() {
         setTrips((prev) => prev.map((t) =>
           t.id === ratingTrip.id ? { ...t, hasRated: true } : t
         ))
-        setToast({ visible: true, message: `Calificado con ${rating} estrellas`, type: 'success' })
+        showSuccess(`Calificado con ${rating} estrellas`)
       }
     } catch {
-      setToast({ visible: true, message: 'Error al enviar calificación', type: 'error' })
+      showError('Error al enviar calificación')
     } finally {
       setRatingTrip(null)
     }
@@ -464,12 +463,6 @@ export default function TripHistoryScreen() {
         />
       )}
 
-      <Toast
-        visible={toast.visible}
-        message={toast.message}
-        type={toast.type}
-        onHide={() => setToast({ ...toast, visible: false })}
-      />
     </SafeAreaView>
   )
 }

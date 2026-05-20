@@ -22,7 +22,7 @@ import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
-import Toast from '../components/Toast'
+import { showSuccess, showError, showInfo } from '../utils/showError'
 
 type Method = 'phone' | 'email'
 type Step = 'input' | 'otp' | 'name'
@@ -48,18 +48,10 @@ export default function LoginPhoneScreen() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [toastVisible, setToastVisible] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('info')
 
   const emailGuard = useBruteForceGuard()
   const otpGuard = useBruteForceGuard()
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info') => {
-    setToastMessage(message)
-    setToastType(type)
-    setToastVisible(true)
-  }
 
   const switchMethod = (m: Method) => {
     setMethod(m)
@@ -96,7 +88,7 @@ export default function LoginPhoneScreen() {
       setIsSubmitting(true)
       await signInWithOTP(formatPhone(phone))
       setStep('otp')
-      showToast(`Código enviado al +57 ${phone.replace(/[^\d]/g, '')}. Válido por 10 minutos.`, 'success')
+      showSuccess(`Código enviado al +57 ${phone.replace(/[^\d]/g, '')}. Válido por 10 minutos.`)
     } catch (err: any) {
       if (err.message?.includes('Network') || err.message?.includes('Failed to fetch')) {
         errorHandler.handle('Sin conexión a internet', ErrorType.NETWORK, ErrorSeverity.HIGH, true, { context: 'otp_send_network' })
@@ -513,7 +505,6 @@ export default function LoginPhoneScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
 
-      <Toast visible={toastVisible} message={toastMessage} type={toastType} onHide={() => setToastVisible(false)} />
     </SafeAreaView>
   )
 }

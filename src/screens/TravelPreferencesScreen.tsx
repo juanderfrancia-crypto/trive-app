@@ -14,7 +14,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useLayoutEffect, useState, useEffect } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
-import Toast from '../components/Toast'
+import { showSuccess, showError } from '../utils/showError'
 import * as travelPreferences from '../services/travelPreferences'
 
 type MusicPref = 'none' | 'quiet' | 'moderate' | 'loud'
@@ -26,8 +26,6 @@ export default function TravelPreferencesScreen() {
   const { user: authUser } = useAuth()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [toastMessage, setToastMessage] = useState('')
-  const [toastVisible, setToastVisible] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
 
   // Preferences State
@@ -76,12 +74,10 @@ export default function TravelPreferencesScreen() {
         ac_preference: acPreference,
         luggage_restriction: luggageRestriction,
       })
-      setToastMessage('Preferencias guardadas exitosamente')
-      setToastVisible(true)
+      showSuccess('Preferencias guardadas exitosamente')
     } catch (error) {
       console.error('Error saving preferences:', error)
-      setToastMessage('Error al guardar preferencias')
-      setToastVisible(true)
+      showError('Error al guardar preferencias')
     } finally {
       setSaving(false)
     }
@@ -252,9 +248,6 @@ export default function TravelPreferencesScreen() {
         </ScrollView>
       )}
 
-      {toastVisible && (
-        <Toast message={toastMessage} visible={toastVisible} type="success" onHide={() => setToastVisible(false)} />
-      )}
     </SafeAreaView>
   )
 }

@@ -14,7 +14,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../hooks/useAuth'
 import { usePassengerStats } from '../hooks/usePassengerStats'
 import { useDriverEarnings } from '../hooks/useDriverEarnings'
-import Toast from '../components/Toast'
+import { showSuccess, showError, showInfo } from '../utils/showError'
 import { uploadProfilePhoto, uploadVehiclePhoto } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
@@ -41,9 +41,6 @@ export default function ProfileScreen() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [uploadingVehiclePhoto, setUploadingVehiclePhoto] = useState(false)
   const [shouldLogout, setShouldLogout]   = useState(false)
-  const [toastVisible, setToastVisible]   = useState(false)
-  const [toastMessage, setToastMessage]   = useState('')
-  const [toastType, setToastType]         = useState<'success' | 'error' | 'info'>('success')
   const [driverVehicle, setDriverVehicle] = useState<any>(null)
   const [recentRoutes, setRecentRoutes]   = useState<any[]>([])
   const [driverDocs, setDriverDocs]       = useState<Record<string, any>>({})
@@ -264,9 +261,10 @@ export default function ProfileScreen() {
     }
   }
 
-  // ── Toast ──────────────────────────────────────────────────────────────────
   const showToast = (msg: string, type: 'success' | 'error' | 'info' = 'success') => {
-    setToastMessage(msg); setToastType(type); setToastVisible(true)
+    if (type === 'error') showError(msg)
+    else if (type === 'info') showInfo(msg)
+    else showSuccess(msg)
   }
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -820,7 +818,6 @@ export default function ProfileScreen() {
         )}
       </ScrollView>
 
-      <Toast visible={toastVisible} message={toastMessage} type={toastType} onHide={() => setToastVisible(false)} />
 
       {/* Modal editar nombre */}
       <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
