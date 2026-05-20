@@ -235,29 +235,30 @@ export function EarningsScreen() {
                 </View>
               ))}
 
-              {visibleCount < transactions.length && (
-                <TouchableOpacity
-                  style={styles.loadMoreBtn}
-                  onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.loadMoreText}>
-                    Ver más ({transactions.length - visibleCount} restantes)
-                  </Text>
-                  <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
-                </TouchableOpacity>
-              )}
-
-              {visibleCount >= transactions.length && transactions.length > PAGE_SIZE && (
-                <TouchableOpacity
-                  style={styles.loadMoreBtn}
-                  onPress={() => setVisibleCount(PAGE_SIZE)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.loadMoreText}>Mostrar menos</Text>
-                  <Ionicons name="chevron-up" size={16} color={COLORS.primary} />
-                </TouchableOpacity>
-              )}
+              <View style={styles.loadMoreRow}>
+                {visibleCount > PAGE_SIZE && (
+                  <TouchableOpacity
+                    style={[styles.loadMoreBtn, styles.loadMoreBtnHalf]}
+                    onPress={() => setVisibleCount(PAGE_SIZE)}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chevron-up" size={16} color={COLORS.textSecondary} />
+                    <Text style={[styles.loadMoreText, { color: COLORS.textSecondary }]}>Mostrar menos</Text>
+                  </TouchableOpacity>
+                )}
+                {visibleCount < transactions.length && (
+                  <TouchableOpacity
+                    style={[styles.loadMoreBtn, styles.loadMoreBtnHalf]}
+                    onPress={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.loadMoreText}>
+                      Ver más ({transactions.length - visibleCount})
+                    </Text>
+                    <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </>
           )}
         </View>
@@ -434,15 +435,21 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.textTertiary,
   },
+  loadMoreRow: {
+    flexDirection: 'row',
+    marginTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
   loadMoreBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
     paddingVertical: SPACING.md,
-    marginTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderLight,
+  },
+  loadMoreBtnHalf: {
+    flex: 1,
   },
   loadMoreText: {
     ...TYPOGRAPHY.bodyMedium,
