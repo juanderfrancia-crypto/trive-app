@@ -6,6 +6,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -32,10 +33,10 @@ interface TripItem {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  completed: COLORS.success,
+  completed: '#10B981',
   cancelled: COLORS.error,
-  scheduled: COLORS.primary,
-  in_progress: COLORS.warning,
+  scheduled: '#1A3FCC',
+  in_progress: '#F59E0B',
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -43,6 +44,15 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: 'Cancelado',
   confirmed: 'Confirmado',
   pending: 'Pendiente',
+  scheduled: 'Programado',
+  in_progress: 'En curso',
+}
+
+const STATUS_BG: Record<string, string> = {
+  completed: '#ECFDF5',
+  cancelled: '#FEF2F2',
+  scheduled: '#EEF2FF',
+  in_progress: '#FFFBEB',
 }
 
 export default function TripHistoryScreen() {
@@ -56,7 +66,6 @@ export default function TripHistoryScreen() {
   const [ratingTrip, setRatingTrip] = useState<TripItem | null>(null)
   const [toast, setToast] = useState({ visible: false, message: '', type: 'info' as any })
 
-  // Carga inicial de IDs ocultos
   useFocusEffect(useCallback(() => {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
       setHiddenIds(raw ? new Set(JSON.parse(raw)) : new Set())
@@ -67,7 +76,6 @@ export default function TripHistoryScreen() {
   const loadTrips = async (passengerId: string) => {
     setLoading(true)
     try {
-      // 1 query — solo los campos necesarios + nombre del conductor
       const { data, error } = await supabase
         .from('bookings')
         .select(`
@@ -95,7 +103,6 @@ export default function TripHistoryScreen() {
         .filter((b) => b.routes?.status === 'completed')
         .map((b) => b.id)
 
-      // 1 query batch para saber qué viajes ya calificó — sin N+1
       let ratedSet = new Set<string>()
       if (completedBookingIds.length > 0) {
         const { data: ratedData } = await supabase
@@ -215,43 +222,90 @@ export default function TripHistoryScreen() {
   const effectiveStatus = (trip: TripItem) =>
     trip.status === 'cancelled' ? 'cancelled' : trip.routeStatus
 
+  const FILTERS: { id: FilterType; label: string }[] = [
+    { id: 'all', label: 'Todos' },
+    { id: 'active', label: 'Activos' },
+    { id: 'completed', label: 'Completados' },
+    { id: 'cancelled', label: 'Cancelados' },
+  ]
+
   const renderItem = ({ item }: { item: TripItem }) => {
     const status = effectiveStatus(item)
     const accentColor = STATUS_COLOR[status] ?? COLORS.textSecondary
+    const statusBg = STATUS_BG[status] ?? '#F4F6FF'
     const canRate = status === 'completed' && !item.hasRated && !!item.driverId
 
     return (
-      <View style={s.row}>
-        {/* Indicador de color */}
-        <View style={[s.accent, { backgroundColor: accentColor }]} />
+      <View style={s.card}>
+        {/* Ícono de ruta */}
+        <LinearGradient
+          colors={['#0E2699', '#1230B8', '#1A3FCC']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          style={s.routeIcon}
+        >
+          <Ionicons name="navigate" size={18} color="#fff" />
+        </LinearGradient>
 
         {/* Contenido */}
-        <View style={s.rowContent}>
-          <View style={s.rowTop}>
-            <Text style={s.route} numberOfLines={1}>
-              {item.origin} → {item.destination}
-            </Text>
+        <View style={s.cardContent}>
+          {/* Ruta */}
+          <View style={s.routeRow}>
+            <View style={s.routePoints}>
+              <View style={s.routePoint}>
+                <View style={s.dotOrigin} />
+                <Text style={s.routeText} numberOfLines={1}>{item.origin}</Text>
+              </View>
+              <View style={s.routeLine} />
+              <View style={s.routePoint}>
+                <View style={s.dotDest} />
+                <Text style={s.routeText} numberOfLines={1}>{item.destination}</Text>
+              </View>
+            </View>
             <Text style={s.price}>${item.price.toLocaleString('es-CO')}</Text>
           </View>
 
-          <View style={s.rowBottom}>
-            <Text style={s.meta} numberOfLines={1}>
-              {item.driverName}
-              {item.departureTime ? `  ·  ${formatDate(item.departureTime)}  ·  ${formatTime(item.departureTime)}` : ''}
-            </Text>
+          {/* Meta info */}
+          <View style={s.metaRow}>
+            <Ionicons name="person-outline" size={12} color={COLORS.textTertiary} />
+            <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
+            {item.departureTime ? (
+              <>
+                <View style={s.metaDot} />
+                <Ionicons name="calendar-outline" size={12} color={COLORS.textTertiary} />
+                <Text style={s.metaText}>{formatDate(item.departureTime)}</Text>
+                <View style={s.metaDot} />
+                <Ionicons name="time-outline" size={12} color={COLORS.textTertiary} />
+                <Text style={s.metaText}>{formatTime(item.departureTime)}</Text>
+              </>
+            ) : null}
+          </View>
+
+          {/* Fila inferior: status + acción */}
+          <View style={s.bottomRow}>
+            <View style={[s.statusChip, { backgroundColor: statusBg }]}>
+              <View style={[s.statusDot, { backgroundColor: accentColor }]} />
+              <Text style={[s.statusText, { color: accentColor }]}>
+                {STATUS_LABEL[status] ?? status}
+              </Text>
+            </View>
 
             {canRate ? (
-              <TouchableOpacity style={s.rateBtn} onPress={() => setRatingTrip(item)}>
-                <Ionicons name="star" size={11} color="#fff" />
-                <Text style={s.rateBtnText}>Calificar</Text>
+              <TouchableOpacity onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={s.rateBtn}
+                >
+                  <Ionicons name="star" size={12} color="#FBBF24" />
+                  <Text style={s.rateBtnText}>Calificar conductor</Text>
+                </LinearGradient>
               </TouchableOpacity>
-            ) : (
-              <View style={[s.statusChip, { backgroundColor: accentColor + '18' }]}>
-                <Text style={[s.statusChipText, { color: accentColor }]}>
-                  {STATUS_LABEL[status] ?? status}
-                </Text>
+            ) : item.hasRated ? (
+              <View style={s.ratedBadge}>
+                <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                <Text style={s.ratedText}>Calificado</Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
 
@@ -261,7 +315,7 @@ export default function TripHistoryScreen() {
           onPress={() => hideTrip(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={15} color={COLORS.error} />
+          <Ionicons name="trash-outline" size={14} color={COLORS.textTertiary} />
         </TouchableOpacity>
       </View>
     )
@@ -269,46 +323,64 @@ export default function TripHistoryScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F6FF" />
+
       {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+        <TouchableOpacity style={s.headerIconBtn} onPress={() => navigation.goBack()}>
+          <Ionicons name="chevron-back" size={24} color="#1230B8" />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={s.title}>Historial de Viajes</Text>
-          <Text style={s.subtitle}>Tus viajes recientes</Text>
-        </View>
-        {filtered.length > 0 && (
+        <Text style={s.title}>Historial de Viajes</Text>
+        {filtered.length > 0 ? (
           <TouchableOpacity style={s.deleteAllBtn} onPress={hideAll}>
             <Ionicons name="trash-outline" size={16} color={COLORS.error} />
-            <Text style={s.deleteAllText}>Eliminar todo</Text>
           </TouchableOpacity>
+        ) : (
+          <View style={s.headerIconBtn} />
         )}
       </View>
 
       {/* Filtros */}
       <View style={s.filters}>
-        {(['all', 'active', 'completed', 'cancelled'] as FilterType[]).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[s.filterChip, filter === f && s.filterChipActive]}
-            onPress={() => setFilter(f)}
-          >
-            <Text style={[s.filterText, filter === f && s.filterTextActive]}>
-              {f === 'all' ? 'Todos' : f === 'active' ? 'Activos' : f === 'completed' ? 'Completados' : 'Cancelados'}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        {FILTERS.map((f) => {
+          const isActive = filter === f.id
+          return (
+            <TouchableOpacity
+              key={f.id}
+              onPress={() => setFilter(f.id)}
+              style={s.filterWrap}
+            >
+              {isActive ? (
+                <LinearGradient
+                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                  style={s.filterChip}
+                >
+                  <Text style={[s.filterText, s.filterTextActive]}>{f.label}</Text>
+                </LinearGradient>
+              ) : (
+                <View style={s.filterChip}>
+                  <Text style={s.filterText}>{f.label}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          )
+        })}
       </View>
 
       {loading ? (
         <View style={s.centered}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
+          <ActivityIndicator size="large" color="#1230B8" />
+          <Text style={s.loadingText}>Cargando viajes...</Text>
         </View>
       ) : filtered.length === 0 ? (
         <View style={s.empty}>
-          <Ionicons name="receipt-outline" size={52} color={COLORS.textTertiary} />
+          <LinearGradient
+            colors={['#EEF2FF', '#E4EBFF']}
+            style={s.emptyIconWrap}
+          >
+            <Ionicons name="receipt-outline" size={32} color="#1A3FCC" />
+          </LinearGradient>
           <Text style={s.emptyTitle}>Sin viajes</Text>
           <Text style={s.emptyText}>
             {filter === 'all' ? 'Aún no tienes viajes registrados'
@@ -324,7 +396,6 @@ export default function TripHistoryScreen() {
           renderItem={renderItem}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={s.separator} />}
         />
       )}
 
@@ -349,118 +420,269 @@ export default function TripHistoryScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.background },
+  safe: {
+    flex: 1,
+    backgroundColor: '#F4F6FF',
+  },
 
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: '#F4F6FF',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    borderBottomColor: '#D6E0FF',
   },
-  backBtn: {
-    width: 44, height: 44,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
+  headerIconBtn: {
+    width: 38, height: 38,
+    borderRadius: 12,
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.sm,
   },
-  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary },
-  subtitle: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginTop: 2 },
+  title: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0E1A4A',
+  },
   deleteAllBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.lg,
+    width: 38, height: 38,
+    borderRadius: 12,
     backgroundColor: COLORS.error + '12',
-    borderWidth: 1, borderColor: COLORS.error + '30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.error + '25',
   },
-  deleteAllText: { ...TYPOGRAPHY.labelSmall, color: COLORS.error, fontWeight: '600' },
 
+  // Filtros
   filters: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     gap: SPACING.sm,
   },
+  filterWrap: {
+    borderRadius: RADIUS.full,
+    overflow: 'hidden',
+  },
   filterChip: {
-    paddingHorizontal: SPACING.md, paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1, borderColor: COLORS.borderLight,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#D6E0FF',
   },
-  filterChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterText: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary },
-  filterTextActive: { color: '#fff', fontWeight: '600' },
-
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  empty: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: SPACING.xl, gap: SPACING.md,
+  filterText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
   },
-  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary },
-  emptyText: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, textAlign: 'center' },
+  filterTextActive: {
+    color: '#fff',
+  },
 
-  list: { paddingBottom: SPACING.xxxl },
-  separator: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: SPACING.lg + 4 },
+  // Lista
+  list: {
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: 100,
+    gap: SPACING.md,
+  },
 
-  row: {
+  // Card
+  card: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    paddingVertical: SPACING.md,
-    paddingRight: SPACING.md,
+    alignItems: 'flex-start',
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E9EBF2',
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    gap: SPACING.md,
   },
-  accent: { width: 4, alignSelf: 'stretch', borderRadius: 2, marginRight: SPACING.md, marginLeft: SPACING.md },
-  rowContent: { flex: 1, gap: 5 },
-  rowTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  route: {
-    flex: 1,
-    fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
-  },
-  price: { fontSize: 14, fontWeight: '700', color: COLORS.primary, flexShrink: 0 },
-  rowBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
-  },
-  meta: {
-    flex: 1,
-    fontSize: 12, color: COLORS.textSecondary,
-  },
-
-  statusChip: {
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    flexShrink: 0,
-  },
-  statusChipText: { fontSize: 11, fontWeight: '600' },
-
-  rateBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.warning,
-    paddingHorizontal: 8, paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    flexShrink: 0,
-  },
-  rateBtnText: { fontSize: 11, fontWeight: '700', color: '#fff' },
-
-  deleteBtn: {
-    width: 30, height: 30,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.error + '12',
+  routeIcon: {
+    width: 44, height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: SPACING.sm,
     flexShrink: 0,
+  },
+  cardContent: {
+    flex: 1,
+    gap: 8,
+  },
+
+  // Ruta
+  routeRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+  },
+  routePoints: {
+    flex: 1,
+    gap: 3,
+  },
+  routePoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dotOrigin: {
+    width: 7, height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#1A3FCC',
+    flexShrink: 0,
+  },
+  dotDest: {
+    width: 7, height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#10B981',
+    flexShrink: 0,
+  },
+  routeLine: {
+    width: 2,
+    height: 8,
+    backgroundColor: '#D6E0FF',
+    marginLeft: 2.5,
+  },
+  routeText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0E1A4A',
+  },
+  price: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1230B8',
+    flexShrink: 0,
+  },
+
+  // Meta
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 11,
+    color: COLORS.textSecondary,
+  },
+  metaDot: {
+    width: 3, height: 3,
+    borderRadius: 1.5,
+    backgroundColor: COLORS.textTertiary,
+  },
+
+  // Fila inferior
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.sm,
+    marginTop: 2,
+  },
+  statusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+  },
+  statusDot: {
+    width: 6, height: 6,
+    borderRadius: 3,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  rateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
+  },
+  rateBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  ratedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    backgroundColor: '#ECFDF5',
+  },
+  ratedText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#10B981',
+  },
+
+  // Botón eliminar
+  deleteBtn: {
+    width: 28, height: 28,
+    borderRadius: 8,
+    backgroundColor: '#F4F6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+
+  // Estados
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  empty: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+    gap: SPACING.md,
+  },
+  emptyIconWrap: {
+    width: 72, height: 72,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0E1A4A',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 })

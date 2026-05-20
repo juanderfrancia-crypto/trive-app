@@ -307,14 +307,29 @@ export default function DriverPanelScreen() {
       if (newStatus === 'completed') {
         const route = routes.find((routeItem) => routeItem.id === routeId)
         if (route?.passengers?.length) {
+          // Marcar bookings como completados para que "Gastado este mes" los contabilice
+          const bookingIds = route.passengers.map((p) => p.booking_id)
+          await supabase
+            .from('bookings')
+            .update({ booking_status: 'completed', payment_status: 'completed' })
+            .in('id', bookingIds)
+
           await Promise.all(
             route.passengers.map((passenger) =>
               insertNotificationForUser(passenger.passenger_id, {
                 user_id: passenger.passenger_id,
-                type: 'trip_update',
+                type: 'trip_completed',
                 title: 'Viaje completado',
                 message: `El viaje ${route.origin} → ${route.destination} ha finalizado. ¡Gracias por viajar con Trive!`,
-                data: { route_id: route.id, audience: 'passengers_only' },
+                data: {
+                  route_id: route.id,
+                  booking_id: passenger.booking_id,
+                  driver_id: user?.id,
+                  driver_name: user?.name,
+                  origin: route.origin,
+                  destination: route.destination,
+                  audience: 'passengers_only',
+                },
                 is_read: false,
               })
             )

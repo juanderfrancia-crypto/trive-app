@@ -278,8 +278,8 @@ export default function ProfileScreen() {
   const initials   = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const rating     = (profile?.rating ?? 0).toFixed(1)
   const yearsOnApp = profile?.created_at
-    ? Math.max(1, Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (365.25 * 24 * 60 * 60 * 1000)))
-    : 1
+    ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+    : 0
   const membershipLabels: Record<string, string> = {
     premium: 'USUARIO PREMIUM', basic: 'USUARIO BÁSICO', vip: 'USUARIO VIP', free: 'PASAJERO'
   }
@@ -403,12 +403,13 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
+
       {/* Configuración (reemplaza opciones del menú hamburguesa) */}
       <View style={s.section}>
         <TouchableOpacity style={pv.secondaryActionBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.8}>
-          <Ionicons name="settings-outline" size={18} color={COLORS.accentLight} />
+          <Ionicons name="settings-outline" size={18} color="#1A3FCC" />
           <Text style={pv.secondaryActionText}>Configuración</Text>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.accentLight} />
+          <Ionicons name="chevron-forward" size={16} color="#1A3FCC" />
         </TouchableOpacity>
       </View>
 
@@ -428,41 +429,64 @@ export default function ProfileScreen() {
 
     return (
       <>
-        {/* Hero card */}
+        {/* Hero */}
         <View style={dv.hero}>
-          <View style={dv.heroAvatar}>
-            <AvatarCircle size={90} showBadge={false} />
-            <View style={dv.verifiedBadge}>
-              <Ionicons name="checkmark-circle" size={22} color="#FBBF24" />
+          {/* Foto grande izquierda — ocupa 50% ancho y toda la altura */}
+          <TouchableOpacity
+            style={dv.heroPhotoCol}
+            onPress={handleProfilePhotoUpload}
+            activeOpacity={0.9}
+            disabled={uploadingPhoto}
+          >
+            {uploadingPhoto ? (
+              <View style={[dv.heroPhoto, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#1230B8' }]}>
+                <ActivityIndicator color="#fff" />
+              </View>
+            ) : avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={dv.heroPhoto} resizeMode="cover" />
+            ) : (
+              <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={dv.heroPhoto}>
+                <Text style={dv.heroPhotoInitials}>{initials}</Text>
+              </LinearGradient>
+            )}
+            <View style={dv.heroPhotoCameraBtn}>
+              <Ionicons name="camera" size={13} color="#fff" />
             </View>
-          </View>
-          <TouchableOpacity style={dv.heroNameRow} onPress={openEditName} activeOpacity={0.7}>
-            <Text style={dv.heroName}>{user?.name || 'Conductor'}</Text>
-            <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {displayEmail && (
-            <Text style={dv.heroContact}>{displayEmail}</Text>
-          )}
-          {user?.phone && (
-            <Text style={dv.heroContact}>{user.phone}</Text>
-          )}
-          <View style={dv.conductorBadge}>
-            <Text style={dv.conductorBadgeText}>CONDUCTOR VERIFICADO</Text>
-          </View>
-          <View style={dv.heroStats}>
-            <View style={dv.heroStat}>
-              <Ionicons name="star" size={14} color="#FBBF24" />
-              <Text style={dv.heroStatVal}>{rating}</Text>
+
+          {/* Info derecha */}
+          <View style={dv.heroInfoCol}>
+            <View style={dv.heroNameRow}>
+              <TouchableOpacity style={dv.heroNameTap} onPress={openEditName} activeOpacity={0.7}>
+                <Text style={dv.heroName} numberOfLines={2}>{user?.name || 'Conductor'}</Text>
+                <Ionicons name="pencil-outline" size={13} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+              <Ionicons name="checkmark-circle" size={18} color="#FBBF24" />
             </View>
-            <View style={dv.heroStatSep} />
-            <View style={dv.heroStat}>
-              <Ionicons name="time-outline" size={14} color={COLORS.textSecondary} />
-              <Text style={dv.heroStatVal}>{yearsOnApp} {yearsOnApp === 1 ? 'año' : 'años'} en Trive</Text>
+
+            {displayEmail && <Text style={dv.heroContact} numberOfLines={1}>{displayEmail}</Text>}
+            {user?.phone  && <Text style={dv.heroContact} numberOfLines={1}>{user.phone}</Text>}
+
+            <View style={dv.conductorBadge}>
+              <Text style={dv.conductorBadgeText}>CONDUCTOR VERIFICADO</Text>
             </View>
-            <View style={dv.heroStatSep} />
-            <View style={dv.heroStat}>
-              <Ionicons name="car-outline" size={14} color={COLORS.textSecondary} />
-              <Text style={dv.heroStatVal}>{totalTrips} viajes</Text>
+
+            <View style={dv.heroStats}>
+              <View style={dv.heroStat}>
+                <Ionicons name="star" size={12} color="#FBBF24" />
+                <Text style={dv.heroStatVal}>{rating} <Text style={dv.heroStatLabel}>calificación</Text></Text>
+              </View>
+              <View style={dv.heroStat}>
+                <Ionicons name="time-outline" size={12} color="#1A3FCC" />
+                <Text style={dv.heroStatVal}>
+                  {yearsOnApp === 0 ? 'Nuevo' : `${yearsOnApp} ${yearsOnApp === 1 ? 'año' : 'años'}`}{' '}
+                  <Text style={dv.heroStatLabel}>en Trive</Text>
+                </Text>
+              </View>
+              <View style={dv.heroStat}>
+                <Ionicons name="car-outline" size={12} color="#1A3FCC" />
+                <Text style={dv.heroStatVal}>{totalTrips} <Text style={dv.heroStatLabel}>viajes</Text></Text>
+              </View>
             </View>
           </View>
         </View>
@@ -518,8 +542,8 @@ export default function ProfileScreen() {
               onPress={() => navigation.navigate('DriverPanel')}
               activeOpacity={0.7}
             >
-              <View style={[dv.actionIcon, { backgroundColor: `${COLORS.primary}12` }]}>
-                <Ionicons name="speedometer-outline" size={20} color={COLORS.accentLight} />
+              <View style={[dv.actionIcon, { backgroundColor: 'rgba(18,48,184,0.07)' }]}>
+                <Ionicons name="speedometer-outline" size={20} color="#1A3FCC" />
               </View>
               <View style={dv.actionInfo}>
                 <Text style={dv.actionTitle}>Panel del Conductor</Text>
@@ -679,7 +703,7 @@ export default function ProfileScreen() {
                 <View key={type}>
                   {idx > 0 && <View style={s.divider} />}
                   <View style={dv.docRow}>
-                    <View style={dv.docIcon}><Ionicons name={icon as any} size={20} color={COLORS.accentLight} /></View>
+                    <View style={dv.docIcon}><Ionicons name={icon as any} size={20} color="#1A3FCC" /></View>
                     <View style={dv.docInfo}>
                       <Text style={dv.docTitle}>{label}</Text>
                       <Text style={[dv.docSub, { color: statusColor }]}>{statusLabel}</Text>
@@ -690,13 +714,19 @@ export default function ProfileScreen() {
               )
             })}
           </View>
-          <TouchableOpacity style={dv.updateDocBtn} onPress={() => navigation.navigate('DriverDocuments')} activeOpacity={0.8}>
-            <Text style={dv.updateDocText}>Actualizar Documentación</Text>
-          </TouchableOpacity>
+          <LinearGradient
+            colors={['#0E2699', '#1230B8', '#1A3FCC']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={dv.updateDocBtn}
+          >
+            <TouchableOpacity onPress={() => navigation.navigate('DriverDocuments')} activeOpacity={0.8} style={dv.updateDocBtnInner}>
+              <Text style={dv.updateDocText}>Actualizar Documentación</Text>
+            </TouchableOpacity>
+          </LinearGradient>
           <TouchableOpacity style={dv.settingsBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.8}>
-            <Ionicons name="settings-outline" size={18} color={COLORS.accentLight} />
+            <Ionicons name="settings-outline" size={18} color="#1A3FCC" />
             <Text style={dv.settingsBtnText}>Configuración</Text>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.accentLight} />
+            <Ionicons name="chevron-forward" size={16} color="#1A3FCC" />
           </TouchableOpacity>
         </View>
 
@@ -719,7 +749,7 @@ export default function ProfileScreen() {
               {recentRoutes.map((route, idx) => (
                 <View key={route.id}>
                   <View style={dv.routeRow}>
-                    <View style={dv.routeIcon}><Ionicons name="time-outline" size={18} color={COLORS.accentLight} /></View>
+                    <View style={dv.routeIcon}><Ionicons name="time-outline" size={18} color="#1A3FCC" /></View>
                     <View style={dv.routeInfo}>
                       <Text style={dv.routeName} numberOfLines={1}>
                         {route.origin} → {route.destination}
@@ -763,8 +793,10 @@ export default function ProfileScreen() {
 
         {!profileLoading && (
           <View style={s.section}>
-            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
-              <Ionicons name="log-out-outline" size={18} color={COLORS.error} />
+            <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
+              <View style={s.logoutIconWrap}>
+                <Ionicons name="log-out-outline" size={18} color={COLORS.error} />
+              </View>
               <Text style={s.logoutBtnText}>Cerrar Sesión</Text>
             </TouchableOpacity>
           </View>
@@ -793,13 +825,15 @@ export default function ProfileScreen() {
               <TouchableOpacity style={nm.cancelBtn} onPress={() => setEditNameVisible(false)}>
                 <Text style={nm.cancelText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity
+              <LinearGradient
+                colors={(savingName || newName.trim().length < 2) ? ['#D1D5DB', '#D1D5DB'] : ['#0E2699', '#1230B8', '#1A3FCC']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={[nm.saveBtn, (savingName || newName.trim().length < 2) && nm.saveBtnDisabled]}
-                onPress={handleSaveName}
-                disabled={savingName || newName.trim().length < 2}
               >
-                {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={nm.saveText}>Guardar</Text>}
-              </TouchableOpacity>
+                <TouchableOpacity onPress={handleSaveName} disabled={savingName || newName.trim().length < 2} style={nm.saveBtnInner}>
+                  {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={nm.saveText}>Guardar</Text>}
+                </TouchableOpacity>
+              </LinearGradient>
             </View>
           </View>
         </KeyboardAvoidingView>
@@ -809,23 +843,30 @@ export default function ProfileScreen() {
       <Modal visible={chatsListVisible} animationType="slide" transparent onRequestClose={() => setChatsListVisible(false)}>
         <View style={cm.overlay}>
           <View style={cm.sheet}>
+            {/* Handle */}
+            <View style={cm.handle} />
+
             {/* Header */}
             <View style={cm.sheetHeader}>
-              <Text style={cm.sheetTitle}>Mis Chats</Text>
+              <View>
+                <Text style={cm.sheetTitle}>Mis Chats</Text>
+                <Text style={cm.sheetSub}>Los chats desaparecen cuando el viaje finaliza</Text>
+              </View>
               <TouchableOpacity onPress={() => setChatsListVisible(false)} style={cm.closeBtn}>
-                <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+                <Ionicons name="close" size={20} color="#1230B8" />
               </TouchableOpacity>
             </View>
-            <Text style={cm.sheetSub}>Los chats desaparecen cuando el viaje finaliza</Text>
 
             {visibleChats.length === 0 ? (
               <View style={cm.empty}>
-                <Ionicons name="chatbubbles-outline" size={48} color={COLORS.textTertiary} />
+                <LinearGradient colors={['#EEF2FF', '#E4EBFF']} style={cm.emptyIconWrap}>
+                  <Ionicons name="chatbubbles-outline" size={32} color="#1A3FCC" />
+                </LinearGradient>
                 <Text style={cm.emptyTitle}>Sin chats activos</Text>
                 <Text style={cm.emptyText}>Aparecen aquí mientras tengas una reserva activa</Text>
               </View>
             ) : (
-              <ScrollView>
+              <ScrollView contentContainerStyle={cm.scrollContent} showsVerticalScrollIndicator={false}>
                 {visibleChats.map((chat) => {
                   const unread = unreadCounts[chat.routeId] ?? 0
                   return (
@@ -833,23 +874,40 @@ export default function ProfileScreen() {
                       key={chat.bookingId}
                       style={cm.chatRow}
                       onPress={() => { setSelectedChat(chat); setChatsListVisible(false); setChatModalVisible(true) }}
-                      activeOpacity={0.75}
+                      activeOpacity={0.85}
                     >
-                      <View style={cm.avatar}>
+                      <LinearGradient
+                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                        style={cm.avatar}
+                      >
                         <Text style={cm.avatarText}>{chat.driverName.charAt(0).toUpperCase()}</Text>
                         {chat.routeStatus === 'in_progress' && <View style={cm.activeDot} />}
-                      </View>
+                      </LinearGradient>
+
                       <View style={cm.chatInfo}>
-                        <Text style={cm.driverName}>{chat.driverName}</Text>
-                        <Text style={cm.routeText} numberOfLines={1}>{chat.origin} → {chat.destination}</Text>
+                        <View style={cm.chatInfoTop}>
+                          <Text style={cm.driverName} numberOfLines={1}>{chat.driverName}</Text>
+                          {chat.routeStatus === 'in_progress' && (
+                            <View style={cm.inProgressPill}>
+                              <Text style={cm.inProgressText}>En curso</Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={cm.routeRow}>
+                          <Ionicons name="navigate-outline" size={11} color="#1230B8" />
+                          <Text style={cm.routeText} numberOfLines={1}>{chat.origin} → {chat.destination}</Text>
+                        </View>
                       </View>
+
                       {unread > 0 && (
                         <View style={cm.badge}>
                           <Text style={cm.badgeText}>{unread > 9 ? '9+' : unread}</Text>
                         </View>
                       )}
+
                       <TouchableOpacity style={cm.deleteBtn} onPress={() => hideChat(chat.bookingId)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                        <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                        <Ionicons name="trash-outline" size={14} color={COLORS.textTertiary} />
                       </TouchableOpacity>
                     </TouchableOpacity>
                   )
@@ -885,7 +943,7 @@ export default function ProfileScreen() {
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: COLORS.background },
+  safe:   { flex: 1, backgroundColor: '#F4F6FF' },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: SPACING.lg },
   loadingBox: { paddingVertical: 80, alignItems: 'center' },
@@ -897,11 +955,11 @@ const s = StyleSheet.create({
   sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, marginBottom: 4, marginTop: SPACING.lg },
 
   menuCard: {
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: COLORS.borderLight,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: '#D6E0FF',
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
   },
-  divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 56 },
+  divider: { height: 1, backgroundColor: '#E4EBFF', marginLeft: 56 },
 
   avatarWrap: { position: 'relative', borderWidth: 3, borderColor: '#fff', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 6 },
   avatarBg:   { justifyContent: 'center', alignItems: 'center' },
@@ -917,16 +975,30 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    backgroundColor: `${COLORS.error}10`,
-    borderRadius: RADIUS.md,
+    gap: SPACING.md,
+    backgroundColor: '#FFF5F5',
+    borderRadius: RADIUS.lg,
     borderWidth: 1.5,
-    borderColor: `${COLORS.error}35`,
-    paddingVertical: 12,
+    borderColor: `${COLORS.error}40`,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.xl,
+    shadowColor: COLORS.error,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 4,
+  },
+  logoutIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: `${COLORS.error}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   logoutBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: COLORS.error,
   },
@@ -937,7 +1009,7 @@ const pv = StyleSheet.create({
   profileRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.lg,
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F6FF',
   },
   profileInfo: { flex: 1 },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
@@ -967,11 +1039,11 @@ const pv = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: SPACING.md },
   statCard: {
     flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 3,
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 14, elevation: 6,
   },
   statIcon: {
     width: 44, height: 44, borderRadius: RADIUS.md,
-    backgroundColor: `${COLORS.primary}12`,
+    backgroundColor: 'rgba(18,48,184,0.08)',
     justifyContent: 'center', alignItems: 'center',
     marginBottom: 4,
   },
@@ -1009,11 +1081,12 @@ const pv = StyleSheet.create({
 
   secondaryActionBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: `${COLORS.primary}40`,
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.md,
+    borderWidth: 1.5, borderColor: '#D6E0FF',
     paddingHorizontal: SPACING.md, paddingVertical: 12,
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  secondaryActionText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  secondaryActionText: { fontSize: 14, fontWeight: '700', color: '#1230B8' },
 
   footer: {
     textAlign: 'center', fontSize: 11, fontWeight: '600',
@@ -1024,23 +1097,91 @@ const pv = StyleSheet.create({
 
 // ── Driver view styles ────────────────────────────────────────────────────────
 const dv = StyleSheet.create({
-  hero: { padding: SPACING.xl, paddingTop: SPACING.xl, paddingBottom: SPACING.xxl, alignItems: 'center', backgroundColor: COLORS.background },
-  heroAvatar: { position: 'relative', marginBottom: SPACING.md },
-  verifiedBadge: { position: 'absolute', bottom: -4, right: -4 },
-  heroNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.sm },
-  heroName: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
-  heroContact: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  conductorBadge: {
-    backgroundColor: `${COLORS.primary}12`,
-    paddingHorizontal: SPACING.md, paddingVertical: 5,
-    borderRadius: RADIUS.full, marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: `${COLORS.primary}25`,
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
+    gap: SPACING.md,
+    backgroundColor: '#F4F6FF',
   },
-  conductorBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.8 },
-  heroStats: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  heroStat:  { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  heroStatVal: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-  heroStatSep: { width: 1, height: 14, backgroundColor: COLORS.borderLight },
+  heroPhotoCol: {
+    width: '48%',
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    minHeight: 155,
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 14,
+    elevation: 7,
+  },
+  heroPhoto: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  heroPhotoInitials: {
+    fontSize: 44,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  heroPhotoCameraBtn: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
+  },
+  heroInfoCol: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.xs,
+  },
+  heroNameRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs,
+  },
+  heroNameTap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 5,
+    paddingRight: 4,
+  },
+  heroName: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, flex: 1, lineHeight: 21 },
+  heroContact: { fontSize: 12, color: COLORS.textSecondary, marginBottom: 3 },
+  conductorBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: '#D6E0FF',
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.sm,
+  },
+  conductorBadgeText: { fontSize: 9, fontWeight: '700', color: '#1230B8', letterSpacing: 0.5 },
+  heroStats: {
+    flexDirection: 'column',
+    gap: 5,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: '#E4EBFF',
+  },
+  heroStat: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  heroStatVal: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary },
+  heroStatLabel: { fontSize: 11, fontWeight: '400', color: COLORS.textSecondary },
+  heroStatSep: { width: 0, height: 0 },
 
   earningsCard: {
     borderRadius: RADIUS.xl,
@@ -1088,10 +1229,10 @@ const dv = StyleSheet.create({
 
   vehicleCard: {
     flexDirection: 'row', gap: SPACING.md,
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    borderWidth: 1, borderColor: COLORS.borderLight,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
+    borderWidth: 1, borderColor: '#D6E0FF',
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
   },
   vehiclePhotoWrap: {
     width: 120,
@@ -1131,7 +1272,7 @@ const dv = StyleSheet.create({
   vehicleInfo:   { flex: 1, padding: SPACING.md, justifyContent: 'center', gap: 4 },
   vehicleName:   { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
   vehicleMeta:   { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  vehiclePlate:  { fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
+  vehiclePlate:  { fontSize: 13, fontWeight: '700', color: '#1230B8', letterSpacing: 0.5 },
   vehicleMetaText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   vehicleStatus: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statusDot:     { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.success },
@@ -1154,47 +1295,58 @@ const dv = StyleSheet.create({
   editVehicleBtnText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
 
   docRow:  { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
-  docIcon: { width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}10`, justifyContent: 'center', alignItems: 'center' },
+  docIcon: { width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: 'rgba(18,48,184,0.07)', justifyContent: 'center', alignItems: 'center' },
   docInfo: { flex: 1 },
   docTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   docSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   updateDocBtn: {
     marginTop: SPACING.sm, borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: COLORS.primary,
+    overflow: 'hidden',
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.30,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  updateDocBtnInner: {
     paddingVertical: 12, alignItems: 'center',
   },
-  updateDocText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  updateDocText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   walletBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, padding: SPACING.lg,
+    borderWidth: 1, borderColor: '#D6E0FF',
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 10, elevation: 4,
+    marginBottom: SPACING.sm,
   },
   walletLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   walletRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   walletLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   walletSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  walletBalance: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
+  walletBalance: { fontSize: 16, fontWeight: '800', color: '#1230B8' },
   settingsBtn: {
     marginTop: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
-    borderColor: `${COLORS.primary}40`,
+    borderColor: '#D6E0FF',
+    backgroundColor: '#F8F9FF',
     paddingVertical: 12,
     paddingHorizontal: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  settingsBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  settingsBtnText: { fontSize: 14, fontWeight: '700', color: '#1230B8' },
 
-  seeAll:  { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  seeAll:  { fontSize: 13, fontWeight: '700', color: '#1230B8' },
   routeRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
-  routeIcon: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: `${COLORS.primary}10`, justifyContent: 'center', alignItems: 'center' },
+  routeIcon: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: 'rgba(18,48,184,0.07)', justifyContent: 'center', alignItems: 'center' },
   routeInfo: { flex: 1 },
   routeName:  { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 3 },
   routeMeta:  { fontSize: 12, color: COLORS.textSecondary },
   routeRight: { alignItems: 'flex-end', gap: 4 },
-  routePrice: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
+  routePrice: { fontSize: 14, fontWeight: '800', color: '#1230B8' },
   routeStatusPill: { backgroundColor: COLORS.borderLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full },
   routeStatusDone: { backgroundColor: `${COLORS.success}15` },
   routeStatusText: { fontSize: 9, fontWeight: '800', color: COLORS.textTertiary, letterSpacing: 0.3 },
@@ -1211,6 +1363,7 @@ const nm = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
     padding: SPACING.xl, paddingBottom: 40, gap: SPACING.lg,
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
   },
   title:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
   input:  {
@@ -1220,8 +1373,9 @@ const nm = StyleSheet.create({
   btnRow: { flexDirection: 'row', gap: SPACING.md },
   cancelBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight, justifyContent: 'center', alignItems: 'center' },
   cancelText: { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary },
-  saveBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
-  saveBtnDisabled: { opacity: 0.45 },
+  saveBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
+  saveBtnInner: { flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' },
+  saveBtnDisabled: { opacity: 0.55 },
   saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 })
 
@@ -1229,64 +1383,88 @@ const nm = StyleSheet.create({
 const cm = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    maxHeight: '80%',
+    backgroundColor: '#F4F6FF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '82%',
     paddingBottom: SPACING.xxxl,
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
+  },
+  handle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#D6E0FF',
+    alignSelf: 'center',
+    marginTop: 12, marginBottom: 4,
   },
   sheetHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.sm,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D6E0FF',
   },
-  sheetTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  sheetTitle: { fontSize: 18, fontWeight: '800', color: '#0E1A4A' },
+  sheetSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   closeBtn: {
-    width: 36, height: 36, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface,
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center', alignItems: 'center',
   },
-  sheetSub: { fontSize: 12, color: COLORS.textSecondary, paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
-  empty: { alignItems: 'center', paddingVertical: 40, gap: SPACING.md, paddingHorizontal: SPACING.xl },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  scrollContent: { padding: SPACING.lg, gap: SPACING.md, paddingBottom: SPACING.xl },
+  empty: { alignItems: 'center', paddingVertical: 48, gap: SPACING.md, paddingHorizontal: SPACING.xl },
+  emptyIconWrap: { width: 68, height: 68, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm },
+  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0E1A4A' },
   emptyText: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
   chatRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E9EBF2',
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
     gap: SPACING.md,
   },
   avatar: {
-    width: 46, height: 46, borderRadius: 23,
-    backgroundColor: COLORS.primary,
+    width: 46, height: 46, borderRadius: 14,
     justifyContent: 'center', alignItems: 'center',
     position: 'relative', flexShrink: 0,
+    overflow: 'hidden',
   },
-  avatarText: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  avatarText: { fontSize: 18, fontWeight: '800', color: '#fff' },
   activeDot: {
-    position: 'absolute', bottom: 1, right: 1,
-    width: 11, height: 11, borderRadius: 6,
-    backgroundColor: COLORS.success,
+    position: 'absolute', bottom: 2, right: 2,
+    width: 10, height: 10, borderRadius: 5,
+    backgroundColor: '#10B981',
     borderWidth: 2, borderColor: '#fff',
   },
-  chatInfo: { flex: 1 },
-  driverName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  routeText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  chatInfo: { flex: 1, gap: 4 },
+  chatInfoTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  driverName: { fontSize: 14, fontWeight: '700', color: '#0E1A4A', flex: 1 },
+  inProgressPill: {
+    backgroundColor: '#ECFDF5', borderRadius: RADIUS.full,
+    paddingHorizontal: 7, paddingVertical: 2,
+  },
+  inProgressText: { fontSize: 10, fontWeight: '700', color: '#10B981' },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  routeText: { fontSize: 12, color: COLORS.textSecondary, flex: 1 },
   badge: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: '#1230B8',
     borderRadius: 10, minWidth: 20, height: 20,
-    justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5,
+    justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5, flexShrink: 0,
   },
   badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
   deleteBtn: {
-    width: 32, height: 32, borderRadius: RADIUS.md,
-    backgroundColor: COLORS.error + '12',
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: '#F4F6FF',
     justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
 })

@@ -9,6 +9,9 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useNotificationCenter } from '../context/NotificationsContext'
 import { Notification } from '../hooks/useNotifications'
+import { useAppStore } from '../store/useAppStore'
+import RatingModal from '../components/RatingModal'
+import { createReview } from '../services/reviews'
 
 type NotificationCategory = 'all' | 'chat' | 'ruta' | 'feed'
 
@@ -18,6 +21,7 @@ interface NotificationWithSender extends Notification {
 
 export default function NotificationsScreen() {
   const navigation = useNavigation()
+  const currentUser = useAppStore((s) => s.user)
   const {
     notifications,
     loading,
@@ -33,6 +37,12 @@ export default function NotificationsScreen() {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailNotif, setDetailNotif] = useState<NotificationWithSender | null>(null)
+  const [ratingTarget, setRatingTarget] = useState<{
+    bookingId: string
+    driverId: string
+    driverName: string
+    notifId: string
+  } | null>(null)
 
   const handleRefresh = async () => {
     setRefreshing(true)
@@ -392,18 +402,20 @@ export default function NotificationsScreen() {
   )
 
   // Variables para el modal de detalle (calculadas en el componente, no en un sub-componente)
-  const _dStyle       = detailNotif ? getCategoryStyle(detailNotif.type, detailNotif.senderName) : null
-  const _dIsBooking   = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(detailNotif.type) : false
-  const _dIsChat      = detailNotif?.type === 'message'
-  const _dOrigin      = detailNotif?.data?.origin        as string | undefined
-  const _dDest        = detailNotif?.data?.destination   as string | undefined
-  const _dSeats       = detailNotif?.data?.seat_numbers  as number[] | undefined
-  const _dDriver      = detailNotif?.data?.driver_name   as string | undefined
-  const _dPassenger   = detailNotif?.data?.passenger_name as string | undefined
-  const _dPrice       = detailNotif?.data?.price         as number | undefined
-  const _dTripDate    = detailNotif?.data?.trip_date     as string | undefined
-  const _dBookingId   = detailNotif?.data?.booking_id    as string | undefined
-  const _dFmtDate     = _dTripDate
+  const _dStyle             = detailNotif ? getCategoryStyle(detailNotif.type, detailNotif.senderName) : null
+  const _dIsBooking         = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(detailNotif.type) : false
+  const _dIsChat            = detailNotif?.type === 'message'
+  const _dIsTripCompleted   = detailNotif?.type === 'trip_completed'
+  const _dOrigin            = detailNotif?.data?.origin        as string | undefined
+  const _dDest              = detailNotif?.data?.destination   as string | undefined
+  const _dSeats             = detailNotif?.data?.seat_numbers  as number[] | undefined
+  const _dDriver            = detailNotif?.data?.driver_name   as string | undefined
+  const _dDriverId          = detailNotif?.data?.driver_id     as string | undefined
+  const _dPassenger         = detailNotif?.data?.passenger_name as string | undefined
+  const _dPrice             = detailNotif?.data?.price         as number | undefined
+  const _dTripDate          = detailNotif?.data?.trip_date     as string | undefined
+  const _dBookingId         = detailNotif?.data?.booking_id    as string | undefined
+  const _dFmtDate           = _dTripDate
     ? new Date(_dTripDate).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
     : null
 
@@ -593,6 +605,31 @@ export default function NotificationsScreen() {
                     </View>
                   )}
 
+                  {_dIsTripCompleted && _dBookingId && _dDriverId && (
+                    <TouchableOpacity
+                      style={styles.rateDriverBtn}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setRatingTarget({
+                          bookingId: _dBookingId!,
+                          driverId: _dDriverId!,
+                          driverName: _dDriver || 'Conductor',
+                          notifId: detailNotif.id,
+                        })
+                        setDetailNotif(null)
+                      }}
+                    >
+                      <LinearGradient
+                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={styles.rateDriverBtnInner}
+                      >
+                        <Ionicons name="star" size={16} color="#FBBF24" />
+                        <Text style={styles.rateDriverBtnText}>Calificar conductor</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  )}
+
                   <View style={{ height: 24 }} />
                 </ScrollView>
               </>
@@ -600,6 +637,28 @@ export default function NotificationsScreen() {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {ratingTarget && (
+        <RatingModal
+          visible={!!ratingTarget}
+          userName={ratingTarget.driverName}
+          isDriver
+          onClose={() => setRatingTarget(null)}
+          onSubmit={async (rating, comment, recommend) => {
+            if (!currentUser?.id) throw new Error('Usuario no autenticado')
+            await createReview(
+              ratingTarget.bookingId,
+              currentUser.id,
+              ratingTarget.driverId,
+              rating,
+              comment,
+              recommend
+            )
+            await deleteNotifications([ratingTarget.notifId])
+            setRatingTarget(null)
+          }}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -945,5 +1004,23 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontWeight: '500',
     flex: 1,
+  },
+  rateDriverBtn: {
+    marginTop: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+  },
+  rateDriverBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.lg,
+  },
+  rateDriverBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
   },
 })
