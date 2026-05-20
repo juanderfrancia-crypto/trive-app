@@ -378,14 +378,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   card: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...SHADOWS.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   cardTitle: {
     ...TYPOGRAPHY.bodyMedium,
@@ -420,7 +415,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   txCount: {
     ...TYPOGRAPHY.caption,

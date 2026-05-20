@@ -596,16 +596,18 @@ const styles = StyleSheet.create({
   },
   transactionsSection: {
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
     marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
   },
   sectionTitle: {
     ...TYPOGRAPHY.bold,
     fontSize: 16,
     color: COLORS.textPrimary,
     marginBottom: SPACING.md,
+    paddingTop: SPACING.md,
   },
   transactionItem: {
     flexDirection: 'row',
