@@ -124,6 +124,41 @@ const FAQ_DATA: FAQItem[] = [
     answer:
       'El botón SOS aparece en la tarjeta de tu viaje activo. Al tocarlo, la app abre WhatsApp con un mensaje pre-llenado para tu contacto de emergencia, incluyendo tu ubicación GPS en tiempo real, nombre del conductor y datos del vehículo (color, marca, placa). Configura tu contacto de emergencia en Configuración > Seguridad.',
   },
+  {
+    id: '16',
+    category: 'Aeropuerto',
+    question: '¿Qué son los viajes al aeropuerto?',
+    answer:
+      'Los viajes al aeropuerto son una modalidad especial de Trive donde un pasajero publica su solicitud de transporte hacia un aeropuerto colombiano (origen, destino, fecha/hora de vuelo, número de personas y precio ofrecido) y los conductores verificados pueden aceptarla. Es ideal para llegar puntual a tu vuelo con un conductor de confianza.',
+  },
+  {
+    id: '17',
+    category: 'Aeropuerto',
+    question: '¿Cómo publico una solicitud de viaje al aeropuerto?',
+    answer:
+      'En la pantalla principal toca el banner "Viajes al Aeropuerto". Ingresa tu punto de origen, selecciona el aeropuerto de destino, elige la fecha y hora de salida, el número de personas y el precio que ofreces pagar. Toca "Publicar solicitud" y los conductores disponibles podrán verla y aceptarla. Recibirás una notificación cuando un conductor acepte tu viaje.',
+  },
+  {
+    id: '18',
+    category: 'Aeropuerto',
+    question: '¿Cómo acepto una solicitud de aeropuerto como conductor?',
+    answer:
+      'En la pantalla principal toca "Solicitudes de Aeropuerto". Verás todas las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar viaje" en la solicitud que te interese. Se descontarán $5.000 de tu billetera Trive como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y podrán coordinar los detalles del recorrido.',
+  },
+  {
+    id: '19',
+    category: 'Aeropuerto',
+    question: '¿Por qué se descuentan $5.000 al conductor en viajes de aeropuerto?',
+    answer:
+      'Los $5.000 son el costo de intermediación tecnológica que Trive cobra al conductor al aceptar una solicitud de aeropuerto. Este valor es diferente a los $2.000 de las rutas regulares y no constituye una comisión sobre el precio del trayecto: el dinero que el pasajero paga al conductor es 100% de él. Asegúrate de tener saldo suficiente en tu billetera antes de aceptar.',
+  },
+  {
+    id: '20',
+    category: 'Aeropuerto',
+    question: '¿Qué aeropuertos están disponibles?',
+    answer:
+      'Están disponibles los 30 principales aeropuertos de Colombia, incluyendo El Dorado (Bogotá), José María Córdova (Medellín), Alfonso Bonilla Aragón (Cali), Rafael Núñez (Cartagena), Ernesto Cortissoz (Barranquilla) y muchos más. Al escribir el nombre de la ciudad o el código IATA, verás las sugerencias automáticamente.',
+  },
 ]
 
 export default function HelpScreen() {

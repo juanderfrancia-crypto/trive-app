@@ -23,7 +23,7 @@ export default function PrivacyPolicyScreen() {
 
         <Text style={s.company}>Trive Technologies SAS</Text>
         <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
-        <Text style={s.date}>Última actualización: 3 de mayo de 2026</Text>
+        <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
 
         <Section title="1. Responsable del tratamiento">
           <B>Trive Technologies SAS</B>{'\n'}
@@ -38,7 +38,8 @@ export default function PrivacyPolicyScreen() {
           <B>d) Datos de uso:</B> historial de trayectos, calificaciones, reseñas y mensajes internos en la Plataforma.{'\n\n'}
           <B>e) Datos técnicos:</B> token del dispositivo para notificaciones push, sistema operativo y versión de la aplicación.{'\n\n'}
           <B>f) Fotografía de perfil:</B> de forma opcional, cargada por el usuario.{'\n\n'}
-          <B>g) Datos del programa de referidos (conductores):</B> código de referido generado por la Plataforma para cada conductor activo y, en caso de aplicar, el código del conductor que lo refirió. Estos datos se utilizan exclusivamente para calcular y acreditar los beneficios del programa de referidos.
+          <B>g) Datos del programa de referidos (conductores):</B> código de referido generado por la Plataforma para cada conductor activo y, en caso de aplicar, el código del conductor que lo refirió. Estos datos se utilizan exclusivamente para calcular y acreditar los beneficios del programa de referidos.{'\n\n'}
+          <B>h) Datos de solicitudes de viaje al aeropuerto (pasajeros):</B> origen del recorrido, aeropuerto de destino, fecha y hora de vuelo, número de pasajeros, precio ofrecido y notas opcionales. Estos datos son visibles para los conductores verificados de la Plataforma con el fin de facilitar la aceptación del viaje.
         </Section>
 
         <Section title="3. Finalidades del tratamiento">
@@ -50,6 +51,7 @@ export default function PrivacyPolicyScreen() {
           • Verificar la identidad de los conductores mediante revisión de documentos.{'\n'}
           • Calcular calificaciones y reputación de usuarios.{'\n'}
           • Gestionar el programa de referidos entre conductores y acreditar los beneficios correspondientes.{'\n'}
+          • Conectar pasajeros con conductores para solicitudes de viaje al aeropuerto, mostrando la información de la solicitud a conductores verificados.{'\n'}
           • Mejorar la Plataforma mediante análisis estadísticos anonimizados.{'\n'}
           • Cumplir obligaciones legales vigentes.
         </Section>

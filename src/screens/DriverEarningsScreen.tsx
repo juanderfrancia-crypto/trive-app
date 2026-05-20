@@ -794,4 +794,30 @@ const styles = StyleSheet.create({
     color: COLORS.textTertiary,
     marginTop: 2,
   },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    marginTop: SPACING.md,
+    textAlign: 'center',
+  },
+  errorSubtext: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  retryBtn: {
+    marginTop: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.primary,
+    borderRadius: RADIUS.md,
+  },
+  retryBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: 'white',
+  },
 })

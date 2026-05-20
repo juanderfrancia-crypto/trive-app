@@ -178,6 +178,46 @@ export default function LearningCenterScreen() {
       ],
       expanded: false
     },
+    {
+      id: '10',
+      title: 'Solicitar un Viaje al Aeropuerto',
+      category: 'Pasajero',
+      duration: '5 min',
+      icon: 'airplane-outline',
+      description: 'Cómo publicar tu solicitud y que un conductor te lleve al aeropuerto',
+      steps: [
+        '1. En la pantalla principal toca el banner "Viajes al Aeropuerto"',
+        '2. Escribe tu punto de origen (dirección o barrio de salida)',
+        '3. En el campo destino, escribe el nombre del aeropuerto o la ciudad; elige de la lista que aparece',
+        '4. Ingresa la fecha de tu vuelo en formato DD/MM/AAAA',
+        '5. Ingresa la hora de salida deseada en formato HH:MM',
+        '6. Selecciona el número de personas que viajarán',
+        '7. Escribe el precio que ofreces pagar al conductor',
+        '8. Agrega una nota opcional (equipaje, instrucciones especiales, etc.)',
+        '9. Toca "Publicar solicitud" — los conductores disponibles podrán verla',
+        '10. Recibirás una notificación cuando un conductor acepte tu viaje',
+      ],
+      expanded: false
+    },
+    {
+      id: '11',
+      title: 'Aceptar Solicitudes de Aeropuerto',
+      category: 'Conductor',
+      duration: '5 min',
+      icon: 'airplane-outline',
+      description: 'Cómo ver y aceptar solicitudes de pasajeros que van al aeropuerto',
+      steps: [
+        '1. En la pantalla principal toca el banner "Solicitudes de Aeropuerto"',
+        '2. Verás todas las solicitudes activas con origen, destino, fecha, hora y precio ofrecido',
+        '3. Revisa los detalles: número de personas, notas del pasajero y precio',
+        '4. Toca "Aceptar viaje" en la solicitud que te interese',
+        '5. Confirma en el diálogo — se descontarán $5.000 de tu billetera Trive',
+        '6. Si no tienes saldo suficiente, la app te llevará a la Billetera para recargar',
+        '7. Al aceptar, el pasajero recibirá una notificación con tu nombre',
+        '8. Coordina con el pasajero el punto exacto de encuentro y el método de pago',
+      ],
+      expanded: false
+    },
   ])
 
   const toggleTutorial = (id: string) => {
@@ -320,6 +360,11 @@ export default function LearningCenterScreen() {
           <View style={styles.tipCard}>
             <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
             <Text style={styles.tipText}>Configura tu contacto de emergencia en Configuración {'>'} Seguridad. El botón SOS en tu viaje activo enviará tu ubicación GPS en tiempo real junto con los datos del conductor por WhatsApp</Text>
+          </View>
+
+          <View style={styles.tipCard}>
+            <Ionicons name="airplane-outline" size={20} color={COLORS.primary} />
+            <Text style={styles.tipText}>Para viajes al aeropuerto, publica tu solicitud con al menos 2-3 horas de anticipación para que un conductor pueda aceptarla. Como conductor, verifica tu saldo antes de aceptar: se descuentan $5.000 automáticamente</Text>
           </View>
         </View>
 

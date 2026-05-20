@@ -576,6 +576,46 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
 
+        {/* ══ AEROPUERTO — pasajero ════════════════════════════════════════ */}
+        {!isDriver && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.airportBanner}
+              onPress={() => navigation.navigate('AirportRequest' as never)}
+              activeOpacity={0.88}
+            >
+              <View style={styles.airportIconWrap}>
+                <Ionicons name="airplane" size={22} color={COLORS.primary} />
+              </View>
+              <View style={styles.airportTextWrap}>
+                <Text style={styles.airportBannerTitle}>¿Necesitas ir al aeropuerto?</Text>
+                <Text style={styles.airportBannerSub}>Publica tu solicitud y un conductor te lleva</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ══ AEROPUERTO — conductor ════════════════════════════════════════ */}
+        {isDriver && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.airportBanner}
+              onPress={() => navigation.navigate('AirportFeed' as never)}
+              activeOpacity={0.88}
+            >
+              <View style={styles.airportIconWrap}>
+                <Ionicons name="airplane" size={22} color={COLORS.primary} />
+              </View>
+              <View style={styles.airportTextWrap}>
+                <Text style={styles.airportBannerTitle}>Solicitudes de aeropuerto</Text>
+                <Text style={styles.airportBannerSub}>Ver pasajeros que necesitan conductor</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* ══ RUTAS DESTACADAS (carrusel) ════════════════════════════════════ */}
         <View style={styles.sectionNoBottom}>
           <View style={styles.sectionHeaderRow}>
@@ -898,6 +938,30 @@ const styles = StyleSheet.create({
   ctaTextWrap: { flex: 1 },
   ctaTitle:    { fontSize: 15, fontWeight: '700', color: '#fff' },
   ctaSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+
+  // ── Airport banner ───────────────────────────────────────────────────────────
+  airportBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  airportIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: '#EFF6FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  airportTextWrap: { flex: 1 },
+  airportBannerTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  airportBannerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
 
   // ── Carousel ──────────────────────────────────────────────────────────────────
   carouselWrapper: { marginBottom: SPACING.md },

@@ -22,7 +22,7 @@ export default function TermsOfServiceScreen() {
         </View>
 
         <Text style={s.company}>Trive Technologies SAS</Text>
-        <Text style={s.date}>Última actualización: 3 de mayo de 2026</Text>
+        <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
 
         <Section title="1. Aceptación de los términos">
           Al descargar, instalar o utilizar la aplicación Trive, declaras haber leído, entendido y aceptado estos Términos de Uso en su totalidad. Si no estás de acuerdo con alguno de estos términos, debes abstenerte de utilizar la Plataforma.
@@ -51,8 +51,9 @@ export default function TermsOfServiceScreen() {
           • Ser propietarios del vehículo o contar con autorización expresa para conducirlo.{'\n'}
           • Mantener documentos del vehículo al día: SOAT y revisión técnico-mecánica vigentes.{'\n'}
           • Publicar únicamente trayectos que efectivamente vayan a realizar.{'\n'}
-          • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
-          • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.
+          • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación de ruta descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
+          • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.{'\n\n'}
+          <B>Viajes al aeropuerto:</B> los conductores también pueden aceptar solicitudes de viaje al aeropuerto publicadas por pasajeros. Al aceptar una solicitud de aeropuerto, se descuentan automáticamente $5.000 de la billetera del conductor (costo de intermediación para esta modalidad). Si el saldo es insuficiente, el conductor no podrá aceptar la solicitud hasta recargar su billetera. Una vez aceptado, el conductor y el pasajero acuerdan el pago del trayecto directamente, tal como en las rutas regulares.
         </Section>
 
         <Section title="6. Pasajeros">
@@ -65,7 +66,9 @@ export default function TermsOfServiceScreen() {
 
         <Section title="7. Tarifas y pagos">
           Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. El pago se acuerda y realiza directamente entre conductor y pasajero mediante los métodos que ellos acuerden (Nequi, Daviplata, efectivo u otros). Trive no intermedia ni procesa dichos pagos.{'\n\n'}
-          La publicación de cada trayecto tiene un costo fijo de $2.000 que se descuenta automáticamente del saldo de la billetera virtual del conductor en Trive. Este valor cubre el servicio de intermediación tecnológica y no constituye comisión sobre el precio del trayecto. El saldo de la billetera puede recargarse a través de los métodos habilitados en la Plataforma.{'\n\n'}
+          <B>Rutas regulares:</B> la publicación de cada trayecto tiene un costo fijo de $2.000 que se descuenta automáticamente del saldo de la billetera virtual del conductor en Trive.{'\n\n'}
+          <B>Viajes al aeropuerto:</B> cuando un conductor acepta una solicitud de viaje al aeropuerto publicada por un pasajero, se descuentan $5.000 de la billetera del conductor. Este monto cubre el servicio de intermediación para esta modalidad y no constituye comisión sobre el precio acordado del trayecto. El pasajero publica el precio que ofrece pagar y el conductor decide libremente si acepta.{'\n\n'}
+          En ambas modalidades, el saldo de la billetera puede recargarse a través de los métodos habilitados en la Plataforma.{'\n\n'}
           <B>Programa de referidos:</B> los conductores cuentan con un código personal de referido. Cuando un conductor nuevo se registra usando ese código y publica su primer trayecto, el conductor referidor recibe un crédito de $2.000 en su billetera y el conductor nuevo obtiene un descuento de $1.000 en esa primera publicación. Este beneficio aplica una sola vez por conductor nuevo.
         </Section>
 
