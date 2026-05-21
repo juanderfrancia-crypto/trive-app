@@ -93,7 +93,9 @@ export default function HomeScreen() {
         .eq('id', user.id)
         .single()
         .then(({ data }) => {
-          setPreferredMunicipality(data?.preferred_municipality ?? null)
+          const mun = data?.preferred_municipality ?? null
+          setPreferredMunicipality(mun)
+          if (mun) setOrigin((prev) => prev || mun)
         })
     }, [user?.id])
   )
@@ -109,6 +111,7 @@ export default function HomeScreen() {
   const handleMunicipalitySelect = async (m: Municipality) => {
     setShowMunicipalityPicker(false)
     setPreferredMunicipality(m.name)
+    setOrigin((prev) => prev || m.name)
     if (user?.id) {
       await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
     }
