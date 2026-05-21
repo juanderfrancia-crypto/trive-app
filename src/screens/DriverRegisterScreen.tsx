@@ -26,7 +26,7 @@ import { showSuccess } from '../utils/showError'
 const VEHICLE_TYPES = [
   { id: 'auto', name: 'Auto', maxSeats: 4, icon: 'car-sport' as const },
   { id: 'taxi', name: 'Taxi', maxSeats: 4, icon: 'car' as const },
-  { id: 'busetica', name: 'Busetica', maxSeats: 15, icon: 'bus' as const },
+  { id: 'busetica', name: 'Minivan', maxSeats: 15, icon: 'bus' as const },
   { id: 'buseta', name: 'Buseta', maxSeats: 70, icon: 'bus' as const },
 ]
 
