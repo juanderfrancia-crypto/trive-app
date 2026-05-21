@@ -16,12 +16,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { insertNotificationForUser } from '../services/notificationInsert'
+import { showSuccess, showError } from '../utils/showError'
 
 const ROUTE_COMMISSION = 2000
 
@@ -70,8 +70,9 @@ export default function RecurringRoutesScreen() {
   const [vehicleData,    setVehicleData]    = useState<any>(null)
   const [vehicleLoading, setVehicleLoading] = useState(true)
 
-  // ── Create-template modal ──────────────────────────────────────────────────
-  const [showCreate, setShowCreate] = useState(false)
+  // ── Create/edit-template modal ─────────────────────────────────────────────
+  const [showCreate,  setShowCreate]  = useState(false)
+  const [editTarget,  setEditTarget]  = useState<RouteTemplate | null>(null)
   const [fName,    setFName]    = useState('')
   const [fOrigin,  setFOrigin]  = useState('')
   const [fDest,    setFDest]    = useState('')
@@ -85,24 +86,23 @@ export default function RecurringRoutesScreen() {
   const [delayMins,     setDelayMins]       = useState(0)
   const [customDelay,   setCustomDelay]     = useState('')
   const [durationMins,  setDurationMins]    = useState(180)
+  const [customDuration, setCustomDuration] = useState('')
+  const [pubVia,        setPubVia]          = useState('')
   const [publishing,    setPublishing]      = useState(false)
 
   // ── Persistence helpers ────────────────────────────────────────────────────
-  const storageKey = `route_templates_${user?.id}`
-
   const loadTemplates = useCallback(async () => {
     if (!user?.id) return
     try {
-      const raw = await AsyncStorage.getItem(storageKey)
-      setTemplates(raw ? JSON.parse(raw) : [])
+      const { data, error } = await supabase
+        .from('route_templates')
+        .select('*')
+        .eq('driver_id', user.id)
+        .order('created_at', { ascending: false })
+      if (!error && data) setTemplates(data)
     } catch {}
     setTmplLoading(false)
-  }, [user?.id, storageKey])
-
-  const persistTemplates = async (list: RouteTemplate[]) => {
-    await AsyncStorage.setItem(storageKey, JSON.stringify(list))
-    setTemplates(list)
-  }
+  }, [user?.id])
 
   // ── Vehicle from Supabase ──────────────────────────────────────────────────
   const loadVehicleData = useCallback(async () => {
@@ -127,6 +127,19 @@ export default function RecurringRoutesScreen() {
   const resetForm = () => {
     setFName(''); setFOrigin(''); setFDest(''); setFPrice('')
     setFSeats(''); setFVehicle('auto'); setFVia('')
+    setEditTarget(null)
+  }
+
+  const openEdit = (tpl: RouteTemplate) => {
+    setFName(tpl.name)
+    setFOrigin(tpl.origin)
+    setFDest(tpl.destination)
+    setFPrice(String(tpl.price_per_seat))
+    setFSeats(String(tpl.total_seats))
+    setFVehicle(tpl.vehicle_type)
+    setFVia(tpl.description)
+    setEditTarget(tpl)
+    setShowCreate(true)
   }
 
   // ── Add template ───────────────────────────────────────────────────────────
@@ -146,21 +159,38 @@ export default function RecurringRoutesScreen() {
       Alert.alert('Asientos inválidos', `Ingresa entre 1 y ${vt?.maxSeats} asientos para ${vt?.name}.`)
       return
     }
+    if (!user?.id) return
     const autoName = `${fOrigin.trim().split(' - ')[0]} → ${fDest.trim().split(' - ')[0]}`
-    const newTpl: RouteTemplate = {
-      id:            Date.now().toString(),
-      name:          fName.trim() || autoName,
-      origin:        fOrigin.trim(),
-      destination:   fDest.trim(),
+    const payload = {
+      name:           fName.trim() || autoName,
+      origin:         fOrigin.trim(),
+      destination:    fDest.trim(),
       price_per_seat: price,
-      total_seats:   seats,
-      vehicle_type:  fVehicle,
-      description:   fVia.trim(),
-      created_at:    new Date().toISOString(),
+      total_seats:    seats,
+      vehicle_type:   fVehicle,
+      description:    fVia.trim() || null,
     }
-    await persistTemplates([newTpl, ...templates])
-    setShowCreate(false)
-    resetForm()
+
+    try {
+      if (editTarget) {
+        const { error } = await supabase
+          .from('route_templates')
+          .update(payload)
+          .eq('id', editTarget.id)
+          .eq('driver_id', user.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('route_templates')
+          .insert({ ...payload, driver_id: user.id })
+        if (error) throw error
+      }
+      await loadTemplates()
+      setShowCreate(false)
+      resetForm()
+    } catch (err: any) {
+      showError(err.message || 'No se pudo guardar la plantilla.')
+    }
   }
 
   // ── Delete template ────────────────────────────────────────────────────────
@@ -170,7 +200,10 @@ export default function RecurringRoutesScreen() {
       {
         text: 'Eliminar',
         style: 'destructive',
-        onPress: () => persistTemplates(templates.filter((t) => t.id !== id)),
+        onPress: async () => {
+          await supabase.from('route_templates').delete().eq('id', id)
+          setTemplates((prev) => prev.filter((t) => t.id !== id))
+        },
       },
     ])
   }
@@ -190,10 +223,11 @@ export default function RecurringRoutesScreen() {
         return
       }
 
-      const delay = customDelay.trim() ? parseInt(customDelay, 10) : delayMins
+      const delay    = customDelay.trim()    ? parseInt(customDelay, 10)    : delayMins
+      const duration = customDuration.trim() ? parseInt(customDuration, 10) : durationMins
       const now   = new Date()
       const depDt = new Date(now.getTime() + delay * 60000)
-      const arrDt = new Date(depDt.getTime() + durationMins * 60000)
+      const arrDt = new Date(depDt.getTime() + duration * 60000)
 
       const routeData = {
         driver_id:      user.id,
@@ -211,7 +245,7 @@ export default function RecurringRoutesScreen() {
         vehicle_color:  vehicleData.vehicle_color,
         vehicle_type:   publishTarget.vehicle_type,
         status:         'scheduled',
-        description:    publishTarget.description || null,
+        description:    pubVia.trim() || null,
       }
 
       const newRoute = await createRoute(routeData as any)
@@ -231,13 +265,10 @@ export default function RecurringRoutesScreen() {
       }).catch(() => {})
 
       setPublishTarget(null)
-      setDelayMins(0); setCustomDelay(''); setDurationMins(180)
-      Alert.alert('¡Publicada!', 'La ruta está activa. Los pasajeros ya pueden reservar.', [
-        { text: 'Ver panel', onPress: () => navigation.navigate('DriverPanel' as never) },
-        { text: 'Quedarse aquí', style: 'cancel' },
-      ])
+      setDelayMins(0); setCustomDelay(''); setDurationMins(180); setCustomDuration(''); setPubVia('')
+      showSuccess('¡Ruta publicada! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo publicar la ruta.')
+      showError(err.message || 'No se pudo publicar la ruta.')
     } finally {
       setPublishing(false)
     }
@@ -318,8 +349,11 @@ export default function RecurringRoutesScreen() {
                     <Text style={styles.cardName} numberOfLines={1}>{tpl.name}</Text>
                     <Text style={styles.cardRoute} numberOfLines={1}>{tpl.origin} → {tpl.destination}</Text>
                   </View>
+                  <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(tpl)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Ionicons name="pencil" size={14} color="#1230B8" />
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    <Ionicons name="trash" size={14} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
 
@@ -352,7 +386,7 @@ export default function RecurringRoutesScreen() {
                 ) : (
                   <TouchableOpacity
                     style={styles.publishBtn}
-                    onPress={() => setPublishTarget(tpl)}
+                    onPress={() => { setPublishTarget(tpl); setPubVia(tpl.description || '') }}
                     activeOpacity={0.85}
                   >
                     <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.publishBtnGrad}>
@@ -374,8 +408,8 @@ export default function RecurringRoutesScreen() {
             {/* Handle */}
             <View style={styles.handle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Nueva plantilla</Text>
-              <TouchableOpacity onPress={() => setShowCreate(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+              <Text style={styles.modalTitle}>{editTarget ? 'Editar plantilla' : 'Nueva plantilla'}</Text>
+              <TouchableOpacity onPress={() => { setShowCreate(false); resetForm() }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Ionicons name="close" size={22} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
@@ -406,7 +440,7 @@ export default function RecurringRoutesScreen() {
 
               <TouchableOpacity style={styles.saveBtn} onPress={handleAddTemplate} activeOpacity={0.85}>
                 <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.saveBtnGrad}>
-                  <Text style={styles.saveBtnText}>Guardar plantilla</Text>
+                  <Text style={styles.saveBtnText}>{editTarget ? 'Actualizar plantilla' : 'Guardar plantilla'}</Text>
                 </LinearGradient>
               </TouchableOpacity>
               <View style={{ height: 40 }} />
@@ -423,7 +457,7 @@ export default function RecurringRoutesScreen() {
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Publicar ruta</Text>
-                <TouchableOpacity onPress={() => setPublishTarget(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => { setPublishTarget(null); setCustomDuration(''); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="close" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
@@ -473,15 +507,37 @@ export default function RecurringRoutesScreen() {
                   {DURATION_OPTIONS.map((m) => (
                     <TouchableOpacity
                       key={m}
-                      style={[styles.optChip, durationMins === m && styles.optChipActive]}
-                      onPress={() => setDurationMins(m)}
+                      style={[styles.optChip, durationMins === m && !customDuration && styles.optChipActive]}
+                      onPress={() => { setDurationMins(m); setCustomDuration('') }}
                     >
-                      <Text style={[styles.optChipText, durationMins === m && styles.optChipTextActive]}>
+                      <Text style={[styles.optChipText, durationMins === m && !customDuration && styles.optChipTextActive]}>
                         {fmtDuration(m)}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
+                <View style={styles.customRow}>
+                  <TextInput
+                    style={styles.customInput}
+                    placeholder="Ej: 200"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={customDuration}
+                    onChangeText={setCustomDuration}
+                    keyboardType="numeric"
+                    maxLength={3}
+                  />
+                  <Text style={styles.customLabel}>min personalizados</Text>
+                </View>
+
+                {/* Por donde voy */}
+                <Text style={[styles.formLabel, { marginTop: SPACING.lg }]}>Por donde voy (opcional)</Text>
+                <TextInput
+                  style={styles.formInput}
+                  placeholder='Ej: La Paila, autopista sur'
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={pubVia}
+                  onChangeText={setPubVia}
+                />
 
                 {/* Cost warning */}
                 <View style={styles.costWarn}>
@@ -597,7 +653,16 @@ const styles = StyleSheet.create({
   cardIcon:   { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   cardName:   { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   cardRoute:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  deleteBtn:  { padding: 4 },
+  editBtn: {
+    width: 32, height: 32, borderRadius: 10,
+    backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#D6E0FF',
+    justifyContent: 'center', alignItems: 'center', marginRight: 6,
+  },
+  deleteBtn: {
+    width: 32, height: 32, borderRadius: 10,
+    backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA',
+    justifyContent: 'center', alignItems: 'center',
+  },
   cardMeta:   { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: SPACING.md },
   metaItem:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
   metaText:   { fontSize: 12, color: COLORS.textSecondary },

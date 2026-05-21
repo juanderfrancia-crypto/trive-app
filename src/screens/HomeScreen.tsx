@@ -21,7 +21,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -30,6 +29,10 @@ import { useProfile } from '../hooks/useProfile'
 import { useRoutes, Route } from '../hooks/useRoutes'
 import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
+import { SkeletonRouteCard } from '../components/Skeleton'
+import { supabase } from '../services/supabase'
+import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
+import { Municipality } from '../data/colombiaMunicipalities'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_W = SCREEN_W - SPACING.lg * 2
@@ -58,6 +61,10 @@ export default function HomeScreen() {
   const [topRoutes, setTopRoutes]   = useState<Route[]>([])
   const [fetchingRoutes, setFetchingRoutes] = useState(false)
   const [activeDot, setActiveDot]   = useState(0)
+  const [pendingAirportCount, setPendingAirportCount] = useState(0)
+  const [showAddMenu, setShowAddMenu] = useState(false)
+  const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
+  const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const pulseAnim    = useRef(new Animated.Value(1)).current
   const skeletonAnim = useRef(new Animated.Value(0.4)).current
 
@@ -76,6 +83,38 @@ export default function HomeScreen() {
   const showRoutesError   = routesError && topRoutes.length === 0
 
 
+  // ── Cargar municipio preferido ─────────────────────────────────────────────
+  useFocusEffect(
+    useCallback(() => {
+      if (!user?.id) return
+      supabase
+        .from('profiles')
+        .select('preferred_municipality')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          setPreferredMunicipality(data?.preferred_municipality ?? null)
+        })
+    }, [user?.id])
+  )
+
+  const handleAvailableRidesPress = () => {
+    if (!preferredMunicipality) {
+      setShowMunicipalityPicker(true)
+    } else {
+      navigation.navigate('AvailableRides' as never, { municipality: preferredMunicipality } as never)
+    }
+  }
+
+  const handleMunicipalitySelect = async (m: Municipality) => {
+    setShowMunicipalityPicker(false)
+    setPreferredMunicipality(m.name)
+    if (user?.id) {
+      await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
+    }
+    navigation.navigate('AvailableRides' as never, { municipality: m.name } as never)
+  }
+
   // ── Load top routes ────────────────────────────────────────────────────────
   const loadTopRoutes = useCallback(async () => {
     setFetchingRoutes(true)
@@ -88,7 +127,16 @@ export default function HomeScreen() {
     }
   }, [fetchRoutes])
 
-  useFocusEffect(useCallback(() => { loadTopRoutes() }, [loadTopRoutes]))
+  useFocusEffect(useCallback(() => {
+    loadTopRoutes()
+    if (isDriver) {
+      supabase
+        .from('airport_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending')
+        .then(({ count }) => setPendingAirportCount(count ?? 0))
+    }
+  }, [loadTopRoutes, isDriver]))
 
   // ── Pulse animation ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -147,8 +195,12 @@ export default function HomeScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              const raw = await AsyncStorage.getItem('emergency_contact')
-              if (!raw) {
+              const userId = useAppStore.getState().user?.id
+              const { data: prof } = userId
+                ? await supabase.from('profiles').select('emergency_contact').eq('id', userId).single()
+                : { data: null }
+              const contact: { name: string; phone: string } | null = prof?.emergency_contact ?? null
+              if (!contact) {
                 Alert.alert(
                   'Sin contacto de emergencia',
                   'Configura un contacto en Ajustes → Privacidad y Seguridad.',
@@ -159,7 +211,6 @@ export default function HomeScreen() {
                 )
                 return
               }
-              const contact: { name: string; phone: string } = JSON.parse(raw)
 
               let lat = 3.4372
               let lng = -76.5197
@@ -553,7 +604,7 @@ export default function HomeScreen() {
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               style={styles.ctaWrapper}
-              onPress={() => navigation.navigate('AvailableRides' as never)}
+              onPress={handleAvailableRidesPress}
               accessibilityLabel="Viajes disponibles ahora"
               activeOpacity={0.88}
             >
@@ -596,22 +647,50 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* ══ AEROPUERTO — conductor ════════════════════════════════════════ */}
+        {/* ══ AEROPUERTO + PUBLICAR — conductor ════════════════════════════ */}
         {isDriver && (
-          <View style={styles.section}>
+          <View style={[styles.section, { flexDirection: 'row', gap: SPACING.md }]}>
+            {/* Aeropuerto */}
             <TouchableOpacity
-              style={styles.airportBanner}
+              style={[styles.airportBanner, { flex: 1 }, pendingAirportCount > 0 && styles.airportBannerActive]}
               onPress={() => navigation.navigate('AirportFeed' as never)}
               activeOpacity={0.88}
             >
               <View style={styles.airportIconWrap}>
-                <Ionicons name="airplane" size={22} color={COLORS.primary} />
+                <Ionicons name="airplane" size={20} color={COLORS.primary} />
+                {pendingAirportCount > 0 && (
+                  <View style={styles.airportBadge}>
+                    <Text style={styles.airportBadgeText}>
+                      {pendingAirportCount > 99 ? '99+' : pendingAirportCount}
+                    </Text>
+                  </View>
+                )}
               </View>
               <View style={styles.airportTextWrap}>
-                <Text style={styles.airportBannerTitle}>Solicitudes de aeropuerto</Text>
-                <Text style={styles.airportBannerSub}>Ver pasajeros que necesitan conductor</Text>
+                <Text style={styles.airportBannerTitleSm} numberOfLines={2}>Solicitudes de aeropuerto</Text>
+                <Text style={[styles.airportBannerSub, pendingAirportCount > 0 && styles.airportBannerSubActive]} numberOfLines={1}>
+                  {pendingAirportCount > 0
+                    ? `${pendingAirportCount} esperando`
+                    : 'Ver solicitudes'}
+                </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+              <Ionicons name="chevron-forward" size={16} color={pendingAirportCount > 0 ? COLORS.primary : COLORS.textTertiary} />
+            </TouchableOpacity>
+
+            {/* Publicar ruta */}
+            <TouchableOpacity
+              style={styles.publishRoundBtn}
+              onPress={() => setShowAddMenu(true)}
+              activeOpacity={0.85}
+            >
+              <LinearGradient
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.publishRoundBtnInner}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         )}
@@ -627,9 +706,11 @@ export default function HomeScreen() {
         </View>
 
         {showRoutesLoading ? (
-          <View style={[styles.section, styles.loadingBox]}>
-            <ActivityIndicator size="small" color={COLORS.primary} />
-            <Text style={styles.loadingText}>Cargando rutas...</Text>
+          <View style={styles.carouselWrapper}>
+            <View style={[styles.carouselContent, { flexDirection: 'row', gap: SPACING.md }]}>
+              <SkeletonRouteCard />
+              <SkeletonRouteCard />
+            </View>
           </View>
         ) : showRoutesError ? (
           <View style={[styles.section, styles.emptyBox]}>
@@ -639,22 +720,33 @@ export default function HomeScreen() {
         ) : topRoutes.length > 0 ? (
           <>
             {/* Break out of section padding for full-bleed carousel */}
-            <View style={styles.carouselWrapper}>
-              <FlatList
-                data={topRoutes}
-                keyExtractor={(item) => item.id}
-                renderItem={renderRouteCard}
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                snapToInterval={CARD_W + SPACING.md}
-                decelerationRate="fast"
-                contentContainerStyle={styles.carouselContent}
-                ItemSeparatorComponent={() => <View style={{ width: SPACING.md }} />}
-                onMomentumScrollEnd={(e) => {
-                  const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + SPACING.md))
-                  setActiveDot(Math.min(idx, topRoutes.length - 1))
-                }}
-              />
+            <View>
+              <View style={styles.carouselWrapper}>
+                <FlatList
+                  data={topRoutes}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderRouteCard}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  snapToInterval={CARD_W + SPACING.md}
+                  decelerationRate="fast"
+                  contentContainerStyle={styles.carouselContent}
+                  ItemSeparatorComponent={() => <View style={{ width: SPACING.md }} />}
+                  onMomentumScrollEnd={(e) => {
+                    const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + SPACING.md))
+                    setActiveDot(Math.min(idx, topRoutes.length - 1))
+                  }}
+                />
+              </View>
+              {topRoutes.length > 1 && activeDot < topRoutes.length - 1 && (
+                <LinearGradient
+                  colors={['transparent', '#FAFAFA']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.carouselEdgeFade}
+                  pointerEvents="none"
+                />
+              )}
             </View>
 
             {/* Dot indicators */}
@@ -675,6 +767,66 @@ export default function HomeScreen() {
         )}
 
       </ScrollView>
+
+      <MunicipalityPickerModal
+        visible={showMunicipalityPicker}
+        current={preferredMunicipality}
+        onSelect={handleMunicipalitySelect}
+        onClose={() => setShowMunicipalityPicker(false)}
+      />
+
+      {/* ── Menú publicar ── */}
+      {showAddMenu && (
+        <View style={styles.addMenuOverlay}>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setShowAddMenu(false)}
+          />
+          <View style={styles.addMenuSheet}>
+            <View style={styles.addMenuHandle} />
+            <Text style={styles.addMenuTitle}>¿Qué quieres hacer?</Text>
+
+            <TouchableOpacity
+              style={styles.addMenuItem}
+              activeOpacity={0.8}
+              onPress={() => {
+                setShowAddMenu(false)
+                setTimeout(() => navigation.navigate('DriverRegister' as never), 150)
+              }}
+            >
+              <LinearGradient colors={['#0E2699', '#1A3FCC']} style={styles.addMenuItemIcon}>
+                <Ionicons name="add-circle" size={20} color="#fff" />
+              </LinearGradient>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.addMenuItemTitle}>Crear ruta</Text>
+                <Text style={styles.addMenuItemSub}>Publica un viaje nuevo ahora</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+
+            <View style={styles.addMenuDivider} />
+
+            <TouchableOpacity
+              style={styles.addMenuItem}
+              activeOpacity={0.8}
+              onPress={() => {
+                setShowAddMenu(false)
+                setTimeout(() => navigation.navigate('RecurringRoutes' as never), 150)
+              }}
+            >
+              <LinearGradient colors={['#6C1FC6', '#8B5CF6']} style={styles.addMenuItemIcon}>
+                <Ionicons name="repeat" size={20} color="#fff" />
+              </LinearGradient>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.addMenuItemTitle}>Plantillas de ruta</Text>
+                <Text style={styles.addMenuItemSub}>Publica tus rutas habituales rápido</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
     </SafeAreaView>
   )
@@ -958,14 +1110,49 @@ const styles = StyleSheet.create({
     backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  airportBannerActive: {
+    borderColor: '#C7D2FE',
+    backgroundColor: '#EEF2FF',
   },
   airportTextWrap: { flex: 1 },
-  airportBannerTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  airportBannerTitle:   { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  airportBannerTitleSm: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 17 },
   airportBannerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  airportBannerSubActive: { color: COLORS.primary, fontWeight: '600' },
+  airportBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#E53935',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  airportBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    lineHeight: 13,
+  },
 
   // ── Carousel ──────────────────────────────────────────────────────────────────
   carouselWrapper: { marginBottom: SPACING.md },
   carouselContent: { paddingHorizontal: SPACING.lg },
+  carouselEdgeFade: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: 56,
+    zIndex: 5,
+  },
   routeCard: {
     width: CARD_W, borderRadius: RADIUS.md, overflow: 'hidden',
     shadowColor: '#082D66', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.42, shadowRadius: 28, elevation: 18,
@@ -1039,4 +1226,60 @@ const styles = StyleSheet.create({
   emptyBox: { alignItems: 'center', backgroundColor: COLORS.surface, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.borderLight, gap: SPACING.sm },
   emptyTitle:    { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary, textAlign: 'center' },
   emptySubtitle: { fontSize: 13, color: COLORS.textTertiary, textAlign: 'center' },
+
+  // ── Publicar ruta (botón redondo junto a aeropuerto) ─────────────────────────
+  publishRoundBtn: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    overflow: 'hidden',
+    alignSelf: 'center',
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  publishRoundBtnInner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Add menu
+  addMenuOverlay: {
+    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end',
+    zIndex: 999,
+  },
+  addMenuSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: SPACING.lg, paddingBottom: 36, paddingTop: 10,
+  },
+  addMenuHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#D6E0FF', alignSelf: 'center', marginBottom: 16,
+  },
+  addMenuTitle: {
+    fontSize: 13, fontWeight: '600', color: COLORS.textSecondary,
+    letterSpacing: 0.3, marginBottom: SPACING.md, textTransform: 'uppercase',
+  },
+  addMenuItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 14,
+  },
+  addMenuItemIcon: {
+    width: 44, height: 44, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+  },
+  addMenuItemTitle: {
+    fontSize: 15, fontWeight: '700', color: '#0E1C4E',
+  },
+  addMenuItemSub: {
+    fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
+  },
+  addMenuDivider: {
+    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 58,
+  },
 })

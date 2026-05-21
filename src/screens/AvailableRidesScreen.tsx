@@ -5,25 +5,35 @@ import {
   TouchableOpacity,
   StyleSheet,
   FlatList,
-  ActivityIndicator,
   RefreshControl,
   Alert,
 } from 'react-native'
 import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { useNavigation, useFocusEffect } from '@react-navigation/native'
+import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAvailableRides } from '../hooks/useAvailableRides'
+import { SkeletonRideCard } from '../components/Skeleton'
 import { useAppStore } from '../store/useAppStore'
+import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
+import { Municipality } from '../data/colombiaMunicipalities'
+import { supabase } from '../services/supabase'
+
+type TabFilter = 'todos' | 'saliendo' | 'llegando'
 
 export default function AvailableRidesScreen() {
   const navigation = useNavigation()
+  const route      = useRoute<any>()
   const { rides, loading, error, refetch } = useAvailableRides()
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const authUser         = useAppStore((s) => s.authUser)
+  const user             = useAppStore((s) => s.user)
   const [refreshing, setRefreshing] = useState(false)
+  const [tab, setTab] = useState<TabFilter>('todos')
+  const [municipality, setMunicipality] = useState<string | null>(route.params?.municipality ?? null)
+  const [showPicker, setShowPicker] = useState(false)
 
   // 🔄 Refetch whenever the screen is focused (e.g., returning from SeatSelection)
   useFocusEffect(
@@ -37,6 +47,26 @@ export default function AvailableRidesScreen() {
     await refetch()
     setRefreshing(false)
   }, [refetch])
+
+  const handleMunicipalitySelect = async (m: Municipality) => {
+    setShowPicker(false)
+    setMunicipality(m.name)
+    if (user?.id) {
+      await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
+    }
+  }
+
+  const filteredRides = useMemo(() => {
+    if (!municipality) return rides
+    const mun = municipality.toLowerCase()
+    return rides.filter((r: any) => {
+      const origin = (r.origin ?? '').toLowerCase()
+      const dest   = (r.destination ?? '').toLowerCase()
+      if (tab === 'saliendo') return origin.includes(mun)
+      if (tab === 'llegando') return dest.includes(mun)
+      return origin.includes(mun) || dest.includes(mun)
+    })
+  }, [rides, municipality, tab])
 
   const handleReserve = (ride: any) => {
     if (!authUser) {
@@ -64,102 +94,123 @@ export default function AvailableRidesScreen() {
     return `en ${Math.round(diffMins / 1440)}d`
   }, [])
 
-  const renderRideCard = ({ item: ride }: any) => (
-    <View style={styles.rideCard}>
-      {/* Header: Origin → Destination (Horizontal) */}
-      <View style={styles.routeInfo}>
-        <View style={styles.routeStart}>
-          <Ionicons name="location" size={18} color={COLORS.primary} />
-          <Text style={styles.routeText} numberOfLines={1}>
-            {ride.origin}
-          </Text>
-        </View>
+  const renderRideCard = ({ item: ride }: any) => {
+    const occupied     = (ride.total_seats ?? 0) - (ride.seats_available_count ?? 0)
+    const total        = ride.total_seats ?? 1
+    const pct          = Math.min((occupied / total) * 100, 100)
+    const isAlmostFull = pct >= 70 && ride.seats_available_count > 0
+    const isFull       = ride.seats_available_count === 0
+    const initials     = (ride.driver_name ?? 'C').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
 
-        <View style={styles.routeDash}>
-          <Ionicons name="arrow-forward" size={14} color={COLORS.secondary} />
-        </View>
-
-        <View style={styles.routeEnd}>
-          <Ionicons name="location" size={18} color={COLORS.error} />
-          <Text style={styles.routeText} numberOfLines={1}>
-            {ride.destination}
-          </Text>
-        </View>
-      </View>
-
-      {/* Time & Availability */}
-      <View style={styles.timeAvailability}>
-        <View style={styles.timeBlock}>
-          <Ionicons name="time" size={16} color={COLORS.textSecondary} />
-          <Text style={styles.timeText}>{formatTime(ride.departure_time)}</Text>
-          <Text style={styles.minutesText}>{getMinutesUntilDeparture(ride.departure_time)}</Text>
-        </View>
-
-        <View style={styles.availabilityBlock}>
-          <View style={styles.seatsBox}>
-            <Text style={styles.seatsCount}>{ride.seats_available_count}</Text>
-            <Text style={styles.seatsLabel}>de {ride.total_seats}</Text>
+    return (
+      <View style={styles.rideCard}>
+        {/* ── Ruta + precio ── */}
+        <View style={styles.routeSection}>
+          <View style={styles.routeTrack}>
+            <View style={styles.trackDot} />
+            <View style={styles.trackLine} />
+            <View style={[styles.trackDot, styles.trackDotEnd]} />
           </View>
-          <Text style={styles.seatsText}>asientos</Text>
+          <View style={styles.routeNames}>
+            <Text style={styles.originText} numberOfLines={1}>{ride.origin}</Text>
+            <Text style={styles.destText} numberOfLines={1}>{ride.destination}</Text>
+          </View>
+          <View style={styles.routeMeta}>
+            <Text style={styles.priceText}>${Math.round(ride.price_per_seat).toLocaleString('es-CO')}</Text>
+            <Text style={styles.departureLine}>
+              {new Date(ride.departure_time).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })}
+              {' · '}{formatTime(ride.departure_time)}
+            </Text>
+            <Text style={styles.minutesText}>{getMinutesUntilDeparture(ride.departure_time)}</Text>
+          </View>
         </View>
 
-        <View style={styles.priceBlock}>
-          <Text style={styles.priceLabel}>por persona</Text>
-          <Text style={styles.priceValue}>${ride.price_per_seat.toLocaleString()}</Text>
-        </View>
-      </View>
+        <View style={styles.divider} />
 
-      {/* Driver Info */}
-      <View style={styles.driverInfo}>
-        {ride.driver_photo ? (
-          <Image source={{ uri: ride.driver_photo }} style={styles.driverPhoto} contentFit="cover" cachePolicy="memory-disk" />
-        ) : (
-          <View style={[styles.driverPhoto, styles.driverPhotoPlaceholder]}>
-            <Ionicons name="person" size={24} color={COLORS.textTertiary} />
+        {/* ── Conductor ── */}
+        <View style={styles.driverSection}>
+          <View style={styles.avatarWrap}>
+            {ride.driver_photo ? (
+              <Image source={{ uri: ride.driver_photo }} style={styles.avatar} contentFit="cover" cachePolicy="memory-disk" />
+            ) : (
+              <LinearGradient
+                colors={[COLORS.primaryDark, '#0a2a6e']}
+                style={styles.avatarPlaceholder}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+              >
+                <Text style={styles.avatarInitials}>{initials}</Text>
+              </LinearGradient>
+            )}
+          </View>
+          <View style={styles.driverDetails}>
+            <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
+            <View style={styles.driverMetaRow}>
+              <Text style={styles.vehicleText}>{ride.vehicle_type || 'Auto'}</Text>
+              {!!ride.vehicle_color && <Text style={styles.vehicleText}>· {ride.vehicle_color}</Text>}
+              {!!ride.vehicle_plate && (
+                <View style={styles.platePill}>
+                  <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          <View style={styles.ratingWrap}>
+            <Ionicons name="star" size={13} color="#FBBF24" />
+            <Text style={styles.ratingVal}>{ride.driver_rating.toFixed(1)}</Text>
+          </View>
+        </View>
+
+        {/* ── Vía (opcional) ── */}
+        {!!ride.description && (
+          <View style={styles.viaStrip}>
+            <Ionicons name="git-branch-outline" size={11} color={COLORS.accent} />
+            <Text style={styles.viaText} numberOfLines={1}>{ride.description}</Text>
           </View>
         )}
 
-        <View style={styles.driverDetails}>
-          <Text style={styles.driverName}>{ride.driver_name}</Text>
-          <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color={COLORS.warning} />
-            <Text style={styles.ratingText}>
-              {ride.driver_rating.toFixed(1)} ({ride.driver_review_count})
-            </Text>
+        <View style={styles.divider} />
+
+        {/* ── Ocupación + botón ── */}
+        <View style={styles.bottomRow}>
+          <View style={styles.occupancyWrap}>
+            {isAlmostFull && <Text style={styles.almostFullText}>¡CASI LLENO!</Text>}
+            <View style={styles.occupancyLabelRow}>
+              <Text style={[styles.occupancyFraction, isFull && { color: COLORS.error }]}>{occupied}/{total}</Text>
+              <Text style={styles.occupancyWord}> cupos</Text>
+            </View>
+            <View style={styles.progressBg}>
+              <View style={[
+                styles.progressFill,
+                { width: `${pct}%` as any },
+                isAlmostFull && { backgroundColor: '#D97706' },
+                isFull && { backgroundColor: COLORS.error },
+              ]} />
+            </View>
           </View>
-        </View>
 
-        <TouchableOpacity
-          style={styles.reserveButton}
-          onPress={() => handleReserve(ride)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.reserveGradient}>
-            <Text style={styles.reserveText}>Reservar</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
-          </View>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.reserveBtn, isFull && styles.reserveBtnDisabled]}
+            onPress={() => handleReserve(ride)}
+            disabled={isFull}
+            activeOpacity={0.85}
+          >
+            {isFull ? (
+              <Text style={styles.reserveTextDisabled}>Sin cupos</Text>
+            ) : (
+              <LinearGradient
+                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                style={styles.reserveBtnInner}
+              >
+                <Text style={styles.reserveText}>Reservar</Text>
+                <Ionicons name="arrow-forward" size={13} color="#fff" />
+              </LinearGradient>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-
-      {/* Vehicle Info */}
-      <View style={styles.vehicleInfo}>
-        <View style={styles.vehicleTag}>
-          <Ionicons name="car" size={14} color={COLORS.secondary} />
-          <Text style={styles.vehicleType}>{ride.vehicle_type || 'Auto'}</Text>
-        </View>
-        <Text style={styles.vehicleDetail}>{ride.vehicle_color}</Text>
-        <Text style={styles.vehiclePlate}>{ride.vehicle_plate}</Text>
-      </View>
-
-      {/* Nota de ruta */}
-      {!!ride.description && (
-        <View style={styles.viaRow}>
-          <Ionicons name="git-branch-outline" size={13} color={COLORS.accent} />
-          <Text style={styles.viaText} numberOfLines={2}>{ride.description}</Text>
-        </View>
-      )}
-    </View>
-  )
+    )
+  }
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
@@ -187,26 +238,59 @@ export default function AvailableRidesScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.text} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Viajes Disponibles</Text>
-        <View style={{ width: 28 }} />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.headerTitle}>Viajes Ahora</Text>
+          {municipality ? (
+            <TouchableOpacity style={styles.municipalityBadge} onPress={() => setShowPicker(true)} activeOpacity={0.7}>
+              <Ionicons name="location" size={11} color={COLORS.primary} />
+              <Text style={styles.municipalityText} numberOfLines={1}>{municipality}</Text>
+              <Ionicons name="chevron-down" size={11} color={COLORS.primary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={() => setShowPicker(true)} activeOpacity={0.7}>
+              <Text style={styles.municipalityEmpty}>Toca para elegir tu municipio</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity style={styles.filterBtn} onPress={() => setShowPicker(true)} activeOpacity={0.7}>
+          <Ionicons name="options-outline" size={20} color={COLORS.primary} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabsRow}>
+        {(['todos', 'saliendo', 'llegando'] as TabFilter[]).map((t) => (
+          <TouchableOpacity
+            key={t}
+            style={[styles.tab, tab === t && styles.tabActive]}
+            onPress={() => setTab(t)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
+              {t === 'todos' ? 'Todos' : t === 'saliendo' ? `Saliendo de aquí` : `Llegando aquí`}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {loading && rides.length === 0 ? (
-        <View style={styles.loaderContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loaderText}>Buscando viajes...</Text>
+        <View style={styles.listContent}>
+          <SkeletonRideCard />
+          <SkeletonRideCard />
+          <SkeletonRideCard />
         </View>
       ) : error && rides.length === 0 ? (
         renderError()
-      ) : rides.length === 0 ? (
+      ) : filteredRides.length === 0 ? (
         renderEmpty()
       ) : (
         <FlatList
-          data={rides}
+          data={filteredRides}
           renderItem={renderRideCard}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
@@ -214,6 +298,13 @@ export default function AvailableRidesScreen() {
           scrollIndicatorInsets={{ right: 1 }}
         />
       )}
+
+      <MunicipalityPickerModal
+        visible={showPicker}
+        current={municipality}
+        onSelect={handleMunicipalitySelect}
+        onClose={() => setShowPicker(false)}
+      />
     </SafeAreaView>
   )
 }
@@ -224,85 +315,85 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
-  headerTitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.text,
-    flex: 1,
-    textAlign: 'center',
+  backBtn: {
+    width: 36, height: 36, borderRadius: RADIUS.md,
+    backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center',
   },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  municipalityBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    marginTop: 2,
+  },
+  municipalityText: {
+    fontSize: 12, fontWeight: '600', color: COLORS.primary,
+    maxWidth: 180,
+  },
+  municipalityEmpty: {
+    fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
+  },
+  filterBtn: {
+    width: 36, height: 36, borderRadius: RADIUS.md,
+    backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
+  },
+  tabsRow: {
+    flexDirection: 'row', paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm, gap: SPACING.sm,
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
+  tab: {
+    paddingHorizontal: 12, paddingVertical: 6,
+    borderRadius: RADIUS.full, backgroundColor: '#F4F6FB',
+  },
+  tabActive: { backgroundColor: COLORS.primary },
+  tabText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  tabTextActive: { color: '#fff' },
   loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, justifyContent: 'center', alignItems: 'center',
   },
   loaderText: {
-    ...TYPOGRAPHY.body2,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.md,
+    fontSize: 14, color: COLORS.textSecondary, marginTop: SPACING.md,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: SPACING.lg,
   },
   emptyTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.text,
-    marginTop: SPACING.md,
+    fontSize: 17, fontWeight: '700', color: COLORS.text, marginTop: SPACING.md,
   },
   emptyText: {
-    ...TYPOGRAPHY.body2,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.sm,
-    textAlign: 'center',
+    fontSize: 14, color: COLORS.textSecondary,
+    marginTop: SPACING.sm, textAlign: 'center',
   },
   emptyButton: {
-    marginTop: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.primary,
+    marginTop: SPACING.lg, paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg, backgroundColor: COLORS.primary,
     borderRadius: RADIUS.md,
   },
   emptyButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.surface,
+    fontSize: 14, fontWeight: '600', color: COLORS.surface,
   },
   errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    flex: 1, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: SPACING.lg,
   },
   errorTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.error,
-    marginTop: SPACING.md,
+    fontSize: 17, fontWeight: '700', color: COLORS.error, marginTop: SPACING.md,
   },
   errorText: {
-    ...TYPOGRAPHY.body2,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.sm,
-    textAlign: 'center',
+    fontSize: 14, color: COLORS.textSecondary,
+    marginTop: SPACING.sm, textAlign: 'center',
   },
   errorButton: {
-    marginTop: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.error,
+    marginTop: SPACING.lg, paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg, backgroundColor: COLORS.error,
     borderRadius: RADIUS.md,
   },
   errorButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.surface,
+    fontSize: 14, fontWeight: '600', color: COLORS.surface,
   },
   listContent: {
     padding: SPACING.md,
@@ -310,251 +401,170 @@ const styles = StyleSheet.create({
   },
   rideCard: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    borderRadius: RADIUS.xl,
     marginBottom: SPACING.md,
-    ...SHADOWS.md,
+    borderWidth: 1,
+    borderColor: '#E8EDFF',
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
     overflow: 'hidden',
   },
-  routeInfo: {
-    marginBottom: SPACING.md,
+
+  // ── Sección ruta ──
+  routeSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: 12,
+    gap: 10,
   },
-  routeStart: {
-    flexDirection: 'row',
+  routeTrack: {
     alignItems: 'center',
+    gap: 3,
+    paddingTop: 2,
+  },
+  trackDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: COLORS.primary,
+    borderWidth: 1.5, borderColor: '#fff',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
+  },
+  trackLine: {
+    width: 1.5, height: 14, backgroundColor: '#CBD5E1',
+  },
+  trackDotEnd: {
+    backgroundColor: '#fff',
+    borderColor: COLORS.primary,
+    borderWidth: 2,
+  },
+  routeNames: {
     flex: 1,
-    maxWidth: '40%',
+    gap: 8,
   },
-  routeText: {
-    ...TYPOGRAPHY.subtitle1,
-    color: COLORS.text,
-    marginLeft: SPACING.xs,
-    flex: 1,
-    fontWeight: '600',
-    fontSize: 13,
+  originText: {
+    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
   },
-  routeDash: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 0.3,
+  destText: {
+    fontSize: 15, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
   },
-  dashLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: COLORS.border,
-    marginHorizontal: SPACING.sm,
+  routeMeta: {
+    alignItems: 'flex-end',
+    gap: 3,
   },
-  routeEnd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    maxWidth: '40%',
+  priceText: {
+    fontSize: 17, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
   },
-  timeAvailability: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-    padding: SPACING.sm,
-    marginBottom: SPACING.sm,
-    backgroundColor: COLORS.background,
-    gap: SPACING.md,
-    flexWrap: 'wrap',
-  },
-  timeBlock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    flex: 0,
-  },
-  timeText: {
-    ...TYPOGRAPHY.subtitle2,
-    color: COLORS.text,
-    fontWeight: '700',
-    fontSize: 16,
+  departureLine: {
+    fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
   },
   minutesText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.success,
-    fontWeight: '600',
-    fontSize: 11,
+    fontSize: 11, color: COLORS.success, fontWeight: '700',
   },
-  availabilityBlock: {
+
+  divider: {
+    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md,
+  },
+
+  // ── Sección conductor ──
+  driverSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
-    flex: 0,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 12,
+    gap: SPACING.sm,
   },
-  seatsBox: {
-    backgroundColor: COLORS.primary + '20',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.sm,
-    alignItems: 'center',
-    justifyContent: 'center',
+  avatarWrap: {
+    width: 46, height: 46, borderRadius: 23,
+    overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
+    flexShrink: 0,
   },
-  seatsCount: {
-    fontSize: 14,
-    color: COLORS.primary,
-    fontWeight: '700',
+  avatar: { width: 46, height: 46 },
+  avatarPlaceholder: {
+    width: 46, height: 46, justifyContent: 'center', alignItems: 'center',
   },
-  seatsLabel: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    fontSize: 10,
-  },
-  seatsText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-    fontSize: 12,
-  },
-  priceBlock: {
-    alignItems: 'flex-end',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  priceLabel: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    fontSize: 10,
-  },
-  priceValue: {
-    ...TYPOGRAPHY.subtitle2,
-    color: COLORS.primary,
-    fontWeight: '700',
-    fontSize: 16,
-    flexWrap: 'wrap',
-  },
-  driverInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.xs,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    gap: SPACING.md,
-    justifyContent: 'space-between',
-  },
-  driverPhoto: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    borderWidth: 2,
-    borderColor: COLORS.primary + '20',
-  },
-  driverPhotoPlaceholder: {
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
+  avatarInitials: {
+    fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3,
   },
   driverDetails: {
-    flex: 1,
-    justifyContent: 'center',
-    marginRight: SPACING.sm,
+    flex: 1, gap: 4,
   },
   driverName: {
-    ...TYPOGRAPHY.subtitle2,
-    color: COLORS.text,
-    fontWeight: '700',
-    fontSize: 14,
-    maxWidth: '80%',
+    fontSize: 14, fontWeight: '700', color: '#0E1C4E',
   },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: SPACING.xs,
+  driverMetaRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap',
   },
-  ratingText: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    fontSize: 12,
+  vehicleText: {
+    fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
   },
-  reserveButton: {
+  platePill: {
+    backgroundColor: '#F0F4FF', paddingHorizontal: 5, paddingVertical: 1,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
+  },
+  plateText: {
+    fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5,
+  },
+  ratingWrap: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#FFFBEB', paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: RADIUS.full, borderWidth: 1, borderColor: '#FDE68A',
+    flexShrink: 0,
+  },
+  ratingVal: {
+    fontSize: 12, fontWeight: '700', color: '#92400E',
+  },
+
+  // ── Vía ──
+  viaStrip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    marginHorizontal: SPACING.md, marginBottom: 8,
+    backgroundColor: `${COLORS.accent}10`,
+    paddingHorizontal: 8, paddingVertical: 5,
+    borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent,
+  },
+  viaText: { flex: 1, fontSize: 11, color: COLORS.accent, fontWeight: '500' },
+
+  // ── Fila inferior ──
+  bottomRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: 12,
+    gap: SPACING.md,
+  },
+  occupancyWrap: { flex: 1, gap: 5 },
+  almostFullText: {
+    fontSize: 10, fontWeight: '800', color: '#92400E', letterSpacing: 0.4,
+  },
+  occupancyLabelRow: {
+    flexDirection: 'row', alignItems: 'baseline',
+  },
+  occupancyFraction: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  occupancyWord: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  progressBg: {
+    height: 5, backgroundColor: '#E8EDFF', borderRadius: RADIUS.full, overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
+  },
+  reserveBtn: {
     borderRadius: RADIUS.md,
     overflow: 'hidden',
-    backgroundColor: COLORS.primary,
-    elevation: 4,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3,
-    flex: 0,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
-  reserveGradient: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    alignItems: 'center',
-    gap: SPACING.sm,
+  reserveBtnInner: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
+    paddingVertical: 10, paddingHorizontal: 16,
   },
-  reserveText: {
-    ...TYPOGRAPHY.button,
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
+  reserveBtnDisabled: {
+    backgroundColor: '#F1F5F9', borderRadius: RADIUS.md,
+    paddingVertical: 10, paddingHorizontal: 16,
+    shadowOpacity: 0, elevation: 0,
+    alignItems: 'center' as const,
   },
-  vehicleInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    justifyContent: 'flex-start',
-  },
-  vehicleTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: COLORS.secondary + '20',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 6,
-    borderRadius: RADIUS.sm,
-  },
-  vehicleType: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.secondary,
-    fontWeight: '700',
-    fontSize: 11,
-    textTransform: 'capitalize',
-  },
-  vehicleDetail: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.textSecondary,
-    fontSize: 11,
-    fontWeight: '500',
-    flex: 1,
-    textAlign: 'center',
-  },
-  vehiclePlate: {
-    ...TYPOGRAPHY.labelSmall,
-    color: COLORS.text,
-    fontWeight: '700',
-    fontSize: 12,
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-  },
-  viaRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 6,
-    backgroundColor: `${COLORS.accent}10`,
-    borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
-    marginTop: SPACING.sm,
-    borderLeftWidth: 3, borderLeftColor: COLORS.accent,
-  },
-  viaText: { flex: 1, fontSize: 12, color: COLORS.accent, lineHeight: 16 },
+  reserveText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  reserveTextDisabled: { fontSize: 13, fontWeight: '600', color: COLORS.textTertiary },
 })

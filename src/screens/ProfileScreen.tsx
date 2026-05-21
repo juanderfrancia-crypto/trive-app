@@ -65,6 +65,17 @@ export default function ProfileScreen() {
     })
   }, [])
 
+  // Limpiar IDs ocultos huérfanos cuando cargan las reservas
+  useEffect(() => {
+    if (!activeBookings.length || !hiddenChatIds.size) return
+    const activeIds = new Set(activeBookings.map((b) => b.bookingId))
+    const cleaned = new Set([...hiddenChatIds].filter((id) => activeIds.has(id)))
+    if (cleaned.size !== hiddenChatIds.size) {
+      setHiddenChatIds(cleaned)
+      AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...cleaned]))
+    }
+  }, [activeBookings])
+
   const saveHiddenChats = async (ids: Set<string>) => {
     await AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...ids]))
   }

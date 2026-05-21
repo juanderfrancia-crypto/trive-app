@@ -10,8 +10,10 @@ import {
   ActivityIndicator,
   Modal,
   FlatList,
+  StatusBar,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -19,6 +21,7 @@ import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { insertNotificationForUser } from '../services/notificationInsert'
+import { showSuccess } from '../utils/showError'
 
 const VEHICLE_TYPES = [
   { id: 'auto', name: 'Auto', maxSeats: 4, icon: 'car-sport' as const },
@@ -61,6 +64,7 @@ export default function DriverRegisterScreen() {
   const [vehicleData, setVehicleData] = useState<any>(null)
   const [vehicleLoading, setVehicleLoading] = useState(true)
   const [submittingRoute, setSubmittingRoute] = useState(false)
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
 
   const selectedVehicleType = VEHICLE_TYPES.find((v) => v.id === vehicleTypeId)
   const maxSeats = selectedVehicleType?.maxSeats || 0
@@ -229,18 +233,23 @@ export default function DriverRegisterScreen() {
         is_read: false,
       }).catch(() => {})
 
-      Alert.alert(
-        'Éxito',
-        '¡Ruta creada correctamente! Los pasajeros ya pueden verla y reservar.',
-        [
-          {
-            text: 'Ir al inicio',
-            onPress: () => {
-              navigation.navigate('Main' as never)
-            },
-          },
-        ]
-      )
+      if (saveAsTemplate) {
+        try {
+          await supabase.from('route_templates').insert({
+            driver_id:      user.id,
+            name:           `${origin.trim()} → ${destination.trim()}`,
+            origin:         `${origin.trim()} - ${originZone.trim()}`,
+            destination:    `${destination.trim()} - ${destinationZone.trim()}`,
+            price_per_seat: parseFloat(pricePerSeat),
+            total_seats:    parseInt(totalSeats),
+            vehicle_type:   vehicleTypeId,
+            description:    routeVia.trim() || null,
+          })
+        } catch {}
+      }
+
+      showSuccess(saveAsTemplate ? '¡Ruta publicada y guardada como plantilla!' : '¡Ruta publicada! Los pasajeros ya pueden verla.')
+      navigation.navigate('Main' as never)
 
       // Limpiar formulario
       setOrigin('')
@@ -307,33 +316,32 @@ export default function DriverRegisterScreen() {
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backBtn} 
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Crea tu ruta</Text>
-            <Text style={styles.subtitle}>Publica tu viaje y gana dinero</Text>
-          </View>
+    <View style={styles.safeContainer}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      {/* Header con gradiente — arranca desde arriba cubriendo la status bar */}
+      <LinearGradient
+        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: insets.top + 4 }]}
+      >
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="chevron-back" size={22} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <Text style={styles.title}>Publicar ruta</Text>
+          <Text style={styles.subtitle}>Completa los datos de tu viaje</Text>
         </View>
+        <View style={styles.headerIconRight}>
+          <Ionicons name="car-sport" size={22} color="rgba(255,255,255,0.7)" />
+        </View>
+      </LinearGradient>
 
-        {/* Intro Card */}
-        <View style={styles.introCard}>
-          <View style={styles.introIcon}>
-            <Ionicons name="checkmark-circle" size={32} color={COLORS.success} />
-          </View>
-          <Text style={styles.introTitle}>Conductor Verificado</Text>
-          <Text style={styles.introText}>
-            Publica tus rutas y conecta con pasajeros confiables
-          </Text>
-        </View>
+      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
 
         {/* RUTA DETAILS */}
         <View style={styles.section}>
@@ -412,9 +420,9 @@ export default function DriverRegisterScreen() {
 
           {/* Helper text: Flujo informal */}
           <View style={styles.helperTextContainer}>
-            <Ionicons name="information-circle" size={16} color={COLORS.success} />
-            <Text style={[styles.helperText, { color: COLORS.success }]}>
-              ⚡ Publica tu ruta AHORA y comienza de inmediato
+            <Ionicons name="flash" size={15} color="#1230B8" />
+            <Text style={styles.helperText}>
+              Publica tu ruta ahora y comienza de inmediato
             </Text>
           </View>
 
@@ -790,21 +798,48 @@ export default function DriverRegisterScreen() {
           </View>
         </View>
 
+        {/* Guardar como plantilla */}
+        <TouchableOpacity
+          style={[styles.templateToggle, saveAsTemplate && styles.templateToggleActive]}
+          onPress={() => setSaveAsTemplate(!saveAsTemplate)}
+          activeOpacity={0.8}
+        >
+          <View style={[styles.toggleCheck, saveAsTemplate && styles.toggleCheckActive]}>
+            {saveAsTemplate && <Ionicons name="checkmark" size={13} color="#fff" />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.toggleLabel, saveAsTemplate && styles.toggleLabelActive]}>
+              Guardar como plantilla
+            </Text>
+            <Text style={styles.toggleSub}>
+              Repite este viaje rápido desde Rutas Frecuentes
+            </Text>
+          </View>
+          <Ionicons name="bookmark" size={16} color={saveAsTemplate ? '#1230B8' : COLORS.textTertiary} />
+        </TouchableOpacity>
+
         {/* Buttons */}
         <TouchableOpacity
           style={[styles.submitBtn, (routeLoading || submittingRoute) && styles.submitBtnDisabled]}
           onPress={handleCreateRoute}
           disabled={routeLoading || submittingRoute}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          {routeLoading || submittingRoute ? (
-            <ActivityIndicator size="small" color={COLORS.textInverse} />
-          ) : (
-            <>
-              <Ionicons name="checkmark-done" size={20} color={COLORS.textInverse} />
-              <Text style={styles.submitBtnText}>Publicar Ruta</Text>
-            </>
-          )}
+          <LinearGradient
+            colors={['#0E2699', '#1230B8', '#1A3FCC']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.submitBtnInner}
+          >
+            {routeLoading || submittingRoute ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-done" size={20} color="#fff" />
+                <Text style={styles.submitBtnText}>Publicar ruta</Text>
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -885,69 +920,50 @@ export default function DriverRegisterScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F6FF',
   },
   container: {
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F4F6FF',
     paddingHorizontal: SPACING.lg,
   },
 
-  // Header
-  header: {
+  // Header gradiente
+  headerGradient: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
   },
   headerContent: {
     flex: 1,
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-  subtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-
-  // Intro Card
-  introCard: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  introIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.accent,
+  headerIconRight: {
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.md,
   },
-  introTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textInverse,
-    marginBottom: SPACING.xs,
+  title: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: -0.3,
   },
-  introText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textInverse + '80',
-    textAlign: 'center',
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.72)',
+    marginTop: 2,
   },
 
   // Section
@@ -964,13 +980,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: '#E4EBFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0E2699',
   },
 
   // Input
@@ -1073,36 +1090,76 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
 
+  // Template toggle
+  templateToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#fff',
+    borderRadius: RADIUS.lg,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+    borderWidth: 1.5,
+    borderColor: '#D6E0FF',
+  },
+  templateToggleActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#1230B8',
+  },
+  toggleCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#D6E0FF',
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  toggleCheckActive: {
+    backgroundColor: '#1230B8',
+    borderColor: '#1230B8',
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+  },
+  toggleLabelActive: {
+    color: '#0E2699',
+  },
+  toggleSub: {
+    fontSize: 11,
+    color: COLORS.textTertiary,
+    marginTop: 2,
+  },
+
   // Buttons
   submitBtn: {
-    backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+    shadowColor: '#0E2699',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  submitBtnInner: {
     height: 56,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.md,
-    marginBottom: SPACING.md,
-    ...SHADOWS.orangeSoft,
-    // Sombra profunda adicional
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 14,
-    elevation: 10,
-    // Bordes blancos para efecto 3D
-    borderTopWidth: 2.5,
-    borderTopColor: COLORS.shadowWhiteMid,
-    borderLeftWidth: 1,
-    borderLeftColor: COLORS.shadowWhiteDark,
   },
   submitBtnDisabled: {
     opacity: 0.6,
   },
   submitBtnText: {
-    color: COLORS.textInverse,
-    ...TYPOGRAPHY.bodyMedium,
-    fontWeight: '600',
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: -0.2,
   },
   cancelBtn: {
     height: 48,
@@ -1400,18 +1457,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.md,
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: '#E4EBFF',
     borderLeftWidth: 3,
-    borderLeftColor: COLORS.primary,
+    borderLeftColor: '#1230B8',
     borderRadius: RADIUS.md,
   },
   helperText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.primary,
-    fontWeight: '500',
+    fontSize: 12,
+    color: '#1230B8',
+    fontWeight: '600',
     flex: 1,
   },
 

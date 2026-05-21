@@ -9,7 +9,9 @@ import {
   ActivityIndicator,
   RefreshControl,
   Share,
+  StatusBar,
 } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
@@ -64,6 +66,7 @@ export default function DriverPanelScreen() {
   const [updatingRouteId, setUpdatingRouteId] = useState<string | null>(null)
   const [approvalStatus, setApprovalStatus] = useState<DriverApprovalStatus | null>(null)
   const [checkingApproval, setCheckingApproval] = useState(true)
+  const [showAddMenu, setShowAddMenu] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFetchingRef = useRef(false)
   const failureCountRef = useRef(0)
@@ -560,35 +563,44 @@ export default function DriverPanelScreen() {
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
+    <View style={styles.safeContainer}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       {/* Header */}
-      <View style={styles.header}>
+      <LinearGradient
+        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+        style={[styles.header, { paddingTop: insets.top + 8 }]}
+      >
         <TouchableOpacity
           style={styles.backBtn}
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Ionicons name="chevron-back" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Panel del Conductor</Text>
-          <Text style={styles.subtitle}>Gestiona tus viajes</Text>
+          <Text style={styles.subtitle}>
+            {routes.length > 0
+              ? `${routes.length} viaje${routes.length !== 1 ? 's' : ''} activo${routes.length !== 1 ? 's' : ''}`
+              : 'Sin viajes activos'}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.recurringBtn}
           onPress={() => navigation.navigate('RecurringRoutes' as never)}
           activeOpacity={0.8}
         >
-          <Ionicons name="repeat" size={20} color={COLORS.primary} />
+          <Ionicons name="repeat" size={20} color="rgba(255,255,255,0.85)" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.addBtn}
-          onPress={() => navigation.navigate('DriverRegister' as never)}
+          onPress={() => setShowAddMenu(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="add" size={24} color={COLORS.textInverse} />
+          <Ionicons name="add" size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.container}
@@ -641,20 +653,38 @@ export default function DriverPanelScreen() {
             const statusInfo = getStatusInfo(route.status)
             const isUpdating = updatingRouteId === route.id
 
+            const isInProgress = route.status === 'in_progress'
+
             return (
-              <View key={route.id} style={styles.routeCard}>
+              <View key={route.id} style={[styles.routeCard, isInProgress && styles.routeCardActive]}>
+
+                {/* Banner EN CURSO */}
+                {isInProgress && (
+                  <View style={styles.inProgressBanner}>
+                    <View style={styles.liveDot}>
+                      <View style={styles.liveDotInner} />
+                    </View>
+                    <Text style={styles.inProgressLabel}>VIAJE EN CURSO</Text>
+                    <Text style={styles.inProgressTime}>Salida {formatTime(route.departure_time)}</Text>
+                  </View>
+                )}
+
                 {/* Route Header */}
                 <View style={styles.routeHeader}>
+                  <View style={styles.routeTrackWrap}>
+                    <View style={styles.routeTrackDot} />
+                    <View style={styles.routeTrackLine} />
+                    <View style={[styles.routeTrackDot, styles.routeTrackDotEnd]} />
+                  </View>
                   <View style={styles.routeInfo}>
-                    <Text style={styles.routeRoute}>
-                      {route.origin} → {route.destination}
-                    </Text>
+                    <Text style={styles.originText} numberOfLines={1}>{route.origin}</Text>
+                    <Text style={styles.destText} numberOfLines={1}>{route.destination}</Text>
                     <Text style={styles.routeDateTime}>
                       {formatDate(route.departure_time)} · {formatTime(route.departure_time)}
                     </Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
-                    <Ionicons name={statusInfo.icon as any} size={14} color={statusInfo.color} />
+                    <Ionicons name={statusInfo.icon as any} size={13} color={statusInfo.color} />
                     <Text style={[styles.statusText, { color: statusInfo.color }]}>
                       {statusInfo.label}
                     </Text>
@@ -662,18 +692,28 @@ export default function DriverPanelScreen() {
                 </View>
 
                 {/* Vehicle Info */}
-                <View style={styles.vehicleInfo}>
-                  <View style={styles.vehicleItem}>
-                    <Ionicons name="car" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.vehicleText}>
-                      {route.vehicle_make} · {route.vehicle_color}
-                    </Text>
-                  </View>
-                  <View style={styles.vehicleItem}>
-                    <Ionicons name="card-outline" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.vehicleText}>{route.vehicle_plate}</Text>
-                  </View>
+                <View style={styles.vehicleRow}>
+                  {route.vehicle_make ? (
+                    <View style={styles.vehiclePill}>
+                      <Ionicons name="car-sport" size={12} color={COLORS.primary} />
+                      <Text style={styles.vehiclePillText}>{route.vehicle_make}</Text>
+                    </View>
+                  ) : null}
+                  {route.vehicle_color ? (
+                    <View style={styles.vehiclePill}>
+                      <Ionicons name="color-palette-outline" size={12} color={COLORS.primary} />
+                      <Text style={styles.vehiclePillText}>{route.vehicle_color}</Text>
+                    </View>
+                  ) : null}
+                  {route.vehicle_plate ? (
+                    <View style={[styles.vehiclePill, styles.vehiclePlatePill]}>
+                      <Ionicons name="card-outline" size={12} color="#0E2699" />
+                      <Text style={styles.vehiclePlateText}>{route.vehicle_plate}</Text>
+                    </View>
+                  ) : null}
                 </View>
+
+                <View style={styles.sectionDivider} />
 
                 {/* Seats Status */}
                 <View style={styles.seatsSection}>
@@ -684,15 +724,23 @@ export default function DriverPanelScreen() {
                     </Text>
                   </View>
                   <View style={styles.seatsBar}>
-                    {Array.from({ length: route.total_seats }).map((_, index) => (
+                    {Array.from({ length: Math.min(route.total_seats, 10) }).map((_, index) => (
                       <View
                         key={index}
-                        style={[
-                          styles.seatDot,
-                          index < seatsFilled ? styles.seatFilled : styles.seatEmpty,
-                        ]}
-                      />
+                        style={[styles.seatDot, index < seatsFilled ? styles.seatFilled : styles.seatEmpty]}
+                      >
+                        <Ionicons
+                          name={index < seatsFilled ? 'person' : 'person-outline'}
+                          size={13}
+                          color={index < seatsFilled ? '#fff' : COLORS.textTertiary}
+                        />
+                      </View>
                     ))}
+                    {route.total_seats > 10 && (
+                      <View style={styles.seatsMore}>
+                        <Text style={styles.seatsMoreText}>+{route.total_seats - 10}</Text>
+                      </View>
+                    )}
                   </View>
                   {isFull && (
                     <View style={styles.fullBadge}>
@@ -704,172 +752,221 @@ export default function DriverPanelScreen() {
 
                 {/* Passengers List - Grouped by Dropoff Point */}
                 {route.passengers && route.passengers.length > 0 && (
-                  <View style={styles.passengersSection}>
-                    <Text style={styles.passengersTitle}>Paradas de desembarque</Text>
-                    {groupPassengersByDropoff(route.passengers).map((dropoffGroup, idx) => (
-                      <View key={idx} style={styles.dropoffGroupItem}>
-                        <View style={styles.dropoffHeader}>
-                          <View style={styles.dropoffIconContainer}>
-                            <Ionicons
-                              name={dropoffGroup.isCustom ? 'flag' : 'pin'}
-                              size={16}
-                              color={COLORS.primary}
-                            />
-                          </View>
-                          <View style={styles.dropoffInfo}>
-                            <Text style={styles.dropoffLocation}>{dropoffGroup.dropoff}</Text>
-                            <Text style={styles.dropoffCount}>{dropoffGroup.count} pasajero{dropoffGroup.count !== 1 ? 's' : ''}</Text>
-                          </View>
-                          {dropoffGroup.isCustom && (
-                            <View style={styles.customBadge}>
-                              <Text style={styles.customBadgeText}>Custom</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={styles.passengersInGroup}>
-                          {dropoffGroup.passengers.map((passenger) => (
-                            <View key={passenger.booking_id} style={styles.passengerItem}>
-                              <View style={styles.passengerAvatar}>
-                                <Text style={styles.passengerInitials}>
-                                  {passenger.name.charAt(0).toUpperCase()}
-                                </Text>
-                              </View>
-                              <View style={styles.passengerInfo}>
-                                <Text style={styles.passengerName}>{passenger.name}</Text>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2 }}>
-                                  <Text style={styles.passengerSeat}>Asiento {passenger.seat_number}</Text>
-                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: passenger.payment_method === 'digital' ? '#EDE9FE' : '#F0FDF4', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
-                                    <Ionicons name={passenger.payment_method === 'digital' ? 'phone-portrait-outline' : 'cash-outline'} size={11} color={passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A'} />
-                                    <Text style={{ fontSize: 11, fontWeight: '600', color: passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A' }}>
-                                      {passenger.payment_method === 'digital' ? 'Digital' : 'Efectivo'}
-                                    </Text>
-                                  </View>
-                                </View>
-                              </View>
-                              <TouchableOpacity
-                                style={styles.chatBtn}
-                                onPress={() => {
-                                  const key = `${route.id}-${passenger.passenger_id}`
-                                  setUnreadCounts((prev) => ({ ...prev, [key]: 0 }))
-                                  setSelectedChat({
-                                    tripId: route.id,
-                                    otherUserId: passenger.passenger_id,
-                                    otherUserName: passenger.name,
-                                  })
-                                }}
-                              >
-                                <Ionicons name="chatbubble-ellipses-outline" size={18} color={COLORS.primary} />
-                                {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
-                                  <View style={styles.chatBadge}>
-                                    <Text style={styles.chatBadgeText}>
-                                      {unreadCounts[`${route.id}-${passenger.passenger_id}`] > 9
-                                        ? '9+'
-                                        : unreadCounts[`${route.id}-${passenger.passenger_id}`]}
-                                    </Text>
-                                  </View>
-                                )}
-                              </TouchableOpacity>
-                            </View>
-                          ))}
+                  <>
+                    <View style={styles.sectionDivider} />
+                    <View style={styles.passengersSection}>
+                      <View style={styles.sectionTitleRow}>
+                        <Ionicons name="people" size={14} color={COLORS.primary} />
+                        <Text style={styles.sectionTitle}>Pasajeros</Text>
+                        <View style={styles.passengerCountPill}>
+                          <Text style={styles.passengerCountText}>{route.passengers.length}</Text>
                         </View>
                       </View>
-                    ))}
-                  </View>
+                      {groupPassengersByDropoff(route.passengers).map((dropoffGroup, idx) => (
+                        <View key={idx} style={styles.dropoffGroupItem}>
+                          <View style={styles.dropoffHeader}>
+                            <View style={styles.dropoffIconContainer}>
+                              <Ionicons
+                                name={dropoffGroup.isCustom ? 'flag' : 'location'}
+                                size={14}
+                                color={COLORS.primary}
+                              />
+                            </View>
+                            <View style={styles.dropoffInfo}>
+                              <Text style={styles.dropoffLocation} numberOfLines={1}>{dropoffGroup.dropoff}</Text>
+                              <Text style={styles.dropoffCount}>{dropoffGroup.count} pasajero{dropoffGroup.count !== 1 ? 's' : ''}</Text>
+                            </View>
+                            {dropoffGroup.isCustom && (
+                              <View style={styles.customBadge}>
+                                <Text style={styles.customBadgeText}>Personalizada</Text>
+                              </View>
+                            )}
+                          </View>
+                          <View style={styles.passengersInGroup}>
+                            {dropoffGroup.passengers.map((passenger, pIdx) => (
+                              <View
+                                key={passenger.booking_id}
+                                style={[styles.passengerItem, pIdx < dropoffGroup.passengers.length - 1 && styles.passengerItemBorder]}
+                              >
+                                <LinearGradient
+                                  colors={['#0E2699', '#1230B8']}
+                                  style={styles.passengerAvatar}
+                                >
+                                  <Text style={styles.passengerInitials}>
+                                    {passenger.name.charAt(0).toUpperCase()}
+                                  </Text>
+                                </LinearGradient>
+                                <View style={styles.passengerInfo}>
+                                  <Text style={styles.passengerName}>{passenger.name}</Text>
+                                  <View style={styles.passengerMeta}>
+                                    <View style={styles.seatPill}>
+                                      <Ionicons name="person-outline" size={10} color={COLORS.textTertiary} />
+                                      <Text style={styles.seatPillText}>Asiento {passenger.seat_number}</Text>
+                                    </View>
+                                    <View style={[
+                                      styles.paymentPill,
+                                      passenger.payment_method === 'digital' ? styles.paymentPillDigital : styles.paymentPillCash,
+                                    ]}>
+                                      <Ionicons
+                                        name={passenger.payment_method === 'digital' ? 'phone-portrait-outline' : 'cash-outline'}
+                                        size={10}
+                                        color={passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A'}
+                                      />
+                                      <Text style={[
+                                        styles.paymentPillText,
+                                        { color: passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A' },
+                                      ]}>
+                                        {passenger.payment_method === 'digital' ? 'Digital' : 'Efectivo'}
+                                      </Text>
+                                    </View>
+                                  </View>
+                                </View>
+                                <TouchableOpacity
+                                  style={styles.chatBtn}
+                                  onPress={() => {
+                                    const key = `${route.id}-${passenger.passenger_id}`
+                                    setUnreadCounts((prev) => ({ ...prev, [key]: 0 }))
+                                    setSelectedChat({
+                                      tripId: route.id,
+                                      otherUserId: passenger.passenger_id,
+                                      otherUserName: passenger.name,
+                                    })
+                                  }}
+                                >
+                                  <Ionicons name="chatbubble-ellipses" size={17} color={COLORS.primary} />
+                                  {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
+                                    <View style={styles.chatBadge}>
+                                      <Text style={styles.chatBadgeText}>
+                                        {unreadCounts[`${route.id}-${passenger.passenger_id}`] > 9
+                                          ? '9+'
+                                          : unreadCounts[`${route.id}-${passenger.passenger_id}`]}
+                                      </Text>
+                                    </View>
+                                  )}
+                                </TouchableOpacity>
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      ))}
+                    </View>
+                  </>
                 )}
 
                 {/* Earnings */}
+                <View style={styles.sectionDivider} />
                 <View style={styles.earningsSection}>
-                  <View style={styles.earningsRow}>
-                    <Text style={styles.earningsLabel}>Ingreso total</Text>
-                    <Text style={styles.earningsValue}>
-                      ${(seatsFilled * route.price_per_seat).toLocaleString('es-CO')}
-                    </Text>
+                  <View style={styles.earningsLeft}>
+                    <View style={styles.earningsIconWrap}>
+                      <Ionicons name="wallet" size={16} color="#059669" />
+                    </View>
+                    <View>
+                      <Text style={styles.earningsLabel}>Ingresos estimados</Text>
+                      <Text style={styles.earningsDetail}>
+                        {seatsFilled} asiento{seatsFilled !== 1 ? 's' : ''} × ${route.price_per_seat.toLocaleString('es-CO')}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.earningsRow}>
-                    <Text style={styles.earningsLabel}>Precio por asiento</Text>
-                    <Text style={styles.earningsUnit}>
-                      ${route.price_per_seat.toLocaleString('es-CO')}
-                    </Text>
-                  </View>
+                  <Text style={styles.earningsValue}>
+                    ${(seatsFilled * route.price_per_seat).toLocaleString('es-CO')}
+                  </Text>
                 </View>
+
+                {/* Warning sin pasajeros */}
+                {seatsFilled === 0 && route.status === 'scheduled' && (
+                  <View style={styles.noPassengersWarning}>
+                    <View style={styles.warningIconWrap}>
+                      <Ionicons name="megaphone-outline" size={16} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.warningTitle}>Sin pasajeros aún</Text>
+                      <Text style={styles.warningText}>Comparte tu ruta para conseguir pasajeros más rápido.</Text>
+                    </View>
+                  </View>
+                )}
 
                 {/* Actions */}
                 {route.status === 'scheduled' && (
                   <View style={styles.actionsSection}>
+                    {/* CTA principal */}
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.shareBtn]}
-                      onPress={() => shareRoute(route)}
-                    >
-                      <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
-                      <Text style={[styles.actionBtnText, { color: '#25D366' }]}>Compartir</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.startBtn]}
+                      style={[(isUpdating || seatsFilled === 0) && styles.primaryBtnDisabled]}
                       onPress={() => updateRouteStatus(route.id, 'in_progress')}
                       disabled={isUpdating || seatsFilled === 0}
+                      activeOpacity={0.85}
                     >
-                      {isUpdating ? (
-                        <ActivityIndicator size="small" color={COLORS.textInverse} />
-                      ) : (
-                        <>
-                          <Ionicons name="play" size={18} color={COLORS.textInverse} />
-                          <Text style={styles.actionBtnText}>Iniciar Viaje</Text>
-                        </>
-                      )}
+                      <LinearGradient
+                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={styles.primaryActionBtn}
+                      >
+                        {isUpdating ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons name="play-circle" size={20} color="#fff" />
+                            <Text style={styles.primaryActionText}>Iniciar Viaje</Text>
+                          </>
+                        )}
+                      </LinearGradient>
                     </TouchableOpacity>
 
-                    <TouchableOpacity
-                      style={[styles.actionBtn, styles.cancelBtn]}
-                      onPress={() => {
-                        Alert.alert(
-                          'Cancelar Viaje',
-                          '¿Estás seguro de que deseas cancelar este viaje? Se notificará a los pasajeros.',
+                    {/* Acciones secundarias */}
+                    <View style={styles.secondaryActionsRow}>
+                      <TouchableOpacity
+                        style={styles.secondaryActionBtn}
+                        onPress={() => shareRoute(route)}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="logo-whatsapp" size={15} color="#25D366" />
+                        <Text style={[styles.secondaryActionText, { color: '#25D366' }]}>Compartir ruta</Text>
+                      </TouchableOpacity>
+
+                      <View style={styles.secondaryActionSep} />
+
+                      <TouchableOpacity
+                        style={styles.secondaryActionBtn}
+                        onPress={() => Alert.alert(
+                          'Cancelar viaje',
+                          '¿Cancelar este viaje? Se notificará a los pasajeros.',
                           [
                             { text: 'No', style: 'cancel' },
-                            {
-                              text: 'Sí, cancelar',
-                              style: 'destructive',
-                              onPress: () => updateRouteStatus(route.id, 'cancelled'),
-                            },
+                            { text: 'Sí, cancelar', style: 'destructive', onPress: () => updateRouteStatus(route.id, 'cancelled') },
                           ]
-                        )
-                      }}
-                      disabled={isUpdating}
-                    >
-                      <Ionicons name="close" size={18} color={COLORS.error} />
-                      <Text style={[styles.actionBtnText, { color: COLORS.error }]}>
-                        Cancelar
-                      </Text>
-                    </TouchableOpacity>
+                        )}
+                        disabled={isUpdating}
+                        activeOpacity={0.8}
+                      >
+                        <Ionicons name="close-circle-outline" size={15} color={COLORS.error} />
+                        <Text style={[styles.secondaryActionText, { color: COLORS.error }]}>Cancelar viaje</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
 
                 {route.status === 'in_progress' && (
                   <View style={styles.actionsSection}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, styles.completeBtn]}
+                      style={[isUpdating && styles.primaryBtnDisabled]}
                       onPress={() => updateRouteStatus(route.id, 'completed')}
                       disabled={isUpdating}
+                      activeOpacity={0.85}
                     >
-                      {isUpdating ? (
-                        <ActivityIndicator size="small" color={COLORS.textInverse} />
-                      ) : (
-                        <>
-                          <Ionicons name="checkmark-done" size={18} color={COLORS.textInverse} />
-                          <Text style={styles.actionBtnText}>Completar Viaje</Text>
-                        </>
-                      )}
+                      <LinearGradient
+                        colors={['#059669', '#10B981']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={styles.primaryActionBtn}
+                      >
+                        {isUpdating ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <>
+                            <Ionicons name="checkmark-done-circle" size={20} color="#fff" />
+                            <Text style={styles.primaryActionText}>Completar Viaje</Text>
+                          </>
+                        )}
+                      </LinearGradient>
                     </TouchableOpacity>
-                  </View>
-                )}
-
-                {seatsFilled === 0 && route.status === 'scheduled' && (
-                  <View style={styles.noPassengersWarning}>
-                    <Ionicons name="information-circle" size={18} color={COLORS.warning} />
-                    <Text style={styles.warningText}>
-                      Nadie ha reservado aún. Puedes cancelar o esperar pasajeros.
-                    </Text>
                   </View>
                 )}
               </View>
@@ -877,6 +974,59 @@ export default function DriverPanelScreen() {
           })
         )}
       </ScrollView>
+
+      {/* ── Add menu overlay (sin Modal) ── */}
+      {showAddMenu && (
+        <View style={styles.menuOverlay}>
+          <TouchableOpacity
+            style={{ flex: 1 }}
+            activeOpacity={1}
+            onPress={() => setShowAddMenu(false)}
+          />
+          <View style={styles.menuSheet}>
+            <View style={styles.menuHandle} />
+            <Text style={styles.menuTitle}>¿Qué quieres hacer?</Text>
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.8}
+              onPress={() => {
+                setShowAddMenu(false)
+                setTimeout(() => handleCreateRoute(), 150)
+              }}
+            >
+              <LinearGradient colors={['#0E2699', '#1A3FCC']} style={styles.menuItemIcon}>
+                <Ionicons name="add-circle" size={20} color="#fff" />
+              </LinearGradient>
+              <View style={styles.menuItemText}>
+                <Text style={styles.menuItemTitle}>Crear ruta</Text>
+                <Text style={styles.menuItemSub}>Publica un viaje nuevo ahora</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+
+            <View style={styles.menuDivider} />
+
+            <TouchableOpacity
+              style={styles.menuItem}
+              activeOpacity={0.8}
+              onPress={() => {
+                setShowAddMenu(false)
+                setTimeout(() => navigation.navigate('RecurringRoutes' as never), 150)
+              }}
+            >
+              <LinearGradient colors={['#6C1FC6', '#8B5CF6']} style={styles.menuItemIcon}>
+                <Ionicons name="repeat" size={20} color="#fff" />
+              </LinearGradient>
+              <View style={styles.menuItemText}>
+                <Text style={styles.menuItemTitle}>Plantillas de ruta</Text>
+                <Text style={styles.menuItemSub}>Publica tus rutas habituales rápido</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {selectedChat && user?.id && (
         <TripMessagesModal
@@ -906,6 +1056,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
     paddingBottom: SPACING.xxxl,
   },
   loadingText: {
@@ -919,48 +1070,49 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
+    paddingBottom: SPACING.lg,
     gap: SPACING.md,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.sm,
   },
   headerContent: {
     flex: 1,
   },
   title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: -0.3,
   },
   subtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
+    fontWeight: '500',
   },
   recurringBtn: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.lg,
-    backgroundColor: `${COLORS.primary}12`,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: `${COLORS.primary}25`,
   },
   addBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.lg,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
-    ...SHADOWS.md,
   },
 
   // Empty State
@@ -1020,63 +1172,128 @@ const styles = StyleSheet.create({
 
   // Route Card
   routeCard: {
-    backgroundColor: COLORS.surface,
+    backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    ...SHADOWS.lg,
-    borderTopColor: COLORS.shadowWhiteLight,
-    borderTopWidth: 1.5,
+    borderWidth: 1,
+    borderColor: '#E8EDFF',
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
+    overflow: 'hidden',
+  },
+  routeCardActive: {
+    borderColor: '#10B981',
+    borderLeftWidth: 4,
+    backgroundColor: '#F7FFFE',
+    shadowColor: '#10B981',
+    shadowOpacity: 0.12,
+    elevation: 4,
+  },
+  inProgressBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#10B981',
+    marginHorizontal: -SPACING.lg,
+    marginTop: -SPACING.lg,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 9,
+  },
+  liveDot: {
+    width: 14, height: 14, borderRadius: 7,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  liveDotInner: {
+    width: 7, height: 7, borderRadius: 4,
+    backgroundColor: '#fff',
+  },
+  inProgressLabel: {
+    flex: 1, fontSize: 11, fontWeight: '800',
+    color: '#fff', letterSpacing: 1.2,
+  },
+  inProgressTime: {
+    fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.85)',
   },
   routeHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: SPACING.md,
+    gap: 10,
+  },
+  routeTrackWrap: {
+    alignItems: 'center',
+    gap: 3,
+    paddingTop: 2,
+    flexShrink: 0,
+  },
+  routeTrackDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: COLORS.primary,
+    borderWidth: 1.5, borderColor: '#fff',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
+  },
+  routeTrackLine: {
+    width: 1.5, height: 12, backgroundColor: '#CBD5E1',
+  },
+  routeTrackDotEnd: {
+    backgroundColor: '#fff',
+    borderColor: COLORS.primary,
+    borderWidth: 2,
   },
   routeInfo: {
     flex: 1,
+    gap: 2,
   },
-  routeRoute: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
+  originText: {
+    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+  },
+  destText: {
+    fontSize: 14, fontWeight: '600', color: '#334155',
   },
   routeDateTime: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
+    fontSize: 12, color: COLORS.textTertiary, fontWeight: '500', marginTop: 2,
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
     borderRadius: RADIUS.full,
-    gap: SPACING.xs,
+    gap: 4,
+    flexShrink: 0,
   },
   statusText: {
-    ...TYPOGRAPHY.label,
-    fontWeight: '600',
+    fontSize: 11, fontWeight: '700', letterSpacing: 0.2,
   },
 
   // Vehicle Info
-  vehicleInfo: {
+  vehicleRow: {
     flexDirection: 'row',
-    gap: SPACING.lg,
-    marginBottom: SPACING.lg,
-    paddingBottom: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: SPACING.md,
   },
-  vehicleItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
+  vehiclePill: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: '#D6E0FF',
+    borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 5,
   },
-  vehicleText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
+  vehiclePillText: {
+    fontSize: 12, fontWeight: '500', color: '#334155',
+  },
+  vehiclePlatePill: {
+    backgroundColor: '#EEF2FF', borderColor: '#C7D2FE',
+  },
+  vehiclePlateText: {
+    fontSize: 12, fontWeight: '700', color: '#0E2699', letterSpacing: 0.5,
+  },
+
+  sectionDivider: {
+    height: 1, backgroundColor: '#F1F5F9', marginVertical: SPACING.md,
   },
 
   // Seats Section
@@ -1104,9 +1321,8 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   seatDot: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.md,
+    width: 30, height: 30,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1114,9 +1330,17 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   seatEmpty: {
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: '#F0F4FF',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#D6E0FF',
+  },
+  seatsMore: {
+    width: 30, height: 30, borderRadius: 8,
+    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: '#D6E0FF',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  seatsMoreText: {
+    fontSize: 10, fontWeight: '700', color: COLORS.primary,
   },
   fullBadge: {
     flexDirection: 'row',
@@ -1136,51 +1360,65 @@ const styles = StyleSheet.create({
 
   // Passengers Section
   passengersSection: {
-    marginBottom: SPACING.lg,
-  },
-  passengersTitle: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    marginBottom: SPACING.md,
-  },
-  passengerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: SPACING.sm,
   },
+  sectionTitleRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: SPACING.md,
+  },
+  sectionTitle: {
+    fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, flex: 1,
+  },
+  passengerCountPill: {
+    backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
+    paddingHorizontal: 8, paddingVertical: 2,
+  },
+  passengerCountText: {
+    fontSize: 11, fontWeight: '700', color: '#fff',
+  },
+  passengerItem: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
+  },
+  passengerItemBorder: {
+    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+  },
   passengerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.md,
+    width: 38, height: 38, borderRadius: 19,
+    justifyContent: 'center', alignItems: 'center',
+    marginRight: SPACING.md, flexShrink: 0,
   },
   passengerInitials: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '600',
+    fontSize: 15, fontWeight: '800', color: '#fff',
   },
   passengerInfo: {
-    flex: 1,
+    flex: 1, gap: 4,
   },
   passengerName: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
+    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
   },
-  passengerSeat: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
+  passengerMeta: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+  },
+  seatPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#F4F6FF', borderRadius: RADIUS.full,
+    paddingHorizontal: 7, paddingVertical: 2,
+  },
+  seatPillText: {
+    fontSize: 11, color: COLORS.textSecondary, fontWeight: '500',
+  },
+  paymentPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    borderRadius: RADIUS.full, paddingHorizontal: 7, paddingVertical: 2,
+  },
+  paymentPillDigital: { backgroundColor: '#EDE9FE' },
+  paymentPillCash:    { backgroundColor: '#F0FDF4' },
+  paymentPillText: {
+    fontSize: 11, fontWeight: '600',
   },
   confirmedBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: RADIUS.full,
+    width: 24, height: 24, borderRadius: RADIUS.full,
     backgroundColor: COLORS.success + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
   chatBtn: {
     width: 36,
@@ -1212,137 +1450,160 @@ const styles = StyleSheet.create({
 
   // Earnings Section
   earningsSection: {
-    backgroundColor: COLORS.accentLight + '15',
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#F0FDF4', borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md, paddingVertical: 12,
     marginBottom: SPACING.lg,
+    borderWidth: 1, borderColor: '#BBF7D0',
   },
-  earningsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  earningsLeft: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  earningsIconWrap: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center',
   },
   earningsLabel: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
+    fontSize: 12, fontWeight: '600', color: '#166534',
+  },
+  earningsDetail: {
+    fontSize: 11, color: '#4ADE80', fontWeight: '500', marginTop: 2,
   },
   earningsValue: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.primary,
-    fontWeight: '700',
-  },
-  earningsUnit: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textPrimary,
+    fontSize: 20, fontWeight: '800', color: '#16A34A', letterSpacing: -0.5,
   },
 
   // Actions Section
   actionsSection: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-  actionBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-    height: 48,
     gap: SPACING.sm,
+    marginTop: SPACING.xs,
   },
-  shareBtn: {
-    backgroundColor: '#F0FFF4',
-    borderWidth: 1,
-    borderColor: '#25D36640',
+  primaryActionBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, borderRadius: RADIUS.md, paddingVertical: 14,
   },
-  startBtn: {
-    backgroundColor: COLORS.primary,
-    ...SHADOWS.orangeSoft,
+  primaryActionText: {
+    fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: -0.2,
   },
-  completeBtn: {
-    backgroundColor: COLORS.success,
-    ...SHADOWS.sm,
+  primaryBtnDisabled: {
+    opacity: 0.5,
   },
-  cancelBtn: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.error,
+  secondaryActionsRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: '#E8EDFF',
+    overflow: 'hidden',
   },
-  actionBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '600',
+  secondaryActionBtn: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 12,
+  },
+  secondaryActionSep: {
+    width: 1, height: 20, backgroundColor: '#E8EDFF',
+  },
+  secondaryActionText: {
+    fontSize: 13, fontWeight: '600',
+  },
+
+  // Add menu
+  menuOverlay: {
+    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end',
+    zIndex: 999,
+  },
+  menuSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: SPACING.lg, paddingBottom: 36, paddingTop: 10,
+  },
+  menuHandle: {
+    width: 40, height: 4, borderRadius: 2,
+    backgroundColor: '#D6E0FF', alignSelf: 'center', marginBottom: 16,
+  },
+  menuTitle: {
+    fontSize: 13, fontWeight: '600', color: COLORS.textTertiary,
+    letterSpacing: 0.3, marginBottom: SPACING.md, textTransform: 'uppercase',
+  },
+  menuItem: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    paddingVertical: 14,
+  },
+  menuItemIcon: {
+    width: 44, height: 44, borderRadius: 14,
+    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
+  },
+  menuItemText: { flex: 1 },
+  menuItemTitle: {
+    fontSize: 15, fontWeight: '700', color: '#0E1C4E',
+  },
+  menuItemSub: {
+    fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
+  },
+  menuDivider: {
+    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 58,
   },
 
   // Warning
   noPassengersWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.warning + '15',
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#FFFBEB',
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     gap: SPACING.sm,
-    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderWidth: 1, borderColor: '#FDE68A',
+  },
+  warningIconWrap: {
+    width: 34, height: 34, borderRadius: 10,
+    backgroundColor: '#FEF3C7',
+    justifyContent: 'center', alignItems: 'center',
+    flexShrink: 0,
+  },
+  warningTitle: {
+    fontSize: 13, fontWeight: '700', color: '#92400E', marginBottom: 2,
   },
   warningText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.warning,
-    flex: 1,
+    fontSize: 12, color: '#B45309', lineHeight: 16,
   },
 
-  // 📍 Dropoff Groups
+  // Dropoff Groups
   dropoffGroupItem: {
-    backgroundColor: COLORS.background,
+    backgroundColor: '#FAFBFF',
     borderRadius: RADIUS.md,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.primary,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: '#E8EDFF',
     overflow: 'hidden',
   },
   dropoffHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.primary + '10',
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: 10,
+    backgroundColor: '#EEF2FF',
+    gap: 8,
   },
   dropoffIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.md,
+    width: 28, height: 28, borderRadius: 8,
+    backgroundColor: `${COLORS.primary}20`,
+    justifyContent: 'center', alignItems: 'center',
+    flexShrink: 0,
   },
-  dropoffInfo: {
-    flex: 1,
-  },
+  dropoffInfo: { flex: 1 },
   dropoffLocation: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
+    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
   },
   dropoffCount: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
+    fontSize: 11, color: COLORS.textSecondary, marginTop: 1,
   },
   customBadge: {
-    backgroundColor: COLORS.accent,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.sm,
+    backgroundColor: '#EDE9FE', borderRadius: RADIUS.full,
+    paddingHorizontal: 8, paddingVertical: 3,
   },
   customBadgeText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textInverse,
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 10, fontWeight: '700', color: '#6C1FC6',
   },
   passengersInGroup: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.surface,
+    paddingBottom: 4,
+    backgroundColor: '#fff',
   },
 })

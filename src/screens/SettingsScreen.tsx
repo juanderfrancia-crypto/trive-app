@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput } from 'react-native'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -13,30 +12,50 @@ import {
 } from '../services/notificationPreferences'
 import { getPushNotificationToken, registerPushToken } from '../services/pushNotifications'
 import { supabase } from '../services/supabase'
+import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
+import { Municipality } from '../data/colombiaMunicipalities'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
   const [pushNotifications, setPushNotifications] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
+  const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
+  const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
   const [emergencyContact, setEmergencyContact] = useState<{name: string; phone: string} | null>(null)
   const [sosModalVisible, setSosModalVisible] = useState(false)
   const [sosName, setSosName] = useState('')
   const [sosPhone, setSosPhone] = useState('')
 
   useEffect(() => {
-    AsyncStorage.getItem('emergency_contact').then((raw) => {
-      if (raw) setEmergencyContact(JSON.parse(raw))
-    })
-  }, [])
+    if (!user?.id) return
+    supabase
+      .from('profiles')
+      .select('emergency_contact, preferred_municipality')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.emergency_contact) setEmergencyContact(data.emergency_contact)
+        if (data?.preferred_municipality) setPreferredMunicipality(data.preferred_municipality)
+      })
+  }, [user?.id])
+
+  const saveMunicipality = async (m: Municipality) => {
+    setShowMunicipalityPicker(false)
+    setPreferredMunicipality(m.name)
+    if (user?.id) {
+      await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
+    }
+  }
 
   const saveEmergencyContact = async () => {
     if (!sosPhone.trim()) {
       Alert.alert('Error', 'El número de teléfono es obligatorio')
       return
     }
+    if (!user?.id) return
     const contact = { name: sosName.trim() || 'Contacto SOS', phone: sosPhone.trim() }
-    await AsyncStorage.setItem('emergency_contact', JSON.stringify(contact))
+    await supabase.from('profiles').update({ emergency_contact: contact }).eq('id', user.id)
     setEmergencyContact(contact)
     setSosModalVisible(false)
   }
@@ -238,8 +257,27 @@ export default function SettingsScreen() {
       {/* Viaje Personalizado */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Viaje Personalizado</Text>
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
+          style={styles.settingCard}
+          onPress={() => setShowMunicipalityPicker(true)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.settingHeader}>
+            <View style={styles.settingIcon}>
+              <Ionicons name="location-outline" size={20} color={COLORS.primary} />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingLabel}>Mi municipio</Text>
+              <Text style={styles.settingDescription}>
+                {preferredMunicipality ?? 'No configurado — filtra los viajes de tu zona'}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
           style={styles.settingCard}
           onPress={() => navigation.navigate('TravelPreferences' as never)}
           activeOpacity={0.7}
@@ -364,6 +402,13 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+      <MunicipalityPickerModal
+        visible={showMunicipalityPicker}
+        current={preferredMunicipality}
+        onSelect={saveMunicipality}
+        onClose={() => setShowMunicipalityPicker(false)}
+      />
 
       {/* Modal contacto de emergencia */}
       <Modal visible={sosModalVisible} transparent animationType="fade" onRequestClose={() => setSosModalVisible(false)}>

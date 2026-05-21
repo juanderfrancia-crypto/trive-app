@@ -26,7 +26,7 @@ export default function ActiveChatsScreen() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const channelsRef = useRef<Record<string, () => void>>({})
 
-  // Cargar chats ocultados
+  // Cargar chats ocultados y limpiar IDs huérfanos
   useEffect(() => {
     AsyncStorage.getItem(HIDDEN_CHATS_KEY).then((raw) => {
       if (raw) setHiddenChatIds(new Set(JSON.parse(raw)))
@@ -36,6 +36,17 @@ export default function ActiveChatsScreen() {
   useFocusEffect(useCallback(() => {
     refetch()
   }, [refetch]))
+
+  // Limpiar IDs ocultos que ya no tienen reserva activa
+  useEffect(() => {
+    if (!bookings.length || !hiddenChatIds.size) return
+    const activeIds = new Set(bookings.map((b) => b.bookingId))
+    const cleaned = new Set([...hiddenChatIds].filter((id) => activeIds.has(id)))
+    if (cleaned.size !== hiddenChatIds.size) {
+      setHiddenChatIds(cleaned)
+      AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...cleaned]))
+    }
+  }, [bookings])
 
   // Suscribir a no leídos por cada chat activo
   useEffect(() => {
