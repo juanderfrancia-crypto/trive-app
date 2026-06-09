@@ -1012,7 +1012,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    maxHeight: '82%',
+    maxHeight: '90%',
   },
   modalHandle: {
     width: 36,

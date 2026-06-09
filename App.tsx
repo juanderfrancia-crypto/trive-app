@@ -1,6 +1,7 @@
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
@@ -22,10 +23,10 @@ try { if (_crashlytics) _crashlytics().setCrashlyticsCollectionEnabled(!__DEV__)
 
 export default function App() {
   return (
-    <>
+    <SafeAreaProvider>
       <StatusBar style="dark" />
       <AppNavigator />
-      <Toast config={toastConfig} topOffset={54} />
-    </>
+      <Toast config={toastConfig} position="bottom" bottomOffset={40} />
+    </SafeAreaProvider>
   );
 }

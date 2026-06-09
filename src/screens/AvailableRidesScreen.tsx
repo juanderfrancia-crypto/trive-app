@@ -7,6 +7,7 @@ import {
   FlatList,
   RefreshControl,
   Alert,
+  Image as RNImage,
 } from 'react-native'
 import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -94,6 +95,14 @@ export default function AvailableRidesScreen() {
     return `en ${Math.round(diffMins / 1440)}d`
   }, [])
 
+  const getVehicleImage = (vehicleType: string | null) => {
+    if (!vehicleType) return null
+    const type = vehicleType.toLowerCase()
+    if (type.includes('van') || type.includes('minivan')) return require('../../assets/vehicles/van.png')
+    // Por defecto: sedan, chevy, auto, etc. → sedanblanco
+    return require('../../assets/vehicles/sedanblanco.png')
+  }
+
   const renderRideCard = ({ item: ride }: any) => {
     const occupied     = (ride.total_seats ?? 0) - (ride.seats_available_count ?? 0)
     const total        = ride.total_seats ?? 1
@@ -118,8 +127,7 @@ export default function AvailableRidesScreen() {
           <View style={styles.routeMeta}>
             <Text style={styles.priceText}>${Math.round(ride.price_per_seat).toLocaleString('es-CO')}</Text>
             <Text style={styles.departureLine}>
-              {new Date(ride.departure_time).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })}
-              {' · '}{formatTime(ride.departure_time)}
+              {new Date(ride.departure_time).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })} · {formatTime(ride.departure_time)}
             </Text>
             <Text style={styles.minutesText}>{getMinutesUntilDeparture(ride.departure_time)}</Text>
           </View>
@@ -127,7 +135,7 @@ export default function AvailableRidesScreen() {
 
         <View style={styles.divider} />
 
-        {/* ── Conductor ── */}
+        {/* ── Conductor + Vehículo ── */}
         <View style={styles.driverSection}>
           <View style={styles.avatarWrap}>
             {ride.driver_photo ? (
@@ -145,19 +153,22 @@ export default function AvailableRidesScreen() {
           <View style={styles.driverDetails}>
             <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
             <View style={styles.driverMetaRow}>
-              <Text style={styles.vehicleText}>{ride.vehicle_type || 'Auto'}</Text>
-              {!!ride.vehicle_color && <Text style={styles.vehicleText}>· {ride.vehicle_color}</Text>}
               {!!ride.vehicle_plate && (
                 <View style={styles.platePill}>
                   <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
                 </View>
               )}
+              <Ionicons name="star" size={11} color="#FBBF24" />
+              <Text style={styles.ratingVal}>{ride.driver_rating.toFixed(1)}</Text>
             </View>
           </View>
-          <View style={styles.ratingWrap}>
-            <Ionicons name="star" size={13} color="#FBBF24" />
-            <Text style={styles.ratingVal}>{ride.driver_rating.toFixed(1)}</Text>
-          </View>
+          {ride.vehicle_type && getVehicleImage(ride.vehicle_type) && (
+            <RNImage
+              source={getVehicleImage(ride.vehicle_type)!}
+              style={styles.vehicleImageSmall}
+              resizeMode="contain"
+            />
+          )}
         </View>
 
         {/* ── Vía (opcional) ── */}
@@ -402,7 +413,7 @@ const styles = StyleSheet.create({
   rideCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: RADIUS.xl,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     borderWidth: 1,
     borderColor: '#E8EDFF',
     shadowColor: '#1230B8',
@@ -418,23 +429,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.md,
-    paddingBottom: 12,
-    gap: 10,
+    paddingTop: SPACING.sm,
+    paddingBottom: 8,
+    gap: 8,
   },
   routeTrack: {
     alignItems: 'center',
-    gap: 3,
-    paddingTop: 2,
+    gap: 2,
+    paddingTop: 1,
   },
   trackDot: {
-    width: 8, height: 8, borderRadius: 4,
+    width: 7, height: 7, borderRadius: 3.5,
     backgroundColor: COLORS.primary,
     borderWidth: 1.5, borderColor: '#fff',
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
   },
   trackLine: {
-    width: 1.5, height: 14, backgroundColor: '#CBD5E1',
+    width: 1.5, height: 10, backgroundColor: '#CBD5E1',
   },
   trackDotEnd: {
     backgroundColor: '#fff',
@@ -443,23 +454,23 @@ const styles = StyleSheet.create({
   },
   routeNames: {
     flex: 1,
-    gap: 8,
+    gap: 5,
   },
   originText: {
-    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    fontSize: 13, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
   },
   destText: {
-    fontSize: 15, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
+    fontSize: 13, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
   },
   routeMeta: {
     alignItems: 'flex-end',
-    gap: 3,
+    gap: 0,
   },
   priceText: {
-    fontSize: 17, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
   },
   departureLine: {
-    fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
+    fontSize: 10, color: COLORS.textTertiary, fontWeight: '500',
   },
   minutesText: {
     fontSize: 11, color: COLORS.success, fontWeight: '700',
@@ -474,76 +485,77 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
-    paddingVertical: 12,
+    paddingVertical: 8,
     gap: SPACING.sm,
   },
   avatarWrap: {
-    width: 46, height: 46, borderRadius: 23,
+    width: 42, height: 42, borderRadius: 21,
     overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
     flexShrink: 0,
   },
-  avatar: { width: 46, height: 46 },
+  avatar: { width: 42, height: 42 },
   avatarPlaceholder: {
-    width: 46, height: 46, justifyContent: 'center', alignItems: 'center',
+    width: 42, height: 42, justifyContent: 'center', alignItems: 'center',
   },
   avatarInitials: {
-    fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: -0.3,
   },
   driverDetails: {
-    flex: 1, gap: 4,
+    flex: 1, gap: 2,
   },
   driverName: {
-    fontSize: 14, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
   },
   driverMetaRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap',
+    flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap',
   },
   vehicleText: {
-    fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
+    fontSize: 9, color: COLORS.textTertiary, fontWeight: '500',
   },
   platePill: {
-    backgroundColor: '#F0F4FF', paddingHorizontal: 5, paddingVertical: 1,
+    backgroundColor: '#F0F4FF', paddingHorizontal: 4, paddingVertical: 1,
     borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
   },
   plateText: {
-    fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5,
+    fontSize: 9, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3,
   },
   ratingWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: '#FFFBEB', paddingHorizontal: 8, paddingVertical: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 2,
+    backgroundColor: '#FFFBEB', paddingHorizontal: 5, paddingVertical: 2,
     borderRadius: RADIUS.full, borderWidth: 1, borderColor: '#FDE68A',
     flexShrink: 0,
   },
   ratingVal: {
-    fontSize: 12, fontWeight: '700', color: '#92400E',
+    fontSize: 10, fontWeight: '700', color: '#92400E',
   },
+  vehicleImageSmall: { width: 100, height: 75, flexShrink: 0 },
 
   // ── Vía ──
   viaStrip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    marginHorizontal: SPACING.md, marginBottom: 8,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    marginHorizontal: SPACING.md, marginBottom: 5,
     backgroundColor: `${COLORS.accent}10`,
-    paddingHorizontal: 8, paddingVertical: 5,
+    paddingHorizontal: 6, paddingVertical: 3,
     borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent,
   },
-  viaText: { flex: 1, fontSize: 11, color: COLORS.accent, fontWeight: '500' },
+  viaText: { flex: 1, fontSize: 10, color: COLORS.accent, fontWeight: '500' },
 
   // ── Fila inferior ──
   bottomRow: {
     flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: SPACING.md, paddingVertical: 12,
+    paddingHorizontal: SPACING.md, paddingVertical: 8,
     gap: SPACING.md,
   },
-  occupancyWrap: { flex: 1, gap: 5 },
+  occupancyWrap: { flex: 1, gap: 3 },
   almostFullText: {
-    fontSize: 10, fontWeight: '800', color: '#92400E', letterSpacing: 0.4,
+    fontSize: 9, fontWeight: '800', color: '#92400E', letterSpacing: 0.3,
   },
   occupancyLabelRow: {
     flexDirection: 'row', alignItems: 'baseline',
   },
-  occupancyFraction: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
-  occupancyWord: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
+  occupancyFraction: { fontSize: 12, fontWeight: '800', color: COLORS.primary },
+  occupancyWord: { fontSize: 10, color: COLORS.textSecondary, fontWeight: '500' },
   progressBg: {
     height: 5, backgroundColor: '#E8EDFF', borderRadius: RADIUS.full, overflow: 'hidden',
   },

@@ -71,7 +71,28 @@
       "Bash(sed -n '291,300p' src/screens/TripStatusScreen.tsx)",
       "Bash(sed -n '451,463p' src/screens/TripStatusScreen.tsx)",
       "Bash(sed -n '28,75p' src/components/RatingModal.tsx)",
-      "Bash(sed -n '223,235p' src/components/RatingModal.tsx)"
+      "Bash(sed -n '223,235p' src/components/RatingModal.tsx)",
+      "Bash(node -e \"const pkg = require\\('./package.json'\\); console.log\\(pkg.dependencies['@react-native-community/datetimepicker'] || 'NO INSTALADO'\\)\")",
+      "Bash(node -e \"const pkg = require\\('./package.json'\\); const deps = {...pkg.dependencies, ...pkg.devDependencies}; Object.keys\\(deps\\).filter\\(k => k.includes\\('date'\\) || k.includes\\('picker'\\) || k.includes\\('modal'\\)\\).forEach\\(k => console.log\\(k, deps[k]\\)\\)\")",
+      "Bash(ls \"c:\\\\Users\\\\T460s\\\\Desktop\\\\codigo cursor\\\\\")",
+      "Read(//c/Users/T460s/Desktop/**)",
+      "Bash(eas login *)",
+      "Bash(eas secret:create --scope project --name GOOGLE_SERVICES_JSON --type file --value ./google-services.json)",
+      "Bash(gh repo *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(ls -la \"c:/Users/T460s/.claude/\" 2>&1)",
+      "Read(//c/Users/T460s/.claude/**)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\([k for k in d.keys\\(\\)], indent=2\\)\\)\")",
+      "Bash(git clone *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(node -e \"JSON.parse\\(require\\('fs'\\).readFileSync\\('C:/Users/T460s/.claude/settings.json', 'utf8'\\)\\); console.log\\('JSON válido'\\)\")",
+      "WebFetch(domain:stitch.withgoogle.com)",
+      "WebSearch"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\T460s\\.claude"
     ]
   }
 }

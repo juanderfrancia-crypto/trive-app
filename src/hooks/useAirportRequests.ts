@@ -192,7 +192,14 @@ export const useAirportRequests = () => {
 
       if (deductError) throw deductError
 
-      // 3. Accept the request
+      // 3. Fetch request details for the notification
+      const { data: reqData } = await supabase
+        .from('airport_requests')
+        .select('origin, destination, departure_time, passengers, offered_price')
+        .eq('id', requestId)
+        .single()
+
+      // 4. Accept the request
       const { data: updated, error: updateError } = await supabase
         .from('airport_requests')
         .update({
@@ -214,14 +221,23 @@ export const useAirportRequests = () => {
         throw updateError || new Error('No se pudo aceptar la solicitud')
       }
 
-      // 4. Notify passenger
+      // 5. Notify passenger with full trip details
       const driverName = profile?.name || 'Tu conductor'
       insertNotificationForUser(updated.passenger_id, {
         user_id: updated.passenger_id,
         type: 'trip_update',
-        title: '¡Tienes conductor!',
-        message: `${driverName} aceptó tu viaje al aeropuerto.`,
-        data: { request_id: requestId },
+        title: '✈️ ¡Tienes conductor para tu viaje!',
+        message: `${driverName} aceptó tu solicitud de aeropuerto.`,
+        data: {
+          request_id: requestId,
+          driver_name: driverName,
+          driver_id: driverId,
+          origin: reqData?.origin,
+          destination: reqData?.destination,
+          trip_date: reqData?.departure_time,
+          price: reqData?.offered_price,
+          passengers: reqData?.passengers,
+        },
         is_read: false,
       }).catch(() => {})
 
@@ -263,12 +279,24 @@ export const useAirportRequests = () => {
 
       // Notify driver if there was one
       if (current.driver_id) {
+        const { data: reqInfo } = await supabase
+          .from('airport_requests')
+          .select('origin, destination, departure_time, offered_price')
+          .eq('id', requestId)
+          .single()
+
         insertNotificationForUser(current.driver_id, {
           user_id: current.driver_id,
           type: 'trip_update',
-          title: 'Viaje cancelado',
+          title: '❌ Viaje cancelado',
           message: 'El pasajero canceló el viaje al aeropuerto.',
-          data: { request_id: requestId },
+          data: {
+            request_id: requestId,
+            origin: reqInfo?.origin,
+            destination: reqInfo?.destination,
+            trip_date: reqInfo?.departure_time,
+            price: reqInfo?.offered_price,
+          },
           is_read: false,
         }).catch(() => {})
       }

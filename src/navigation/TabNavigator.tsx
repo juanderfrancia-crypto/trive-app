@@ -30,44 +30,51 @@ export default function TabNavigator() {
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline'
           } else if (route.name === 'Search') {
-            iconName = focused ? 'car' : 'car-outline'
+            iconName = focused ? 'car-sharp' : 'car-outline'
           } else if (route.name === 'Alerts') {
             iconName = focused ? 'notifications' : 'notifications-outline'
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline'
           }
 
-          if (focused) {
-            return (
-              <View style={styles.tabActive}>
-                <Ionicons name={iconName} size={size} color={COLORS.textInverse} />
-              </View>
-            )
-          }
-
-          return <Ionicons name={iconName} size={size} color={color} />
+          return (
+            <View style={focused ? styles.iconActive : styles.iconInactive}>
+              <Ionicons name={iconName} size={size} color={focused ? COLORS.primary : color} />
+            </View>
+          )
         },
-        tabBarActiveTintColor: '#1230B8',
+        tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarContainerStyle: {
+          backgroundColor: COLORS.surface,
+          borderTopWidth: 0,
+        },
         tabBarStyle: {
           backgroundColor: COLORS.surface,
-          borderTopWidth: 1,
-          borderTopColor: COLORS.borderLight,
-          height: 65 + insets.bottom,
-          paddingBottom: SPACING.md + insets.bottom,
-          paddingTop: SPACING.sm,
-          // Android: elevation baja para sombra sutil, no la franja negra de elevation alta
-          elevation: Platform.OS === 'android' ? 8 : 0,
-          // iOS: sombra suave hacia arriba
+          borderTopWidth: 0,
+          height: 55 + insets.bottom,
+          paddingBottom: SPACING.sm + insets.bottom,
+          paddingTop: SPACING.xs,
+          paddingHorizontal: 0,
+          marginHorizontal: 0,
+          marginBottom: 0,
+          borderRadius: 0,
+          // Android: elevation baja para sombra sutil
+          elevation: Platform.OS === 'android' ? 4 : 0,
+          // iOS: sombra suave
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 6,
+        },
+        tabBarIconSize: 22,
+        sceneContainerStyle: {
+          backgroundColor: COLORS.surface,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: '500',
-          marginTop: SPACING.xs,
+          marginTop: SPACING.xs - 2,
         },
         headerShown: false,
       })}
@@ -97,27 +104,16 @@ export default function TabNavigator() {
 }
 
 const styles = StyleSheet.create({
-  tabActive: {
-    backgroundColor: '#1230B8',
-    borderRadius: RADIUS.full,
-    width: 44,
-    height: 44,
+  iconActive: {
     justifyContent: 'center',
     alignItems: 'center',
-    borderTopWidth: 2,
-    borderTopColor: 'rgba(255,255,255,0.28)',
-    borderLeftWidth: 1,
-    borderLeftColor: 'rgba(255,255,255,0.18)',
-    borderBottomWidth: 3,
-    borderBottomColor: '#0a1a7a',
-    borderRightWidth: 1,
-    borderRightColor: '#0a1a7a',
-    // Android: elevation baja, shadowColor no se aplica en Android (siempre gris oscuro)
-    elevation: Platform.OS === 'android' ? 4 : 0,
-    // iOS: sombra azul del color del botón
-    shadowColor: '#0E2699',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
+    borderBottomWidth: 2,
+    borderBottomColor: COLORS.primary,
+    paddingBottom: 4,
+  },
+  iconInactive: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 4,
   },
 })

@@ -12,7 +12,11 @@ import { useDriverReviews } from '../hooks/useDriverReviews'
 import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import OfflineBanner from '../components/OfflineBanner'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import Badge from '../components/Badge'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
+import { BookingProgressIndicator } from '../components/BookingProgressIndicator'
 
 export default function SeatSelectionScreen() {
   const navigation = useNavigation()
@@ -395,6 +399,7 @@ export default function SeatSelectionScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
+      <BookingProgressIndicator step={2} />
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -710,42 +715,20 @@ export default function SeatSelectionScreen() {
             </View>
 
             {/* Continue Button */}
-            <LinearGradient
-              colors={selectedSeats.length === 0 ? [COLORS.surfaceAlt, COLORS.surfaceAlt] : ['#0E2699', '#1230B8', '#1A3FCC']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.continueBtnGradient}
+            <Button
+              variant={selectedSeats.length === 0 ? "outline" : "primary"}
+              size="lg"
+              loading={loading}
+              icon={selectedSeats.length === 0 ? 'alert-circle' : 'arrow-forward'}
+              disabled={selectedSeats.length === 0 || loading}
+              onPress={handleContinue}
             >
-              <TouchableOpacity
-                style={styles.continueBtnInner}
-                disabled={selectedSeats.length === 0 || loading}
-                onPress={handleContinue}
-                activeOpacity={0.8}
-              >
-                {loading ? (
-                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 10 }} />
-                ) : (
-                  <Ionicons
-                    name={selectedSeats.length === 0 ? 'alert-circle' : 'arrow-forward'}
-                    size={20}
-                    color={selectedSeats.length === 0 ? COLORS.textSecondary : '#fff'}
-                    style={{ marginRight: 10 }}
-                  />
-                )}
-                <Text
-                  style={[
-                    styles.continueBtnText,
-                    (selectedSeats.length === 0 || loading) && styles.continueBtnTextDisabled,
-                  ]}
-                >
-                  {selectedSeats.length === 0
-                    ? 'Selecciona tus asientos'
-                    : loading
-                    ? 'Reservando...'
-                    : `Continuar - $${(selectedSeats.length * selectedRoute.price_per_seat).toLocaleString('es-CO')}`}
-                </Text>
-              </TouchableOpacity>
-            </LinearGradient>
+              {selectedSeats.length === 0
+                ? 'Selecciona tus asientos'
+                : loading
+                ? 'Reservando...'
+                : `Continuar - $${(selectedSeats.length * selectedRoute.price_per_seat).toLocaleString('es-CO')}`}
+            </Button>
           </>
         )}
       </ScrollView>
@@ -922,6 +905,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#1230B8',
     borderWidth: 2,
     borderColor: '#0E2699',
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
   },
   seatText: {
     ...TYPOGRAPHY.labelMedium,

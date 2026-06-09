@@ -12,7 +12,7 @@ import {
   Image,
   ImageSourcePropType,
 } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS } from '../theme/theme'
@@ -22,7 +22,7 @@ const HERO_H = Math.round(height * 0.64)
 
 type Slide = {
   id: string
-  image: ImageSourcePropType
+  image?: ImageSourcePropType
   eyebrow: string
   title: string
   description: string
@@ -33,7 +33,7 @@ const SLIDES: Slide[] = [
     id: '1',
     image: require('../../assets/mocks/onboarding-1.png'),
     eyebrow: 'MOVILIDAD INTERMUNICIPAL',
-    title: 'Tu viaje,\na tu manera',
+    title: 'Viaja cuando\nquieras',
     description:
       'Conecta con conductores verificados y reserva tu cupo en segundos. Sin filas, sin intermediarios.',
   },
@@ -41,7 +41,7 @@ const SLIDES: Slide[] = [
     id: '2',
     image: require('../../assets/mocks/onboarding-2.png'),
     eyebrow: 'SEGURIDAD GARANTIZADA',
-    title: 'Conductores\ncertificados',
+    title: 'Conductores\nverificados',
     description:
       'Verificación de identidad, antecedentes y vehículo en cada conductor que se une a Trive.',
   },
@@ -49,9 +49,9 @@ const SLIDES: Slide[] = [
     id: '3',
     image: require('../../assets/mocks/onboarding-3.png'),
     eyebrow: 'RESERVA DIGITAL',
-    title: 'Listo en\nmenos de un minuto',
+    title: 'En minutos...',
     description:
-      'Busca tu ruta, reserva tu cupo y listo. Todo desde tu celular en segundos.',
+      'Busca tu ruta, reserva tu cupo y listo. Todo desde tu celular',
   },
 ]
 
@@ -62,6 +62,7 @@ interface Props {
 export default function OnboardingScreen({ onComplete }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const listRef = useRef<FlatList<Slide>>(null)
+  const insets = useSafeAreaInsets()
   const slide = SLIDES[currentIndex]
   const isLast = currentIndex === SLIDES.length - 1
 
@@ -79,8 +80,8 @@ export default function OnboardingScreen({ onComplete }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="light-content" backgroundColor="#0a1a5c" translucent={false} />
+    <SafeAreaView style={styles.root} edges={['left', 'right', 'bottom']}>
+      <StatusBar barStyle="light-content" translucent />
 
       {/* ── Hero: imagen a pantalla completa ─────────────────── */}
       <View style={styles.heroArea}>
@@ -96,7 +97,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
           renderItem={({ item }) => (
             <View style={styles.slideVisual}>
               <Image
-                source={item.image}
+                source={item.image!}
                 style={styles.slideImage}
                 resizeMode="cover"
               />
@@ -111,8 +112,16 @@ export default function OnboardingScreen({ onComplete }: Props) {
           )}
         />
 
+        {/* Scrim oscuro para que los íconos de la barra sean visibles */}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.52)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[styles.topScrim, { height: insets.top + 44 }]}
+        />
+
         {/* Header flotante sobre la imagen */}
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
           <Text style={styles.brand}>TRIVE</Text>
           {!isLast && (
             <TouchableOpacity onPress={onComplete} style={styles.skipBtn} activeOpacity={0.7}>
@@ -187,12 +196,26 @@ const styles = StyleSheet.create({
     width,
     height: HERO_H,
   },
+  illustrationContainer: {
+    width,
+    height: HERO_H,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
   imageFade: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     height: HERO_H * 0.38,
+  },
+  topScrim: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 5,
   },
 
   // Header flotante
@@ -201,7 +224,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 24,
-    paddingTop: 12,
     paddingBottom: 12,
     position: 'absolute',
     top: 0,

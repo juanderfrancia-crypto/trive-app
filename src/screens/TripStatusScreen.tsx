@@ -9,6 +9,9 @@ import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
 import { showSuccess, showError } from '../utils/showError'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import Badge from '../components/Badge'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
@@ -82,6 +85,17 @@ export default function TripStatusScreen() {
   })
 
   const driverInitial = selectedRoute.driver_name?.charAt(0).toUpperCase() || 'C'
+
+  const getDepartureLabel = () => {
+    const diffMs = new Date(selectedRoute.departure_time).getTime() - Date.now()
+    if (diffMs <= 0) return 'En curso'
+    const diffMin = Math.round(diffMs / 60000)
+    if (diffMin < 60) return `Salida en ${diffMin} min`
+    const diffH = Math.floor(diffMin / 60)
+    const remMin = diffMin % 60
+    if (remMin === 0) return `Salida en ${diffH}h`
+    return `Salida en ${diffH}h ${remMin}min`
+  }
 
   const handleCancelBooking = () => {
     if (!user) {
@@ -183,7 +197,7 @@ export default function TripStatusScreen() {
                   <Ionicons name="time" size={14} color="#fff" />
                   <Text style={[styles.statusBadgeText, { color: '#fff' }]}>En espera</Text>
                 </View>
-                <Text style={[styles.tripTime, { color: 'rgba(255,255,255,0.8)' }]}>Salida en 15 min</Text>
+                <Text style={[styles.tripTime, { color: 'rgba(255,255,255,0.8)' }]}>{getDepartureLabel()}</Text>
               </View>
 
               <View style={styles.routeDisplay}>

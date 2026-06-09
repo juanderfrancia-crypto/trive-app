@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAirportRequests, AirportRequest } from '../hooks/useAirportRequests'
+import { SkeletonAirportCard } from '../components/Skeleton'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
 
@@ -208,9 +209,10 @@ export default function AirportFeedScreen() {
 
       {/* Lista */}
       {loading && !refreshing ? (
-        <View style={s.loaderContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={s.loaderText}>Cargando solicitudes...</Text>
+        <View style={[s.list, { gap: 0 }]}>
+          <SkeletonAirportCard />
+          <SkeletonAirportCard />
+          <SkeletonAirportCard />
         </View>
       ) : (
         <FlatList

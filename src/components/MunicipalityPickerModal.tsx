@@ -15,17 +15,26 @@ interface Props {
   onClose: () => void
 }
 
+// Función para normalizar strings: remover acentos y espacios extra
+const normalizeString = (str: string): string => {
+  return str
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+}
+
 export function MunicipalityPickerModal({ visible, current, onSelect, onClose }: Props) {
   const insets = useSafeAreaInsets()
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = normalizeString(query)
     if (!q) return COLOMBIA_MUNICIPALITIES
     return COLOMBIA_MUNICIPALITIES.filter(
       (m) =>
-        m.name.toLowerCase().includes(q) ||
-        m.department.toLowerCase().includes(q)
+        normalizeString(m.name).includes(q) ||
+        normalizeString(m.department).includes(q)
     )
   }, [query])
 

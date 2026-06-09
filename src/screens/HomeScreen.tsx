@@ -30,6 +30,9 @@ import { useRoutes, Route } from '../hooks/useRoutes'
 import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
 import { SkeletonRouteCard } from '../components/Skeleton'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import Badge from '../components/Badge'
 import { supabase } from '../services/supabase'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
@@ -67,6 +70,9 @@ export default function HomeScreen() {
   const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const pulseAnim    = useRef(new Animated.Value(1)).current
   const skeletonAnim = useRef(new Animated.Value(0.4)).current
+  const heroEnterAnim = useRef(new Animated.Value(0)).current
+  const upcomingEnterAnim = useRef(new Animated.Value(0)).current
+  const countdownPulseAnim = useRef(new Animated.Value(1)).current
 
   const user       = useAppStore((s) => s.user)
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
@@ -118,6 +124,13 @@ export default function HomeScreen() {
     navigation.navigate('AvailableRides' as never, { municipality: m.name } as never)
   }
 
+  const getMinutesUntilDeparture = (dateString: string) => {
+    const diffMins = Math.round((new Date(dateString).getTime() - Date.now()) / 60000)
+    if (diffMins < 60) return `en ${diffMins} min`
+    if (diffMins < 1440) return `en ${Math.round(diffMins / 60)}h`
+    return `en ${Math.round(diffMins / 1440)}d`
+  }
+
   // ── Load top routes ────────────────────────────────────────────────────────
   const loadTopRoutes = useCallback(async () => {
     setFetchingRoutes(true)
@@ -163,6 +176,44 @@ export default function HomeScreen() {
     return () => skeletonAnim.setValue(0.4)
   }, [skeletonAnim])
 
+  // ── Hero entrance animation ────────────────────────────────────────────────
+  useEffect(() => {
+    Animated.timing(heroEnterAnim, {
+      toValue: 1,
+      duration: 500,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start()
+    return () => heroEnterAnim.setValue(0)
+  }, [heroEnterAnim])
+
+  // ── Upcoming trip entrance animation ───────────────────────────────────────
+  useEffect(() => {
+    if (upcomingTrip) {
+      Animated.timing(upcomingEnterAnim, {
+        toValue: 1,
+        duration: 600,
+        delay: 200,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }).start()
+    }
+    return () => upcomingEnterAnim.setValue(0)
+  }, [upcomingTrip, upcomingEnterAnim])
+
+  // ── Countdown badge pulse animation ───────────────────────────────────────
+  useEffect(() => {
+    if (upcomingTrip) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(countdownPulseAnim, { toValue: 1.1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+          Animated.timing(countdownPulseAnim, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        ])
+      ).start()
+    }
+    return () => countdownPulseAnim.setValue(1)
+  }, [upcomingTrip, countdownPulseAnim])
+
   // ── Helpers ────────────────────────────────────────────────────────────────
   const membershipBadge = () => {
     const type   = user?.membership_type ?? 'free'
@@ -179,10 +230,19 @@ export default function HomeScreen() {
     )
   }
 
+  // ── Vehicle image selector ─────────────────────────────────────────────────
+  const getVehicleImage = (vehicleType: string | null) => {
+    if (!vehicleType) return null
+    const type = vehicleType.toLowerCase()
+    if (type.includes('van')) return require('../../assets/vehicles/van.png')
+    if (type.includes('sedan')) return require('../../assets/vehicles/sedanblanco.png')
+    return require('../../assets/vehicles/sedanblanco.png')
+  }
+
   const metricValue = isDriver
     ? `$${(user?.balance ?? 0).toLocaleString('es-CO')}`
-    : `$${(passengerStats?.spentThisMonth ?? 0).toLocaleString('es-CO')}`
-  const metricLabel = isDriver ? 'Mi billetera' : 'Gastado este mes'
+    : `${passengerStats?.tripsThisMonth ?? 0}`
+  const metricLabel = isDriver ? 'Mi billetera' : 'Viajes este mes'
   const metricLoading = isDriver ? false : statsLoading
 
   // ── SOS ────────────────────────────────────────────────────────────────────
@@ -276,7 +336,7 @@ export default function HomeScreen() {
       onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
     >
       <LinearGradient
-        colors={['#1535BE', '#1130B0', '#0C2490']}
+        colors={['#FFFFFF', '#FFFFFF']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.routeCardInner}
@@ -284,37 +344,22 @@ export default function HomeScreen() {
         {/* Route */}
         <View style={styles.routeTop}>
           <View style={styles.routeRouteWrap}>
-            <View style={styles.routeDot} />
+            <View style={styles.routeTrack}>
+              <View style={styles.routeDot} />
+              <View style={styles.routeTrackLine} />
+              <View style={[styles.routeDot, { backgroundColor: '#fff', borderColor: COLORS.primary, borderWidth: 2 }]} />
+            </View>
             <View style={styles.routeNames}>
               <Text style={styles.routeOrigin} numberOfLines={1}>{route.origin}</Text>
-              <Text style={styles.routeDest}   numberOfLines={1}>→ {route.destination}</Text>
+              <Text style={styles.routeDest} numberOfLines={1}>{route.destination}</Text>
             </View>
           </View>
-          <View style={styles.seatPill}>
-            <Ionicons name="people-outline" size={12} color="#fff" />
-            <Text style={styles.seatPillText}>
-              {route.available_seats} {route.available_seats === 1 ? 'puesto' : 'puestos'}
+          <View style={styles.routeMeta}>
+            <Text style={styles.priceText}>${route.price_per_seat.toLocaleString('es-CO')}</Text>
+            <Text style={styles.timeText}>
+              {new Date(route.departure_time).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })} · {new Date(route.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
             </Text>
-          </View>
-        </View>
-
-        {/* Meta */}
-        <View style={styles.routeMeta}>
-          <View style={styles.routeMetaItem}>
-            <Ionicons name="calendar-outline" size={13} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.routeMetaText}>
-              {new Date(route.departure_time).toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })}
-            </Text>
-          </View>
-          <View style={styles.routeMetaItem}>
-            <Ionicons name="time-outline" size={13} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.routeMetaText}>
-              {new Date(route.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-            </Text>
-          </View>
-          <View style={styles.routeMetaItem}>
-            <Ionicons name="cash-outline" size={13} color="rgba(255,255,255,0.7)" />
-            <Text style={styles.routeMetaText}>${route.price_per_seat.toLocaleString('es-CO')}</Text>
+            <Text style={styles.minutesText}>{getMinutesUntilDeparture(route.departure_time)}</Text>
           </View>
         </View>
 
@@ -323,8 +368,8 @@ export default function HomeScreen() {
         {/* Nota de ruta */}
         {!!route.description && (
           <View style={styles.routeViaRow}>
-            <Ionicons name="git-branch-outline" size={12} color="rgba(255,255,255,0.75)" />
-            <Text style={styles.routeViaText} numberOfLines={2}>{route.description}</Text>
+            <Ionicons name="git-branch-outline" size={11} color={COLORS.accent} />
+            <Text style={styles.routeViaText} numberOfLines={1}>{route.description}</Text>
           </View>
         )}
 
@@ -337,7 +382,7 @@ export default function HomeScreen() {
                 style={styles.driverAvatarImg}
               />
             ) : (
-              <Text style={styles.driverInitials}>
+              <Text style={[styles.driverInitials, { color: COLORS.primary, textShadowColor: 'transparent' }]}>
                 {route.driver_name
                   ? route.driver_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
                   : 'DR'}
@@ -345,18 +390,23 @@ export default function HomeScreen() {
             )}
           </View>
           <View style={styles.driverInfo}>
-            <Text style={styles.driverName} numberOfLines={1}>{route.driver_name ?? 'Conductor'}</Text>
+            <Text style={[styles.driverName, { color: COLORS.textPrimary }]} numberOfLines={1}>{route.driver_name ?? 'Conductor'}</Text>
             <View style={styles.ratingRow}>
+              {route.vehicle_plate && (
+                <View style={styles.platePill}>
+                  <Text style={styles.plateText}>{route.vehicle_plate}</Text>
+                </View>
+              )}
               <Ionicons name="star" size={11} color="#FBBF24" />
               <Text style={styles.ratingText}>{route.driver_rating?.toFixed(1) ?? '0.0'}</Text>
             </View>
           </View>
-          {route.vehicle_type && (
-            <View style={styles.vehicleTag}>
-              <Text style={styles.vehicleTagText}>
-                {route.vehicle_type.charAt(0).toUpperCase() + route.vehicle_type.slice(1)}
-              </Text>
-            </View>
+          {route.vehicle_type && getVehicleImage(route.vehicle_type) && (
+            <Image
+              source={getVehicleImage(route.vehicle_type)!}
+              style={styles.vehicleImage}
+              resizeMode="contain"
+            />
           )}
         </View>
       </LinearGradient>
@@ -370,7 +420,22 @@ export default function HomeScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
 
         {/* ══ BANNER HERO SECTION ═══════════════════════════════════════════ */}
-        <View style={styles.heroBgWrap}>
+        <Animated.View
+          style={[
+            styles.heroBgWrap,
+            {
+              opacity: heroEnterAnim,
+              transform: [
+                {
+                  translateY: heroEnterAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [40, 0],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
           <ImageBackground
             source={isDriver
               ? require('../../assets/banners/condu.png')
@@ -433,22 +498,42 @@ export default function HomeScreen() {
               </View>
             </View>
           </ImageBackground>
-        </View>
+        </Animated.View>
 
         {/* ══ PRÓXIMO VIAJE (solo pasajeros) ════════════════════════════════ */}
         {!isDriver && (
           tripLoading ? null : upcomingTrip ? (
-            <TouchableOpacity style={styles.upcomingCard} onPress={goToTripStatus} activeOpacity={0.92}>
+            <Animated.View
+              style={{
+                opacity: upcomingEnterAnim,
+                transform: [
+                  {
+                    translateY: upcomingEnterAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [50, 0],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <TouchableOpacity style={styles.upcomingCard} onPress={goToTripStatus} activeOpacity={0.92}>
               {/* Header strip */}
               <View style={styles.upcomingHeader}>
                 <View style={styles.upcomingHeaderLeft}>
                   <View style={styles.upcomingDot} />
                   <Text style={styles.upcomingTitle}>Tu próximo viaje</Text>
                 </View>
-                <View style={styles.countdownBadge}>
+                <Animated.View
+                  style={[
+                    styles.countdownBadge,
+                    {
+                      transform: [{ scale: countdownPulseAnim }],
+                    },
+                  ]}
+                >
                   <Ionicons name="time-outline" size={12} color={COLORS.success} />
                   <Text style={styles.countdownText}>Sale en {formatCountdown(upcomingTrip.minutesUntil)}</Text>
-                </View>
+                </Animated.View>
               </View>
 
               {/* Route visualization */}
@@ -497,7 +582,8 @@ export default function HomeScreen() {
                 <Text style={styles.upcomingCtaText}>Ver detalles del viaje</Text>
                 <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
               </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+            </Animated.View>
           ) : null
         )}
 
@@ -505,7 +591,16 @@ export default function HomeScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Buscar viaje</Text>
 
-          <View style={styles.searchCard}>
+          <View style={[
+            styles.searchCard,
+            (originFocused || destinationFocused) && {
+              borderColor: COLORS.primary,
+              shadowColor: COLORS.primary,
+              shadowOpacity: 0.16,
+              shadowRadius: 20,
+              elevation: 8,
+            }
+          ]}>
             <View style={styles.searchRow}>
               <View style={styles.dotCol}>
                 <View style={styles.dotBlue} />
@@ -528,14 +623,13 @@ export default function HomeScreen() {
 
             <View style={styles.searchDividerRow}>
               <View style={styles.searchDivider} />
-              <TouchableOpacity
-                style={styles.swapBtn}
+              <Button
+                variant="ghost"
+                size="sm"
+                icon="swap-vertical"
                 onPress={() => { setOrigin(destination); setDestination(origin) }}
                 accessibilityLabel="Intercambiar origen y destino"
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <Ionicons name="swap-vertical" size={16} color={COLORS.primary} />
-              </TouchableOpacity>
+              />
             </View>
 
             <View style={styles.searchRow}>
@@ -618,13 +712,13 @@ export default function HomeScreen() {
                 style={styles.ctaGradient}
               >
                 <View style={styles.ctaIconWrap}>
-                  <Ionicons name="flash" size={20} color={COLORS.primary} />
+                  <Ionicons name="flash" size={18} color={COLORS.primary} />
                 </View>
                 <View style={styles.ctaTextWrap}>
                   <Text style={styles.ctaTitle}>Viajes Ahora</Text>
                   <Text style={styles.ctaSubtitle}>Disponibles en tiempo real</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.65)" />
+                <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.65)" />
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>
@@ -717,8 +811,9 @@ export default function HomeScreen() {
           </View>
         ) : showRoutesError ? (
           <View style={[styles.section, styles.emptyBox]}>
-            <Ionicons name="alert-circle-outline" size={32} color={COLORS.textTertiary} />
+            <Ionicons name="alert-circle-outline" size={80} color={COLORS.error} />
             <Text style={styles.emptyTitle}>No se pudieron cargar las rutas</Text>
+            <Text style={styles.emptySubtitle}>Intenta de nuevo más tarde</Text>
           </View>
         ) : topRoutes.length > 0 ? (
           <>
@@ -763,7 +858,7 @@ export default function HomeScreen() {
           </>
         ) : (
           <View style={[styles.section, styles.emptyBox]}>
-            <Ionicons name="map-outline" size={32} color={COLORS.textTertiary} />
+            <Ionicons name="map-outline" size={60} color={COLORS.primary} />
             <Text style={styles.emptyTitle}>No hay rutas destacadas</Text>
             <Text style={styles.emptySubtitle}>Revisa más tarde o busca manualmente</Text>
           </View>
@@ -844,15 +939,15 @@ const styles = StyleSheet.create({
   // ── Gradient Hero Background ─────────────────────────────────────────────────
   heroBgWrap: {
     borderRadius: 32,
-    marginBottom: SPACING.lg,
-    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+    marginTop: SPACING.xs,
     marginHorizontal: SPACING.sm,
     overflow: 'hidden',
   },
   heroBg: {
     width: '100%',
-    minHeight: 220,
-    paddingBottom: SPACING.xl,
+    minHeight: 180,
+    paddingBottom: SPACING.lg,
   },
   decorCircle1: {
     position: 'absolute', width: 240, height: 240, borderRadius: 120,
@@ -873,10 +968,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.sm,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xs,
   },
-  wordmark: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 2 },
+  wordmark: { fontSize: 18, fontWeight: '900', color: '#fff', letterSpacing: 2 },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   avatarBtn: {
     width: 40, height: 40, borderRadius: RADIUS.md,
@@ -894,54 +989,54 @@ const styles = StyleSheet.create({
 
   // ── Hero Content (floating on gradient) ──────────────────────────────────────
   heroContent: { paddingHorizontal: SPACING.lg },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
-  heroGreetingWhite: { fontSize: 15, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
-  heroGreetingDark: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
-  heroAmountWhite: { fontSize: 36, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 2 },
-  heroAmountDark: { fontSize: 34, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 2 },
-  heroLabelWhite: { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
-  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.md },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
+  heroGreetingWhite: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
+  heroGreetingDark: { fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
+  heroAmountWhite: { fontSize: 32, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 1 },
+  heroAmountDark: { fontSize: 30, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 1 },
+  heroLabelWhite: { fontSize: 12, color: 'rgba(255,255,255,0.75)' },
+  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
   walletShortcut: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.full,
+    paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
   },
-  walletShortcutText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
-  heroLabelDark: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
+  walletShortcutText: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
+  heroLabelDark: { fontSize: 12, color: COLORS.textSecondary, marginBottom: SPACING.sm },
   pillSolid: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: `${COLORS.primary}10`,
-    paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xs, paddingVertical: 3, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: `${COLORS.primary}20`,
   },
-  pillTextDark: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  pillTextDark: { fontSize: 11, fontWeight: '600', color: COLORS.primary },
   skeletonAmountWhite: {
-    height: 40, width: 160, borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 6,
+    height: 32, width: 140, borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255,255,255,0.2)', marginBottom: 4,
   },
   skeletonLabelWhite: {
-    height: 14, width: 110, borderRadius: RADIUS.xs,
-    backgroundColor: 'rgba(255,255,255,0.15)', marginBottom: SPACING.md,
+    height: 12, width: 100, borderRadius: RADIUS.xs,
+    backgroundColor: 'rgba(255,255,255,0.15)', marginBottom: SPACING.sm,
   },
-  pillRow: { flexDirection: 'row', gap: SPACING.sm, flexWrap: 'wrap' },
+  pillRow: { flexDirection: 'row', gap: SPACING.xs, flexWrap: 'wrap' },
   pillGlass: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.xs, paddingVertical: 3, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
   },
-  pillTextWhite: { fontSize: 12, fontWeight: '600', color: '#fff' },
+  pillTextWhite: { fontSize: 11, fontWeight: '600', color: '#fff' },
   // legacy (kept for safety)
   heroCard: { marginHorizontal: SPACING.lg, marginTop: SPACING.sm, marginBottom: SPACING.lg, backgroundColor: '#EEF4FF', borderRadius: RADIUS.lg, padding: SPACING.lg },
-  heroGreeting: { fontSize: 15, fontWeight: '500', color: COLORS.textSecondary },
+  heroGreeting: { fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
   heroName: { fontWeight: '700', color: COLORS.primary },
-  heroAmount: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 2 },
-  heroLabel: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
-  skeletonAmount: { height: 40, width: 160, borderRadius: RADIUS.sm, backgroundColor: `${COLORS.primary}20`, marginBottom: 6 },
-  skeletonLabel: { height: 14, width: 110, borderRadius: RADIUS.xs, backgroundColor: `${COLORS.primary}15`, marginBottom: SPACING.md },
-  pill: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: 'rgba(21,74,168,0.10)', paddingHorizontal: SPACING.sm, paddingVertical: 5, borderRadius: RADIUS.full },
-  pillText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  heroAmount: { fontSize: 30, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 1 },
+  heroLabel: { fontSize: 12, color: COLORS.textSecondary, marginBottom: SPACING.sm },
+  skeletonAmount: { height: 32, width: 140, borderRadius: RADIUS.sm, backgroundColor: `${COLORS.primary}20`, marginBottom: 4 },
+  skeletonLabel: { height: 12, width: 100, borderRadius: RADIUS.xs, backgroundColor: `${COLORS.primary}15`, marginBottom: SPACING.sm },
+  pill: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: 'rgba(21,74,168,0.10)', paddingHorizontal: SPACING.xs, paddingVertical: 3, borderRadius: RADIUS.full },
+  pillText: { fontSize: 11, fontWeight: '600', color: COLORS.primary },
 
   // ── Upcoming Trip Card ───────────────────────────────────────────────────────
   upcomingCard: {
@@ -978,7 +1073,7 @@ const styles = StyleSheet.create({
   routePointLine: { width: 2, height: 24, backgroundColor: COLORS.borderLight, marginVertical: 3 },
   routePointRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
   upcomingRouteLabels: { flex: 1, gap: 22 },
-  upcomingCity: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
+  upcomingCity: { fontSize: 15, fontWeight: '500', color: COLORS.textPrimary },
   upcomingFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md,
@@ -989,7 +1084,7 @@ const styles = StyleSheet.create({
     backgroundColor: `${COLORS.primary}18`, justifyContent: 'center', alignItems: 'center',
   },
   upcomingAvatarText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
-  upcomingDriverName: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  upcomingDriverName: { fontSize: 13, fontWeight: '500', color: COLORS.textPrimary },
   seatBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     backgroundColor: `${COLORS.primary}12`,
@@ -1016,45 +1111,59 @@ const styles = StyleSheet.create({
   upcomingCtaText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
 
   // ── Section ──────────────────────────────────────────────────────────────────
-  section: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.xl },
+  section: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg },
   sectionNoBottom: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary, letterSpacing: -0.2 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, letterSpacing: -0.3, marginBottom: SPACING.md },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  seeAll: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
+  seeAll: { fontSize: 13, fontWeight: '500', color: COLORS.primary },
 
   // ── Search ───────────────────────────────────────────────────────────────────
   searchCard: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: COLORS.border,
-    marginBottom: SPACING.sm, overflow: 'hidden',
+    marginBottom: SPACING.md, overflow: 'hidden',
     shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.09,
-    shadowRadius: 14,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.md },
+  searchRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
   dotCol: { alignItems: 'center', width: 20, marginRight: SPACING.md },
   dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
   dotLine: { width: 2, minHeight: 18, backgroundColor: COLORS.borderLight, marginTop: 3 },
   dotRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
   searchField: { flex: 1 },
-  searchLabel: { fontSize: 10, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 0.8, marginBottom: 3 },
-  searchInput: { fontSize: 15, color: COLORS.textPrimary, padding: 0 },
-  searchInputFocused: { color: COLORS.primary },
+  searchLabel: { fontSize: 10, fontWeight: '600', color: COLORS.textTertiary, letterSpacing: 0.5, marginBottom: 2 },
+  searchInput: { 
+    fontSize: 14, 
+    color: COLORS.textPrimary, 
+    padding: 0,
+    fontWeight: '500'
+  },
+  searchInputFocused: { 
+    color: COLORS.primary,
+    fontWeight: '600'
+  },
   searchDividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 52,
+    marginLeft: 48,
     marginRight: SPACING.md,
+    paddingVertical: SPACING.xs,
   },
   searchDivider: { flex: 1, height: 1, backgroundColor: COLORS.borderLight },
   swapBtn: {
-    width: 28, height: 28, borderRadius: RADIUS.full,
-    backgroundColor: `${COLORS.primary}10`,
+    width: 30, height: 30, borderRadius: RADIUS.full,
+    backgroundColor: `${COLORS.primary}12`,
     justifyContent: 'center', alignItems: 'center',
     marginLeft: SPACING.sm,
     borderWidth: 1, borderColor: `${COLORS.primary}20`,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
 
   // Recent route chips
@@ -1069,29 +1178,29 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
-    elevation: 2,
+    elevation: 1,
   },
   recentChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
 
   searchBtn: {
-    backgroundColor: '#1230B8', borderRadius: RADIUS.md, height: 50,
+    backgroundColor: '#1230B8', borderRadius: RADIUS.md, height: 48,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: SPACING.sm,
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.45, shadowRadius: 18, elevation: 10,
+    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
     overflow: 'hidden',
   },
   searchBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
-  searchBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  searchBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   searchBtnTextDisabled: { color: COLORS.textTertiary },
 
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
     borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.45, shadowRadius: 20, elevation: 14,
+    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
   },
-  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md },
-  ctaIconWrap: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },
+  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, gap: SPACING.md },
+  ctaIconWrap: { width: 32, height: 32, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },
   ctaTextWrap: { flex: 1 },
-  ctaTitle:    { fontSize: 15, fontWeight: '700', color: '#fff' },
+  ctaTitle:    { fontSize: 14, fontWeight: '700', color: '#fff' },
   ctaSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
   // ── Airport banner ───────────────────────────────────────────────────────────
@@ -1099,21 +1208,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
-    gap: SPACING.md,
+    gap: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
-    ...SHADOWS.sm,
+    shadowColor: COLORS.primaryDark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 6,
+    elevation: 1,
   },
   airportIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.sm,
     backgroundColor: '#EFF6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   airportBannerActive: {
     borderColor: '#C7D2FE',
@@ -1157,66 +1269,114 @@ const styles = StyleSheet.create({
     zIndex: 5,
   },
   routeCard: {
-    width: CARD_W, borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: '#082D66', shadowOffset: { width: 0, height: 14 }, shadowOpacity: 0.42, shadowRadius: 28, elevation: 18,
+    width: CARD_W, borderRadius: RADIUS.xl, overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8EDFF',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    shadowColor: '#1230B8',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.07,
+    shadowRadius: 10,
+    elevation: 3,
   },
-  routeCardInner: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
-  routeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm },
-  routeRouteWrap: { flex: 1, flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm, marginRight: SPACING.sm },
+  routeCardInner: { paddingHorizontal: 0, paddingVertical: 0, gap: 0, backgroundColor: '#fff' },
+  routeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.md, paddingTop: SPACING.md, paddingBottom: 12, gap: 10, marginBottom: 0 },
+  routeRouteWrap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10, marginRight: 0 },
+  routeTrack: {
+    alignItems: 'center',
+    gap: 3,
+    paddingTop: 2,
+  },
+  routeTrackLine: {
+    width: 1.5, height: 14, backgroundColor: '#CBD5E1',
+  },
   routeDot: {
-    width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff', marginTop: 5,
-    shadowColor: '#fff', shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.7, shadowRadius: 5,
+    width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.primary, marginTop: 0,
+    borderWidth: 1.5, borderColor: '#fff',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
   },
-  routeNames: { flex: 1 },
+  routeNames: { flex: 1, gap: 8 },
+  priceText: {
+    fontSize: 17, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
+  },
+  timeText: {
+    fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
+  },
   routeOrigin: {
-    fontSize: 15, fontWeight: '700', color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.45)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5,
+    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5,
   },
   routeDest: {
-    fontSize: 13, color: 'rgba(255,255,255,0.78)', marginTop: 2,
-    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
+    fontSize: 15, fontWeight: '700', color: '#334155', marginTop: 0,
+    textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
   seatPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.12)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
-    paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full,
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: `${COLORS.primary}12`,
+    borderWidth: 1, borderColor: `${COLORS.primary}20`,
+    paddingHorizontal: SPACING.xs, paddingVertical: 3, borderRadius: RADIUS.full,
   },
-  seatPillText: { fontSize: 11, fontWeight: '600', color: '#fff' },
-  routeMeta: { flexDirection: 'row', gap: SPACING.lg, marginBottom: SPACING.sm },
+  seatPillText: { fontSize: 10, fontWeight: '600', color: COLORS.textPrimary },
+  routeMeta: { flexDirection: 'column', gap: 4, marginBottom: 0, alignItems: 'flex-end', justifyContent: 'flex-start' },
   routeMetaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   routeMetaText: {
-    fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.88)',
-    textShadowColor: 'rgba(0,0,0,0.3)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+    fontSize: 11, fontWeight: '500', color: COLORS.textTertiary,
+    textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  routeDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.22)', marginBottom: SPACING.sm },
-  routeViaRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 5, marginBottom: SPACING.sm },
-  routeViaText: { flex: 1, fontSize: 11, color: 'rgba(255,255,255,0.75)', lineHeight: 15 },
-  routeDriver: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  routeDivider: { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md, marginBottom: 0, marginTop: 0 },
+  routeViaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginHorizontal: SPACING.md, marginBottom: 8, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: `${COLORS.accent}10`, borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent },
+  routeViaText: { flex: 1, fontSize: 11, color: COLORS.accent, fontWeight: '500' },
+  routeDriver: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: 12, gap: SPACING.sm },
   driverAvatar: {
-    width: 34, height: 34, borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.32)',
+    width: 46, height: 46, borderRadius: 23,
+    backgroundColor: `${COLORS.primary}12`,
+    borderWidth: 0,
+    borderColor: `${COLORS.primary}20`,
     justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    overflow: 'hidden',
+    flexShrink: 0,
   },
-  driverAvatarImg: { width: 34, height: 34, borderRadius: RADIUS.sm },
+  driverAvatarImg: { width: 46, height: 46, borderRadius: 23 },
   driverInitials: {
-    fontSize: 13, fontWeight: '700', color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+    fontSize: 17, fontWeight: '800', color: COLORS.primary, letterSpacing: -0.3,
+    textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  driverInfo: { flex: 1 },
+  driverInfo: { flex: 1, gap: 4 },
   driverName: {
-    fontSize: 13, fontWeight: '600', color: '#fff',
-    textShadowColor: 'rgba(0,0,0,0.35)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
+    fontSize: 14, fontWeight: '700', color: '#0E1C4E',
   },
-  ratingRow:  { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 2 },
-  ratingText: { fontSize: 11, fontWeight: '600', color: '#FBBF24' },
+  ratingRow:  { 
+    flexDirection: 'row', alignItems: 'center', gap: 3,
+    backgroundColor: '#FFFBEB',
+    paddingHorizontal: 8, paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: '#FDE68A',
+    alignSelf: 'flex-start', flexShrink: 0
+  },
+  ratingText: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+  minutesText: { fontSize: 11, color: COLORS.success, fontWeight: '700' },
+  platePill: {
+    backgroundColor: '#F0F4FF', paddingHorizontal: 5, paddingVertical: 1,
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
+  },
+  plateText: {
+    fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5,
+  },
   vehicleTag: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
-    paddingHorizontal: SPACING.sm, paddingVertical: 3, borderRadius: RADIUS.full,
+    backgroundColor: `${COLORS.primary}12`,
+    borderWidth: 1, borderColor: `${COLORS.primary}20`,
+    paddingHorizontal: SPACING.xs, paddingVertical: 2, borderRadius: RADIUS.full,
+    flexShrink: 0,
   },
-  vehicleTagText: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.92)' },
+  vehicleTagText: { fontSize: 10, fontWeight: '600', color: COLORS.primary },
+  vehicleImage: { width: 100, height: 70, flexShrink: 0 },
 
   // Dots
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginBottom: SPACING.md },

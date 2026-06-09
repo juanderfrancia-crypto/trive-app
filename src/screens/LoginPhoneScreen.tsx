@@ -23,6 +23,7 @@ import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
+import Button from '../components/Button'
 import { showSuccess, showError, showInfo } from '../utils/showError'
 
 type Method = 'phone' | 'email'
@@ -413,24 +414,15 @@ export default function LoginPhoneScreen() {
                 }
               </View>
 
-              <TouchableOpacity
-                style={[s.btn, isSubmitting && s.btnDisabled]}
+              <Button
+                variant="primary"
+                size="lg"
+                loading={isSubmitting || authLoading}
                 onPress={handleSendOTP}
                 disabled={isSubmitting || authLoading}
-                activeOpacity={0.88}
               >
-                <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={s.btnGradient}
-                >
-                  {isSubmitting || authLoading
-                    ? <ActivityIndicator color="#fff" />
-                    : <Text style={s.btnText}>Enviar código</Text>
-                  }
-                </LinearGradient>
-              </TouchableOpacity>
+                Enviar código
+              </Button>
 
               <TermsText />
 
@@ -672,7 +664,7 @@ const s = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginTop: 8,
-    shadowColor: '#1230B8',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -682,6 +674,7 @@ const s = StyleSheet.create({
     height: 62,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 14,
   },
   btnDisabled: { opacity: 0.55 },
   btnText: {

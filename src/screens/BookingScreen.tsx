@@ -22,6 +22,11 @@ import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler
 import { supabase } from '../services/supabase'
 import { showSuccess } from '../utils/showError'
 import OfflineBanner from '../components/OfflineBanner'
+import Button from '../components/Button'
+import Card from '../components/Card'
+import Badge from '../components/Badge'
+import { BookingProgressIndicator } from '../components/BookingProgressIndicator'
+import { ConfirmationAnimation } from '../components/ConfirmationAnimation'
 
 export default function BookingScreen() {
   const navigation = useNavigation<any>()
@@ -36,6 +41,7 @@ export default function BookingScreen() {
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])
   const [bookingFinalized, setBookingFinalized] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
   const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
   const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
   const [driverPaymentMethods, setDriverPaymentMethods] = useState<any[]>([])
@@ -189,6 +195,7 @@ export default function BookingScreen() {
 
       if (allSuccessful) {
         setBookingFinalized(true)
+        setShowConfirmation(true)
         setPendingBookingIds([])
         setBookingData(null)
 
@@ -196,14 +203,19 @@ export default function BookingScreen() {
           await insertNotificationForUser(authUser.id, {
             user_id: authUser.id,
             type: 'booking',
-            title: 'Reserva confirmada',
+            title: '¡Reserva confirmada!',
             message: `Tu reserva para ${selectedRoute.origin} → ${selectedRoute.destination} está confirmada. Asientos: ${seat_numbers.join(', ')}`,
             data: {
-              route_id: selectedRoute.id,
-              booking_id: Array.isArray(results) ? results[0]?.id : undefined,
+              route_id:     selectedRoute.id,
+              booking_id:   Array.isArray(results) ? results[0]?.id : undefined,
               seat_numbers: seat_numbers,
-              departure_time: selectedRoute.departure_time,
-              audience: 'passengers_only',
+              origin:       selectedRoute.origin,
+              destination:  selectedRoute.destination,
+              trip_date:    selectedRoute.departure_time,
+              driver_name:  selectedRoute.driver_name ?? null,
+              driver_id:    selectedRoute.driver_id,
+              price:        total_price,
+              audience:     'passengers_only',
             },
             is_read: false,
           })
@@ -215,10 +227,15 @@ export default function BookingScreen() {
             title: 'Nueva reserva',
             message: `${user.name || 'Un pasajero'} reservó ${seat_numbers.length} cupo${seat_numbers.length > 1 ? 's' : ''} en tu ruta ${selectedRoute.origin} → ${selectedRoute.destination}.`,
             data: {
-              route_id: selectedRoute.id,
-              passenger_id: authUser.id,
+              route_id:      selectedRoute.id,
+              passenger_id:  authUser.id,
+              passenger_name: user.name ?? null,
               seat_numbers,
-              audience: 'drivers_only',
+              origin:        selectedRoute.origin,
+              destination:   selectedRoute.destination,
+              trip_date:     selectedRoute.departure_time,
+              price:         total_price,
+              audience:      'drivers_only',
             },
             is_read: false,
           }).catch(() => {})
@@ -279,6 +296,7 @@ export default function BookingScreen() {
   return (
     <SafeAreaView style={styles.safeContainer}>
       <OfflineBanner />
+      <BookingProgressIndicator step={3} />
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -594,6 +612,12 @@ export default function BookingScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      <ConfirmationAnimation
+        visible={showConfirmation}
+        onAnimationComplete={() => {
+          setTimeout(() => navigation.navigate('TripStatus' as never), 800)
+        }}
+      />
     </SafeAreaView>
   )
 }
