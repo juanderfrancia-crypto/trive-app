@@ -388,6 +388,18 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
+
+          {/* Método de login */}
+          <View style={pv.dataRowDivider} />
+          <View style={pv.dataRow}>
+            <View style={pv.dataLeft}>
+              <View style={pv.dataIcon}><Ionicons name={user?.phone ? 'call' : 'mail'} size={18} color={user?.phone ? '#0040A1' : '#FCD34D'} /></View>
+              <View>
+                <Text style={pv.dataLabel}>Método de acceso</Text>
+                <Text style={pv.dataValue}>{user?.phone ? 'Teléfono' : 'Email'}</Text>
+              </View>
+            </View>
+          </View>
         </View>
       </View>
 
