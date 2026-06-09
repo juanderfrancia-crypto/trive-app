@@ -396,7 +396,7 @@ export default function ProfileScreen() {
               <View style={pv.dataIcon}><Ionicons name={user?.phone ? 'call' : 'mail'} size={18} color={user?.phone ? '#0040A1' : '#FCD34D'} /></View>
               <View>
                 <Text style={pv.dataLabel}>Método de acceso</Text>
-                <Text style={pv.dataValue}>{user?.phone ? 'Teléfono' : 'Email'}</Text>
+                <Text style={pv.dataValue}>{user?.phone ? user.phone : displayEmail || '—'}</Text>
               </View>
             </View>
           </View>
