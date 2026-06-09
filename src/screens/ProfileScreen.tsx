@@ -332,11 +332,11 @@ export default function ProfileScreen() {
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {user?.email && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{user.email}</Text>
+          {displayEmail && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{displayEmail}</Text>
           )}
-          {profile?.phone && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{profile.phone}</Text>
+          {user?.phone && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
           )}
           <View style={pv.premiumBadge}>
             <Ionicons name="star" size={12} color="#78350F" />
@@ -396,12 +396,12 @@ export default function ProfileScreen() {
               <View style={pv.dataIcon}><Ionicons name="mail" size={18} color="#FCD34D" /></View>
               <View>
                 <Text style={pv.dataLabel}>Email</Text>
-                <Text style={pv.dataValue} numberOfLines={1}>{user?.email || '—'}</Text>
+                <Text style={pv.dataValue} numberOfLines={1}>{displayEmail || user?.email || '—'}</Text>
               </View>
             </View>
           </View>
 
-          {profile?.phone ? (
+          {user?.phone ? (
             <>
               <View style={pv.dataRowDivider} />
               <View style={pv.dataRow}>
@@ -409,7 +409,7 @@ export default function ProfileScreen() {
                   <View style={pv.dataIcon}><Ionicons name="call" size={18} color="#0040A1" /></View>
                   <View>
                     <Text style={pv.dataLabel}>Teléfono</Text>
-                    <Text style={pv.dataValue}>{profile.phone}</Text>
+                    <Text style={pv.dataValue}>{user.phone}</Text>
                   </View>
                 </View>
               </View>
