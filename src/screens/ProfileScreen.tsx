@@ -497,10 +497,15 @@ export default function ProfileScreen() {
 
       {/* Configuración (reemplaza opciones del menú hamburguesa) */}
       <View style={s.section}>
-        <TouchableOpacity style={pv.secondaryActionBtn} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
-          <Ionicons name="settings-outline" size={20} color="#1230B8" />
-          <Text style={pv.secondaryActionText}>Configuración</Text>
-          <Ionicons name="chevron-forward" size={18} color="#1230B8" />
+        <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
+          <View style={pv.helpRow}>
+            <View style={pv.settingsIcon}><Ionicons name="settings" size={24} color="#1230B8" /></View>
+            <View style={pv.helpText}>
+              <Text style={pv.payName}>Configuración</Text>
+              <Text style={pv.paySub}>Ajustes y preferencias</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -1212,6 +1217,7 @@ const pv = StyleSheet.create({
 
   helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   helpIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FCD34D', justifyContent: 'center', alignItems: 'center', shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
+  settingsIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: '#1230B8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
   helpText: { flex: 1 },
   chatBadge: {
     position: 'absolute',
@@ -1230,13 +1236,13 @@ const pv = StyleSheet.create({
   chatBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 
   secondaryActionBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: 'rgba(18,48,184,0.08)', borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: 'rgba(18,48,184,0.2)',
-    paddingHorizontal: SPACING.md, paddingVertical: 13,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: '#D6E0FF',
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg,
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
-  secondaryActionText: { fontSize: 14, fontWeight: '700', color: '#1230B8', letterSpacing: 0.2 },
+  secondaryActionText: { fontSize: 14, fontWeight: '700', color: '#1230B8', letterSpacing: 0.2, flex: 1 },
 
   // Data Card
   dataCard: {
