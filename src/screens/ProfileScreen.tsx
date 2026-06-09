@@ -339,7 +339,7 @@ export default function ProfileScreen() {
             <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
           )}
           <View style={pv.premiumBadge}>
-            <Ionicons name="star" size={11} color="#92400E" />
+            <Ionicons name="star" size={12} color="#78350F" />
             <Text style={pv.premiumText}>{membershipLabel}</Text>
           </View>
         </View>
@@ -1078,7 +1078,7 @@ const pv = StyleSheet.create({
   profileRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.lg,
     paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.lg,
-    backgroundColor: '#F8F9FF',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1, borderBottomColor: '#E4EBFF',
   },
   profileInfo: { flex: 1 },
