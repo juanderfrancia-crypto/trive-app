@@ -391,15 +391,31 @@ export default function ProfileScreen() {
 
           {/* Método de login */}
           <View style={pv.dataRowDivider} />
-          <View style={pv.dataRow}>
-            <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name={user?.phone ? 'call' : 'mail'} size={18} color={user?.phone ? '#0040A1' : '#FCD34D'} /></View>
-              <View>
-                <Text style={pv.dataLabel}>Método de acceso</Text>
-                <Text style={pv.dataValue}>{user?.phone ? user.phone : displayEmail || '—'}</Text>
+          {profile?.email && !isFakeEmail(profile.email) ? (
+            <View style={pv.dataRow}>
+              <View style={pv.dataLeft}>
+                <View style={pv.dataIcon}><Ionicons name="mail" size={18} color="#FCD34D" /></View>
+                <View>
+                  <Text style={pv.dataLabel}>Email</Text>
+                  <Text style={pv.dataValue} numberOfLines={1}>{profile.email}</Text>
+                </View>
               </View>
             </View>
-          </View>
+          ) : null}
+          {profile?.phone ? (
+            <>
+              {profile?.email && !isFakeEmail(profile.email) ? <View style={pv.dataRowDivider} /> : null}
+              <View style={pv.dataRow}>
+                <View style={pv.dataLeft}>
+                  <View style={pv.dataIcon}><Ionicons name="call" size={18} color="#0040A1" /></View>
+                  <View>
+                    <Text style={pv.dataLabel}>Teléfono</Text>
+                    <Text style={pv.dataValue}>{profile.phone}</Text>
+                  </View>
+                </View>
+              </View>
+            </>
+          ) : null}
         </View>
       </View>
 
