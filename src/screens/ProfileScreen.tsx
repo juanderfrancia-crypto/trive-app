@@ -332,11 +332,11 @@ export default function ProfileScreen() {
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {displayEmail && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{displayEmail}</Text>
+          {profile?.email && !isFakeEmail(profile.email) && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{profile.email}</Text>
           )}
-          {user?.phone && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
+          {profile?.phone && (
+            <Text style={pv.contactInfo} numberOfLines={1}>{profile.phone}</Text>
           )}
           <View style={pv.premiumBadge}>
             <Ionicons name="star" size={12} color="#78350F" />
