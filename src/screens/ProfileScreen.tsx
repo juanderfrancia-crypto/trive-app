@@ -345,6 +345,52 @@ export default function ProfileScreen() {
         </View>
       </View>
 
+      {/* Datos del pasajero */}
+      <View style={s.section}>
+        <View style={pv.dataCard}>
+          {/* Rating */}
+          <View style={pv.dataRow}>
+            <View style={pv.dataLeft}>
+              <View style={pv.dataIcon}><Ionicons name="star" size={18} color="#FCD34D" /></View>
+              <View>
+                <Text style={pv.dataLabel}>Calificación</Text>
+                <Text style={pv.dataValue}>{(profile?.rating ?? 0).toFixed(1)} / 5.0</Text>
+              </View>
+            </View>
+            <View style={pv.dataRight}>
+              <Text style={pv.dataYear}>{yearsOnApp} {yearsOnApp === 1 ? 'año' : 'años'}</Text>
+            </View>
+          </View>
+
+          {/* Total gastado + Promedio */}
+          <View style={pv.dataRowDivider} />
+          <View style={pv.dataRow}>
+            <View style={pv.dataLeft}>
+              <View style={pv.dataIcon}><Ionicons name="wallet" size={18} color="#0040A1" /></View>
+              <View>
+                <Text style={pv.dataLabel}>Total gastado</Text>
+                <Text style={pv.dataValue}>${(passengerStats?.totalSpent ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}</Text>
+              </View>
+            </View>
+            <View style={pv.dataRight}>
+              <Text style={pv.dataYearSmall}>Promedio: ${(passengerStats?.averagePerTrip ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}</Text>
+            </View>
+          </View>
+
+          {/* Miembro desde */}
+          <View style={pv.dataRowDivider} />
+          <View style={pv.dataRow}>
+            <View style={pv.dataLeft}>
+              <View style={pv.dataIcon}><Ionicons name="calendar" size={18} color="#78350F" /></View>
+              <View>
+                <Text style={pv.dataLabel}>Miembro desde</Text>
+                <Text style={pv.dataValue}>{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
+
       {/* CTA card */}
       <View style={s.section}>
         <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
@@ -1164,6 +1210,32 @@ const pv = StyleSheet.create({
     shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.12, shadowRadius: 10, elevation: 4,
   },
   secondaryActionText: { fontSize: 14, fontWeight: '700', color: '#1230B8', letterSpacing: 0.2 },
+
+  // Data Card
+  dataCard: {
+    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: '#D6E0FF',
+    paddingVertical: SPACING.md, overflow: 'hidden',
+    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+  },
+  dataRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+  },
+  dataRowDivider: {
+    height: 1, backgroundColor: '#D6E0FF', marginVertical: SPACING.xs,
+  },
+  dataLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, flex: 1 },
+  dataIcon: {
+    width: 38, height: 38, borderRadius: RADIUS.md,
+    backgroundColor: 'rgba(0,64,161,0.08)',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  dataLabel: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
+  dataValue: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginTop: 2 },
+  dataRight: { alignItems: 'flex-end' },
+  dataYear: { fontSize: 12, fontWeight: '600', color: '#FCD34D' },
+  dataYearSmall: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
 
   footer: {
     textAlign: 'center', fontSize: 11, fontWeight: '600',
