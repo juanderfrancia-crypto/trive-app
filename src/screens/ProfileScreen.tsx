@@ -1014,7 +1014,7 @@ export default function ProfileScreen() {
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#FFFFFF' },
+  safe:   { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
   scrollContent: { paddingBottom: SPACING.lg },
   loadingBox: { paddingVertical: 80, alignItems: 'center' },
