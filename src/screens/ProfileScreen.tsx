@@ -332,7 +332,7 @@ export default function ProfileScreen() {
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
           </TouchableOpacity>
-          {profile?.email && !isFakeEmail(profile.email) && (
+          {profile?.email && (
             <Text style={pv.contactInfo} numberOfLines={1}>{profile.email}</Text>
           )}
           {profile?.phone && (
@@ -391,20 +391,19 @@ export default function ProfileScreen() {
 
           {/* Método de login */}
           <View style={pv.dataRowDivider} />
-          {profile?.email && !isFakeEmail(profile.email) ? (
-            <View style={pv.dataRow}>
-              <View style={pv.dataLeft}>
-                <View style={pv.dataIcon}><Ionicons name="mail" size={18} color="#FCD34D" /></View>
-                <View>
-                  <Text style={pv.dataLabel}>Email</Text>
-                  <Text style={pv.dataValue} numberOfLines={1}>{profile.email}</Text>
-                </View>
+          <View style={pv.dataRow}>
+            <View style={pv.dataLeft}>
+              <View style={pv.dataIcon}><Ionicons name="mail" size={18} color="#FCD34D" /></View>
+              <View>
+                <Text style={pv.dataLabel}>Email</Text>
+                <Text style={pv.dataValue} numberOfLines={1}>{profile?.email || '—'}</Text>
               </View>
             </View>
-          ) : null}
+          </View>
+
           {profile?.phone ? (
             <>
-              {profile?.email && !isFakeEmail(profile.email) ? <View style={pv.dataRowDivider} /> : null}
+              <View style={pv.dataRowDivider} />
               <View style={pv.dataRow}>
                 <View style={pv.dataLeft}>
                   <View style={pv.dataIcon}><Ionicons name="call" size={18} color="#0040A1" /></View>
