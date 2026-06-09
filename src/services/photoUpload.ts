@@ -5,7 +5,7 @@ import { supabase } from './supabase'
  * If the bucket is public, use the persistent public URL.
  * Otherwise fall back to a longer-lived signed URL.
  */
-const PUBLIC_BUCKETS = new Set(['profile-photos'])
+const PUBLIC_BUCKETS = new Set(['profile-photos', 'vehicle-photos'])
 
 async function getStorageUrl(
   bucket: string,
@@ -13,33 +13,83 @@ async function getStorageUrl(
   options?: { allowPublicUrl?: boolean }
 ): Promise<string> {
   try {
+    const allowPublicUrl = options?.allowPublicUrl ?? PUBLIC_BUCKETS.has(bucket)
+
+    // Si es URL pública, intentar primero con getPublicUrl (sin expiración)
+    if (allowPublicUrl) {
+      const result = await supabase.storage
+        .from(bucket)
+        .getPublicUrl(filePath)
+      
+      const publicData = result.data
+
+      if (publicData?.publicUrl && !publicData.publicUrl.includes('null')) {
+        console.log('✅ Using public URL for', bucket, ':', publicData.publicUrl.substring(0, 60) + '...')
+        return publicData.publicUrl
+      }
+    }
+
+    // Fallback: URL firmada (para buckets privados o si getPublicUrl falla)
     const { data, error } = await supabase.storage
       .from(bucket)
       .createSignedUrl(filePath, 60 * 60 * 24 * 30) // 30 days
 
     if (!error && data?.signedUrl) {
+      console.log('⏰ Using signed URL (expires 30 days) for', bucket)
       return data.signedUrl
-    }
-
-    const allowPublicUrl = options?.allowPublicUrl ?? PUBLIC_BUCKETS.has(bucket)
-
-    if (!allowPublicUrl) {
-      throw error || new Error('No se pudo generar la URL de storage')
-    }
-
-    const result = await supabase.storage
-      .from(bucket)
-      .getPublicUrl(filePath)
-    
-    const publicData = result.data
-
-    if (publicData?.publicUrl && !publicData.publicUrl.includes('null')) {
-      return publicData.publicUrl
     }
 
     throw error || new Error('No se pudo generar la URL de storage')
   } catch (err) {
+    console.error('❌ getStorageUrl error:', err)
     throw err
+  }
+}
+
+/**
+ * Regenerate expired signed URLs to public URLs.
+ * If a URL is a signed URL with an expired token, convert it to a public URL.
+ */
+export async function regenerateExpiredPhotoUrl(
+  oldUrl: string,
+  bucket: 'vehicle-photos' | 'profile-photos'
+): Promise<string> {
+  try {
+    // Check if it's a signed URL (contains /sign/)
+    if (!oldUrl.includes('/sign/')) {
+      console.log('✅ URL is already public:', oldUrl.substring(0, 60) + '...')
+      return oldUrl // Already a public URL
+    }
+
+    console.log('♻️  [regenerateExpiredPhotoUrl] Converting signed URL to public...')
+
+    // Extract file path from signed URL
+    // Format: https://...supabase.co/storage/v1/object/sign/bucket/path/to/file?token=...
+    const pathMatch = oldUrl.match(/\/storage\/v1\/object\/sign\/[^\/]+\/(.+?)\?/)
+    if (!pathMatch || !pathMatch[1]) {
+      console.warn('Could not extract file path from URL:', oldUrl.substring(0, 80))
+      return oldUrl // Return original if we can't parse it
+    }
+
+    const filePath = decodeURIComponent(pathMatch[1])
+    console.log('📂 [regenerateExpiredPhotoUrl] File path:', filePath)
+
+    // Generate new public URL
+    const result = await supabase.storage
+      .from(bucket)
+      .getPublicUrl(filePath)
+
+    const publicUrl = result.data?.publicUrl
+    if (publicUrl && !publicUrl.includes('null')) {
+      console.log('✅ [regenerateExpiredPhotoUrl] New public URL:', publicUrl.substring(0, 60) + '...')
+      return publicUrl
+    }
+
+    console.warn('Failed to generate public URL, returning original')
+    return oldUrl
+  } catch (err) {
+    console.error('❌ regenerateExpiredPhotoUrl error:', err)
+    return oldUrl // Return original URL as fallback
   }
 }
 
@@ -122,6 +172,7 @@ export async function uploadProfilePhoto(userId: string, fileUri: string): Promi
 
     // Get a stable storage URL for the uploaded profile image
     const photoUrl = await getStorageUrl('profile-photos', filePath, { allowPublicUrl: true })
+    console.log('✅ [uploadProfilePhoto] URL generada:', photoUrl.substring(0, 100) + '...')
 
     // Update profile in database
     const { data, error: dbError } = await supabase
@@ -163,7 +214,7 @@ export async function getVehiclePhotoUrl(driverId: string): Promise<string | nul
     if (filePath.includes('*')) continue
     
     try {
-      const url = await getStorageUrl('vehicle-photos', filePath, { allowPublicUrl: false })
+      const url = await getStorageUrl('vehicle-photos', filePath, { allowPublicUrl: true })
       if (url) return url
     } catch (error) {
       console.warn(`Vehicle photo not found at ${filePath}:`, error)
@@ -190,38 +241,42 @@ export async function uploadVehiclePhoto(
     // Read file as Uint8Array using fetch (cross-platform compatible)
     const bytes = await uriToUint8Array(fileUri)
 
-    // Create candidate file paths - try simpler paths first
+    // Create candidate file paths - prioritize paths with folder structure for RLS compliance
+    // Include timestamp to ensure unique paths and force React to detect URL changes
+    const timestamp = Date.now()
     const basePaths = routeId
       ? [
-          `vehicle_${driverId}.jpg`, // Simplest: no folder structure
-          `${driverId}/vehicle.jpg`, // Driver ID only
-          `drivers/${driverId}/vehicle.jpg`, // Standard structure
-          `drivers/${driverId}/routes/${routeId}/vehicle.jpg`, // Full structure
+          `drivers/${driverId}/routes/${routeId}/${timestamp}-vehicle.jpg`, // Full structure with timestamp (best for RLS)
+          `drivers/${driverId}/${timestamp}-vehicle.jpg`, // Driver folder structure with timestamp
+          `${driverId}/${timestamp}-vehicle.jpg`, // Driver ID only with timestamp
+          `vehicle_${driverId}_${timestamp}.jpg`, // Simplest with timestamp
         ]
       : [
-          `vehicle_${driverId}.jpg`, // Simplest
-          `${driverId}/vehicle.jpg`, // Driver ID only
-          `drivers/${driverId}/vehicle.jpg`, // Standard structure
+          `drivers/${driverId}/${timestamp}-vehicle.jpg`, // Driver folder structure with timestamp (best for RLS)
+          `${driverId}/${timestamp}-vehicle.jpg`, // Driver ID only with timestamp
+          `vehicle_${driverId}_${timestamp}.jpg`, // Simplest with timestamp
         ]
 
     let uploadedFilePath: string | null = null
     let uploadError: any = null
 
     for (const candidatePath of basePaths) {
+      console.log(`📤 [uploadVehiclePhoto] Intentando path: ${candidatePath}`)
       const { error } = await supabase.storage
         .from('vehicle-photos')
         .upload(candidatePath, bytes, {
           contentType: 'image/jpeg',
-          upsert: true,
+          upsert: false, // Don't overwrite - create new file with unique path
         })
 
       if (!error) {
         uploadedFilePath = candidatePath
         uploadError = null
+        console.log(`✅ [uploadVehiclePhoto] Subida exitosa con path: ${candidatePath}`)
         break
       }
 
-      console.warn(`Vehicle photo upload failed for path ${candidatePath}:`, error)
+      console.warn(`⚠️  [uploadVehiclePhoto] Falló path ${candidatePath}:`, error?.message)
       uploadError = error
     }
 
@@ -231,36 +286,46 @@ export async function uploadVehiclePhoto(
     }
 
     // Get a stable storage URL for the uploaded vehicle image
-    const photoUrl = await getStorageUrl('vehicle-photos', uploadedFilePath, { allowPublicUrl: false })
+    const photoUrl = await getStorageUrl('vehicle-photos', uploadedFilePath, { allowPublicUrl: true })
+    console.log('✅ [uploadVehiclePhoto] URL generada:', photoUrl.substring(0, 100) + '...')
 
     if (routeId) {
       try {
-        const { error: dbError } = await supabase
+        console.log('📝 [uploadVehiclePhoto] Actualizando routes con routeId:', routeId)
+        const { error: dbError, data: updateData } = await supabase
           .from('routes')
           .update({ vehicle_photo_url: photoUrl })
           .eq('id', routeId)
+          .select()
 
         if (dbError) {
-          console.warn('Error updating route vehicle photo URL:', dbError)
+          console.error('❌ Error updating route vehicle photo URL:', dbError)
+        } else {
+          console.log('✅ [uploadVehiclePhoto] Routes actualizado exitosamente:', updateData)
         }
       } catch (dbErr) {
-        console.warn('Error saving route vehicle photo URL:', dbErr)
+        console.error('❌ Error saving route vehicle photo URL:', dbErr)
       }
+    } else {
+      console.log('ℹ️  [uploadVehiclePhoto] No routeId provided, skipping routes update')
     }
 
     // ✅ NUEVO: Guardar vehicle_photo_url en profiles (para caching)
     try {
-      const { error: profileError } = await supabase
+      console.log('📝 [uploadVehiclePhoto] Actualizando profiles con driverId:', driverId)
+      const { error: profileError, data: profileData } = await supabase
         .from('profiles')
         .update({ vehicle_photo_url: photoUrl })
         .eq('id', driverId)
+        .select()
 
       if (profileError) {
-        console.warn('Error updating profile vehicle photo URL:', profileError)
+        console.error('❌ Error updating profile vehicle photo URL:', profileError)
       } else {
+        console.log('✅ [uploadVehiclePhoto] Guardada en profiles:', photoUrl.substring(0, 100) + '...')
       }
     } catch (profileErr) {
-      console.warn('Error saving profile vehicle photo URL:', profileErr)
+      console.error('❌ Error saving profile vehicle photo URL:', profileErr)
     }
 
     return photoUrl

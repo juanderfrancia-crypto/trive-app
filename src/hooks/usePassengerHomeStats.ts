@@ -9,7 +9,7 @@ export interface PassengerHomeStats {
 
 /**
  * Hook para HomeScreen del pasajero:
- * - Gastado este mes (solo bookings completados y pagados en el mes actual)
+ * - Gastado este mes (bookings completados en el mes actual, sin importar estado de pago)
  * - Próximo viaje (booking futuro con status confirmado/pending)
  */
 export const usePassengerHomeStats = (passengerId?: string) => {
@@ -61,9 +61,9 @@ export const usePassengerHomeStats = (passengerId?: string) => {
       
       console.log('📆 Bookings este mes:', thisMonthBookings.length, thisMonthBookings);
       
-      // Gastado este mes: bookings completados y pagados
+      // Gastado este mes: bookings completados (sin importar estado de pago)
       const spentThisMonth = thisMonthBookings
-        .filter(b => b.booking_status === 'completed' && b.payment_status === 'completed')
+        .filter(b => b.booking_status === 'completed')
         .reduce((sum, b) => sum + (b.price || 0), 0);
       
       // Viajes este mes: viajes cuya fecha ya pasó (completados o con fecha vencida)

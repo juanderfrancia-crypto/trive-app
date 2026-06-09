@@ -15,7 +15,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePassengerStats } from '../hooks/usePassengerStats'
 import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import { showSuccess, showError, showInfo } from '../utils/showError'
-import { uploadProfilePhoto, uploadVehiclePhoto } from '../services/photoUpload'
+import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -47,6 +47,7 @@ export default function ProfileScreen() {
   const [driverVehicle, setDriverVehicle] = useState<any>(null)
   const [recentRoutes, setRecentRoutes]   = useState<any[]>([])
   const [driverDocs, setDriverDocs]       = useState<Record<string, any>>({})
+  const [regeneratedVehiclePhotoUrl, setRegeneratedVehiclePhotoUrl] = useState<string | null>(null)
 
   // Chat
   const { bookings: activeBookings, refetch: refetchActiveBookings } = useActiveBookingsWithChat(
@@ -140,6 +141,7 @@ export default function ProfileScreen() {
   // ── Driver vehicle + route history ─────────────────────────────────────────
   const loadDriverData = useCallback(async () => {
     if (!user?.id) return
+    console.log('🚗 [loadDriverData] Iniciando carga de datos del vehículo...')
     const [{ data: route }, { data: routes }, { data: docs }] = await Promise.all([
       supabase
         .from('routes')
@@ -160,6 +162,7 @@ export default function ProfileScreen() {
         .select('document_type, status, expiry_date')
         .eq('driver_id', user.id),
     ])
+    console.log('🚗 [loadDriverData] Ruta recibida:', route)
     if (route) setDriverVehicle(route)
     setRecentRoutes(routes ?? [])
     if (docs) {
@@ -264,7 +267,23 @@ export default function ProfileScreen() {
       if (result.canceled || !result.assets[0]?.uri) return
       setUploadingVehiclePhoto(true)
       const routeId = driverVehicle?.id != null ? String(driverVehicle.id) : null
-      await uploadVehiclePhoto(user.id, routeId, result.assets[0].uri)
+      
+      // Subir foto y obtener URL nueva
+      const newPhotoUrl = await uploadVehiclePhoto(user.id, routeId, result.assets[0].uri)
+      
+      // ✅ Actualizar inmediatamente el estado con la nueva URL
+      if (newPhotoUrl) {
+        console.log('✅ [handleVehiclePhotoUpload] URL nueva:', newPhotoUrl.substring(0, 80))
+        setRegeneratedVehiclePhotoUrl(newPhotoUrl)
+        
+        // ✅ CRÍTICO: Actualizar driverVehicle directamente para forzar re-render
+        if (driverVehicle) {
+          setDriverVehicle({ ...driverVehicle, vehicle_photo_url: newPhotoUrl })
+          console.log('✅ [handleVehiclePhotoUpload] driverVehicle actualizado')
+        }
+      }
+      
+      // Refrescar datos de BD para sincronizar
       await fetchProfile(user.id)
       await loadDriverData()
       showToast('Foto del vehículo actualizada')
@@ -326,7 +345,7 @@ export default function ProfileScreen() {
     <>
       {/* Profile row */}
       <View style={pv.profileRow}>
-        <AvatarCircle size={72} />
+        <AvatarCircle size={100} />
         <View style={pv.profileInfo}>
           <TouchableOpacity style={pv.nameRow} onPress={openEditName} activeOpacity={0.7}>
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
@@ -484,12 +503,12 @@ export default function ProfileScreen() {
       <View style={s.section}>
         <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
           <View style={pv.helpRow}>
-            <View style={pv.helpIcon}><Ionicons name="headset" size={24} color="#78350F" /></View>
+            <View style={pv.helpIcon}><Ionicons name="headset" size={20} color="#78350F" /></View>
             <View style={pv.helpText}>
               <Text style={pv.payName}>Centro de Ayuda</Text>
               <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -499,12 +518,12 @@ export default function ProfileScreen() {
       <View style={s.section}>
         <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
           <View style={pv.helpRow}>
-            <View style={pv.settingsIcon}><Ionicons name="settings" size={24} color="#1230B8" /></View>
+            <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color="#1230B8" /></View>
             <View style={pv.helpText}>
               <Text style={pv.payName}>Configuración</Text>
               <Text style={pv.paySub}>Ajustes y preferencias</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -522,6 +541,16 @@ export default function ProfileScreen() {
       : '—'
     const totalTrips = earnings?.completedTrips ?? profile?.total_trips ?? 0
     const monthEarnings = earnings?.thisMonthEarnings ?? 0
+    
+    // 🐛 DEBUG: Verificar qué foto se va a mostrar
+    const vehiclePhotoUrl = profile?.vehicle_photo_url || driverVehicle?.vehicle_photo_url
+    if (vehiclePhotoUrl) {
+      console.log('📸 [DriverView] Vehicle photo URL:', vehiclePhotoUrl.substring(0, 100) + '...')
+    } else {
+      console.log('⚠️ [DriverView] No hay foto del vehículo disponible')
+      console.log('   - profile.vehicle_photo_url:', profile?.vehicle_photo_url)
+      console.log('   - driverVehicle.vehicle_photo_url:', driverVehicle?.vehicle_photo_url)
+    }
 
     return (
       <>
@@ -724,10 +753,64 @@ export default function ProfileScreen() {
               accessibilityRole="button"
               accessibilityLabel="Cambiar foto del vehículo"
             >
-              {profile?.vehicle_photo_url || driverVehicle?.vehicle_photo_url ? (
+              {(driverVehicle?.vehicle_photo_url || regeneratedVehiclePhotoUrl) ? (
+                <>
+                  {console.log('📸 [Vehicle] Renderizando URL:', regeneratedVehiclePhotoUrl ? 'REGENERATED' : 'DRIVER_VEHICLE')}
+                  <Image
+                    source={{ uri: regeneratedVehiclePhotoUrl || driverVehicle?.vehicle_photo_url || profile?.vehicle_photo_url }}
+                    style={dv.vehiclePhoto}
+                    onLoad={() => console.log('✅ Vehicle photo cargada')}
+                    onError={async () => {
+                      const currentUrl = regeneratedVehiclePhotoUrl || driverVehicle?.vehicle_photo_url || profile?.vehicle_photo_url
+                      console.log('❌ Error cargando vehicle_photo, intentando regenerar...')
+                      try {
+                        const newUrl = await regenerateExpiredPhotoUrl(currentUrl, 'vehicle-photos')
+                        if (newUrl !== currentUrl) {
+                          console.log('♻️  URL regenerada exitosamente')
+                          setRegeneratedVehiclePhotoUrl(newUrl)
+                          
+                          // Actualizar en base de datos
+                          if (driverVehicle?.id) {
+                            await supabase
+                              .from('routes')
+                              .update({ vehicle_photo_url: newUrl })
+                              .eq('id', driverVehicle.id)
+                          }
+                          
+                          await supabase
+                            .from('profiles')
+                            .update({ vehicle_photo_url: newUrl })
+                            .eq('id', user?.id)
+                        }
+                      } catch (err) {
+                        console.error('Error regenerando URL:', err)
+                      }
+                    }}
+                  />
+                </>
+              ) : profile?.vehicle_photo_url && profile.vehicle_photo_url.trim() ? (
                 <Image
-                  source={{ uri: profile?.vehicle_photo_url || driverVehicle?.vehicle_photo_url }}
+                  source={{ uri: regeneratedVehiclePhotoUrl || profile.vehicle_photo_url }}
                   style={dv.vehiclePhoto}
+                  onLoad={() => console.log('✅ Vehicle photo cargada desde profiles')}
+                  onError={async () => {
+                    console.log('❌ Error cargando vehicle_photo, intentando regenerar...')
+                    try {
+                      const newUrl = await regenerateExpiredPhotoUrl(profile.vehicle_photo_url, 'vehicle-photos')
+                      if (newUrl !== profile.vehicle_photo_url) {
+                        console.log('♻️  URL regenerada exitosamente')
+                        setRegeneratedVehiclePhotoUrl(newUrl)
+                        
+                        // Actualizar en base de datos
+                        await supabase
+                          .from('profiles')
+                          .update({ vehicle_photo_url: newUrl })
+                          .eq('id', user?.id)
+                      }
+                    } catch (err) {
+                      console.error('Error regenerando URL:', err)
+                    }
+                  }}
                 />
               ) : (
                 <View style={dv.vehiclePhotoEmpty}>
@@ -1215,9 +1298,9 @@ const pv = StyleSheet.create({
   payName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   paySub:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
 
-  helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
-  helpIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FCD34D', justifyContent: 'center', alignItems: 'center', shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
-  settingsIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: '#1230B8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
+  helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
+  helpIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FCD34D', justifyContent: 'center', alignItems: 'center', shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
+  settingsIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: '#1230B8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
   helpText: { flex: 1 },
   chatBadge: {
     position: 'absolute',
