@@ -3,6 +3,16 @@ import { supabase } from "../services/supabase";
 import { checkDriverApprovalStatus } from "../services/driverApproval";
 import { insertNotificationForUser } from "../services/notificationInsert";
 
+// Función para normalizar texto: elimina acentos y convierte a minúsculas
+const normalizeText = (text: string): string => {
+  if (!text) return '';
+  return text
+    .normalize('NFD') // Descompone caracteres con acento
+    .replace(/[\u0300-\u036f]/g, '') // Elimina diacríticos
+    .toLowerCase()
+    .trim();
+};
+
 export interface Route {
   id: string;
   driver_id: string;
@@ -140,11 +150,13 @@ export const useRoutes = () => {
       }
 
       if (origin) {
-        query = query.ilike('origin', `%${origin}%`);
+        const normalizedOrigin = normalizeText(origin);
+        query = query.ilike('origin', `%${normalizedOrigin}%`);
       }
 
       if (destination) {
-        query = query.ilike('destination', `%${destination}%`);
+        const normalizedDestination = normalizeText(destination);
+        query = query.ilike('destination', `%${normalizedDestination}%`);
       }
 
       if (limit) {
@@ -160,7 +172,22 @@ export const useRoutes = () => {
 
       if (fetchError) throw fetchError;
 
-      let normalizedRoutes = await enrichRoutesWithDriverInfo((data as Route[]) || []);
+      // Post-filtrado en cliente para asegurar búsqueda sin acentos
+      let filteredData = (data as Route[]) || [];
+      if (origin) {
+        const normalizedOrigin = normalizeText(origin);
+        filteredData = filteredData.filter(route => 
+          normalizeText(route.origin).includes(normalizedOrigin)
+        );
+      }
+      if (destination) {
+        const normalizedDestination = normalizeText(destination);
+        filteredData = filteredData.filter(route => 
+          normalizeText(route.destination).includes(normalizedDestination)
+        );
+      }
+
+      let normalizedRoutes = await enrichRoutesWithDriverInfo(filteredData);
       normalizedRoutes = await normalizeRouteAvailability(normalizedRoutes);
 
       if (isDriverRatingSort) {
@@ -192,11 +219,11 @@ export const useRoutes = () => {
             .eq('status', 'scheduled');
 
           if (origin) {
-            fallbackQuery = fallbackQuery.ilike('origin', `%${origin}%`);
+            fallbackQuery = fallbackQuery.ilike('origin', `%${normalizeText(origin)}%`);
           }
 
           if (destination) {
-            fallbackQuery = fallbackQuery.ilike('destination', `%${destination}%`);
+            fallbackQuery = fallbackQuery.ilike('destination', `%${normalizeText(destination)}%`);
           }
 
           if (limit) {
@@ -212,7 +239,22 @@ export const useRoutes = () => {
 
           if (fallbackFetchError) throw fallbackFetchError;
 
-          let normalizedRoutes = await enrichRoutesWithDriverInfo((fallbackData as Route[]) || []);
+          // Post-filtrado en cliente para asegurar búsqueda sin acentos
+          let filteredFallbackData = (fallbackData as Route[]) || [];
+          if (origin) {
+            const normalizedOrigin = normalizeText(origin);
+            filteredFallbackData = filteredFallbackData.filter(route => 
+              normalizeText(route.origin).includes(normalizedOrigin)
+            );
+          }
+          if (destination) {
+            const normalizedDestination = normalizeText(destination);
+            filteredFallbackData = filteredFallbackData.filter(route => 
+              normalizeText(route.destination).includes(normalizedDestination)
+            );
+          }
+
+          let normalizedRoutes = await enrichRoutesWithDriverInfo(filteredFallbackData);
           normalizedRoutes = await normalizeRouteAvailability(normalizedRoutes);
 
           if (isDriverRatingSort) {

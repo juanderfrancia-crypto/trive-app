@@ -468,7 +468,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F8F9FC" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerIconBtn}
@@ -750,7 +750,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',

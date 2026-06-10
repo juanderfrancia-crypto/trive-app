@@ -16,8 +16,9 @@ import {
   StatusBar,
   Alert,
   Linking,
+  Pressable,
 } from 'react-native'
-import { useNavigation, useFocusEffect } from '@react-navigation/native'
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
@@ -57,6 +58,7 @@ const MEMBERSHIP_CFG: Record<string, { bg: string; text: string; icon: string; l
 export default function HomeScreen() {
   const navigation   = useNavigation<any>()
   const insets       = useSafeAreaInsets()
+  const setSearchParams = useAppStore((s) => s.setSearchParams)
   const [origin, setOrigin]           = useState('')
   const [destination, setDestination] = useState('')
   const [originFocused, setOriginFocused]           = useState(false)
@@ -333,7 +335,10 @@ export default function HomeScreen() {
     <TouchableOpacity
       style={styles.routeCard}
       activeOpacity={0.88}
-      onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
+      onPress={() => {
+        console.log('[HomeScreen] Navegando a Search desde ruta destacada')
+        navigation.navigate('Search', {})
+      }}
     >
       <LinearGradient
         colors={['#FFFFFF', '#FFFFFF']}
@@ -416,7 +421,7 @@ export default function HomeScreen() {
   // ─────────────────────────────────────────────────────────────────────────
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
+      <StatusBar barStyle={isDriver ? "light-content" : "dark-content"} translucent={false} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces>
 
         {/* ══ BANNER HERO SECTION ═══════════════════════════════════════════ */}
@@ -443,39 +448,39 @@ export default function HomeScreen() {
             }
             style={styles.heroBg}
             resizeMode="cover"
-            imageStyle={{ transform: [{ scale: 1.1 }, { translateY: -10 }] }}
+            imageStyle={{ transform: [{ scale: 1.0 }, { translateY: 0 }] }}
           >
             {/* ── Header ───────────────────────────────────────────────────── */}
             <View style={styles.header}>
-              <Text style={[styles.wordmark, { color: '#fff' }]}>TRIVE</Text>
+              <Text style={[styles.wordmark, { color: '#fff' }, isDriver && { textShadowColor: 'rgba(14, 38, 153, 0.55)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 8 }]}>TRIVE</Text>
             </View>
 
             {/* ── Hero content ─────────────────────────────────────────────── */}
             <View style={styles.heroContent}>
               <View style={styles.heroTop}>
-                <Text style={styles.heroGreetingWhite}>
+                <Text style={isDriver ? styles.heroGreetingDark : styles.heroGreetingWhite}>
                   {getGreeting()},{' '}
-                  <Text style={{ fontWeight: '700', color: '#fff' }}>{user?.name?.split(' ').slice(0, 2).join(' ') ?? 'Usuario'}</Text>
+                  <Text style={{ fontWeight: '700', color: isDriver ? COLORS.textPrimary : '#fff' }}>{user?.name?.split(' ').slice(0, 2).join(' ') ?? 'Usuario'}</Text>
                 </Text>
-                {metricLoading && <ActivityIndicator size="small" color="rgba(255,255,255,0.7)" />}
+                {metricLoading && <ActivityIndicator size="small" color={isDriver ? COLORS.textSecondary : 'rgba(255,255,255,0.7)'} />}
               </View>
               {metricLoading ? (
                 <>
-                  <Animated.View style={[styles.skeletonAmountWhite, { opacity: skeletonAnim }]} />
-                  <Animated.View style={[styles.skeletonLabelWhite, { opacity: skeletonAnim }]} />
+                  <Animated.View style={[isDriver ? styles.skeletonAmountDark : styles.skeletonAmountWhite, { opacity: skeletonAnim }]} />
+                  <Animated.View style={[isDriver ? styles.skeletonLabelDark : styles.skeletonLabelWhite, { opacity: skeletonAnim }]} />
                 </>
               ) : (
                 <>
                   <TouchableOpacity activeOpacity={isDriver ? 0.8 : 1} onPress={isDriver ? () => navigation.navigate('Wallet' as never) : undefined}>
-                    <Text style={styles.heroAmountWhite}>{metricValue}</Text>
+                    <Text style={isDriver ? styles.heroAmountDark : styles.heroAmountWhite}>{metricValue}</Text>
                   </TouchableOpacity>
                   <View style={styles.heroLabelRow}>
-                    <Text style={styles.heroLabelWhite}>{metricLabel}</Text>
+                    {!isDriver && <Text style={styles.heroLabelWhite}>{metricLabel}</Text>}
                     {isDriver && (
-                      <TouchableOpacity style={styles.walletShortcut} onPress={() => navigation.navigate('Wallet' as never)} activeOpacity={0.8}>
-                        <Ionicons name="wallet-outline" size={12} color="rgba(255,255,255,0.9)" />
-                        <Text style={styles.walletShortcutText}>Ver billetera</Text>
-                        <Ionicons name="chevron-forward" size={11} color="rgba(255,255,255,0.7)" />
+                      <TouchableOpacity style={[styles.walletShortcut, isDriver && styles.walletShortcutDark]} onPress={() => navigation.navigate('Wallet' as never)} activeOpacity={0.8}>
+                        <Ionicons name="wallet-outline" size={12} color={isDriver ? COLORS.textPrimary : 'rgba(255,255,255,0.9)'} />
+                        <Text style={isDriver ? styles.walletShortcutTextDark : styles.walletShortcutText}>Ver billetera</Text>
+                        <Ionicons name="chevron-forward" size={11} color={isDriver ? COLORS.textSecondary : 'rgba(255,255,255,0.7)'} />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -485,13 +490,13 @@ export default function HomeScreen() {
                 {!isDriver && membershipBadge()}
                 {isDriver && (
                   <>
-                    <View style={styles.pillGlass}>
-                      <Ionicons name="car-outline" size={13} color="rgba(255,255,255,0.9)" />
-                      <Text style={styles.pillTextWhite}>{driverProfile?.total_trips ?? 0} viajes</Text>
+                    <View style={isDriver ? styles.pillGlassDark : styles.pillGlass}>
+                      <Ionicons name="car-outline" size={13} color={isDriver ? COLORS.textPrimary : 'rgba(255,255,255,0.9)'} />
+                      <Text style={isDriver ? styles.pillTextDark : styles.pillTextWhite}>{driverProfile?.total_trips ?? 0} viajes</Text>
                     </View>
-                    <View style={styles.pillGlass}>
+                    <View style={isDriver ? styles.pillGlassDark : styles.pillGlass}>
                       <Ionicons name="star" size={13} color="#FBBF24" />
-                      <Text style={styles.pillTextWhite}>{user?.rating ?? '--'}</Text>
+                      <Text style={isDriver ? styles.pillTextDark : styles.pillTextWhite}>{user?.rating ?? '--'}</Text>
                     </View>
                   </>
                 )}
@@ -588,29 +593,19 @@ export default function HomeScreen() {
         )}
 
         {/* ══ BUSCAR VIAJE ══════════════════════════════════════════════════ */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Buscar viaje</Text>
-
+        <View style={[styles.section, styles.searchSection]}>
           <View style={[
-            styles.searchCard,
-            (originFocused || destinationFocused) && {
-              borderColor: COLORS.primary,
-              shadowColor: COLORS.primary,
-              shadowOpacity: 0.16,
-              shadowRadius: 20,
-              elevation: 8,
-            }
+            styles.searchBox,
+            (originFocused || destinationFocused) && styles.searchBoxFocused
           ]}>
-            <View style={styles.searchRow}>
-              <View style={styles.dotCol}>
-                <View style={styles.dotBlue} />
-                <View style={styles.dotLine} />
-              </View>
-              <View style={styles.searchField}>
-                <Text style={styles.searchLabel}>DESDE</Text>
+            {/* Input Section */}
+            <View style={styles.searchInputsContainer}>
+              {/* Origen */}
+              <View style={styles.searchInputRowVertical}>
+                <View style={styles.dotOrigin} />
                 <TextInput
-                  style={[styles.searchInput, originFocused && styles.searchInputFocused]}
-                  placeholder="Ej: Armenia, Cali..."
+                  style={styles.searchInputHorizontal}
+                  placeholder="Origen"
                   placeholderTextColor={COLORS.textTertiary}
                   value={origin}
                   onChangeText={setOrigin}
@@ -619,28 +614,16 @@ export default function HomeScreen() {
                   accessibilityLabel="Origen"
                 />
               </View>
-            </View>
 
-            <View style={styles.searchDividerRow}>
-              <View style={styles.searchDivider} />
-              <Button
-                variant="ghost"
-                size="sm"
-                icon="swap-vertical"
-                onPress={() => { setOrigin(destination); setDestination(origin) }}
-                accessibilityLabel="Intercambiar origen y destino"
-              />
-            </View>
+              {/* Divider */}
+              <View style={styles.searchDividerHorizontal} />
 
-            <View style={styles.searchRow}>
-              <View style={styles.dotCol}>
-                <View style={styles.dotRed} />
-              </View>
-              <View style={styles.searchField}>
-                <Text style={styles.searchLabel}>HACIA</Text>
+              {/* Destino */}
+              <View style={styles.searchInputRowVertical}>
+                <View style={styles.dotDestino} />
                 <TextInput
-                  style={[styles.searchInput, destinationFocused && styles.searchInputFocused]}
-                  placeholder="Ej: Cali, Puerto Tejada..."
+                  style={styles.searchInputHorizontal}
+                  placeholder="Destino"
                   placeholderTextColor={COLORS.textTertiary}
                   value={destination}
                   onChangeText={setDestination}
@@ -649,6 +632,32 @@ export default function HomeScreen() {
                   accessibilityLabel="Destino"
                 />
               </View>
+            </View>
+
+            {/* Right Actions */}
+            <View style={styles.searchActionsContainer}>
+              {/* Swap Button */}
+              <TouchableOpacity
+                onPress={() => {
+                  const temp = origin;
+                  setOrigin(destination);
+                  setDestination(temp);
+                }}
+                style={styles.searchActionButton}
+              >
+                <Ionicons name="swap-vertical" size={16} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+
+              {/* Clear Button */}
+              <TouchableOpacity
+                onPress={() => {
+                  setOrigin('');
+                  setDestination('');
+                }}
+                style={styles.searchActionButton}
+              >
+                <Ionicons name="close-circle" size={16} color={COLORS.textTertiary} />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -669,27 +678,35 @@ export default function HomeScreen() {
             </ScrollView>
           )}
 
+          {/* Botón Buscar Rutas */}
           <TouchableOpacity
-            style={[styles.searchBtn, (!origin || !destination) && styles.searchBtnDisabled]}
+            activeOpacity={0.7}
             disabled={!origin || !destination}
-            onPress={() =>
-              navigation.navigate('Main' as never, {
-                screen: 'Search',
-                params: { origin: origin.trim(), destination: destination.trim() },
-              } as never)
-            }
-            accessibilityLabel="Buscar rutas"
-            activeOpacity={0.85}
+            onPress={() => {
+              const o = origin.trim()
+              const d = destination.trim()
+              
+              // Guardar parámetros en Zustand
+              setSearchParams(o, d)
+              
+              // Cambiar a la pestaña Search
+              navigation.dispatch(
+                CommonActions.navigate({
+                  name: 'Search',
+                })
+              )
+            }}
+            style={[
+              styles.searchBtn,
+              (!origin || !destination) && styles.searchBtnDisabled,
+              { marginTop: 0 },
+            ]}
           >
-            {origin && destination && (
-              <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-            )}
-            <Ionicons name="search" size={18} color={origin && destination ? '#fff' : COLORS.textTertiary} />
+            <Ionicons 
+              name="search" 
+              size={18} 
+              color={origin && destination ? '#fff' : COLORS.textTertiary} 
+            />
             <Text style={[styles.searchBtnText, (!origin || !destination) && styles.searchBtnTextDisabled]}>
               Buscar rutas
             </Text>
@@ -697,7 +714,7 @@ export default function HomeScreen() {
         </View>
 
         {/* ══ VIAJES AHORA CTA ══════════════════════════════════════════════ */}
-        <View style={styles.section}>
+        <View style={[styles.section, styles.ctaSection]}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               style={styles.ctaWrapper}
@@ -715,8 +732,8 @@ export default function HomeScreen() {
                   <Ionicons name="flash" size={18} color={COLORS.primary} />
                 </View>
                 <View style={styles.ctaTextWrap}>
-                  <Text style={styles.ctaTitle}>Viajes Ahora</Text>
-                  <Text style={styles.ctaSubtitle}>Disponibles en tiempo real</Text>
+                  <Text style={styles.ctaTitle} numberOfLines={1}>Viajes Ahora</Text>
+                  <Text style={styles.ctaSubtitle} numberOfLines={1}>Disponibles en tiempo real</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.65)" />
               </LinearGradient>
@@ -733,11 +750,11 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <View style={styles.airportIconWrap}>
-                <Ionicons name="airplane" size={22} color={COLORS.primary} />
+                <Ionicons name="car-sport" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.airportTextWrap}>
-                <Text style={styles.airportBannerTitle}>¿Necesitas ir al aeropuerto?</Text>
-                <Text style={styles.airportBannerSub}>Publica tu solicitud y un conductor te lleva</Text>
+                <Text style={styles.airportBannerTitle}>Solicitar Viaje</Text>
+                <Text style={styles.airportBannerSub}>Al aeropuerto o cualquier lugar</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
@@ -754,7 +771,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <View style={styles.airportIconWrap}>
-                <Ionicons name="airplane" size={20} color={COLORS.primary} />
+                <Ionicons name="car-sport" size={20} color={COLORS.primary} />
                 {pendingAirportCount > 0 && (
                   <View style={styles.airportBadge}>
                     <Text style={styles.airportBadgeText}>
@@ -764,11 +781,11 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.airportTextWrap}>
-                <Text style={styles.airportBannerTitleSm} numberOfLines={2}>Solicitudes de aeropuerto</Text>
+                <Text style={styles.airportBannerTitleSm} numberOfLines={2}>Solicitudes de viajes</Text>
                 <Text style={[styles.airportBannerSub, pendingAirportCount > 0 && styles.airportBannerSubActive]} numberOfLines={1}>
                   {pendingAirportCount > 0
                     ? `${pendingAirportCount} esperando`
-                    : 'Ver solicitudes'}
+                    : 'Ver viajes'}
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={pendingAirportCount > 0 ? COLORS.primary : COLORS.textTertiary} />
@@ -796,7 +813,10 @@ export default function HomeScreen() {
         <View style={styles.sectionNoBottom}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Rutas destacadas</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => {
+              console.log('[HomeScreen] Navegando a Search desde ver todas')
+              navigation.navigate('Search', {})
+            }} activeOpacity={0.7}>
               <Text style={styles.seeAll}>Ver todas</Text>
             </TouchableOpacity>
           </View>
@@ -938,16 +958,17 @@ const styles = StyleSheet.create({
 
   // ── Gradient Hero Background ─────────────────────────────────────────────────
   heroBgWrap: {
-    borderRadius: 32,
+    borderBottomLeftRadius: 32,
+    borderBottomRightRadius: 32,
     marginBottom: SPACING.md,
-    marginTop: SPACING.xs,
-    marginHorizontal: SPACING.sm,
+    marginTop: 0,
+    marginHorizontal: 0,
     overflow: 'hidden',
   },
   heroBg: {
     width: '100%',
-    minHeight: 180,
-    paddingBottom: SPACING.lg,
+    minHeight: 126,
+    paddingBottom: SPACING.xs,
   },
   decorCircle1: {
     position: 'absolute', width: 240, height: 240, borderRadius: 120,
@@ -968,10 +989,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.xs,
+    paddingTop: SPACING.xs,
+    paddingBottom: 0,
   },
-  wordmark: { fontSize: 18, fontWeight: '900', color: '#fff', letterSpacing: 2 },
+  wordmark: { fontSize: 20, fontWeight: '900', color: '#fff', letterSpacing: 2 },
   headerActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   avatarBtn: {
     width: 40, height: 40, borderRadius: RADIUS.md,
@@ -988,21 +1009,21 @@ const styles = StyleSheet.create({
   avatarImage: { width: 40, height: 40, borderRadius: RADIUS.md },
 
   // ── Hero Content (floating on gradient) ──────────────────────────────────────
-  heroContent: { paddingHorizontal: SPACING.lg },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.xs },
-  heroGreetingWhite: { fontSize: 14, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
-  heroGreetingDark: { fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
-  heroAmountWhite: { fontSize: 32, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 1 },
-  heroAmountDark: { fontSize: 30, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 1 },
+  heroContent: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xs },
+  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
+  heroGreetingWhite: { fontSize: 13, fontWeight: '500', color: 'rgba(255,255,255,0.85)' },
+  heroGreetingDark: { fontSize: 13, fontWeight: '500', color: COLORS.textSecondary },
+  heroAmountWhite: { fontSize: 36, fontWeight: '800', color: '#fff', letterSpacing: -1, marginBottom: 4 },
+  heroAmountDark: { fontSize: 34, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -1, marginBottom: 4 },
   heroLabelWhite: { fontSize: 12, color: 'rgba(255,255,255,0.75)' },
-  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
+  heroLabelRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.xl },
   walletShortcut: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+    flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full,
+    paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
   },
-  walletShortcutText: { fontSize: 10, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
+  walletShortcutText: { fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.9)' },
   heroLabelDark: { fontSize: 12, color: COLORS.textSecondary, marginBottom: SPACING.sm },
   pillSolid: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -1027,6 +1048,26 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)',
   },
   pillTextWhite: { fontSize: 11, fontWeight: '600', color: '#fff' },
+  // Dark variants for conductor banner (white background)
+  skeletonAmountDark: {
+    height: 32, width: 140, borderRadius: RADIUS.sm,
+    backgroundColor: `${COLORS.primary}15`, marginBottom: 4,
+  },
+  skeletonLabelDark: {
+    height: 12, width: 100, borderRadius: RADIUS.xs,
+    backgroundColor: `${COLORS.primary}10`, marginBottom: SPACING.sm,
+  },
+  walletShortcutDark: {
+    backgroundColor: `${COLORS.primary}12`,
+    borderColor: `${COLORS.primary}20`,
+  },
+  walletShortcutTextDark: { fontSize: 12, fontWeight: '600', color: COLORS.textPrimary },
+  pillGlassDark: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    backgroundColor: `${COLORS.primary}08`,
+    paddingHorizontal: SPACING.xs, paddingVertical: 3, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: `${COLORS.primary}15`,
+  },
   // legacy (kept for safety)
   heroCard: { marginHorizontal: SPACING.lg, marginTop: SPACING.sm, marginBottom: SPACING.lg, backgroundColor: '#EEF4FF', borderRadius: RADIUS.lg, padding: SPACING.lg },
   heroGreeting: { fontSize: 14, fontWeight: '500', color: COLORS.textSecondary },
@@ -1052,12 +1093,12 @@ const styles = StyleSheet.create({
   },
   upcomingHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.sm,
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.lg, paddingBottom: SPACING.md,
     borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
   },
   upcomingHeaderLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   upcomingDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.success },
-  upcomingTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary },
+  upcomingTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   countdownBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: `${COLORS.success}15`,
@@ -1066,24 +1107,24 @@ const styles = StyleSheet.create({
   countdownText: { fontSize: 12, fontWeight: '600', color: COLORS.success },
   upcomingRoute: {
     flexDirection: 'row', gap: SPACING.md, alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg,
   },
   upcomingRoutePoints: { alignItems: 'center', gap: 0 },
   routePointBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
-  routePointLine: { width: 2, height: 24, backgroundColor: COLORS.borderLight, marginVertical: 3 },
+  routePointLine: { width: 2, height: 28, backgroundColor: COLORS.borderLight, marginVertical: 3 },
   routePointRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
   upcomingRouteLabels: { flex: 1, gap: 22 },
   upcomingCity: { fontSize: 15, fontWeight: '500', color: COLORS.textPrimary },
   upcomingFooter: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md,
+    paddingHorizontal: SPACING.lg, paddingBottom: SPACING.lg,
   },
   upcomingDriver: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   upcomingAvatar: {
-    width: 34, height: 34, borderRadius: RADIUS.sm,
+    width: 38, height: 38, borderRadius: RADIUS.sm,
     backgroundColor: `${COLORS.primary}18`, justifyContent: 'center', alignItems: 'center',
   },
-  upcomingAvatarText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+  upcomingAvatarText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
   upcomingDriverName: { fontSize: 13, fontWeight: '500', color: COLORS.textPrimary },
   seatBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
@@ -1113,11 +1154,85 @@ const styles = StyleSheet.create({
   // ── Section ──────────────────────────────────────────────────────────────────
   section: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.lg },
   sectionNoBottom: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
+  ctaSection: { marginTop: SPACING.xs },
+  searchSection: { marginTop: SPACING.md },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, letterSpacing: -0.3, marginBottom: SPACING.md },
   sectionHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   seeAll: { fontSize: 13, fontWeight: '500', color: COLORS.primary },
 
   // ── Search ───────────────────────────────────────────────────────────────────
+  searchBox: {
+    flexDirection: 'column',
+    justifyContent: 'space-around',
+    gap: 0,
+    backgroundColor: '#EEEEEE',
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingRight: 50,
+    height: 160,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    marginBottom: SPACING.xl,
+  },
+  searchBoxFocused: {
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.primary,
+  },
+  searchInputsContainer: {
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+  searchInputRowVertical: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  },
+  dotOrigin: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+    opacity: 0.5,
+    flexShrink: 0,
+  },
+  dotDestino: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+    opacity: 0.5,
+    flexShrink: 0,
+  },
+  searchDividerHorizontal: {
+    height: 1,
+    backgroundColor: '#DDDDDD',
+    marginHorizontal: 0,
+  },
+  searchInputHorizontal: {
+    flex: 1,
+    fontSize: 15,
+    color: COLORS.textPrimary,
+    fontWeight: '500',
+    padding: 0,
+  },
+  searchActionsContainer: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: 0,
+    height: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  searchActionButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.04)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   searchCard: {
     backgroundColor: COLORS.surface, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: COLORS.border,
@@ -1167,7 +1282,7 @@ const styles = StyleSheet.create({
   },
 
   // Recent route chips
-  recentScroll: { marginBottom: SPACING.sm },
+  recentScroll: { marginBottom: SPACING.sm, marginTop: -SPACING.md },
   recentContent: { gap: SPACING.sm, paddingVertical: 2 },
   recentChip: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -1187,6 +1302,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: SPACING.sm,
     shadowColor: '#1230B8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
     overflow: 'hidden',
+    paddingHorizontal: SPACING.xl,
+    width: '100%',
   },
   searchBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
   searchBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
@@ -1194,14 +1311,16 @@ const styles = StyleSheet.create({
 
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
-    borderRadius: RADIUS.md, overflow: 'hidden',
+    borderRadius: RADIUS.lg, overflow: 'hidden',
     shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
+    width: '70%',
+    alignSelf: 'center',
   },
-  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.sm, gap: SPACING.md },
+  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md, gap: SPACING.md, height: 48 },
   ctaIconWrap: { width: 32, height: 32, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },
   ctaTextWrap: { flex: 1 },
-  ctaTitle:    { fontSize: 14, fontWeight: '700', color: '#fff' },
-  ctaSubtitle: { fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
+  ctaTitle:    { fontSize: 13, fontWeight: '700', color: '#fff' },
+  ctaSubtitle: { fontSize: 8.5, color: 'rgba(255,255,255,0.8)', marginTop: 0 },
 
   // ── Airport banner ───────────────────────────────────────────────────────────
   airportBanner: {
@@ -1209,7 +1328,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md,
-    padding: SPACING.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     gap: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -1328,7 +1448,7 @@ const styles = StyleSheet.create({
   routeDivider: { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md, marginBottom: 0, marginTop: 0 },
   routeViaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginHorizontal: SPACING.md, marginBottom: 8, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: `${COLORS.accent}10`, borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent },
   routeViaText: { flex: 1, fontSize: 11, color: COLORS.accent, fontWeight: '500' },
-  routeDriver: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: 12, gap: SPACING.sm },
+  routeDriver: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 12, gap: SPACING.sm },
   driverAvatar: {
     width: 46, height: 46, borderRadius: 23,
     backgroundColor: `${COLORS.primary}12`,
@@ -1376,7 +1496,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   vehicleTagText: { fontSize: 10, fontWeight: '600', color: COLORS.primary },
-  vehicleImage: { width: 100, height: 70, flexShrink: 0 },
+  vehicleImage: { width: 70, height: 50, flexShrink: 0 },
 
   // Dots
   dotsRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginBottom: SPACING.md },

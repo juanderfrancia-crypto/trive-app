@@ -57,6 +57,7 @@ import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
 import ReferralScreen from '../screens/ReferralScreen'
 import AirportRequestScreen from '../screens/AirportRequestScreen'
 import AirportFeedScreen from '../screens/AirportFeedScreen'
+import AirportRequestDetailsScreen from '../screens/AirportRequestDetailsScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import { NotificationsProvider } from '../context/NotificationsContext'
@@ -187,6 +188,7 @@ export default function AppNavigator() {
       <Stack.Screen name="LearningCenter" component={LearningCenterScreen} />
       <Stack.Screen name="BugReport" component={BugReportScreen} />
       <Stack.Screen name="AirportRequest" component={AirportRequestScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AirportRequestDetails" component={AirportRequestDetailsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AirportFeed" component={AirportFeedScreen} options={{ headerShown: false }} />
     </>
   ) : null

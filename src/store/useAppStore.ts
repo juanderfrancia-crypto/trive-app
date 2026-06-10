@@ -35,6 +35,7 @@ interface AppState {
   pendingVerificationEmail?: string
   pendingVerificationName?: string
   pendingVerificationPhone?: string
+  searchParams?: { origin: string; destination: string }
 
   setUser: (user: AppUser | null) => void
   setAuthUser: (user: User | null) => void
@@ -47,6 +48,7 @@ interface AppState {
   setNotificationUnreadCount: (count: number) => void
   setPendingVerification: (email: string, name: string, phone: string) => void
   clearPendingVerification: () => void
+  setSearchParams: (origin: string, destination: string) => void
   logout: () => void
 }
 
@@ -108,6 +110,7 @@ export const useAppStore = create<AppState>()(
       pendingVerificationEmail: undefined,
       pendingVerificationName: undefined,
       pendingVerificationPhone: undefined,
+      searchParams: undefined,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setAuthUser: (authUser) => set({ authUser }),
@@ -118,6 +121,7 @@ export const useAppStore = create<AppState>()(
       setBookingData: (bookingData) => set({ bookingData }),
       setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
       setNotificationUnreadCount: (notificationUnreadCount) => set({ notificationUnreadCount }),
+      setSearchParams: (origin: string, destination: string) => set({ searchParams: { origin, destination } }),
       setPendingVerification: (email: string, name: string, phone: string) => {
         // Guardar en SecureStore cifrado, no en AsyncStorage
         savePendingVerificationSecure(email, name, phone)

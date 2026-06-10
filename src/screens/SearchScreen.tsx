@@ -247,8 +247,10 @@ export default function SearchScreen() {
   const { routes, loading, error, fetchRoutes } = useRoutes()
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const user             = useAppStore((s) => s.user)
+  const searchParams     = useAppStore((s) => s.searchParams)
   const { isFavorite, addFavorite, removeFavorite } = useFavoriteRoutes(user?.id)
 
+  // Primero intenta obtener de Zustand, luego de route params
   const routeTransportType = useMemo(() => {
     if (routeNav.params && typeof routeNav.params === 'object' && 'transportType' in routeNav.params)
       return routeNav.params.transportType as TransportFilter
@@ -256,16 +258,18 @@ export default function SearchScreen() {
   }, [routeNav.params])
 
   const routeDestination = useMemo(() => {
+    if (searchParams?.destination) return searchParams.destination
     if (routeNav.params && typeof routeNav.params === 'object' && 'destination' in routeNav.params)
       return String(routeNav.params.destination)
     return ''
-  }, [routeNav.params])
+  }, [routeNav.params, searchParams])
 
   const routeOrigin = useMemo(() => {
+    if (searchParams?.origin) return searchParams.origin
     if (routeNav.params && typeof routeNav.params === 'object' && 'origin' in routeNav.params)
       return String(routeNav.params.origin)
     return ''
-  }, [routeNav.params])
+  }, [routeNav.params, searchParams])
 
   const [search, setSearch]               = useState(() => {
     if (routeOrigin && routeDestination) return `${routeOrigin} → ${routeDestination}`
@@ -468,6 +472,24 @@ export default function SearchScreen() {
 
           <View style={s.chipSep} />
 
+          {/* Botón Limpiar búsqueda - aparece cuando hay un filtro de búsqueda activo */}
+          {search && (
+            <>
+              <TouchableOpacity
+                style={[s.chip, { backgroundColor: '#F3F4F6', borderColor: '#D1D5DB' }]}
+                onPress={() => {
+                  setSearch('')
+                  setTransportType('all')
+                  setFilter('all')
+                }}
+              >
+                <Ionicons name="close-circle-outline" size={14} color={COLORS.textSecondary} />
+                <Text style={[s.chipText, { color: COLORS.textSecondary }]}>Limpiar filtros</Text>
+              </TouchableOpacity>
+              <View style={s.chipSep} />
+            </>
+          )}
+
           {(['all', 'auto', 'taxi', 'busetica', 'buseta'] as TransportFilter[]).map((t) => {
             const icons: Record<TransportFilter, string> = { all: 'grid', auto: 'car-sport', taxi: 'car', busetica: 'bus', buseta: 'bus' }
             const labels: Record<TransportFilter, string> = { all: 'Todos', auto: 'Auto', taxi: 'Taxi', busetica: 'Minivan', buseta: 'Buseta' }
@@ -486,7 +508,13 @@ export default function SearchScreen() {
               <TouchableOpacity
                 key={t}
                 style={[s.chip, isActive && { backgroundColor: activeBg, borderColor: activeBg }]}
-                onPress={() => setTransportType(t)}
+                onPress={() => {
+                  setTransportType(t)
+                  // Si presiona "Todos", limpiar el filtro de búsqueda para ver todos los viajes
+                  if (t === 'all' && search) {
+                    setSearch('')
+                  }
+                }}
               >
                 <Ionicons name={icons[t] as any} size={14} color={iconColor} />
                 <Text style={[s.chipText, { color: textColor }]}>{labels[t]}</Text>

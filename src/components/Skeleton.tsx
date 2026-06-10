@@ -26,29 +26,39 @@ export function SkeletonRouteCard() {
   return (
     <View style={sk.routeCard}>
       <View style={sk.routeCardInner}>
+        {/* Route track + names section */}
         <View style={sk.routeTop}>
-          <View style={{ flex: 1, gap: 6 }}>
-            <Animated.View style={[sk.bar, { width: '65%', height: 14, opacity }]} />
-            <Animated.View style={[sk.bar, { width: '48%', height: 12, opacity }]} />
+          <View style={sk.routeRouteWrap}>
+            {/* Track with dots and line */}
+            <View style={sk.routeTrack}>
+              <Animated.View style={[sk.skeletonDot, { opacity }]} />
+              <View style={sk.skeletonLine} />
+              <Animated.View style={[sk.skeletonDot, { opacity }]} />
+            </View>
+            {/* Origin and destination names */}
+            <View style={sk.routeNames}>
+              <Animated.View style={[sk.bar, { width: '70%', height: 15, opacity }]} />
+              <Animated.View style={[sk.bar, { width: '65%', height: 14, opacity }]} />
+            </View>
           </View>
-          <Animated.View style={[sk.pill, { opacity }]} />
-        </View>
-
-        <View style={sk.metaRow}>
-          <Animated.View style={[sk.bar, { width: 58, height: 11, opacity }]} />
-          <Animated.View style={[sk.bar, { width: 52, height: 11, opacity }]} />
-          <Animated.View style={[sk.bar, { width: 64, height: 11, opacity }]} />
+          {/* Meta info (price, time) */}
+          <View style={sk.routeMetaColumn}>
+            <Animated.View style={[sk.bar, { width: 50, height: 16, opacity }]} />
+            <Animated.View style={[sk.bar, { width: 65, height: 11, opacity }]} />
+            <Animated.View style={[sk.bar, { width: 45, height: 11, opacity }]} />
+          </View>
         </View>
 
         <View style={sk.dividerLight} />
 
+        {/* Driver section */}
         <View style={sk.driverRow}>
-          <Animated.View style={[sk.driverAvatarSq, { opacity }]} />
+          <Animated.View style={[sk.driverAvatarCircle, { opacity }]} />
           <View style={{ flex: 1, gap: 5 }}>
-            <Animated.View style={[sk.bar, { width: '55%', height: 12, opacity }]} />
-            <Animated.View style={[sk.bar, { width: '32%', height: 10, opacity }]} />
+            <Animated.View style={[sk.bar, { width: '55%', height: 13, opacity }]} />
+            <Animated.View style={[sk.bar, { width: '40%', height: 11, opacity }]} />
           </View>
-          <Animated.View style={[sk.vehicleTagSk, { opacity }]} />
+          <Animated.View style={[sk.vehicleImageSk, { opacity }]} />
         </View>
       </View>
     </View>
@@ -149,17 +159,87 @@ const sk = StyleSheet.create({
   },
   routeCardInner: { 
     backgroundColor: '#FFFFFF',
-    paddingHorizontal: SPACING.lg, 
-    paddingVertical: SPACING.lg 
+    paddingHorizontal: 0, 
+    paddingVertical: 0 
   },
   bar: { borderRadius: 6, backgroundColor: GRAY },
   pill: { width: 68, height: 26, borderRadius: RADIUS.full, backgroundColor: GRAY },
-  routeTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: SPACING.sm },
-  metaRow: { flexDirection: 'row', gap: SPACING.lg, marginBottom: SPACING.sm },
-  dividerLight: { height: 1, backgroundColor: '#E5E7EB', marginBottom: SPACING.sm },
-  driverRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  driverAvatarSq: { width: 34, height: 34, borderRadius: RADIUS.sm, backgroundColor: GRAY },
-  vehicleTagSk: { width: 56, height: 22, borderRadius: RADIUS.sm, backgroundColor: GRAY },
+  
+  // Route top section - route track + names + meta info
+  routeTop: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'flex-start', 
+    paddingHorizontal: SPACING.lg, 
+    paddingTop: SPACING.lg, 
+    paddingBottom: 12,
+    gap: 10,
+    marginBottom: 0 
+  },
+  routeRouteWrap: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 10, 
+    marginRight: 0 
+  },
+  routeTrack: {
+    alignItems: 'center',
+    gap: 3,
+    paddingTop: 2,
+  },
+  skeletonDot: {
+    width: 8, 
+    height: 8, 
+    borderRadius: 4, 
+    backgroundColor: GRAY,
+  },
+  skeletonLine: {
+    width: 1.5, 
+    height: 14, 
+    backgroundColor: GRAY,
+  },
+  routeNames: { 
+    flex: 1, 
+    gap: 8 
+  },
+  routeMetaColumn: {
+    flexDirection: 'column',
+    gap: 4,
+    alignItems: 'flex-end',
+    justifyContent: 'flex-start',
+  },
+  
+  dividerLight: { 
+    height: 1, 
+    backgroundColor: '#E5E7EB', 
+    marginHorizontal: SPACING.lg,
+    marginBottom: 0, 
+    marginTop: 0 
+  },
+  
+  // Driver row
+  driverRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingHorizontal: SPACING.lg, 
+    paddingVertical: 12,
+    gap: SPACING.sm 
+  },
+  driverAvatarCircle: { 
+    width: 46, 
+    height: 46, 
+    borderRadius: 23, 
+    backgroundColor: GRAY,
+    flexShrink: 0,
+  },
+  vehicleImageSk: { 
+    width: 100, 
+    height: 70, 
+    borderRadius: RADIUS.sm,
+    backgroundColor: GRAY,
+    flexShrink: 0,
+  },
 
   // ── Airport card (white) ────────────────────────────────────────────────────
   airportCard: {
@@ -223,7 +303,6 @@ const sk = StyleSheet.create({
     padding: SPACING.sm,
     marginBottom: SPACING.sm,
   },
-  dividerLight: { height: 1, backgroundColor: '#E5E7EB', marginVertical: SPACING.sm },
   rideDriver: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   driverCircle: { width: 56, height: 56, borderRadius: 28, backgroundColor: GRAY },
   reserveBtnSk: { width: 90, height: 36, borderRadius: RADIUS.md, backgroundColor: GRAY },

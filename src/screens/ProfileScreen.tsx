@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, ImageBackground, Modal, TextInput, KeyboardAvoidingView, Platform,
+  ActivityIndicator, Image, ImageBackground, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -171,6 +171,13 @@ export default function ProfileScreen() {
       setDriverDocs(docsMap)
     }
   }, [user?.id])
+
+  // ── Focus refresh ──────────────────────────────────────────────────────────
+  // Configure StatusBar when profile screen gets focus
+  useFocusEffect(useCallback(() => {
+    StatusBar.setBarStyle('dark-content')
+    StatusBar.setBackgroundColor('#FFFFFF')
+  }, []))
 
   // ── Focus refresh ──────────────────────────────────────────────────────────
   // isDriverRef lets useFocusEffect read the current value without being a dep,
@@ -454,7 +461,7 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Quick stat: Mis Viajes + Mis Chats */}
+      {/* Quick stat: Mis Viajes + Mis Chats + Solicitudes Aeropuerto */}
       <View style={s.section}>
         <View style={pv.statsRow}>
           <TouchableOpacity style={pv.statCard} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.75}>
@@ -497,7 +504,6 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </View>
-
 
       {/* Centro de Ayuda */}
       <View style={s.section}>
@@ -1006,11 +1012,7 @@ export default function ProfileScreen() {
 
         {/* Footer */}
         <Text style={dv.footerText}>TRIVE V1.0.0 • 2026</Text>
-        <View style={{ height: SPACING.xxxl }} />
-
-        <View style={{ height: SPACING.xxxl }} />
-
-        <View style={{ height: SPACING.xxxl }} />
+        <View style={{ height: SPACING.md }} />
       </>
     )
   }
