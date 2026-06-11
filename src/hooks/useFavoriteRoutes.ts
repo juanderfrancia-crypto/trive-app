@@ -50,7 +50,8 @@ export const useFavoriteRoutes = (userId?: string) => {
           .from('favorite_routes')
           .select('*')
           .eq('user_id', userId)
-          .order('saved_at', { ascending: false });
+          .order('saved_at', { ascending: false })
+          .limit(100);
 
         if (!error && data) {
           setFavorites(data);

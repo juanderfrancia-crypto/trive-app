@@ -7,13 +7,16 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
+import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
 
@@ -87,11 +90,11 @@ const defaultTimeStr = () => {
 
 export default function AirportRequestScreen() {
   const navigation = useNavigation()
-  const { createRequest, requests, loading: loadingRequests } = useAirportNegotiation()
+  const { createRequest, requests, loading: loadingRequests, loadPassengerRequests, loadPassengerActiveTrips } = useAirportNegotiation()
   const user = useAppStore((s) => s.user)
 
-  // Tab state
-  const [activeTab, setActiveTab] = useState<'create' | 'my_requests'>('create')
+  // Tab state - Agregado: active_trips y completed_trips
+  const [activeTab, setActiveTab] = useState<'create' | 'my_requests' | 'active_trips' | 'completed_trips'>('create')
 
   // Trip type state
   const [tripType, setTripType] = useState<'airport' | 'custom'>('airport')
@@ -111,6 +114,14 @@ export default function AirportRequestScreen() {
 
   // Filtrar solicitudes activas del pasajero actual
   const activeRequests = requests.filter(r => r.passenger_id === user?.id && r.status === 'pending')
+  
+  // Agregar filtros para viajes activos y completados
+  const activeTrips = requests.filter(r => r.passenger_id === user?.id && (r.status === 'accepted' || r.status === 'in_progress'))
+  const completedTrips = requests.filter(r => r.passenger_id === user?.id && r.status === 'completed')
+
+  // 💬 Estado para chat de negociación
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [chatRequest, setChatRequest] = useState<any>(null)
 
   const filteredAirports = airportQuery.length >= 2
     ? COLOMBIA_AIRPORTS.filter(a =>
@@ -147,6 +158,23 @@ export default function AirportRequestScreen() {
 
   const adjustPassengers = (delta: number) =>
     setPassengers(prev => Math.min(8, Math.max(1, prev + delta)))
+
+  // Cargar solicitudes del usuario cuando la pantalla se enfoca
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        // Cargar todos los requests del pasajero para mantener realtime sync
+        loadPassengerRequests(user.id)
+      }
+    }, [user?.id, loadPassengerRequests])
+  )
+
+  // Cargar viajes activos cuando se cambia a esa pestaña
+  React.useEffect(() => {
+    if (user?.id && activeTab === 'active_trips') {
+      loadPassengerActiveTrips(user.id)
+    }
+  }, [activeTab, user?.id, loadPassengerActiveTrips])
 
   const formatPriceInput = (text: string) => {
     const digits = text.replace(/\D/g, '')
@@ -189,7 +217,18 @@ export default function AirportRequestScreen() {
         notes: notes.trim() || undefined,
       })
       showSuccess('Solicitud publicada. Te avisamos cuando un conductor acepte.')
-      navigation.goBack()
+      // Limpiar formulario
+      setOrigin('')
+      setAirportQuery('')
+      setSelectedAirport(null)
+      setCustomDestination('')
+      setOfferedPrice('')
+      setNotes('')
+      setPassengers(1)
+      setDateStr(todayStr())
+      setTimeStr(defaultTimeStr())
+      // Cambiar a tab de mis solicitudes para ver la que acaba de crear
+      setActiveTab('my_requests')
     } catch (err: any) {
       showError(err.message || 'Error al publicar solicitud')
     } finally {
@@ -212,25 +251,55 @@ export default function AirportRequestScreen() {
         </TouchableOpacity>
         <View style={s.headerHero}>
           <Ionicons name="car-sport" size={22} color="rgba(255,255,255,0.9)" />
-          <Text style={s.headerTitle}>Solicitar Viaje</Text>
-          <Text style={s.headerSub}>Publica y espera ofertas</Text>
+          <Text style={s.headerTitle}>Mis Viajes</Text>
         </View>
-        <TouchableOpacity 
-          onPress={() => setActiveTab(activeTab === 'create' ? 'my_requests' : 'create')}
-          style={s.tabToggleBtn}
+      </LinearGradient>
+
+      {/* Tabs Navigation */}
+      <View style={s.tabsContainer}>
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'create' && s.tabActive]}
+          onPress={() => setActiveTab('create')}
           activeOpacity={0.7}
         >
-          <Ionicons 
-            name={activeTab === 'create' ? 'list' : 'add'} 
-            size={22} 
-            color="#fff" 
-          />
+          <Ionicons name="add" size={16} color={activeTab === 'create' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'create' && s.tabTextActive]}>Crear</Text>
         </TouchableOpacity>
-      </LinearGradient>
+
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'my_requests' && s.tabActive]}
+          onPress={() => setActiveTab('my_requests')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="list" size={16} color={activeTab === 'my_requests' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'my_requests' && s.tabTextActive]}>Solicitudes</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'active_trips' && s.tabActive]}
+          onPress={() => setActiveTab('active_trips')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'active_trips' && s.tabTextActive]}>Activos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'completed_trips' && s.tabActive]}
+          onPress={() => setActiveTab('completed_trips')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="checkmark-done" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'completed_trips' && s.tabTextActive]}>Completados</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* TAB: CREAR SOLICITUD */}
       {activeTab === 'create' && (
-        <>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
           {/* Trip type selector */}
           <View style={s.tripTypeSelector}>
         <TouchableOpacity
@@ -559,7 +628,7 @@ export default function AirportRequestScreen() {
           Al publicar, los conductores verificados podrán ver tu solicitud.
         </Text>
       </ScrollView>
-      </>
+        </KeyboardAvoidingView>
       )}
 
       {/* TAB: MIS SOLICITUDES */}
@@ -616,6 +685,156 @@ export default function AirportRequestScreen() {
             </View>
           )}
         </ScrollView>
+      )}
+
+      {/* TAB: VIAJES ACTIVOS */}
+      {activeTab === 'active_trips' && (
+        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+          {loadingRequests ? (
+            <View style={s.center}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+          ) : activeTrips.length === 0 ? (
+            <View style={s.emptyState}>
+              <Ionicons name="car-outline" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
+              <Text style={s.emptyTitle}>Sin viajes activos</Text>
+              <Text style={s.emptyText}>Tus viajes confirmados aparecerán aquí</Text>
+            </View>
+          ) : (
+            <View style={s.requestsList}>
+              {activeTrips.map(req => (
+                <TouchableOpacity
+                  key={req.id}
+                  style={[s.requestCard, s.activeTripCard]}
+                  onPress={() => navigation.navigate('AirportRequestDetails' as never, { requestId: req.id } as never)}
+                  activeOpacity={0.75}
+                >
+                  <View style={s.requestCardHeader}>
+                    <View>
+                      <Text style={s.requestFrom}>{req.origin}</Text>
+                      <Ionicons name="arrow-forward" size={14} color={COLORS.primary} />
+                      <Text style={s.requestTo}>{req.destination}</Text>
+                    </View>
+                    <View style={s.requestPrice}>
+                      <Text style={s.requestPriceLabel}>Precio</Text>
+                      <Text style={s.requestPriceValue}>${req.offered_price.toLocaleString('es-CO')}</Text>
+                    </View>
+                  </View>
+                  <View style={s.requestDivider} />
+                  <View style={s.requestCardFooter}>
+                    <View style={s.requestDetail}>
+                      <Ionicons name="person-circle-outline" size={16} color={COLORS.primary} />
+                      <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
+                    </View>
+                    <View style={[s.requestBadge, req.status === 'in_progress' ? s.requestBadgeInProgress : s.requestBadgeAccepted]}>
+                      <Text style={s.requestBadgeText}>{req.status === 'in_progress' ? 'En ruta' : 'Confirmado'}</Text>
+                    </View>
+                  </View>
+                  <View style={s.requestDivider} />
+                  <View style={s.activeTripDetails}>
+                    <View style={s.detailRow}>
+                      <Ionicons name="calendar-outline" size={14} color={COLORS.textTertiary} />
+                      <Text style={s.detailLabel}>Fecha:</Text>
+                      <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleDateString('es-CO')}</Text>
+                    </View>
+                    <View style={s.detailRow}>
+                      <Ionicons name="time-outline" size={14} color={COLORS.textTertiary} />
+                      <Text style={s.detailLabel}>Hora:</Text>
+                      <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                    <View style={s.detailRow}>
+                      <Ionicons name="people-outline" size={14} color={COLORS.textTertiary} />
+                      <Text style={s.detailLabel}>Pasajeros:</Text>
+                      <Text style={s.detailValue}>{req.passengers} {req.passengers === 1 ? 'persona' : 'personas'}</Text>
+                    </View>
+                    {req.notes && (
+                      <View style={s.detailRow}>
+                        <Ionicons name="chatbubble-outline" size={14} color={COLORS.textTertiary} />
+                        <Text style={s.detailLabel}>Notas:</Text>
+                        <Text style={s.detailValue} numberOfLines={1}>{req.notes}</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={s.requestDivider} />
+                  {/* 💬 Botón de Chat para pasajero */}
+                  <TouchableOpacity
+                    style={s.chatButtonRow}
+                    onPress={() => {
+                      setChatRequest(req);
+                      setShowChatModal(true);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+                    <Text style={s.chatButtonText}>💬 Chatear con el conductor</Text>
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* TAB: VIAJES COMPLETADOS */}
+      {activeTab === 'completed_trips' && (
+        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+          {loadingRequests ? (
+            <View style={s.center}>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+            </View>
+          ) : completedTrips.length === 0 ? (
+            <View style={s.emptyState}>
+              <Ionicons name="checkmark-done-outline" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
+              <Text style={s.emptyTitle}>Sin viajes completados</Text>
+              <Text style={s.emptyText}>Una vez completes viajes, podrás calificar aquí</Text>
+            </View>
+          ) : (
+            <View style={s.requestsList}>
+              {completedTrips.map(req => (
+                <TouchableOpacity
+                  key={req.id}
+                  style={[s.requestCard, s.completedTripCard]}
+                  onPress={() => navigation.navigate('CompletedTrips' as never, { requestId: req.id } as never)}
+                  activeOpacity={0.75}
+                >
+                  <View style={s.requestCardHeader}>
+                    <View>
+                      <Text style={s.requestFrom}>{req.origin}</Text>
+                      <Ionicons name="arrow-forward" size={14} color={COLORS.textTertiary} />
+                      <Text style={s.requestTo}>{req.destination}</Text>
+                    </View>
+                    <View style={s.requestPrice}>
+                      <Text style={s.requestPriceLabel}>Pagado</Text>
+                      <Text style={s.requestPriceValue}>${req.offered_price.toLocaleString('es-CO')}</Text>
+                    </View>
+                  </View>
+                  <View style={s.requestDivider} />
+                  <View style={s.requestCardFooter}>
+                    <View style={s.requestDetail}>
+                      <Ionicons name="person-circle-outline" size={16} color={COLORS.textTertiary} />
+                      <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
+                    </View>
+                    <View style={[s.requestBadge, s.requestBadgeCompleted]}>
+                      <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                      <Text style={s.requestBadgeCompletedText}>Completado</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+      )}
+
+      {/* 💬 Modal de Chat de Negociación */}
+      {chatRequest && (
+        <NegotiationChatModal
+          visible={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          requestId={chatRequest.id}
+          driverName={chatRequest.driver_name || 'Conductor'}
+          otherUserId={chatRequest.driver_id}
+        />
       )}
     </SafeAreaView>
   )
@@ -1025,10 +1244,111 @@ const s = StyleSheet.create({
   requestBadgeActive: {
     backgroundColor: '#D1FAE5',
   },
+  requestBadgeAccepted: {
+    backgroundColor: '#DBEAFE',
+  },
+  requestBadgeInProgress: {
+    backgroundColor: '#FEF3C7',
+  },
+  requestBadgeCompleted: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#D1FAE5',
+  },
   requestBadgeText: {
     fontSize: 11,
     fontWeight: '700',
     color: '#059669',
+  },
+  requestBadgeCompletedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+
+  // Active trips styling
+  activeTripCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.primary,
+  },
+
+  // Trip details section
+  activeTripDetails: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  detailLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textTertiary,
+    minWidth: 60,
+  },
+  detailValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textPrimary,
+    flex: 1,
+  },
+
+  // Chat button in active trips
+  chatButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    justifyContent: 'center',
+  },
+  chatButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+
+  // Completed trips styling
+  completedTripCard: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#10B981',
+    opacity: 0.9,
+  },
+
+  // Tabs navigation
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: SPACING.sm,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+  },
+  tabTextActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
   },
 })
 

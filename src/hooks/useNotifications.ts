@@ -5,13 +5,21 @@ import { useAppStore } from '../store/useAppStore';
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'booking' | 'trip_update' | 'driver_arrived' | 'trip_completed' | 'review_pending' | 'message';
+  type: 'booking' | 'trip_update' | 'driver_arrived' | 'trip_completed' | 'review_pending' | 'message' | 'trip_published' | 'offer_received' | 'offer_accepted' | 'trip_confirmed' | 'trip_started' | 'trip_rated';
   title: string;
   message: string;
   data?: {
     route_id?: string;
     booking_id?: string;
     other_user_id?: string;
+    request_id?: string;
+    offer_id?: string;
+    driver_id?: string;
+    driver_name?: string;
+    price?: number;
+    origin?: string;
+    destination?: string;
+    audience?: string;
     [key: string]: any;
   };
   is_read: boolean;
@@ -52,7 +60,8 @@ export const useNotifications = (userId?: string) => {
         .from('notifications')
         .select('*')
         .eq('user_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (fetchError) throw fetchError;
       setNotifications((data || []).filter(notificationIsRelevantForCurrentUser));
     } catch (err: any) {

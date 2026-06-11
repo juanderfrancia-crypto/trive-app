@@ -8,7 +8,8 @@ CREATE TABLE IF NOT EXISTS notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   type VARCHAR(50) NOT NULL,
-  -- Tipos: 'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending', 'message'
+  -- Tipos: 'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending', 'message',
+  -- 'trip_published', 'offer_received', 'offer_accepted', 'trip_confirmed', 'trip_started', 'trip_rated'
   title VARCHAR(255) NOT NULL,
   message TEXT NOT NULL,
   data JSONB,
@@ -18,7 +19,10 @@ CREATE TABLE IF NOT EXISTS notifications (
   updated_at TIMESTAMP DEFAULT NOW(),
 
   CONSTRAINT notification_type_check CHECK (
-    type IN ('booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending', 'message')
+    type IN (
+      'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending', 'message',
+      'trip_published', 'offer_received', 'offer_accepted', 'trip_confirmed', 'trip_started', 'trip_rated'
+    )
   )
 );
 

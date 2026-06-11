@@ -79,6 +79,7 @@ export const useAirportRequests = () => {
         .select('*')
         .eq('passenger_id', passengerId)
         .order('created_at', { ascending: false })
+        .limit(50)
 
       if (fetchError) throw fetchError
 

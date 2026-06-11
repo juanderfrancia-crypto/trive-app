@@ -1303,7 +1303,8 @@ const styles = StyleSheet.create({
     shadowColor: '#1230B8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
     overflow: 'hidden',
     paddingHorizontal: SPACING.xl,
-    width: '100%',
+    width: '95%',
+    alignSelf: 'center',
   },
   searchBtnDisabled: { backgroundColor: COLORS.borderLight, shadowOpacity: 0, elevation: 0 },
   searchBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
@@ -1313,7 +1314,7 @@ const styles = StyleSheet.create({
   ctaWrapper: {
     borderRadius: RADIUS.lg, overflow: 'hidden',
     shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
-    width: '70%',
+    width: '82%',
     alignSelf: 'center',
   },
   ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md, gap: SPACING.md, height: 48 },

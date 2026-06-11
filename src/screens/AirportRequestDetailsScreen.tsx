@@ -31,23 +31,37 @@ export default function AirportRequestDetailsScreen() {
     loading,
     error,
     loadOffersForRequest,
+    loadSingleRequest,
     updateRequestPrice,
     acceptOffer,
+    acceptPassengerOffer,
     cancelRequest,
   } = useAirportNegotiation()
 
   const [showPriceModal, setShowPriceModal] = useState(false)
   const [newPrice, setNewPrice] = useState('')
   const [updatingPrice, setUpdatingPrice] = useState(false)
+  const [loadingRequest, setLoadingRequest] = useState(!requests.find(r => r.id === requestId))
 
   const request = requests.find(r => r.id === requestId)
 
+  // Cargar solicitud individual si no existe en el array
+  useEffect(() => {
+    if (requestId && !request && loadingRequest) {
+      loadSingleRequest(requestId).then(() => {
+        setLoadingRequest(false)
+      })
+    } else if (request) {
+      setLoadingRequest(false)
+    }
+  }, [requestId, request, loadSingleRequest, loadingRequest])
+
   // Cargar ofertas al montar
   useEffect(() => {
-    if (requestId) {
+    if (requestId && request) {
       loadOffersForRequest(requestId)
     }
-  }, [requestId, loadOffersForRequest])
+  }, [requestId, request, loadOffersForRequest])
 
   const handleUpdatePrice = async () => {
     const price = parseInt(newPrice.replace(/\D/g, ''), 10)
@@ -79,10 +93,13 @@ export default function AirportRequestDetailsScreen() {
           text: 'Aceptar',
           onPress: async () => {
             try {
-              await acceptOffer(offerId, requestId)
+              console.log('🔵 [FRONTEND] Iniciando aceptación de oferta:', { offerId, requestId })
+              await acceptPassengerOffer(offerId, requestId)
+              console.log('✅ [FRONTEND] Oferta aceptada exitosamente')
               showSuccess('¡Viaje confirmado! El conductor te contactará.')
               setTimeout(() => navigation.goBack(), 1500)
             } catch (err: any) {
+              console.error('❌ [FRONTEND] Error al aceptar oferta:', err)
               showError(err.message)
             }
           },
@@ -114,7 +131,7 @@ export default function AirportRequestDetailsScreen() {
     )
   }
 
-  if (!request) {
+  if (loadingRequest || !request) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>

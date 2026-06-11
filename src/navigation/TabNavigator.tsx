@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import SearchScreen from '../screens/SearchScreen'
+import AirportHubScreen from '../screens/AirportHubScreen'
 import NotificationsScreen from '../screens/NotificationsScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -31,6 +32,8 @@ export default function TabNavigator() {
             iconName = focused ? 'home' : 'home-outline'
           } else if (route.name === 'Search') {
             iconName = focused ? 'car-sharp' : 'car-outline'
+          } else if (route.name === 'Requests') {
+            iconName = focused ? 'clipboard' : 'clipboard-outline'
           } else if (route.name === 'Alerts') {
             iconName = focused ? 'notifications' : 'notifications-outline'
           } else if (route.name === 'Profile') {
@@ -81,6 +84,7 @@ export default function TabNavigator() {
     >
       <Tab.Screen name="Home"    component={HomeScreen}          options={{ title: 'Inicio' }} />
       <Tab.Screen name="Search"  component={SearchScreen}        options={{ title: 'Viajes' }} />
+      <Tab.Screen name="Requests" component={AirportHubScreen}   options={{ title: 'Solicitudes' }} />
       <Tab.Screen
         name="Alerts"
         component={NotificationsScreen}

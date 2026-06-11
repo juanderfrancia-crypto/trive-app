@@ -19,6 +19,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAirportNegotiation, AirportRequest } from '../hooks/useAirportNegotiation'
 import { SkeletonAirportCard } from '../components/Skeleton'
+import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
 
@@ -28,27 +29,60 @@ export default function AirportFeedScreen() {
     requests,
     loading,
     loadDriverFeed,
+    loadDriverActiveTrips,
     createOffer,
+    startTrip,
+    completeTrip,
+    rateTrip,
   } = useAirportNegotiation()
   const user = useAppStore((s) => s.user)
+
+  // Tab state - Agregado: active_trips y completed_trips
+  const [activeTab, setActiveTab] = useState<'available' | 'my_offers' | 'active_trips' | 'completed_trips'>('available')
 
   const [refreshing, setRefreshing] = useState(false)
   const [processing, setProcessing] = useState<string | null>(null)
   const [showProposalModal, setShowProposalModal] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
   const [proposedPrice, setProposedPrice] = useState('')
+  const [showRatingModal, setShowRatingModal] = useState(false)
+  const [ratingTrip, setRatingTrip] = useState<AirportRequest | null>(null)
+  const [selectedRating, setSelectedRating] = useState(0)
+  const [ratingComment, setRatingComment] = useState('')
+  
+  // 💬 Estado para chat de negociación
+  const [showChatModal, setShowChatModal] = useState(false)
+  const [chatRequest, setChatRequest] = useState<AirportRequest | null>(null)
+
+  // Filtrar solicitudes según el tab activo
+  const availableRequests = requests.filter(r => r.status === 'pending' && r.driver_id !== user?.id)
+  const myOffers = requests.filter(r => r.status === 'pending' && r.driver_id !== user?.id) // TODO: filtrar por ofertas del conductor
+  const activeTrips = requests.filter(r => r.driver_id === user?.id && (r.status === 'accepted' || r.status === 'in_progress'))
+  const completedTrips = requests.filter(r => r.driver_id === user?.id && r.status === 'completed')
 
   useFocusEffect(
     useCallback(() => {
-      loadDriverFeed()
-    }, [loadDriverFeed])
+      if (user?.id) {
+        if (activeTab === 'active_trips') {
+          loadDriverActiveTrips(user.id)
+        } else {
+          loadDriverFeed()
+        }
+      }
+    }, [loadDriverFeed, loadDriverActiveTrips, activeTab, user?.id])
   )
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true)
-    await loadDriverFeed()
+    if (user?.id) {
+      if (activeTab === 'active_trips') {
+        await loadDriverActiveTrips(user.id)
+      } else {
+        await loadDriverFeed()
+      }
+    }
     setRefreshing(false)
-  }, [loadDriverFeed])
+  }, [loadDriverFeed, loadDriverActiveTrips, activeTab, user?.id])
 
   const handlePropose = (item: AirportRequest) => {
     setSelectedRequest(item)
@@ -84,6 +118,30 @@ export default function AirportFeedScreen() {
     } catch (err: any) {
       console.error('Error en handleSubmitProposal:', err)
       showError(err.message || 'Error al enviar propuesta')
+      setProcessing(null)
+    }
+  }
+
+  const handleSubmitRating = async () => {
+    if (!user?.id || !ratingTrip || selectedRating === 0) {
+      showError('Por favor selecciona una calificación')
+      return
+    }
+
+    try {
+      setProcessing(`rating_${ratingTrip.id}`)
+      await rateTrip(ratingTrip.id, selectedRating, ratingComment)
+      showSuccess('✅ ¡Gracias por calificar el viaje!')
+      
+      setTimeout(() => {
+        setShowRatingModal(false)
+        setRatingTrip(null)
+        setSelectedRating(0)
+        setRatingComment('')
+        setProcessing(null)
+      }, 500)
+    } catch (err: any) {
+      showError(err.message || 'Error al calificar viaje')
       setProcessing(null)
     }
   }
@@ -124,6 +182,8 @@ export default function AirportFeedScreen() {
 
   const renderItem = ({ item }: { item: AirportRequest }) => {
     const isProcessing = processing === item.id
+    const isAvailableTab = activeTab === 'available'
+    const isActiveTripsTab = activeTab === 'active_trips'
 
     return (
       <View style={s.card}>
@@ -190,34 +250,129 @@ export default function AirportFeedScreen() {
           </View>
         )}
 
-        {/* Botones de acción */}
-        <View style={s.buttonRow}>
-          <TouchableOpacity
-            style={[s.btnWrapper, s.btnProposal, processing === 'proposal' && s.btnDisabled]}
-            onPress={() => handlePropose(item)}
-            disabled={processing === 'proposal'}
-            activeOpacity={0.75}
-          >
-            <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
-            <Text style={s.btnProposalText}>Proponer precio</Text>
-          </TouchableOpacity>
+        {/* Botones de acción - DISPONIBLES */}
+        {isAvailableTab && (
+          <View style={s.buttonRow}>
+            <TouchableOpacity
+              style={[s.btnWrapper, s.btnProposal, processing === 'proposal' && s.btnDisabled]}
+              onPress={() => handlePropose(item)}
+              disabled={processing === 'proposal'}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
+              <Text style={s.btnProposalText}>Proponer precio</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[s.btnWrapper, s.btnAccept, isProcessing && s.btnDisabled]}
-            onPress={() => handleAcceptPrice(item)}
-            disabled={isProcessing}
-            activeOpacity={0.75}
-          >
-            {isProcessing ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                <Text style={s.btnAcceptText}>Aceptar</Text>
-              </>
+            <TouchableOpacity
+              style={[s.btnWrapper, s.btnAccept, isProcessing && s.btnDisabled]}
+              onPress={() => handleAcceptPrice(item)}
+              disabled={isProcessing}
+              activeOpacity={0.75}
+            >
+              {isProcessing ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                  <Text style={s.btnAcceptText}>Aceptar</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Botones de acción - VIAJES ACTIVOS */}
+        {isActiveTripsTab && (
+          <View style={s.buttonRow}>
+            {/* Botón Chatear - disponible en ambos estados */}
+            <TouchableOpacity
+              style={[s.btnWrapper, s.btnChat]}
+              onPress={() => {
+                setChatRequest(item)
+                setShowChatModal(true)
+              }}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+              <Text style={s.btnChatText}>💬 Chat</Text>
+            </TouchableOpacity>
+
+            {item.status === 'accepted' && (
+              <TouchableOpacity
+                style={[s.btnWrapper, s.btnAccept, isProcessing && s.btnDisabled]}
+                onPress={async () => {
+                  try {
+                    setProcessing(item.id)
+                    await startTrip(item.id)
+                    showSuccess('✅ Viaje iniciado. ¡Bienvenido!')
+                  } catch (err: any) {
+                    showError(err.message || 'Error al iniciar viaje')
+                  } finally {
+                    setProcessing(null)
+                  }
+                }}
+                disabled={isProcessing}
+                activeOpacity={0.75}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="play-circle-outline" size={16} color="#fff" />
+                    <Text style={s.btnAcceptText}>🚗 Iniciar viaje</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-        </View>
+
+            {item.status === 'in_progress' && (
+              <TouchableOpacity
+                style={[s.btnWrapper, s.btnAccept, isProcessing && s.btnDisabled]}
+                onPress={async () => {
+                  try {
+                    setProcessing(item.id)
+                    await completeTrip(item.id)
+                    showSuccess('✅ Viaje completado. ¡Gracias por tu servicio!')
+                  } catch (err: any) {
+                    showError(err.message || 'Error al completar viaje')
+                  } finally {
+                    setProcessing(null)
+                  }
+                }}
+                disabled={isProcessing}
+                activeOpacity={0.75}
+              >
+                {isProcessing ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                    <Text style={s.btnAcceptText}>✔️ Completar viaje</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {/* Botones de acción - VIAJES COMPLETADOS */}
+        {activeTab === 'completed_trips' && (
+          <View style={s.buttonRow}>
+            <TouchableOpacity
+              style={[s.btnWrapper, s.btnAccept]}
+              onPress={() => {
+                setRatingTrip(item)
+                setSelectedRating(0)
+                setRatingComment('')
+                setShowRatingModal(true)
+              }}
+              activeOpacity={0.75}
+            >
+              <Ionicons name="star-outline" size={16} color="#fff" />
+              <Text style={s.btnAcceptText}>⭐ Calificar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     )
   }
@@ -244,51 +399,196 @@ export default function AirportFeedScreen() {
         </TouchableOpacity>
         <View style={s.headerHero}>
           <Ionicons name="car-sport" size={22} color="rgba(255,255,255,0.9)" />
-          <View style={s.headerTitleRow}>
-            <Text style={s.headerTitle}>Solicitudes de viajes</Text>
-            {requests.length > 0 && (
-              <View style={s.headerBadge}>
-                <Text style={s.headerBadgeText}>{requests.length}</Text>
-              </View>
-            )}
-          </View>
-          <Text style={s.headerSub}>
-            {requests.length === 0
-              ? 'Sin solicitudes disponibles'
-              : `${requests.length} solicitud${requests.length !== 1 ? 'es' : ''} esperando tu oferta`}
-          </Text>
+          <Text style={s.headerTitle}>Mis Viajes</Text>
         </View>
-        <View style={{ width: 40 }} />
       </LinearGradient>
 
-      {/* Comisión info strip */}
-      <View style={s.commissionStrip}>
-        <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
-        <Text style={s.commissionText}>
-          Al aceptar se descuentan <Text style={s.commissionBold}>$5.000</Text> de tu billetera
-        </Text>
+      {/* Tabs Navigation */}
+      <View style={s.tabsContainer}>
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'available' && s.tabActive]}
+          onPress={() => setActiveTab('available')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="list" size={16} color={activeTab === 'available' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'available' && s.tabTextActive]}>Disponibles</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'active_trips' && s.tabActive]}
+          onPress={() => setActiveTab('active_trips')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'active_trips' && s.tabTextActive]}>Activos</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[s.tab, activeTab === 'completed_trips' && s.tabActive]}
+          onPress={() => setActiveTab('completed_trips')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="checkmark-done" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
+          <Text style={[s.tabText, activeTab === 'completed_trips' && s.tabTextActive]}>Completados</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Lista */}
-      {loading && !refreshing ? (
-        <View style={[s.list, { gap: 0 }]}>
-          <SkeletonAirportCard />
-          <SkeletonAirportCard />
-          <SkeletonAirportCard />
-        </View>
-      ) : (
+      {activeTab === 'available' && (
+        <>
+          {/* Info strip para tab de disponibles */}
+          <View style={s.commissionStrip}>
+            <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
+            <Text style={s.commissionText}>
+              Al aceptar se descuentan <Text style={s.commissionBold}>$5.000</Text> de tu billetera
+            </Text>
+          </View>
+          {loading && !refreshing ? (
+            <View style={[s.list, { gap: 0 }]}>
+              <SkeletonAirportCard />
+              <SkeletonAirportCard />
+              <SkeletonAirportCard />
+            </View>
+          ) : (
+            <FlatList
+              data={availableRequests}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              contentContainerStyle={[s.list, availableRequests.length === 0 && s.listEmpty]}
+              ListEmptyComponent={renderEmpty}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+              }
+              showsVerticalScrollIndicator={false}
+            />
+          )}
+        </>
+      )}
+
+      {activeTab === 'active_trips' && (
         <FlatList
-          data={requests}
+          data={activeTrips}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
-          contentContainerStyle={[s.list, requests.length === 0 && s.listEmpty]}
-          ListEmptyComponent={renderEmpty}
+          contentContainerStyle={[s.list, activeTrips.length === 0 && s.listEmpty]}
+          ListEmptyComponent={() => (
+            <View style={s.emptyContainer}>
+              <Ionicons name="car-outline" size={48} color={COLORS.textTertiary} style={{ marginBottom: 16, opacity: 0.4 }} />
+              <Text style={s.emptyTitle}>Sin viajes activos</Text>
+              <Text style={s.emptyText}>Tus viajes confirmados aparecerán aquí</Text>
+            </View>
+          )}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
           }
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      {activeTab === 'completed_trips' && (
+        <FlatList
+          data={completedTrips}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={[s.list, completedTrips.length === 0 && s.listEmpty]}
+          ListEmptyComponent={() => (
+            <View style={s.emptyContainer}>
+              <Ionicons name="checkmark-done-outline" size={48} color={COLORS.textTertiary} style={{ marginBottom: 16, opacity: 0.4 }} />
+              <Text style={s.emptyTitle}>Sin viajes completados</Text>
+              <Text style={s.emptyText}>Los viajes completados aparecerán aquí</Text>
+            </View>
+          )}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
+
+      {/* Modal para calificar viaje */}
+      <Modal
+        visible={showRatingModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowRatingModal(false)}
+      >
+        <View style={s.modalOverlay}>
+          <Pressable
+            style={{ flex: 1 }}
+            onPress={() => setShowRatingModal(false)}
+          >
+            <View style={s.modalContent} pointerEvents="box-only">
+              <View style={s.modalHeader}>
+                <Text style={s.modalTitle}>Calificar viaje</Text>
+                <TouchableOpacity onPress={() => setShowRatingModal(false)}>
+                  <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                </TouchableOpacity>
+              </View>
+              <View style={s.modalBody}>
+                {ratingTrip && (
+                  <>
+                    {/* Ruta del viaje */}
+                    <View style={s.modalRoute}>
+                      <Text style={s.modalRouteLabel}>De {ratingTrip.origin} a {ratingTrip.destination}</Text>
+                      <Text style={s.modalRouteValue}>Conductor: {ratingTrip.passenger_name}</Text>
+                    </View>
+
+                    {/* Selector de calificación */}
+                    <View style={s.modalPriceSection}>
+                      <Text style={s.modalLabel}>Calificación</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 16, marginVertical: 16 }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <TouchableOpacity
+                            key={star}
+                            onPress={() => setSelectedRating(star)}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons
+                              name={star <= selectedRating ? 'star' : 'star-outline'}
+                              size={32}
+                              color={star <= selectedRating ? '#F59E0B' : '#CBD5E1'}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Comentario */}
+                    <View style={{ marginBottom: SPACING.lg }}>
+                      <Text style={s.modalLabel}>Comentario (opcional)</Text>
+                      <TextInput
+                        style={[s.input, { borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md, height: 80, textAlignVertical: 'top' }]}
+                        placeholder="Comparte tu experiencia..."
+                        placeholderTextColor={COLORS.textTertiary}
+                        value={ratingComment}
+                        onChangeText={setRatingComment}
+                        multiline
+                      />
+                    </View>
+
+                    {/* Botón enviar */}
+                    <TouchableOpacity
+                      style={[s.submitBtn, processing?.startsWith('rating') && s.submitBtnDisabled]}
+                      onPress={handleSubmitRating}
+                      disabled={processing?.startsWith('rating') || selectedRating === 0}
+                      activeOpacity={0.75}
+                    >
+                      {processing?.startsWith('rating') ? (
+                        <ActivityIndicator size="small" color="#fff" />
+                      ) : (
+                        <>
+                          <Ionicons name="checkmark-done" size={16} color="#fff" />
+                          <Text style={s.submitBtnText}>Enviar calificación</Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
+            </View>
+          </Pressable>
+        </View>
+      </Modal>
 
       {/* Modal para proponer precio */}
       <Modal
@@ -363,6 +663,17 @@ export default function AirportFeedScreen() {
           </Pressable>
         </View>
       </Modal>
+
+      {/* 💬 Modal de Chat de Negociación */}
+      {chatRequest && (
+        <NegotiationChatModal
+          visible={showChatModal}
+          onClose={() => setShowChatModal(false)}
+          requestId={chatRequest.id}
+          driverName={chatRequest.passenger_name || 'Pasajero'}
+          otherUserId={chatRequest.passenger_id}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -513,6 +824,12 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   btnAcceptText: { fontSize: 13, fontWeight: '600', color: '#fff' },
+  btnChat: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    borderWidth: 1,
+    borderColor: '#3B82F6',
+  },
+  btnChatText: { fontSize: 13, fontWeight: '600', color: '#3B82F6' },
   btnDisabled: { opacity: 0.5 },
 
   // Empty state
@@ -603,6 +920,52 @@ const s = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#fff',
+  },
+
+  // Tabs navigation
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+    paddingHorizontal: SPACING.sm,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  tabActive: {
+    borderBottomColor: COLORS.primary,
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#666',
+  },
+  tabTextActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+
+  // Empty container
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: SPACING.xxxl,
+  },
+  emptyText: {
+    fontSize: 13,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+    maxWidth: 240,
   },
 })
 

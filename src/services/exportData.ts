@@ -44,12 +44,14 @@ export async function exportUserData() {
       .from('messages')
       .select('*')
       .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(1000),
     supabase
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false }),
+      .order('created_at', { ascending: false })
+      .limit(500),
     supabase.from('travel_preferences').select('*').eq('user_id', userId).maybeSingle(),
     supabase
       .from('favorite_routes')

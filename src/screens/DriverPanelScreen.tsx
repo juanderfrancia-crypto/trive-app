@@ -95,76 +95,63 @@ export default function DriverPanelScreen() {
     if (isFetchingRef.current) return
     isFetchingRef.current = true
     try {
+      // 🔧 FIX: Usar JOIN en lugar de queries O(n²)
+      // Obtener rutas CON bookings y perfiles en 1 sola query
       const { data, error } = await supabase
         .from('routes')
-        .select('*')
+        .select(`
+          *,
+          bookings!inner(
+            id,
+            passenger_id,
+            seat_number,
+            booking_status,
+            payment_method,
+            created_at,
+            dropoff_point,
+            dropoff_point_custom,
+            passenger:profiles!passenger_id(id, name, email, phone)
+          )
+        `)
         .eq('driver_id', user.id)
         .in('status', ['scheduled', 'in_progress'])
+        .in('bookings.booking_status', ['confirmed', 'completed'])
         .order('departure_time', { ascending: true })
 
       if (error) throw error
 
-      const routesWithPassengers = await Promise.all(
-        (data || []).map(async (route) => {
-          const { data: bookings, error: bookingsError } = await supabase
-            .from('bookings')
-            .select(`
-              id,
-              passenger_id,
-              seat_number,
-              booking_status,
-              payment_method,
-              created_at,
-              dropoff_point,
-              dropoff_point_custom
-            `)
-            .eq('route_id', route.id)
-            .in('booking_status', ['confirmed', 'completed'])
-            .order('seat_number', { ascending: true })
-
-          if (bookingsError) {
-            console.error('Error loading bookings for route', route.id, ':', bookingsError)
-            return { ...route, passengers: [] }
-          }
-
-          // Obtener información de perfiles para pasajeros si hay bookings
-          let passengers: Passenger[] = []
-          if (bookings && bookings.length > 0) {
-            const passengerIds = bookings.map((b: any) => b.passenger_id)
-            const { data: profiles, error: profilesError } = await supabase
-              .from('profiles')
-              .select('id, name, email, phone')
-              .in('id', passengerIds)
-
-            const profileMap = new Map(
-              (profiles || []).map((p: any) => [p.id, p])
-            )
-
-            passengers = bookings.map((b: any) => {
-              const profile = profileMap.get(b.passenger_id)
-              return {
-                booking_id: b.id,
-                passenger_id: b.passenger_id,
-                name: profile?.name || `Pasajero ${b.seat_number}`,
-                email: profile?.email || '',
-                phone: profile?.phone || '',
-                seat_number: b.seat_number,
-                booking_status: b.booking_status,
-                payment_method: b.payment_method || 'cash',
-                created_at: b.created_at,
-                dropoff_point: b.dropoff_point || route.destination,
-                dropoff_point_custom: b.dropoff_point_custom || false,
-              }
-            })
-          }
-
-          return { ...route, passengers }
-        })
-      )
+      const routesWithPassengers = (data || []).map((route: any) => {
+        const passengers: Passenger[] = (route.bookings || []).map((b: any) => ({
+          booking_id: b.id,
+          passenger_id: b.passenger_id,
+          name: b.passenger?.name || `Pasajero ${b.seat_number}`,
+          email: b.passenger?.email || '',
+          phone: b.passenger?.phone || '',
+          seat_number: b.seat_number,
+          booking_status: b.booking_status,
+          payment_method: b.payment_method || 'cash',
+          created_at: b.created_at,
+          dropoff_point: b.dropoff_point || route.destination,
+          dropoff_point_custom: b.dropoff_point_custom || false,
+        }))
+        return { ...route, passengers }
+      })
 
       failureCountRef.current = 0
       setRoutes(routesWithPassengers)
       loadUnreadCounts(routesWithPassengers)
+
+      // 🔧 FIX: Limpiar listeners de rutas que ya no existen (memory leak prevention)
+      const currentRouteIds = new Set(routesWithPassengers.map(r => r.id))
+      const staleRoutes = Array.from(msgChannelsRef.current.keys()).filter(routeId => !currentRouteIds.has(routeId))
+      for (const staleRouteId of staleRoutes) {
+        const unsub = msgChannelsRef.current.get(staleRouteId)
+        if (unsub) {
+          unsub()  // Ejecutar cleanup
+          msgChannelsRef.current.delete(staleRouteId)
+          console.log(`✅ Listener limpiado para ruta eliminada: ${staleRouteId}`)
+        }
+      }
 
       // Suscribir canales de mensajes para cada ruta nueva
       for (const route of routesWithPassengers) {
@@ -220,12 +207,29 @@ export default function DriverPanelScreen() {
         )
         .subscribe()
 
-      // Polling de respaldo cada 60s (por si Realtime falla)
-      const scheduleNext = () => {
-        pollingIntervalRef.current = setTimeout(() => {
-          fetchDriverRoutes()
-          scheduleNext()
-        }, 60000)
+      // Polling de respaldo cada 60s (por si Realtime falla) - CON EXPONENTIAL BACKOFF
+      const maxRetries = 5
+      const baseDelay = 60000  // 60 segundos
+      
+      const scheduleNext = (retryCount = 0) => {
+        if (retryCount >= maxRetries) {
+          console.warn('⚠️ Polling pausado tras', maxRetries, 'fallos. Presiona refresh para reintentar.')
+          return  // STOP: No schedule siguiente
+        }
+
+        const delay = baseDelay * Math.pow(1.5, retryCount)  // 60s → 90s → 135s → 202s → 303s
+        
+        pollingIntervalRef.current = setTimeout(async () => {
+          try {
+            await fetchDriverRoutes()
+            failureCountRef.current = 0  // Reset en éxito
+            scheduleNext(0)  // Volver a reintentar con delay base
+          } catch (err) {
+            failureCountRef.current += 1
+            console.error(`❌ Polling fallo ${failureCountRef.current}/${maxRetries}:`, err)
+            scheduleNext(failureCountRef.current)  // Reintentar con backoff
+          }
+        }, delay)
       }
       scheduleNext()
 
