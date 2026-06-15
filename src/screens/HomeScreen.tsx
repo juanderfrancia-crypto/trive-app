@@ -744,33 +744,34 @@ export default function HomeScreen() {
         {/* ══ SOLICITAR VIAJE PRIVADO — pasajero ═════════════════════════════ */}
         {!isDriver && (
           <>
-            <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.airportBanner}
-              onPress={() => navigation.navigate('AirportRequest' as never)}
-              activeOpacity={0.88}
-            >
-              <View style={styles.airportIconWrap}>
-                <Ionicons name="document-text" size={22} color={COLORS.primary} />
-              </View>
-              <View style={styles.airportTextWrap}>
-                <Text style={styles.airportBannerTitle}>Solicitar Viaje</Text>
-                <Text style={styles.airportBannerSub}>Publica y negocia el precio</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
+            {/* Solicitar Viaje — Secundario */}
+            <View style={[styles.section, { marginBottom: SPACING.md }]}>
+              <TouchableOpacity
+                style={styles.airportBanner}
+                onPress={() => navigation.navigate('AirportRequest' as never)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.airportIconWrap}>
+                  <Ionicons name="document-text" size={20} color={COLORS.primary} />
+                </View>
+                <View style={styles.airportTextWrap}>
+                  <Text style={[styles.airportBannerTitle, { fontSize: 13 }]}>Solicitar Viaje</Text>
+                  <Text style={[styles.airportBannerSub, { fontSize: 10 }]}>Negocia el precio</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color="rgba(0,0,0,0.3)" />
+              </TouchableOpacity>
+            </View>
 
-          {/* Tip Banner — Guía al usuario nuevo */}
-          <View style={[styles.section, { backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: RADIUS.lg, padding: SPACING.md, borderLeftWidth: 4, borderLeftColor: COLORS.primary }]}>
-            <View style={{ flexDirection: 'row', gap: SPACING.md, alignItems: 'flex-start' }}>
-              <Ionicons name="information-circle" size={20} color={COLORS.primary} style={{ marginTop: 2 }} />
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.airportBannerTitle, { fontSize: 13, fontWeight: '600', marginBottom: SPACING.xs }]}>💡 Consejo rápido</Text>
-                <Text style={[styles.airportBannerSub, { fontSize: 12, lineHeight: 18 }]}>Ve primero "Cupos Hoy" para salidas inmediatas. Si no encuentras lo que buscas, solicita un viaje privado.</Text>
+            {/* Tip Banner — Mejor Estética */}
+            <View style={[styles.section, { backgroundColor: 'rgba(219,234,254,0.5)', borderRadius: RADIUS.lg, padding: SPACING.md, borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)' }]}>
+              <View style={{ flexDirection: 'row', gap: SPACING.md, alignItems: 'flex-start' }}>
+                <Text style={{ fontSize: 18, marginTop: 1 }}>💡</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: SPACING.xs }}>Consejo</Text>
+                  <Text style={{ fontSize: 11, color: 'rgba(59,130,246,0.8)', lineHeight: 16, fontWeight: '500' }}>Ve primero los "Cupos Hoy" disponibles. Si no encuentras, solicita un viaje privado.</Text>
+                </View>
               </View>
             </View>
-          </View>
           </>
         )}
 
@@ -1257,38 +1258,37 @@ const styles = StyleSheet.create({
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
     borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 8,
-    width: '82%',
-    alignSelf: 'center',
+    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10,
+    width: '100%',
   },
-  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md, gap: SPACING.md, height: 48 },
-  ctaIconWrap: { width: 32, height: 32, borderRadius: RADIUS.sm, backgroundColor: '#EEF4FF', justifyContent: 'center', alignItems: 'center' },
+  ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.lg, gap: SPACING.lg, height: 64 },
+  ctaIconWrap: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: 'rgba(255,255,255,0.25)', justifyContent: 'center', alignItems: 'center' },
   ctaTextWrap: { flex: 1 },
-  ctaTitle:    { fontSize: 13, fontWeight: '700', color: '#fff' },
-  ctaSubtitle: { fontSize: 8.5, color: 'rgba(255,255,255,0.8)', marginTop: 0 },
+  ctaTitle:    { fontSize: 16, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+  ctaSubtitle: { fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2, fontWeight: '500' },
 
   // ── Airport banner ───────────────────────────────────────────────────────────
   airportBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
+    backgroundColor: 'rgba(229,231,235,0.4)',
     borderRadius: RADIUS.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.md,
-    gap: SPACING.sm,
+    gap: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: 'rgba(0,0,0,0.05)',
     shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 0,
   },
   airportIconWrap: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.sm,
-    backgroundColor: '#EFF6FF',
+    backgroundColor: 'rgba(59,130,246,0.12)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1297,9 +1297,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2FF',
   },
   airportTextWrap: { flex: 1 },
-  airportBannerTitle:   { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  airportBannerTitleSm: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, lineHeight: 17 },
-  airportBannerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  airportBannerTitle:   { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
+  airportBannerTitleSm: { fontSize: 12, fontWeight: '600', color: COLORS.textPrimary, lineHeight: 17 },
+  airportBannerSub:   { fontSize: 11, color: 'rgba(107,114,128,0.8)', marginTop: 1 },
   airportBannerSubActive: { color: COLORS.primary, fontWeight: '600' },
   airportBadge: {
     position: 'absolute',
