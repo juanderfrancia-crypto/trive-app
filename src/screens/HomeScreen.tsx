@@ -605,7 +605,7 @@ export default function HomeScreen() {
                 <View style={styles.dotOrigin} />
                 <TextInput
                   style={styles.searchInputHorizontal}
-                  placeholder="Origen"
+                  placeholder="¿De dónde sales?"
                   placeholderTextColor={COLORS.textTertiary}
                   value={origin}
                   onChangeText={setOrigin}
@@ -623,7 +623,7 @@ export default function HomeScreen() {
                 <View style={styles.dotDestino} />
                 <TextInput
                   style={styles.searchInputHorizontal}
-                  placeholder="Destino"
+                  placeholder="¿A dónde vas?"
                   placeholderTextColor={COLORS.textTertiary}
                   value={destination}
                   onChangeText={setDestination}
@@ -708,7 +708,7 @@ export default function HomeScreen() {
               color={origin && destination ? '#fff' : COLORS.textTertiary} 
             />
             <Text style={[styles.searchBtnText, (!origin || !destination) && styles.searchBtnTextDisabled]}>
-              Buscar rutas
+              Buscar viajes
             </Text>
           </TouchableOpacity>
         </View>
@@ -728,12 +728,12 @@ export default function HomeScreen() {
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
               >
-                <View style={styles.ctaIconWrap}>
-                  <Ionicons name="flash" size={18} color="#fff" />
+                <View style={[styles.ctaIconWrap, { backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: RADIUS.md, padding: SPACING.sm }]}>
+                  <Ionicons name="flash" size={20} color="#FFD700" />
                 </View>
                 <View style={styles.ctaTextWrap}>
-                  <Text style={styles.ctaTitle} numberOfLines={1}>Cupos Disponibles</Text>
-                  <Text style={styles.ctaSubtitle} numberOfLines={1}>Hoy en {preferredMunicipality || 'tu municipio'}</Text>
+                  <Text style={styles.ctaTitle} numberOfLines={1}>⚡ Cupos Hoy</Text>
+                  <Text style={styles.ctaSubtitle} numberOfLines={1}>{preferredMunicipality || 'tu municipio'}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.65)" />
               </LinearGradient>
@@ -743,7 +743,8 @@ export default function HomeScreen() {
 
         {/* ══ SOLICITAR VIAJE PRIVADO — pasajero ═════════════════════════════ */}
         {!isDriver && (
-          <View style={styles.section}>
+          <>
+            <View style={styles.section}>
             <TouchableOpacity
               style={styles.airportBanner}
               onPress={() => navigation.navigate('AirportRequest' as never)}
@@ -759,6 +760,18 @@ export default function HomeScreen() {
               <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
+
+          {/* Tip Banner — Guía al usuario nuevo */}
+          <View style={[styles.section, { backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: RADIUS.lg, padding: SPACING.md, borderLeftWidth: 4, borderLeftColor: COLORS.primary }]}>
+            <View style={{ flexDirection: 'row', gap: SPACING.md, alignItems: 'flex-start' }}>
+              <Ionicons name="information-circle" size={20} color={COLORS.primary} style={{ marginTop: 2 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.airportBannerTitle, { fontSize: 13, fontWeight: '600', marginBottom: SPACING.xs }]}>💡 Consejo rápido</Text>
+                <Text style={[styles.airportBannerSub, { fontSize: 12, lineHeight: 18 }]}>Ve primero "Cupos Hoy" para salidas inmediatas. Si no encuentras lo que buscas, solicita un viaje privado.</Text>
+              </View>
+            </View>
+          </View>
+          </>
         )}
 
         {/* ══ PUBLICAR RUTA + SOLICITUDES — conductor ════════════════════════ */}
