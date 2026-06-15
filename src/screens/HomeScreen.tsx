@@ -713,13 +713,13 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* ══ VIAJES AHORA CTA ══════════════════════════════════════════════ */}
+        {/* ══ CUPOS DISPONIBLES HOY ═════════════════════════════════════════ */}
         <View style={[styles.section, styles.ctaSection]}>
           <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
             <TouchableOpacity
               style={styles.ctaWrapper}
               onPress={handleAvailableRidesPress}
-              accessibilityLabel="Viajes disponibles ahora"
+              accessibilityLabel="Ver cupos disponibles en tu municipio"
               activeOpacity={0.88}
             >
               <LinearGradient
@@ -729,11 +729,11 @@ export default function HomeScreen() {
                 style={styles.ctaGradient}
               >
                 <View style={styles.ctaIconWrap}>
-                  <Ionicons name="flash" size={18} color={COLORS.primary} />
+                  <Ionicons name="flash" size={18} color="#fff" />
                 </View>
                 <View style={styles.ctaTextWrap}>
-                  <Text style={styles.ctaTitle} numberOfLines={1}>Viajes Ahora</Text>
-                  <Text style={styles.ctaSubtitle} numberOfLines={1}>Disponibles en tiempo real</Text>
+                  <Text style={styles.ctaTitle} numberOfLines={1}>Cupos Disponibles</Text>
+                  <Text style={styles.ctaSubtitle} numberOfLines={1}>Hoy en {preferredMunicipality || 'tu municipio'}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.65)" />
               </LinearGradient>
@@ -741,7 +741,7 @@ export default function HomeScreen() {
           </Animated.View>
         </View>
 
-        {/* ══ AEROPUERTO — pasajero ════════════════════════════════════════ */}
+        {/* ══ SOLICITAR VIAJE PRIVADO — pasajero ═════════════════════════════ */}
         {!isDriver && (
           <View style={styles.section}>
             <TouchableOpacity
@@ -750,139 +750,70 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <View style={styles.airportIconWrap}>
-                <Ionicons name="car-sport" size={22} color={COLORS.primary} />
+                <Ionicons name="document-text" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.airportTextWrap}>
                 <Text style={styles.airportBannerTitle}>Solicitar Viaje</Text>
-                <Text style={styles.airportBannerSub}>Al aeropuerto o cualquier lugar</Text>
+                <Text style={styles.airportBannerSub}>Publica y negocia el precio</Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         )}
 
-        {/* ══ AEROPUERTO + PUBLICAR — conductor ════════════════════════════ */}
+        {/* ══ PUBLICAR RUTA + SOLICITUDES — conductor ════════════════════════ */}
         {isDriver && (
-          <View style={[styles.section, { flexDirection: 'row', gap: SPACING.md }]}>
-            {/* Aeropuerto */}
-            <TouchableOpacity
-              style={[styles.airportBanner, { flex: 1 }, pendingAirportCount > 0 && styles.airportBannerActive]}
-              onPress={() => navigation.navigate('AirportFeed' as never)}
-              activeOpacity={0.88}
-            >
-              <View style={styles.airportIconWrap}>
-                <Ionicons name="car-sport" size={20} color={COLORS.primary} />
-                {pendingAirportCount > 0 && (
-                  <View style={styles.airportBadge}>
-                    <Text style={styles.airportBadgeText}>
-                      {pendingAirportCount > 99 ? '99+' : pendingAirportCount}
-                    </Text>
-                  </View>
-                )}
-              </View>
-              <View style={styles.airportTextWrap}>
-                <Text style={styles.airportBannerTitleSm} numberOfLines={2}>Solicitudes de viajes</Text>
-                <Text style={[styles.airportBannerSub, pendingAirportCount > 0 && styles.airportBannerSubActive]} numberOfLines={1}>
-                  {pendingAirportCount > 0
-                    ? `${pendingAirportCount} esperando`
-                    : 'Ver viajes'}
-                </Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={pendingAirportCount > 0 ? COLORS.primary : COLORS.textTertiary} />
-            </TouchableOpacity>
-
-            {/* Publicar ruta */}
-            <TouchableOpacity
-              style={styles.publishRoundBtn}
-              onPress={() => setShowAddMenu(true)}
-              activeOpacity={0.85}
-            >
-              <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.publishRoundBtnInner}
-              >
-                <Ionicons name="add" size={24} color="#fff" />
-              </LinearGradient>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* ══ RUTAS DESTACADAS (carrusel) ════════════════════════════════════ */}
-        <View style={styles.sectionNoBottom}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Rutas destacadas</Text>
-            <TouchableOpacity onPress={() => {
-              console.log('[HomeScreen] Navegando a Search desde ver todas')
-              navigation.navigate('Search', {})
-            }} activeOpacity={0.7}>
-              <Text style={styles.seeAll}>Ver todas</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {showRoutesLoading ? (
-          <View style={styles.carouselWrapper}>
-            <View style={[styles.carouselContent, { flexDirection: 'row', gap: SPACING.md }]}>
-              <SkeletonRouteCard />
-              <SkeletonRouteCard />
-            </View>
-          </View>
-        ) : showRoutesError ? (
-          <View style={[styles.section, styles.emptyBox]}>
-            <Ionicons name="alert-circle-outline" size={80} color={COLORS.error} />
-            <Text style={styles.emptyTitle}>No se pudieron cargar las rutas</Text>
-            <Text style={styles.emptySubtitle}>Intenta de nuevo más tarde</Text>
-          </View>
-        ) : topRoutes.length > 0 ? (
           <>
-            {/* Break out of section padding for full-bleed carousel */}
-            <View>
-              <View style={styles.carouselWrapper}>
-                <FlatList
-                  data={topRoutes}
-                  keyExtractor={(item) => item.id}
-                  renderItem={renderRouteCard}
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  snapToInterval={CARD_W + SPACING.md}
-                  decelerationRate="fast"
-                  contentContainerStyle={styles.carouselContent}
-                  ItemSeparatorComponent={() => <View style={{ width: SPACING.md }} />}
-                  onMomentumScrollEnd={(e) => {
-                    const idx = Math.round(e.nativeEvent.contentOffset.x / (CARD_W + SPACING.md))
-                    setActiveDot(Math.min(idx, topRoutes.length - 1))
-                  }}
-                />
-              </View>
-              {topRoutes.length > 1 && activeDot < topRoutes.length - 1 && (
-                <LinearGradient
-                  colors={['transparent', '#FAFAFA']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.carouselEdgeFade}
-                  pointerEvents="none"
-                />
-              )}
+            {/* Publicar Ruta - Principal */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={styles.airportBanner}
+                onPress={() => setShowAddMenu(true)}
+                activeOpacity={0.88}
+              >
+                <View style={styles.airportIconWrap}>
+                  <Ionicons name="add-circle" size={22} color="#fff" />
+                </View>
+                <View style={styles.airportTextWrap}>
+                  <Text style={[styles.airportBannerTitle, { color: '#fff' }]}>Publicar Ruta</Text>
+                  <Text style={[styles.airportBannerSub, { color: 'rgba(255,255,255,0.8)' }]}>Vende cupos hoy</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.65)" />
+              </TouchableOpacity>
             </View>
 
-            {/* Dot indicators */}
-            {topRoutes.length > 1 && (
-              <View style={styles.dotsRow}>
-                {topRoutes.map((_, i) => (
-                  <View key={i} style={[styles.dot, i === activeDot && styles.dotActive]} />
-                ))}
-              </View>
-            )}
+            {/* Solicitudes Especiales - Secundaria */}
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={[styles.airportBanner, pendingAirportCount > 0 && styles.airportBannerActive]}
+                onPress={() => navigation.navigate('AirportFeed' as never)}
+                activeOpacity={0.88}
+              >
+                <View style={styles.airportIconWrap}>
+                  <Ionicons name="document-text" size={20} color={COLORS.primary} />
+                  {pendingAirportCount > 0 && (
+                    <View style={styles.airportBadge}>
+                      <Text style={styles.airportBadgeText}>
+                        {pendingAirportCount > 99 ? '99+' : pendingAirportCount}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                <View style={styles.airportTextWrap}>
+                  <Text style={styles.airportBannerTitle} numberOfLines={2}>Viajes Especiales</Text>
+                  <Text style={[styles.airportBannerSub, pendingAirportCount > 0 && styles.airportBannerSubActive]} numberOfLines={1}>
+                    {pendingAirportCount > 0
+                      ? `${pendingAirportCount} solicitudes`
+                      : 'Ver solicitudes'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={pendingAirportCount > 0 ? COLORS.primary : COLORS.textTertiary} />
+              </TouchableOpacity>
+            </View>
           </>
-        ) : (
-          <View style={[styles.section, styles.emptyBox]}>
-            <Ionicons name="map-outline" size={60} color={COLORS.primary} />
-            <Text style={styles.emptyTitle}>No hay rutas destacadas</Text>
-            <Text style={styles.emptySubtitle}>Revisa más tarde o busca manualmente</Text>
-          </View>
         )}
+
+
 
       </ScrollView>
 
