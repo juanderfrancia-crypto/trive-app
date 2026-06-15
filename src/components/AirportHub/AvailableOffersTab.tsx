@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   View,
   Text,
@@ -6,163 +6,261 @@ import {
   FlatList,
   Alert,
   StyleSheet,
+  ActivityIndicator,
+  Modal,
+  TextInput,
+  RefreshControl,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
-import { supabase } from '../../services/supabase'
+import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
+import { showSuccess, showError } from '../../utils/showError'
+import type { HubTabProps } from './types'
 
-interface AvailableOffer {
-  id: string
-  origin: string
-  destination: string
-  offered_price: number
-  passengerName: string
-  passengerId: string
-  createdAt: string
-  status: string
-}
-
-export default function AvailableOffersTab() {
+export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
-  const [offers, setOffers] = useState<AvailableOffer[]>([])
-  const [loading, setLoading] = useState(true)
+  const {
+    requests,
+    loading,
+    loadDriverFeed,
+    createOffer,
+  } = useAirportNegotiation()
+
   const [refreshing, setRefreshing] = useState(false)
+  const [processing, setProcessing] = useState<string | null>(null)
+  const [showProposalModal, setShowProposalModal] = useState(false)
+  const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
+  const [proposedPrice, setProposedPrice] = useState('')
 
-  const loadOffers = useCallback(async () => {
-    if (!user?.id) return
+  const availableRequests = requests.filter((r) => r.status === 'pending')
 
-    try {
-      if (!refreshing) setLoading(true)
-      const { data, error } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          origin,
-          destination,
-          offered_price,
-          passenger_id,
-          status,
-          created_at,
-          profiles!passenger_id (id, name)
-        `
-        )
-        .eq('status', 'pending')
-        .neq('driver_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      const formattedOffers = (data || []).map((req: any) => ({
-        id: req.id,
-        origin: req.origin,
-        destination: req.destination,
-        offered_price: req.offered_price,
-        passengerName: req.profiles?.name || 'Pasajero',
-        passengerId: req.passenger_id,
-        createdAt: req.created_at,
-        status: req.status,
-      }))
-
-      setOffers(formattedOffers)
-    } catch (err) {
-      console.error('❌ Error loading offers:', err)
-      Alert.alert('Error', 'No se pudieron cargar las ofertas')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [user?.id, refreshing])
+  const load = useCallback(async () => {
+    if (!user?.id || !isDriver) return
+    await loadDriverFeed()
+  }, [user?.id, isDriver, loadDriverFeed])
 
   useFocusEffect(
     useCallback(() => {
-      loadOffers()
-    }, [loadOffers])
+      load()
+    }, [load])
   )
 
-  const handleAcceptOffer = async (offerId: string) => {
-    console.log('Aceptar oferta:', offerId)
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await load()
+    setRefreshing(false)
   }
 
-  const renderOfferItem = ({ item: offer }: { item: AvailableOffer }) => (
-    <TouchableOpacity
-      style={styles.offerCard}
-      onPress={() => handleAcceptOffer(offer.id)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.offerLeft}>
-        <View style={styles.offerBadge}>
-          <Ionicons name="sparkles" size={20} color={COLORS.success} />
-        </View>
-      </View>
+  const handlePropose = (item: AirportRequest) => {
+    setSelectedRequest(item)
+    setProposedPrice(item.offered_price.toString())
+    setShowProposalModal(true)
+  }
 
-      <View style={styles.offerContent}>
+  const handleSubmitProposal = async () => {
+    if (!user?.id || !selectedRequest) return
+    const price = parseInt(proposedPrice.replace(/\D/g, ''), 10)
+    if (!price || price <= 0) {
+      showError('Ingresa un precio válido')
+      return
+    }
+    try {
+      setProcessing('proposal')
+      await createOffer(selectedRequest.id, user.id, price)
+      showSuccess('Tu propuesta fue enviada. El pasajero la verá al instante.')
+      setShowProposalModal(false)
+      setSelectedRequest(null)
+      setProposedPrice('')
+    } catch (err: any) {
+      showError(err.message || 'Error al enviar propuesta')
+    } finally {
+      setProcessing(null)
+    }
+  }
+
+  const handleAcceptPrice = (item: AirportRequest) => {
+    if (!user?.id) return
+    Alert.alert(
+      'Enviar oferta',
+      `¿Ofreces aceptar el viaje de ${item.passenger_name ?? 'el pasajero'} por $${item.offered_price.toLocaleString('es-CO')}?\n\nEl pasajero deberá confirmarte. Se descontarán $5.000 al confirmar.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Enviar oferta',
+          onPress: async () => {
+            try {
+              setProcessing(item.id)
+              await createOffer(item.id, user.id)
+              showSuccess('Oferta enviada. Te avisamos cuando el pasajero la acepte.')
+            } catch (err: any) {
+              showError(err.message || 'Error al enviar oferta')
+            } finally {
+              setProcessing(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
+  const formatDateTime = (iso: string) => {
+    const d = new Date(iso)
+    const date = d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
+    const time = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+    return `${date} · ${time}`
+  }
+
+  const renderOfferItem = ({ item }: { item: AirportRequest }) => {
+    const isProcessing = processing === item.id
+    return (
+      <View style={styles.offerCard}>
         <View style={styles.offerHeader}>
-          <Text style={styles.passengerName} numberOfLines={1}>{offer.passengerName}</Text>
-          <Text style={styles.offerPrice}>${offer.offered_price.toLocaleString('es-CO')}</Text>
+          <Text style={styles.passengerName} numberOfLines={1}>
+            {item.passenger_name ?? 'Pasajero'}
+          </Text>
+          <Text style={styles.offerPrice}>${item.offered_price.toLocaleString('es-CO')}</Text>
         </View>
 
         <Text style={styles.offerRoute} numberOfLines={2}>
-          {offer.origin} → {offer.destination}
+          {item.origin} → {item.destination}
         </Text>
 
-        <Text style={styles.offerTime}>
-          {new Date(offer.createdAt).toLocaleTimeString('es-CO', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+        <Text style={styles.offerMeta}>
+          {formatDateTime(item.departure_time)} · {item.passengers}{' '}
+          {item.passengers === 1 ? 'persona' : 'personas'}
         </Text>
-      </View>
 
-      <View style={styles.offerAction}>
-        <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
+        <View style={styles.buttonRow}>
+          <TouchableOpacity
+            style={[styles.btnOutline, processing === 'proposal' && styles.btnDisabled]}
+            onPress={() => handlePropose(item)}
+            disabled={!!processing}
+          >
+            <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
+            <Text style={styles.btnOutlineText}>Proponer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btnPrimary, isProcessing && styles.btnDisabled]}
+            onPress={() => handleAcceptPrice(item)}
+            disabled={!!processing}
+          >
+            {isProcessing ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                <Text style={styles.btnPrimaryText}>Aceptar precio</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
-    </TouchableOpacity>
-  )
+    )
+  }
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconBg}>
         <Ionicons name="briefcase-outline" size={48} color={COLORS.primary} />
       </View>
-      <Text style={styles.emptyTitle}>Sin ofertas disponibles</Text>
+      <Text style={styles.emptyTitle}>Sin solicitudes disponibles</Text>
       <Text style={styles.emptySubtitle}>
-        Nuevas solicitudes de pasajeros aparecerán aquí cuando lleguen
+        Cuando un pasajero publique un viaje aparecerá aquí para que puedas ofertar
       </Text>
     </View>
   )
 
+  if (!isDriver) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptySubtitle}>Cambia a modo conductor para ver solicitudes de pasajeros</Text>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
-      {loading && offers.length === 0 ? (
+      <View style={styles.commissionStrip}>
+        <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
+        <Text style={styles.commissionText}>
+          Al confirmar el pasajero se descuentan <Text style={styles.commissionBold}>$5.000</Text> de tu billetera
+        </Text>
+      </View>
+
+      {loading && availableRequests.length === 0 ? (
         <SkeletonList count={4} />
       ) : (
         <FlatList
-          data={offers}
+          data={availableRequests}
           renderItem={renderOfferItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={renderEmpty}
-          refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true)
-            loadOffers()
-          }}
-          scrollEnabled={offers.length > 0}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
+          }
+          scrollEnabled={availableRequests.length > 0}
         />
       )}
+
+      <Modal visible={showProposalModal} transparent animationType="slide" onRequestClose={() => setShowProposalModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Proponer precio</Text>
+            {selectedRequest && (
+              <Text style={styles.modalSub}>
+                Precio del pasajero: ${selectedRequest.offered_price.toLocaleString('es-CO')}
+              </Text>
+            )}
+            <TextInput
+              style={styles.modalInput}
+              value={proposedPrice}
+              onChangeText={(t) => setProposedPrice(t.replace(/\D/g, ''))}
+              keyboardType="numeric"
+              placeholder="Tu precio"
+              placeholderTextColor={COLORS.textTertiary}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowProposalModal(false)}>
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.modalConfirm}
+                onPress={handleSubmitProposal}
+                disabled={processing === 'proposal'}
+              >
+                {processing === 'proposal' ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.modalConfirmText}>Enviar propuesta</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
+  container: { flex: 1, backgroundColor: COLORS.surface },
+  commissionStrip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.sm,
+    backgroundColor: '#eef2ff',
+    borderRadius: RADIUS.md,
   },
+  commissionText: { flex: 1, fontSize: TYPOGRAPHY.size.xs, color: COLORS.textSecondary },
+  commissionBold: { fontWeight: '700', color: COLORS.primary },
   listContainer: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -170,33 +268,16 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   offerCard: {
-    flexDirection: 'row',
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
-    alignItems: 'center',
-    gap: SPACING.md,
+    gap: SPACING.sm,
     ...SHADOWS.md,
-  },
-  offerLeft: {
-    justifyContent: 'center',
-  },
-  offerBadge: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.lg,
-    backgroundColor: '#e8f5e9',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  offerContent: {
-    flex: 1,
   },
   offerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
   },
   passengerName: {
     fontSize: TYPOGRAPHY.size.md,
@@ -212,16 +293,37 @@ const styles = StyleSheet.create({
   offerRoute: {
     fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
     lineHeight: 18,
   },
-  offerTime: {
+  offerMeta: {
     fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textTertiary,
   },
-  offerAction: {
-    paddingLeft: SPACING.md,
+  buttonRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
+  btnOutline: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
   },
+  btnOutlineText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  btnPrimary: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  btnPrimaryText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  btnDisabled: { opacity: 0.6 },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -249,4 +351,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl * 2,
+  },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.sm },
+  modalSub: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: SPACING.lg,
+  },
+  modalActions: { flexDirection: 'row', gap: SPACING.md },
+  modalCancel: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  modalCancelText: { fontWeight: '600', color: COLORS.textSecondary },
+  modalConfirm: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  modalConfirmText: { fontWeight: '700', color: '#fff' },
 })

@@ -15,6 +15,7 @@ import RatingModal from '../components/RatingModal'
 import { createReview } from '../services/reviews'
 import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
+import { getNotificationRoute } from '../navigation/NotificationNavigation'
 
 type NotificationCategory = 'all' | 'chat' | 'ruta' | 'feed'
 
@@ -111,7 +112,11 @@ export default function NotificationsScreen() {
       .filter((notif) => {
         if (selectedCategory === 'chat') return notif.type === 'message'
         if (selectedCategory === 'ruta')
-          return ['trip_update', 'driver_arrived', 'trip_completed', 'booking'].includes(notif.type)
+          return [
+            'trip_update', 'driver_arrived', 'trip_completed', 'booking',
+            'trip_published', 'offer_received', 'offer_accepted',
+            'trip_confirmed', 'trip_started', 'trip_rated',
+          ].includes(notif.type)
         if (selectedCategory === 'feed') return notif.type === 'review_pending'
         return true
       })
@@ -217,6 +222,17 @@ export default function NotificationsScreen() {
     const handlePress = () => {
       if (selectionMode) { toggleSelect(item.id); return }
       if (isUnread) markAsRead(item.id)
+
+      const route = getNotificationRoute(item, currentUser?.role)
+      if (route?.screenName) {
+        if (route.screenName === 'Main') {
+          ;(navigation as any).navigate('Main', route.params)
+        } else {
+          ;(navigation as any).navigate(route.screenName, route.params)
+        }
+        return
+      }
+
       setDetailNotif(item)
     }
 

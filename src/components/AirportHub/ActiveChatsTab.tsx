@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -15,26 +15,22 @@ import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { supabase } from '../../services/supabase'
+import type { HubTabProps } from './types'
 
 interface ChatPreview {
   requestId: string
-  tripId: string
   otherUserId: string
   otherUserName: string
   otherUserAvatar?: string
   origin: string
   destination: string
   price: number
-  userRole: 'conductor' | 'pasajero'
   unreadCount: number
-  isActive: boolean
   lastMessage?: string
-  lastMessageTime?: string
 }
 
-export default function ActiveChatsTab() {
+export default function ActiveChatsTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
-  
   const [chats, setChats] = useState<ChatPreview[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -48,103 +44,103 @@ export default function ActiveChatsTab() {
       if (!refreshing) setLoading(true)
       const chatsList: ChatPreview[] = []
 
-      // 1️⃣ Chats como conductor
-      const { data: driverTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          created_at,
-          profiles!passenger_id (id, name, avatar_url)
-        `
-        )
-        .eq('driver_id', user.id)
-        .in('status', ['accepted', 'in_progress'])
-        .order('created_at', { ascending: false })
+      if (isDriver) {
+        const { data: driverTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, passenger_id, origin, destination, offered_price,
+             profiles!passenger_id (id, name, avatar_url)`
+          )
+          .eq('driver_id', user.id)
+          .in('status', ['accepted', 'in_progress'])
+          .order('created_at', { ascending: false })
 
-      if (driverTrips) {
-        for (const trip of driverTrips) {
-          const passengerProfile = trip.profiles as any
+        for (const trip of driverTrips ?? []) {
+          const p = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
-            tripId: trip.id,
             otherUserId: trip.passenger_id,
-            otherUserName: passengerProfile?.name || 'Pasajero',
-            otherUserAvatar: passengerProfile?.avatar_url || undefined,
+            otherUserName: p?.name || 'Pasajero',
+            otherUserAvatar: p?.avatar_url,
             origin: trip.origin,
             destination: trip.destination,
             price: trip.offered_price,
-            userRole: 'conductor',
-            isActive: trip.status === 'accepted' || trip.status === 'in_progress',
             unreadCount: 0,
           })
         }
-      }
+      } else {
+        const { data: passengerTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, driver_id, origin, destination, offered_price,
+             profiles!driver_id (id, name, avatar_url)`
+          )
+          .eq('passenger_id', user.id)
+          .in('status', ['accepted', 'in_progress'])
+          .order('created_at', { ascending: false })
 
-      // 2️⃣ Chats como pasajero
-      const { data: passengerTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          created_at,
-          profiles!driver_id (id, name, avatar_url)
-        `
-        )
-        .eq('passenger_id', user.id)
-        .in('status', ['accepted', 'in_progress'])
-        .order('created_at', { ascending: false })
-
-      if (passengerTrips) {
-        for (const trip of passengerTrips) {
-          const driverProfile = trip.profiles as any
+        for (const trip of passengerTrips ?? []) {
+          if (!trip.driver_id) continue
+          const d = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
-            tripId: trip.id,
             otherUserId: trip.driver_id,
-            otherUserName: driverProfile?.name || 'Conductor',
-            otherUserAvatar: driverProfile?.avatar_url || undefined,
+            otherUserName: d?.name || 'Conductor',
+            otherUserAvatar: d?.avatar_url,
             origin: trip.origin,
             destination: trip.destination,
             price: trip.offered_price,
-            userRole: 'pasajero',
-            isActive: trip.status === 'accepted' || trip.status === 'in_progress',
             unreadCount: 0,
           })
         }
       }
 
-      // 3️⃣ Cargar conteos de no leídos y último mensaje
-      for (const chat of chatsList) {
-        try {
-          const { data: messages } = await supabase
-            .from('negotiation_messages')
-            .select('id, message_text, created_at, is_read')
-            .eq('request_id', chat.requestId)
-            .neq('sent_by_user_id', user.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
+      // Una sola query para mensajes no leídos de todos los chats
+      const requestIds = chatsList.map((c) => c.requestId)
+      if (requestIds.length > 0) {
+        const { data: unreadMessages } = await supabase
+          .from('negotiation_messages')
+          .select('request_id, message_text, created_at, is_read')
+          .in('request_id', requestIds)
+          .neq('sent_by_user_id', user.id)
+          .eq('is_read', false)
+          .order('created_at', { ascending: false })
 
-          chat.unreadCount = messages?.filter((m: any) => !m.is_read).length || 0
-          
-          if (messages && messages.length > 0) {
-            chat.lastMessage = messages[0].message_text
-            chat.lastMessageTime = messages[0].created_at
+        const lastByRequest = new Map<string, { text: string; count: number }>()
+        for (const msg of unreadMessages ?? []) {
+          const prev = lastByRequest.get(msg.request_id)
+          if (!prev) {
+            lastByRequest.set(msg.request_id, { text: msg.message_text, count: 1 })
+          } else {
+            prev.count += 1
           }
-        } catch (err) {
-          console.error('❌ Error loading unread count:', err)
+        }
+
+        for (const chat of chatsList) {
+          const info = lastByRequest.get(chat.requestId)
+          if (info) {
+            chat.unreadCount = info.count
+            chat.lastMessage = info.text
+          }
+        }
+
+        // Último mensaje (leído o no) si no hay no leídos
+        const { data: latestMessages } = await supabase
+          .from('negotiation_messages')
+          .select('request_id, message_text, created_at')
+          .in('request_id', requestIds)
+          .order('created_at', { ascending: false })
+
+        const latestMap = new Map<string, string>()
+        for (const msg of latestMessages ?? []) {
+          if (!latestMap.has(msg.request_id)) {
+            latestMap.set(msg.request_id, msg.message_text)
+          }
+        }
+        for (const chat of chatsList) {
+          if (!chat.lastMessage && latestMap.has(chat.requestId)) {
+            chat.lastMessage = latestMap.get(chat.requestId)
+          }
         }
       }
 
@@ -156,7 +152,7 @@ export default function ActiveChatsTab() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [user?.id, refreshing])
+  }, [user?.id, isDriver, refreshing])
 
   useFocusEffect(
     useCallback(() => {
@@ -164,23 +160,18 @@ export default function ActiveChatsTab() {
     }, [loadChats])
   )
 
-  const handleChatPress = (chat: ChatPreview) => {
-    setSelectedChat(chat)
-    setChatModalVisible(true)
-  }
-
   const renderChatItem = ({ item: chat }: { item: ChatPreview }) => (
     <TouchableOpacity
       style={styles.chatCard}
-      onPress={() => handleChatPress(chat)}
+      onPress={() => {
+        setSelectedChat(chat)
+        setChatModalVisible(true)
+      }}
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
         {chat.otherUserAvatar ? (
-          <Image
-            source={{ uri: chat.otherUserAvatar }}
-            style={styles.avatar}
-          />
+          <Image source={{ uri: chat.otherUserAvatar }} style={styles.avatar} />
         ) : (
           <View style={styles.avatarPlaceholder}>
             <Ionicons name="person" size={20} color={COLORS.surface} />
@@ -196,31 +187,20 @@ export default function ActiveChatsTab() {
       </View>
 
       <View style={styles.chatContent}>
-        <View style={styles.chatHeader}>
-          <Text style={styles.chatName} numberOfLines={1}>
-            {chat.otherUserName}
-          </Text>
-          <View style={styles.chatActiveBadge}>
-            <View style={styles.chatActiveIndicator} />
-            <Text style={styles.chatActiveText}>ACTIVO</Text>
-          </View>
-        </View>
-
+        <Text style={styles.chatName} numberOfLines={1}>
+          {chat.otherUserName}
+        </Text>
         <Text style={styles.chatRoute} numberOfLines={1}>
           {chat.origin} → {chat.destination}
         </Text>
-
         {chat.lastMessage && (
           <Text style={styles.chatLastMessage} numberOfLines={1}>
-            "{chat.lastMessage}"
+            {chat.lastMessage}
           </Text>
         )}
-
-        <View style={styles.chatFooter}>
-          <Text style={styles.chatPrice}>${chat.price.toLocaleString('es-CO')}</Text>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
-        </View>
+        <Text style={styles.chatPrice}>${chat.price.toLocaleString('es-CO')}</Text>
       </View>
+      <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
     </TouchableOpacity>
   )
 
@@ -229,9 +209,11 @@ export default function ActiveChatsTab() {
       <View style={styles.emptyIconBg}>
         <Ionicons name="chatbubbles-outline" size={48} color={COLORS.primary} />
       </View>
-      <Text style={styles.emptyTitle}>Sin chats activos</Text>
+      <Text style={styles.emptyTitle}>Sin conversaciones</Text>
       <Text style={styles.emptySubtitle}>
-        Los viajes aceptados aparecerán aquí para que puedas conversar
+        {isDriver
+          ? 'Chatea con tus pasajeros cuando confirmes un viaje'
+          : 'Chatea con tu conductor cuando confirmes un viaje'}
       </Text>
     </View>
   )
@@ -274,10 +256,7 @@ export default function ActiveChatsTab() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-  },
+  container: { flex: 1, backgroundColor: COLORS.surface },
   listContainer: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -293,9 +272,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     ...SHADOWS.md,
   },
-  avatarContainer: {
-    position: 'relative',
-  },
+  avatarContainer: { position: 'relative' },
   avatarPlaceholder: {
     width: 48,
     height: 48,
@@ -304,11 +281,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.lg,
-  },
+  avatar: { width: 48, height: 48, borderRadius: RADIUS.lg },
   unreadBadge: {
     position: 'absolute',
     top: -5,
@@ -322,72 +295,29 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.surface,
   },
-  unreadBadgeText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  chatContent: {
-    flex: 1,
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
+  unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  chatContent: { flex: 1 },
   chatName: {
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: '600',
     color: COLORS.text,
-    flex: 1,
-  },
-  chatActiveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    backgroundColor: '#e8f5e9',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-  },
-  chatActiveIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#10b981',
-  },
-  chatActiveText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: '700',
-    color: '#10b981',
+    marginBottom: 2,
   },
   chatRoute: {
     fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-    lineHeight: 18,
+    marginBottom: 2,
   },
   chatLastMessage: {
     fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
     fontStyle: 'italic',
-    marginBottom: SPACING.xs,
-  },
-  chatFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    marginBottom: 2,
   },
   chatPrice: {
-    fontSize: TYPOGRAPHY.size.md,
+    fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '700',
     color: COLORS.primary,
-  },
-  roleTag: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
   },
   emptyContainer: {
     flex: 1,

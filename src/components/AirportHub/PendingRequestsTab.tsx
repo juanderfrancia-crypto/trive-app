@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import {
   View,
   Text,
@@ -8,82 +8,51 @@ import {
   StyleSheet,
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
-import { supabase } from '../../services/supabase'
+import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
+import type { HubTabProps } from './types'
 
-interface PendingRequest {
-  id: string
-  origin: string
-  destination: string
-  offered_price: number
-  status: string
-  createdAt: string
-  driverName?: string
-}
-
-export default function PendingRequestsTab() {
+export default function PendingRequestsTab({ isDriver }: HubTabProps) {
+  const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
-  const [requests, setRequests] = useState<PendingRequest[]>([])
-  const [loading, setLoading] = useState(true)
+  const { requests, loading, loadPassengerRequests, cancelRequest } = useAirportNegotiation()
   const [refreshing, setRefreshing] = useState(false)
 
-  const loadRequests = useCallback(async () => {
-    if (!user?.id) return
+  const pendingRequests = requests.filter(
+    (r) => r.passenger_id === user?.id && r.status === 'pending'
+  )
 
-    try {
-      if (!refreshing) setLoading(true)
-      const { data, error } = await supabase
-        .from('airport_requests')
-        .select('id, origin, destination, offered_price, status, created_at, driver_id')
-        .eq('passenger_id', user.id)
-        .in('status', ['pending', 'negotiating'])
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-
-      const formattedRequests = (data || []).map((req: any) => ({
-        id: req.id,
-        origin: req.origin,
-        destination: req.destination,
-        offered_price: req.offered_price,
-        status: req.status,
-        createdAt: req.created_at,
-      }))
-
-      setRequests(formattedRequests)
-    } catch (err) {
-      console.error('❌ Error loading requests:', err)
-      Alert.alert('Error', 'No se pudieron cargar las solicitudes')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }, [user?.id, refreshing])
+  const load = useCallback(async () => {
+    if (!user?.id || isDriver) return
+    await loadPassengerRequests(user.id)
+  }, [user?.id, isDriver, loadPassengerRequests])
 
   useFocusEffect(
     useCallback(() => {
-      loadRequests()
-    }, [loadRequests])
+      load()
+    }, [load])
   )
 
-  const handleDeleteRequest = async (requestId: string) => {
-    Alert.alert('Eliminar solicitud', '¿Deseas cancelar esta solicitud?', [
-      { text: 'No', onPress: () => {} },
-      {
-        text: 'Sí, eliminar',
-        onPress: async () => {
-          try {
-            const { error } = await supabase
-              .from('airport_requests')
-              .update({ status: 'cancelled' })
-              .eq('id', requestId)
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await load()
+    setRefreshing(false)
+  }
 
-            if (error) throw error
-            loadRequests()
-          } catch (err) {
+  const handleDeleteRequest = (requestId: string) => {
+    Alert.alert('Cancelar solicitud', '¿Deseas cancelar esta solicitud?', [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Sí, cancelar',
+        style: 'destructive',
+        onPress: async () => {
+          if (!user?.id) return
+          try {
+            await cancelRequest(requestId, user.id)
+          } catch {
             Alert.alert('Error', 'No se pudo cancelar la solicitud')
           }
         },
@@ -91,20 +60,32 @@ export default function PendingRequestsTab() {
     ])
   }
 
-  const renderRequestItem = ({ item: request }: { item: PendingRequest }) => (
-    <TouchableOpacity style={styles.requestCard} activeOpacity={0.7}>
+  const openDetails = (requestId: string) => {
+    navigation.navigate('AirportRequestDetails', { requestId })
+  }
+
+  const openCreate = () => {
+    navigation.navigate('AirportRequest')
+  }
+
+  const renderRequestItem = ({ item: request }: { item: AirportRequest }) => (
+    <TouchableOpacity
+      style={styles.requestCard}
+      activeOpacity={0.7}
+      onPress={() => openDetails(request.id)}
+    >
       <View style={styles.requestLeft}>
-        <View style={[styles.statusBadge, request.status === 'pending' ? styles.badgePending : styles.badgeNegotiating]}>
-          <Text style={styles.statusIcon}>{request.status === 'pending' ? '⏳' : '💬'}</Text>
+        <View style={styles.statusBadge}>
+          <Text style={styles.statusIcon}>⏳</Text>
         </View>
       </View>
 
       <View style={styles.requestContent}>
         <View style={styles.requestHeader}>
-          <Text style={styles.requestStatus}>
-            {request.status === 'pending' ? 'Pendiente' : 'Negociando'}
+          <Text style={styles.requestStatus}>Pendiente</Text>
+          <Text style={styles.requestPrice}>
+            ${request.offered_price.toLocaleString('es-CO')}
           </Text>
-          <Text style={styles.requestPrice}>${request.offered_price.toLocaleString('es-CO')}</Text>
         </View>
 
         <Text style={styles.requestRoute} numberOfLines={2}>
@@ -112,11 +93,16 @@ export default function PendingRequestsTab() {
         </Text>
 
         <Text style={styles.requestTime}>
-          {new Date(request.createdAt).toLocaleTimeString('es-CO', {
+          Salida:{' '}
+          {new Date(request.departure_time).toLocaleString('es-CO', {
+            day: 'numeric',
+            month: 'short',
             hour: '2-digit',
             minute: '2-digit',
           })}
         </Text>
+
+        <Text style={styles.tapHint}>Toca para ver ofertas de conductores</Text>
       </View>
 
       <TouchableOpacity
@@ -133,30 +119,46 @@ export default function PendingRequestsTab() {
       <View style={styles.emptyIconBg}>
         <Ionicons name="document-outline" size={48} color={COLORS.primary} />
       </View>
-      <Text style={styles.emptyTitle}>Sin solicitudes pendientes</Text>
+      <Text style={styles.emptyTitle}>Sin solicitudes activas</Text>
       <Text style={styles.emptySubtitle}>
-        Crea una nueva solicitud desde la pestaña de "Viajes"
+        Publica un viaje al aeropuerto o a cualquier destino para que los conductores te encuentren
       </Text>
+      <TouchableOpacity style={styles.createBtn} onPress={openCreate} activeOpacity={0.85}>
+        <Ionicons name="add-circle" size={20} color="#fff" />
+        <Text style={styles.createBtnText}>Nueva solicitud</Text>
+      </TouchableOpacity>
     </View>
   )
 
+  if (isDriver) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptySubtitle}>Cambia a modo pasajero para ver tus solicitudes</Text>
+      </View>
+    )
+  }
+
   return (
     <View style={styles.container}>
-      {loading && requests.length === 0 ? (
+      {pendingRequests.length > 0 && (
+        <TouchableOpacity style={styles.topCreateBtn} onPress={openCreate} activeOpacity={0.85}>
+          <Ionicons name="add" size={18} color={COLORS.primary} />
+          <Text style={styles.topCreateBtnText}>Nueva solicitud</Text>
+        </TouchableOpacity>
+      )}
+
+      {loading && pendingRequests.length === 0 ? (
         <SkeletonList count={4} />
       ) : (
         <FlatList
-          data={requests}
+          data={pendingRequests}
           renderItem={renderRequestItem}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={renderEmpty}
           refreshing={refreshing}
-          onRefresh={() => {
-            setRefreshing(true)
-            loadRequests()
-          }}
-          scrollEnabled={requests.length > 0}
+          onRefresh={onRefresh}
+          scrollEnabled={pendingRequests.length > 0}
         />
       )}
     </View>
@@ -164,9 +166,24 @@ export default function PendingRequestsTab() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
+  container: { flex: 1, backgroundColor: COLORS.surface },
+  topCreateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: '#eef2ff',
+  },
+  topCreateBtnText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   listContainer: {
     paddingHorizontal: SPACING.md,
@@ -183,29 +200,17 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     ...SHADOWS.md,
   },
-  requestLeft: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  requestLeft: { justifyContent: 'center', alignItems: 'center' },
   statusBadge: {
     width: 50,
     height: 50,
     borderRadius: RADIUS.lg,
+    backgroundColor: '#fff3e0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  badgePending: {
-    backgroundColor: '#fff3e0',
-  },
-  badgeNegotiating: {
-    backgroundColor: '#e3f2fd',
-  },
-  statusIcon: {
-    fontSize: 24,
-  },
-  requestContent: {
-    flex: 1,
-  },
+  statusIcon: { fontSize: 24 },
+  requestContent: { flex: 1 },
   requestHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -232,10 +237,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textTertiary,
   },
-  deleteButton: {
-    padding: SPACING.sm,
-    marginLeft: SPACING.sm,
+  tapHint: {
+    fontSize: TYPOGRAPHY.size.xs,
+    color: COLORS.primary,
+    marginTop: SPACING.xs,
+    fontWeight: '600',
   },
+  deleteButton: { padding: SPACING.sm, marginLeft: SPACING.sm },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -263,5 +271,20 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: SPACING.lg,
+  },
+  createBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+  },
+  createBtnText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '700',
+    color: '#fff',
   },
 })

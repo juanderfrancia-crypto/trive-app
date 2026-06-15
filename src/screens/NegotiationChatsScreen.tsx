@@ -229,7 +229,7 @@ export default function NegotiationChatsScreen() {
       <Text style={styles.emptyTitle}>Sin chats activos</Text>
       <Text style={styles.emptySubtitle}>
         Los viajes aceptados aparecerán aquí para que puedas conversar con los
-        {user?.role === 'conductor' ? ' pasajeros' : ' conductores'}
+        {user?.role === 'driver' ? ' pasajeros' : ' conductores'}
       </Text>
     </View>
   )

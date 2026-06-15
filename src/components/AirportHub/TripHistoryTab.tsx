@@ -12,6 +12,7 @@ import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { supabase } from '../../services/supabase'
+import type { HubTabProps } from './types'
 
 interface CompletedTrip {
   id: string
@@ -20,10 +21,9 @@ interface CompletedTrip {
   price: number
   completedAt: string
   otherUserName: string
-  userRole: 'conductor' | 'pasajero'
 }
 
-export default function TripHistoryTab() {
+export default function TripHistoryTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
   const [trips, setTrips] = useState<CompletedTrip[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,29 +36,19 @@ export default function TripHistoryTab() {
       if (!refreshing) setLoading(true)
       const tripsList: CompletedTrip[] = []
 
-      // 1️⃣ Viajes completados como conductor
-      const { data: driverTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          completed_at,
-          profiles!passenger_id (name)
-        `
-        )
-        .eq('driver_id', user.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(50)
+      if (isDriver) {
+        const { data: driverTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, origin, destination, offered_price, completed_at,
+             profiles!passenger_id (name)`
+          )
+          .eq('driver_id', user.id)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(50)
 
-      if (driverTrips) {
-        for (const trip of driverTrips) {
+        for (const trip of driverTrips ?? []) {
           tripsList.push({
             id: trip.id,
             origin: trip.origin,
@@ -66,34 +56,21 @@ export default function TripHistoryTab() {
             price: trip.offered_price,
             completedAt: trip.completed_at || '',
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
-            userRole: 'conductor',
           })
         }
-      }
+      } else {
+        const { data: passengerTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, origin, destination, offered_price, completed_at,
+             profiles!driver_id (name)`
+          )
+          .eq('passenger_id', user.id)
+          .eq('status', 'completed')
+          .order('completed_at', { ascending: false })
+          .limit(50)
 
-      // 2️⃣ Viajes completados como pasajero
-      const { data: passengerTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          completed_at,
-          profiles!driver_id (name)
-        `
-        )
-        .eq('passenger_id', user.id)
-        .eq('status', 'completed')
-        .order('completed_at', { ascending: false })
-        .limit(50)
-
-      if (passengerTrips) {
-        for (const trip of passengerTrips) {
+        for (const trip of passengerTrips ?? []) {
           tripsList.push({
             id: trip.id,
             origin: trip.origin,
@@ -101,12 +78,10 @@ export default function TripHistoryTab() {
             price: trip.offered_price,
             completedAt: trip.completed_at || '',
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
-            userRole: 'pasajero',
           })
         }
       }
 
-      tripsList.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime())
       setTrips(tripsList)
     } catch (err) {
       console.error('❌ Error loading history:', err)
@@ -114,7 +89,7 @@ export default function TripHistoryTab() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [user?.id, refreshing])
+  }, [user?.id, isDriver, refreshing])
 
   useFocusEffect(
     useCallback(() => {
@@ -123,7 +98,7 @@ export default function TripHistoryTab() {
   )
 
   const renderTripItem = ({ item: trip }: { item: CompletedTrip }) => (
-    <TouchableOpacity style={styles.tripCard} activeOpacity={0.7}>
+    <View style={styles.tripCard}>
       <View style={styles.tripLeft}>
         <View style={styles.statusBadge}>
           <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
@@ -133,27 +108,25 @@ export default function TripHistoryTab() {
       <View style={styles.tripContent}>
         <View style={styles.tripHeader}>
           <Text style={styles.tripUser}>{trip.otherUserName}</Text>
-          <Text style={styles.tripBadge}>✅ Completado</Text>
+          <Text style={styles.tripBadge}>Completado</Text>
         </View>
-
         <Text style={styles.tripRoute} numberOfLines={2}>
           {trip.origin} → {trip.destination}
         </Text>
-
         <View style={styles.tripFooter}>
           <Text style={styles.tripPrice}>${trip.price.toLocaleString('es-CO')}</Text>
-          <Text style={styles.tripDate}>
-            {new Date(trip.completedAt).toLocaleDateString('es-CO', {
-              month: 'short',
-              day: 'numeric',
-              year: '2-digit',
-            })}
-          </Text>
+          {trip.completedAt ? (
+            <Text style={styles.tripDate}>
+              {new Date(trip.completedAt).toLocaleDateString('es-CO', {
+                month: 'short',
+                day: 'numeric',
+                year: '2-digit',
+              })}
+            </Text>
+          ) : null}
         </View>
       </View>
-
-      <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
-    </TouchableOpacity>
+    </View>
   )
 
   const renderEmpty = () => (
@@ -162,9 +135,7 @@ export default function TripHistoryTab() {
         <Ionicons name="checkmark-circle-outline" size={48} color={COLORS.primary} />
       </View>
       <Text style={styles.emptyTitle}>Sin historial</Text>
-      <Text style={styles.emptySubtitle}>
-        Los viajes completados aparecerán aquí
-      </Text>
+      <Text style={styles.emptySubtitle}>Tus viajes completados aparecerán aquí</Text>
     </View>
   )
 
@@ -192,10 +163,7 @@ export default function TripHistoryTab() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-  },
+  container: { flex: 1, backgroundColor: COLORS.surface },
   listContainer: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -211,9 +179,7 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
     ...SHADOWS.md,
   },
-  tripLeft: {
-    justifyContent: 'center',
-  },
+  tripLeft: { justifyContent: 'center' },
   statusBadge: {
     width: 50,
     height: 50,
@@ -222,9 +188,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  tripContent: {
-    flex: 1,
-  },
+  tripContent: { flex: 1 },
   tripHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

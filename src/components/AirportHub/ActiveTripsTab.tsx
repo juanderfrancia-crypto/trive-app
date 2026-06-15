@@ -14,6 +14,7 @@ import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { TripDetailsModal } from '../TripDetailsModal'
 import { supabase } from '../../services/supabase'
+import type { HubTabProps } from './types'
 
 interface ActiveTrip {
   id: string
@@ -24,10 +25,9 @@ interface ActiveTrip {
   otherUserName: string
   otherUserId: string
   otherUserAvatar?: string
-  userRole: 'conductor' | 'pasajero'
 }
 
-export default function ActiveTripsTab() {
+export default function ActiveTripsTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
   const [trips, setTrips] = useState<ActiveTrip[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,27 +43,18 @@ export default function ActiveTripsTab() {
       if (!refreshing) setLoading(true)
       const tripsList: ActiveTrip[] = []
 
-      // 1️⃣ Viajes como conductor
-      const { data: driverTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          profiles!passenger_id (name, avatar_url)
-        `
-        )
-        .eq('driver_id', user.id)
-        .in('status', ['accepted', 'in_progress'])
-        .order('created_at', { ascending: false })
+      if (isDriver) {
+        const { data: driverTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, passenger_id, origin, destination, offered_price, status,
+             profiles!passenger_id (name, avatar_url)`
+          )
+          .eq('driver_id', user.id)
+          .in('status', ['accepted', 'in_progress'])
+          .order('created_at', { ascending: false })
 
-      if (driverTrips) {
-        for (const trip of driverTrips) {
+        for (const trip of driverTrips ?? []) {
           tripsList.push({
             id: trip.id,
             origin: trip.origin,
@@ -73,32 +64,21 @@ export default function ActiveTripsTab() {
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
             otherUserId: trip.passenger_id,
             otherUserAvatar: (trip.profiles as any)?.avatar_url,
-            userRole: 'conductor',
           })
         }
-      }
+      } else {
+        const { data: passengerTrips } = await supabase
+          .from('airport_requests')
+          .select(
+            `id, driver_id, origin, destination, offered_price, status,
+             profiles!driver_id (name, avatar_url)`
+          )
+          .eq('passenger_id', user.id)
+          .in('status', ['accepted', 'in_progress'])
+          .order('created_at', { ascending: false })
 
-      // 2️⃣ Viajes como pasajero
-      const { data: passengerTrips } = await supabase
-        .from('airport_requests')
-        .select(
-          `
-          id,
-          driver_id,
-          passenger_id,
-          origin,
-          destination,
-          offered_price,
-          status,
-          profiles!driver_id (name, avatar_url)
-        `
-        )
-        .eq('passenger_id', user.id)
-        .in('status', ['accepted', 'in_progress'])
-        .order('created_at', { ascending: false })
-
-      if (passengerTrips) {
-        for (const trip of passengerTrips) {
+        for (const trip of passengerTrips ?? []) {
+          if (!trip.driver_id) continue
           tripsList.push({
             id: trip.id,
             origin: trip.origin,
@@ -108,7 +88,6 @@ export default function ActiveTripsTab() {
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
             otherUserId: trip.driver_id,
             otherUserAvatar: (trip.profiles as any)?.avatar_url,
-            userRole: 'pasajero',
           })
         }
       }
@@ -120,7 +99,7 @@ export default function ActiveTripsTab() {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [user?.id, refreshing])
+  }, [user?.id, isDriver, refreshing])
 
   useFocusEffect(
     useCallback(() => {
@@ -128,30 +107,18 @@ export default function ActiveTripsTab() {
     }, [loadTrips])
   )
 
-  const handleDetailsPress = (trip: ActiveTrip) => {
-    setSelectedTrip(trip)
-    setDetailsModalVisible(true)
-  }
-
-  const handleChatPress = (trip: ActiveTrip) => {
-    setSelectedTrip(trip)
-    setChatModalVisible(true)
-  }
-
   const renderTripItem = ({ item: trip }: { item: ActiveTrip }) => (
     <View style={styles.tripCard}>
       <View style={styles.tripHeader}>
-        <View style={styles.tripUserSection}>
-          <Text style={styles.tripUser}>{trip.otherUserName}</Text>
-        </View>
+        <Text style={styles.tripUser}>{trip.otherUserName}</Text>
         <View style={styles.tripStatusBadge}>
-          <Ionicons 
-            name={trip.status === 'accepted' ? 'checkmark-circle' : 'navigate-circle'} 
-            size={16} 
-            color={COLORS.white} 
+          <Ionicons
+            name={trip.status === 'accepted' ? 'checkmark-circle' : 'navigate-circle'}
+            size={16}
+            color={COLORS.white}
           />
           <Text style={styles.tripStatus}>
-            {trip.status === 'accepted' ? 'Aceptado' : 'En progreso'}
+            {trip.status === 'accepted' ? 'Confirmado' : 'En ruta'}
           </Text>
         </View>
       </View>
@@ -159,20 +126,25 @@ export default function ActiveTripsTab() {
       <Text style={styles.tripRoute} numberOfLines={2}>
         {trip.origin} → {trip.destination}
       </Text>
-
       <Text style={styles.tripPrice}>${trip.price.toLocaleString('es-CO')}</Text>
 
       <View style={styles.tripActions}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.actionButton, styles.detailButton]}
-          onPress={() => handleDetailsPress(trip)}
+          onPress={() => {
+            setSelectedTrip(trip)
+            setDetailsModalVisible(true)
+          }}
         >
           <Ionicons name="information-circle" size={14} color={COLORS.primary} />
           <Text style={styles.detailButtonText}>Ver</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.actionButton, styles.chatButton]}
-          onPress={() => handleChatPress(trip)}
+          onPress={() => {
+            setSelectedTrip(trip)
+            setChatModalVisible(true)
+          }}
         >
           <Ionicons name="chatbubble" size={14} color={COLORS.white} />
           <Text style={styles.chatButtonText}>Chat</Text>
@@ -186,9 +158,11 @@ export default function ActiveTripsTab() {
       <View style={styles.emptyIconBg}>
         <Ionicons name="car-outline" size={48} color={COLORS.primary} />
       </View>
-      <Text style={styles.emptyTitle}>Sin viajes activos</Text>
+      <Text style={styles.emptyTitle}>Sin viajes en curso</Text>
       <Text style={styles.emptySubtitle}>
-        Los viajes aceptados aparecerán aquí
+        {isDriver
+          ? 'Los viajes que aceptes aparecerán aquí'
+          : 'Cuando un conductor confirme tu solicitud, la verás aquí'}
       </Text>
     </View>
   )
@@ -221,7 +195,10 @@ export default function ActiveTripsTab() {
               setDetailsModalVisible(false)
               setSelectedTrip(null)
             }}
-            trip={selectedTrip}
+            trip={{
+              ...selectedTrip,
+              userRole: isDriver ? 'conductor' : 'pasajero',
+            }}
           />
           <NegotiationChatModal
             visible={chatModalVisible}
@@ -241,10 +218,7 @@ export default function ActiveTripsTab() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-  },
+  container: { flex: 1, backgroundColor: COLORS.surface },
   listContainer: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -258,44 +232,26 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     ...SHADOWS.md,
   },
-  tripLeft: {
-    justifyContent: 'center',
-  },
-  statusBadge: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.lg,
-    backgroundColor: '#e3f2fd',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tripContent: {
-    flex: 1,
-  },
   tripHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: SPACING.md,
   },
-  tripUserSection: {
-    flex: 1,
-  },
   tripUser: {
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: '600',
     color: COLORS.text,
+    flex: 1,
   },
   tripStatusBadge: {
     backgroundColor: '#10b981',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.full,
-    minWidth: 120,
-    alignItems: 'center',
     flexDirection: 'row',
     gap: SPACING.xs,
-    justifyContent: 'center',
+    alignItems: 'center',
   },
   tripStatus: {
     fontSize: TYPOGRAPHY.size.sm,
@@ -327,19 +283,15 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full,
   },
   detailButton: {
-    backgroundColor: 'transparent',
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    paddingHorizontal: SPACING.md,
   },
   detailButtonText: {
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
     color: COLORS.primary,
   },
-  chatButton: {
-    backgroundColor: COLORS.primary,
-  },
+  chatButton: { backgroundColor: COLORS.primary },
   chatButtonText: {
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
