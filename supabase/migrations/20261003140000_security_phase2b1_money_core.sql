@@ -35,7 +35,15 @@ $$;
 -- ============================================================
 -- 3. Libro de movimientos. Montos negativos son cobros; positivos, abonos.
 --    Solo lo llaman funciones SECURITY DEFINER.
+--    Tipos y estados permitidos por la tabla (restricciones CHECK).
 -- ============================================================
+ALTER TABLE public.wallet_transactions DROP CONSTRAINT IF EXISTS wallet_transactions_type_check;
+ALTER TABLE public.wallet_transactions ADD CONSTRAINT wallet_transactions_type_check
+  CHECK (type = ANY (ARRAY[
+    'recharge', 'route_fee', 'airport_fee', 'airport_refund',
+    'referral_bonus', 'referral_discount', 'admin_credit', 'admin_debit'
+  ]::text[]));
+
 CREATE OR REPLACE FUNCTION public.post_wallet_movement(
   p_user uuid,
   p_amount integer,
@@ -47,7 +55,7 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
   INSERT INTO public.wallet_transactions (user_id, amount, type, status)
-  VALUES (p_user, p_amount, p_type, 'completed');
+  VALUES (p_user, p_amount, p_type, 'approved');
 $$;
 
 REVOKE EXECUTE ON FUNCTION public.post_wallet_movement(uuid, integer, text)
@@ -81,7 +89,7 @@ BEGIN
     RAISE EXCEPTION 'Necesitas $2.000 de saldo para publicar un viaje';
   END IF;
 
-  PERFORM public.post_wallet_movement(v_uid, -c_fee, 'publication_fee');
+  PERFORM public.post_wallet_movement(v_uid, -c_fee, 'route_fee');
 
   INSERT INTO public.routes
   SELECT (jsonb_populate_record(NULL::public.routes,
@@ -196,6 +204,7 @@ $$;
 REVOKE UPDATE ON public.profiles FROM authenticated;
 GRANT UPDATE (
   name,
+  email,
   phone,
   avatar_url,
   profile_photo_url,
