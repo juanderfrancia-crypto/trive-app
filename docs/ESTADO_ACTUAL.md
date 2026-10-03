@@ -132,6 +132,11 @@ Estos son los que hay que resolver antes de la prueba cerrada en Play Console.
 - **P8 · Duplicación.** Hay dos archivos de tema con colores distintos (`src/theme/colors.ts` y `src/theme/theme.ts`), tres pantallas de solicitudes de aeropuerto con lógica parecida, y scripts repetidos en `database/`.
 - **P9 · Calidad.** 22 `catch` vacíos, ~119 `console.log`/`TODO` en `src/`, y pantallas muy grandes (Perfil 1.764 líneas, Panel del conductor 1.613, Registro de conductor 1.546, Inicio 1.513).
 
+## 6.1 Documentos de referencia
+
+- Políticas de negocio y seguridad confirmadas por el dueño: `docs/POLITICAS_NEGOCIO_Y_SEGURIDAD.md`.
+- Back-office web (diseño, no iniciado): `docs/BACKOFFICE.md`.
+
 ## 7. Reglas de trabajo
 
 - No se lanza ningún `eas build` sin confirmación del dueño.
