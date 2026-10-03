@@ -89,12 +89,22 @@ Dependencias del cliente que hay que respetar al cerrar esto:
 - El panel del conductor muestra teléfono y email del pasajero (`DriverPanelScreen`, línea 113).
 - Los descuentos de saldo, el crédito de referidos y el cambio de rol se hacen hoy desde el cliente.
 
+## 5.2 Fase 1 de seguridad aplicada (2026-10-03)
+
+Migración `supabase/migrations/20261003120000_security_phase1_rls.sql`, ejecutada por el dueño en el SQL Editor de Supabase.
+
+Verificado con la clave pública después de aplicarla:
+- `notifications`, `user_sessions`, `travel_preferences`, `trip_preferences`, `rating_snapshots`: sin filas visibles para el público.
+- `earnings_transactions`: INSERT anónimo rechazado (42501, RLS).
+
+Sigue abierto (fase 2): `profiles` (13 filas) y `bookings` (220 filas) siguen legibles por el público.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.
 
 - **P1 · Historial de migraciones vacío.** Hay que marcar las 8 migraciones como aplicadas en el historial remoto antes de cualquier `db push`. Requiere aprobación explícita, porque escribe en producción.
-- **P2 · Seguridad de datos (crítico, ver sección 5.1).** Datos personales y de reservas son legibles por cualquiera con la clave pública, y los usuarios pueden escribir saldo, rol y administración. Cerrarlo exige cambios en base de datos y en el cliente, en el mismo paso.
+- **P2 · Seguridad de datos (crítico, ver secciones 5.1 y 5.2; fase 1 aplicada, falta fase 2).** Datos personales y de reservas son legibles por cualquiera con la clave pública, y los usuarios pueden escribir saldo, rol y administración. Cerrarlo exige cambios en base de datos y en el cliente, en el mismo paso.
 - **P3 · `projectId` de EAS inconsistente.** Hay tres valores: `17d0b706…` en `app.json`, `e96c93aa…` en `src/services/pushNotifications.ts` y `e77b81ed…` en la documentación. Hay que confirmar cuál es el proyecto real en expo.dev.
 - **P4 · Borrado de cuenta incompleto.** `PrivacyScreen` solo cancela reservas y rutas y cierra sesión. Google Play exige eliminar la cuenta y sus datos, y tener una URL pública para solicitarlo.
 - **P5 · Referidos.** El crédito de $2.000 al referidor se escribe desde el cliente del conductor nuevo y RLS lo bloquea en silencio. `increment_balance` no existe; el fallback del cliente sí funciona para el bono de $1.000.
