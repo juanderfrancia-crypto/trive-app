@@ -5,6 +5,36 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## 0. Dónde quedamos (bitácora, 2026-10-03)
+
+**Hecho y verificado:**
+- Respaldo de la base antes de la fase 2 (fuera del repositorio, `respaldo_antes_fase2.sql`).
+- Las 9 migraciones de seguridad aplicadas en producción (2a a 2h), todas con "Success".
+- Verificación posterior: 12 funciones clave existen; sin lectura pública de `profiles` ni `bookings`.
+- Funciones Edge desplegadas: `delete-account` y `send-push`.
+- Secreto `WEBHOOK_SECRET` creado y webhook de notificaciones creado.
+- Cierre automático de viajes a 24 h programado con pg_cron (cada 15 min).
+- Trabajo antiguo `update_completed_bookings_job` desactivado: marcaba reservas como completadas sin confirmación.
+- Bucket `driver-documents` privado, y políticas de dueño aplicadas. Verificado: sin cuenta no se listan documentos.
+- ID de proyecto EAS unificado (`17d0b706-…`) y autoIncrement en producción.
+- APK de preview compilado e instalado en el teléfono. Abre y funciona.
+- Pruebas offline de la base: 72/72.
+
+**Pendiente, en este orden:**
+1. **Rotar secretos expuestos en el chat:** la contraseña de la base ya se reseteó; falta rotar `WEBHOOK_SECRET` (se pegó una vez) y la clave de servicio embebida en el cron `check-document-expiry-daily`.
+2. **Prueba del conductor en el teléfono** (paso 27): registro, cédula, documentos, vehículo en revisión.
+3. **Aprobar conductor y vehículo** desde el SQL Editor o el admin de la app, para que pueda publicar.
+4. **Prueba del pasajero y de los flujos** (secciones 6 del procedimiento de despliegue).
+5. **Proveedor de SMS para OTP:** decidir entre Firebase Phone Auth (usado solo para el código, Supabase sigue siendo la fuente de cuentas) o un proveedor SMS pagado para Twilio. Firebase requiere implementar una función de verificación de prueba y configurar la consola de Firebase con las huellas SHA del keystore.
+6. **Bucket `audio-messages`** sigue público. Los audios de viaje deben ser privados.
+7. **Build de producción** y configuración de Play Console, solo después de las pruebas.
+8. **Revisión legal** de las páginas de privacidad y eliminación, y plazos de conservación de documentos.
+
+**Decisiones abiertas:**
+- Limpiar o conservar los datos de prueba antes de la prueba cerrada (los conductores de prueba con rutas aparecen en la búsqueda).
+- Plazo de conservación de documentos de conductor.
+- Back-office web: diseñado en `docs/BACKOFFICE.md`, no iniciado.
+
 ## 1. Qué es Trive
 
 App móvil (Expo / React Native, Android primero) para **viajes compartidos en Colombia**, con foco en rutas Puerto Tejada (Cauca) ↔ Cali y viajes al aeropuerto.
