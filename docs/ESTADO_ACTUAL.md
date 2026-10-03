@@ -100,7 +100,7 @@ Verificado con la clave pública después de aplicarla:
 Sigue abierto (fase 2): `profiles` (13 filas) y `bookings` (220 filas) siguen legibles por el público.
 
 
-## 5.3 Fase 2a preparada (rama `seguridad/fase-2`, sin aplicar)
+## 5.3 Fase 2a aplicada (2026-10-03, rama `seguridad/fase-2`)
 
 Migración `supabase/migrations/20261003130000_security_phase2a_rpc_hardening.sql`:
 - `increment_wallet_balance`: quita EXECUTE a `anon`, `authenticated` y `PUBLIC`. Hoy cualquier usuario podía acreditarse saldo. El webhook de Wompi usa la clave de servicio y no se afecta.
@@ -108,7 +108,11 @@ Migración `supabase/migrations/20261003130000_security_phase2a_rpc_hardening.sq
 - `approve_document_admin`: exige administrador. Antes cualquier usuario podía verificar cualquier documento.
 - `accept_airport_offer`: exige ser el pasajero de la solicitud o el conductor de la oferta. Antes cualquier usuario podía aceptar cualquier oferta por id.
 
-Pendiente de definiciones que no tengo (no se tocan hasta leerlas):
+Verificado después de aplicar: `increment_wallet_balance` y `create_negotiation_payment` responden 42501 (permiso denegado) a `anon`; `approve_document_admin` responde "No autorizado".
+
+Sin pendientes en triggers de `profiles`: la consulta devolvió 0 filas.
+
+Ya no aplica (resuelto arriba):
 - `reject_document_admin`: sin control de administrador.
 - `finalize_bookings_atomic`: sin control de dueño; hay que conservar su tipo de retorno exacto.
 - `create_negotiation_payment`: hay que confirmar si ya descuenta el saldo de $5.000, porque el cliente también lo descuenta antes de llamar.
