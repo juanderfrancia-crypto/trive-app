@@ -132,3 +132,112 @@ BEGIN
     AND status = 'pending';
 END;
 $$;
+
+-- ============================================================
+-- 5. Cobro de comisión de $5.000: cualquiera podía llamarla con el id de
+--    una oferta y descontar el saldo del conductor. Solo la usa
+--    accept_airport_offer, que corre con permisos del dueño y no se ve
+--    afectada por este cambio.
+-- ============================================================
+REVOKE EXECUTE ON FUNCTION public.create_negotiation_payment(uuid, integer)
+  FROM PUBLIC, anon, authenticated;
+
+-- ============================================================
+-- 6. Rechazar documento: solo administradores.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.reject_document_admin(doc_id uuid, reason text)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF NOT public.is_admin_user() THEN
+    RAISE EXCEPTION 'No autorizado';
+  END IF;
+
+  UPDATE driver_documents
+  SET status = 'rejected',
+      rejection_reason = reason,
+      updated_at = NOW()
+  WHERE id = doc_id;
+
+  RETURN true;
+END;
+$$;
+
+-- ============================================================
+-- 7. Confirmar reservas: solo el pasajero dueño de las reservas.
+--    Mismo tipo de retorno que antes. Un usuario anónimo (auth.uid() nulo)
+--    también queda bloqueado.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.finalize_bookings_atomic(
+  p_booking_ids uuid[],
+  p_payment_method text DEFAULT 'card'::text
+)
+RETURNS TABLE(success boolean, message text, updated_bookings_count integer, remaining_seats integer)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_route_id UUID;
+  v_total_seats INT;
+  v_available_seats INT;
+  v_count INT := 0;
+BEGIN
+  IF auth.uid() IS NULL OR EXISTS (
+    SELECT 1 FROM bookings
+    WHERE id = ANY(p_booking_ids)
+      AND passenger_id IS DISTINCT FROM auth.uid()
+  ) THEN
+    RETURN QUERY SELECT false, 'No autorizado', 0, 0;
+    RETURN;
+  END IF;
+
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1 FROM bookings
+      WHERE id = ANY(p_booking_ids)
+        AND booking_status = 'pending'
+    ) THEN
+      RETURN QUERY SELECT false, 'Algunos bookings no están en estado pending o no existen', 0, 0;
+      RETURN;
+    END IF;
+
+    SELECT route_id INTO v_route_id
+    FROM bookings
+    WHERE id = p_booking_ids[1];
+
+    SELECT total_seats, available_seats INTO v_total_seats, v_available_seats
+    FROM routes
+    WHERE id = v_route_id
+    FOR UPDATE;
+
+    SELECT COUNT(*) INTO v_count
+    FROM bookings
+    WHERE id = ANY(p_booking_ids);
+
+    IF v_available_seats < v_count THEN
+      RETURN QUERY SELECT false, 'No hay suficientes asientos disponibles', 0, v_available_seats;
+      RETURN;
+    END IF;
+
+    UPDATE bookings
+    SET booking_status = 'confirmed',
+        payment_status = p_payment_method,
+        payment_method = p_payment_method,
+        updated_at = NOW()
+    WHERE id = ANY(p_booking_ids);
+
+    SELECT available_seats INTO v_available_seats
+    FROM routes
+    WHERE id = v_route_id;
+
+    RETURN QUERY SELECT true, 'Bookings confirmados exitosamente', v_count, v_available_seats;
+
+  EXCEPTION WHEN OTHERS THEN
+    RETURN QUERY SELECT false, 'Error: ' || SQLERRM, 0, 0;
+  END;
+END;
+$$;
