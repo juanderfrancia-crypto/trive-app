@@ -827,11 +827,10 @@ export const useAirportNegotiation = () => {
       if (current.status === 'cancelled') throw new Error('La solicitud ya está cancelada')
       if (current.status === 'completed') throw new Error('No puedes cancelar un viaje completado')
 
-      const { error: updateError } = await supabase
-        .from('airport_requests')
-        .update({ status: 'cancelled' })
-        .eq('id', requestId)
-        .eq('passenger_id', passengerId)
+      // El servidor devuelve la comisión al conductor si ya la había pagado
+      const { error: updateError } = await supabase.rpc('cancel_airport_request', {
+        p_request_id: requestId,
+      })
 
       if (updateError) throw updateError
 

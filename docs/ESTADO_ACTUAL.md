@@ -141,6 +141,17 @@ Pendiente en la misma fase (2b parte 2):
 
 Orden de despliegue: aplicar la migración junto con el APK nuevo. El cliente anterior ya no puede publicar ni aceptar.
 
+## 5.5 Fase 2b parte 2 preparada (rama `seguridad/fase-2`, sin aplicar)
+
+Migración `supabase/migrations/20261003150000_security_phase2b2_airport_flow.sql` y cambios de cliente:
+- `airport_requests`: el pasajero solo crea y lee las suyas. Se eliminan las escrituras directas de aceptar y de cambiar estado. Los conductores solo ven solicitudes pendientes si `puede_conducir`.
+- `airport_offers`: se elimina `passenger_accept_offer`, que permitía aceptar una oferta sin cobrar. Los conductores crean ofertas solo si `puede_conducir`.
+- `cancel_airport_request`: pasajero cancela y, si el conductor ya pagó, se devuelven $5.000 al libro. Conductor cancela sin reembolso. En curso o completada no se cancela. Usado por `useAirportNegotiation` y `useAirportRequests`.
+- `reject_airport_offer`: el pasajero rechaza una oferta; la solicitud sigue visible para otros conductores. Aún no hay botón en la app.
+- `send_negotiation_message`: el conductor escribe cuando la solicitud está aceptada (el cobro ya ocurrió). Se elimina la política de INSERT directo.
+
+Decisión técnica pendiente: el chat **antes** de aceptar requiere un hilo por oferta. Hoy `negotiation_messages` está ligado a la solicitud con un solo conductor asignado. Hay que decidir si se rediseña la tabla o si el chat previo se hace con ofertas.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.
