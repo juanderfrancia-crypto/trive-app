@@ -1,6 +1,5 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../services/supabase";
-import { checkDriverApprovalStatus } from "../services/driverApproval";
 import { insertNotificationForUser } from "../services/notificationInsert";
 
 // Función para normalizar texto: elimina acentos y convierte a minúsculas
@@ -304,146 +303,14 @@ export const useRoutes = () => {
     }
   }, []);
 
-  const ROUTE_COMMISSION = 2000;
-
+  // El cobro de $2.000 y la creación de la ruta ocurren en una sola transacción
+  // del servidor (publish_route). El cliente no maneja el saldo.
   const createRoute = async (routeData: Omit<Route, "id" | "created_at" | "updated_at">) => {
     try {
       setError(null);
 
-      const driverId = routeData.driver_id;
-
-      // 1. Validate driver approval status
-      const approvalStatus = await checkDriverApprovalStatus(driverId);
-
-      if (!approvalStatus.canCreateRoutes) {
-        let errorMsg = 'No puedes crear rutas. ';
-        if (!approvalStatus.isDriver) {
-          errorMsg += 'Solo los conductores pueden crear rutas.';
-        } else if (!approvalStatus.isVerified) {
-          errorMsg += 'Tu cuenta de conductor aún no ha sido verificada.';
-        } else if (approvalStatus.pendingDocuments.length > 0) {
-          errorMsg += `Faltan documentos por aprobar: ${approvalStatus.pendingDocuments.join(', ')}`;
-        }
-        throw new Error(errorMsg);
-      }
-
-      // 2. Verificar saldo del conductor
-      const { data: profile, error: balanceError } = await supabase
-        .from('profiles')
-        .select('balance')
-        .eq('id', driverId)
-        .single();
-
-      if (balanceError) throw balanceError;
-
-      const currentBalance = profile?.balance ?? 0;
-      if (currentBalance < ROUTE_COMMISSION) {
-        const err = new Error(
-          `Necesitas $${ROUTE_COMMISSION.toLocaleString('es-CO')} para publicar un viaje.\nTu saldo actual es $${currentBalance.toLocaleString('es-CO')}.`
-        );
-        (err as any).code = 'INSUFFICIENT_BALANCE';
-        throw err;
-      }
-
-      // 3. Descontar comisión
-      const { error: deductError } = await supabase
-        .from('profiles')
-        .update({ balance: currentBalance - ROUTE_COMMISSION })
-        .eq('id', driverId)
-        .eq('balance', currentBalance);
-
-      if (deductError) throw deductError;
-
-      // 4. Crear la ruta
-      const { data, error } = await supabase
-        .from("routes")
-        .insert([routeData])
-        .select()
-        .single();
-
-      if (error) {
-        // Reembolsar si falla la creación
-        await supabase
-          .from('profiles')
-          .update({ balance: currentBalance })
-          .eq('id', driverId);
-
-        if (isMissingColumnError(error, 'vehicle_type')) {
-          const { vehicle_type, ...routeDataWithoutType } = routeData as any;
-          // Volver a descontar y reintentar sin vehicle_type
-          await supabase.from('profiles').update({ balance: currentBalance - ROUTE_COMMISSION }).eq('id', driverId);
-          const { data: fallbackData, error: fallbackInsertError } = await supabase
-            .from("routes")
-            .insert([routeDataWithoutType])
-            .select()
-            .single();
-          if (fallbackInsertError) {
-            await supabase.from('profiles').update({ balance: currentBalance }).eq('id', driverId);
-            throw fallbackInsertError;
-          }
-          return fallbackData;
-        }
-
-        throw error;
-      }
-
-      // 5. Referral reward — solo en la primera ruta del conductor
-      try {
-        const { count } = await supabase
-          .from('routes')
-          .select('id', { count: 'exact', head: true })
-          .eq('driver_id', driverId)
-
-        if (count === 1) {
-          const { data: driverProf } = await supabase
-            .from('profiles')
-            .select('referred_by')
-            .eq('id', driverId)
-            .single()
-
-          if (driverProf?.referred_by) {
-            const { data: referrer } = await supabase
-              .from('profiles')
-              .select('id, balance, name')
-              .eq('referral_code', driverProf.referred_by)
-              .single()
-
-            if (referrer) {
-              // Acreditar $2.000 al referidor
-              await supabase
-                .from('profiles')
-                .update({ balance: (referrer.balance ?? 0) + 2000 })
-                .eq('id', referrer.id)
-
-              // Notificar al referidor
-              insertNotificationForUser(referrer.id, {
-                user_id: referrer.id,
-                type: 'trip_update',
-                title: '¡Referido activo! +$2.000',
-                message: 'Tu conductor referido publicó su primera ruta. Te acreditamos $2.000 en tu billetera.',
-                data: {},
-                is_read: false,
-              }).catch(() => {})
-
-              // Devolver $1.000 al conductor nuevo (descuento primera ruta)
-              await supabase.rpc('increment_balance', { user_id: driverId, amount: 1000 }).catch(async () => {
-                // fallback si el RPC no existe
-                const { data: d } = await supabase.from('profiles').select('balance').eq('id', driverId).single()
-                await supabase.from('profiles').update({ balance: (d?.balance ?? 0) + 1000 }).eq('id', driverId)
-              })
-
-              insertNotificationForUser(driverId, {
-                user_id: driverId,
-                type: 'trip_update',
-                title: 'Bienvenido a Trive · $1.000 de regalo',
-                message: 'Usaste un código de referido. Te devolvimos $1.000 como descuento en tu primera publicación.',
-                data: {},
-                is_read: false,
-              }).catch(() => {})
-            }
-          }
-        }
-      } catch { /* referral errors never block route creation */ }
+      const { data, error } = await supabase.rpc("publish_route", { p_route: routeData });
+      if (error) throw error;
 
       return data;
     } catch (err: any) {

@@ -118,6 +118,29 @@ Ya no aplica (resuelto arriba):
 - `create_negotiation_payment`: hay que confirmar si ya descuenta el saldo de $5.000, porque el cliente también lo descuenta antes de llamar.
 - Triggers sobre `profiles` que actualizan `driver_verified`.
 
+## 5.4 Fase 2b parte 1 preparada (rama `seguridad/fase-2`, sin aplicar)
+
+Migración `supabase/migrations/20261003140000_security_phase2b1_money_core.sql` y cambios de cliente:
+- `publish_route`: cobra $2.000 y crea la ruta en una sola transacción. Reemplaza el cobro y la inserción desde el cliente en `useRoutes.createRoute`.
+- `accept_request_direct`: cobra $5.000 y acepta la solicitud en una sola transacción. Reemplaza `useAirportRequests.acceptRequest`.
+- `create_negotiation_payment`: ahora deja registro en el libro (`wallet_transactions`).
+- `accept_airport_offer`: sin cambios; se beneficia del cobro atómico. Se quitó la validación de saldo del cliente en `useAirportNegotiation`, que leía el saldo de quien tenía la sesión.
+- `profiles.balance`: el usuario ya no puede escribirlo desde la API. Columnas editables en lista blanca.
+- `profiles.balance >= 0`: restricción en la base (NOT VALID).
+- Rol: solo `driver` o `passenger` desde la app.
+- `puede_conducir(uid)`: rol conductor y `driver_verified`. Todas las funciones de conductor la usan.
+- Políticas de INSERT directo sobre `routes` eliminadas.
+
+Pendiente en la misma fase (2b parte 2):
+- Chat de negociación abierto antes de aceptar (`send_negotiation_message` aún exige pago).
+- Insertar directo en `negotiation_messages` (política abierta).
+- Bookings: lectura pública, escritura del conductor, mapa de asientos.
+- Lectura pública de `profiles`.
+- Bono de referido: se pagará al completar y confirmar el primer viaje (no al publicar). Hoy está desactivado en el cliente.
+- Confirmación del viaje por el pasajero (24 h), reembolsos y vehículos.
+
+Orden de despliegue: aplicar la migración junto con el APK nuevo. El cliente anterior ya no puede publicar ni aceptar.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.

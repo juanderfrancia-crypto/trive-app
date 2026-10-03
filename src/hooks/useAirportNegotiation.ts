@@ -70,7 +70,6 @@ export interface CreateAirportRequestData {
   notes?: string
 }
 
-const AIRPORT_COMMISSION = 5000
 
 export const useAirportNegotiation = () => {
   const [requests, setRequests] = useState<AirportRequest[]>([])
@@ -617,29 +616,8 @@ export const useAirportNegotiation = () => {
     try {
       setError(null)
 
-      // ⭐ SOLO verificar balance, NO deducir aquí (la RPC se encarga)
-      const { data: profile, error: balanceError } = await supabase
-        .from('profiles')
-        .select('balance, name')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
-        .single()
-
-      if (balanceError) throw balanceError
-
-      const currentBalance = profile?.balance ?? 0
-      if (currentBalance < AIRPORT_COMMISSION) {
-        const err = new Error(
-          `Necesitas $${AIRPORT_COMMISSION.toLocaleString('es-CO')} para aceptar este viaje.\nTu saldo actual es $${currentBalance.toLocaleString('es-CO')}.`
-        )
-        ;(err as any).code = 'INSUFFICIENT_BALANCE'
-        throw err
-      }
-
-      // 🚀 Llamar función RPC que se encarga de:
-      // 1. Deducir comisión del balance
-      // 2. Crear registro de pago
-      // 3. Aceptar oferta
-      // 4. Actualizar solicitud
+      // La función del servidor cobra la comisión al conductor y acepta la oferta
+      // en una sola transacción. Si el conductor no tiene saldo, no se acepta nada.
       const { error: rpcError } = await supabase
         .rpc('accept_airport_offer', { offer_id: offerId })
 

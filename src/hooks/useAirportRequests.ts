@@ -34,7 +34,6 @@ export interface CreateAirportRequestData {
   notes?: string
 }
 
-const AIRPORT_COMMISSION = 5000
 
 export const useAirportRequests = () => {
   const [requests, setRequests] = useState<AirportRequest[]>([])
@@ -162,70 +161,34 @@ export const useAirportRequests = () => {
     }
   }, [])
 
+  // El cobro de $5.000 y la aceptación ocurren en una sola transacción del servidor.
   const acceptRequest = async (requestId: string, driverId: string): Promise<void> => {
     try {
       setError(null)
 
-      // 1. Read current balance
-      const { data: profile, error: balanceError } = await supabase
+      const { error: acceptError } = await supabase.rpc('accept_request_direct', {
+        p_request_id: requestId,
+      })
+      if (acceptError) throw acceptError
+
+      const { data: profile } = await supabase
         .from('profiles')
-        .select('balance, name')
+        .select('name')
         .eq('id', driverId)
         .single()
 
-      if (balanceError) throw balanceError
-
-      const currentBalance = profile?.balance ?? 0
-      if (currentBalance < AIRPORT_COMMISSION) {
-        const err = new Error(
-          `Necesitas $${AIRPORT_COMMISSION.toLocaleString('es-CO')} para aceptar este viaje.\nTu saldo actual es $${currentBalance.toLocaleString('es-CO')}.`
-        )
-        ;(err as any).code = 'INSUFFICIENT_BALANCE'
-        throw err
-      }
-
-      // 2. Deduct commission with optimistic lock
-      const { error: deductError } = await supabase
-        .from('profiles')
-        .update({ balance: currentBalance - AIRPORT_COMMISSION })
-        .eq('id', driverId)
-        .eq('balance', currentBalance)
-
-      if (deductError) throw deductError
-
-      // 3. Fetch request details for the notification
       const { data: reqData } = await supabase
         .from('airport_requests')
-        .select('origin, destination, departure_time, passengers, offered_price')
+        .select('passenger_id, origin, destination, departure_time, passengers, offered_price')
         .eq('id', requestId)
         .single()
 
-      // 4. Accept the request
-      const { data: updated, error: updateError } = await supabase
-        .from('airport_requests')
-        .update({
-          driver_id: driverId,
-          status: 'accepted',
-          accepted_at: new Date().toISOString(),
-        })
-        .eq('id', requestId)
-        .eq('status', 'pending')
-        .select('passenger_id')
-        .single()
+      if (!reqData) return
 
-      if (updateError || !updated) {
-        // Rollback balance
-        await supabase
-          .from('profiles')
-          .update({ balance: currentBalance })
-          .eq('id', driverId)
-        throw updateError || new Error('No se pudo aceptar la solicitud')
-      }
-
-      // 5. Notify passenger with full trip details
+      // Notificar al pasajero con los datos del viaje
       const driverName = profile?.name || 'Tu conductor'
-      insertNotificationForUser(updated.passenger_id, {
-        user_id: updated.passenger_id,
+      insertNotificationForUser(reqData.passenger_id, {
+        user_id: reqData.passenger_id,
         type: 'trip_update',
         title: '✈️ ¡Tienes conductor para tu viaje!',
         message: `${driverName} aceptó tu solicitud de aeropuerto.`,
