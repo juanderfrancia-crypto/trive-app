@@ -832,6 +832,7 @@ export default function AirportRequestScreen() {
           visible={showChatModal}
           onClose={() => setShowChatModal(false)}
           requestId={chatRequest.id}
+          driverId={chatRequest.driver_id ?? ''}
           driverName={chatRequest.driver_name || 'Conductor'}
           otherUserId={chatRequest.driver_id}
         />

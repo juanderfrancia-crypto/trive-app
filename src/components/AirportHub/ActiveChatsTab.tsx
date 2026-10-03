@@ -19,6 +19,7 @@ import type { HubTabProps } from './types'
 
 interface ChatPreview {
   requestId: string
+  driverId: string
   otherUserId: string
   otherUserName: string
   otherUserAvatar?: string
@@ -247,6 +248,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
             loadChats()
           }}
           requestId={selectedChat.requestId}
+          driverId={selectedChat.driverId}
           driverName={selectedChat.otherUserName}
           otherUserId={selectedChat.otherUserId}
         />

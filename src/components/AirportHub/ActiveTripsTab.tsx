@@ -208,6 +208,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
               loadTrips()
             }}
             requestId={selectedTrip.id}
+            driverId={isDriver ? (user?.id ?? '') : selectedTrip.otherUserId}
             driverName={selectedTrip.otherUserName}
             otherUserId={selectedTrip.otherUserId}
           />

@@ -3,7 +3,7 @@ import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showError, showSuccess } from '../utils/showError';
 
-interface NegotiationMessage {
+export interface NegotiationMessage {
   id: string;
   request_id: string;
   driver_id: string;
@@ -15,237 +15,143 @@ interface NegotiationMessage {
   is_read: boolean;
 }
 
-interface NegotiationPayment {
-  id: string;
-  request_id: string;
-  driver_id: string;
-  offer_id: string;
-  amount: number;
-  status: 'pending' | 'deducted' | 'refunded' | 'cancelled';
-  deducted_at: string | null;
-}
-
-export const useNegotiationChat = (requestId: string) => {
+/**
+ * Hilo de negociación entre un pasajero y un conductor sobre una solicitud.
+ * El servidor decide quién puede escribir (send_chat_message); el cliente solo muestra el estado.
+ */
+export const useNegotiationChat = (requestId: string, driverId: string) => {
   const [messages, setMessages] = useState<NegotiationMessage[]>([]);
-  const [payment, setPayment] = useState<NegotiationPayment | null>(null);
-  const [loadingInitial, setLoadingInitial] = useState(true); // Solo para carga inicial
-  const [hasPayment, setHasPayment] = useState(false);
-  const [isUserDriver, setIsUserDriver] = useState(false);
-  const [tripInfo, setTripInfo] = useState<{ driver_id: string; passenger_id: string } | null>(null);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const user = useAppStore(state => state.user);
+  const isUserDriver = user?.id === driverId;
 
-  // 📥 Cargar mensajes iniciales
+  // Estado del hilo: abierto si la oferta está pendiente o aceptada y la solicitud sigue activa
+  const loadThreadState = useCallback(async () => {
+    const [{ data: offer }, { data: request }] = await Promise.all([
+      supabase
+        .from('airport_offers')
+        .select('status')
+        .eq('request_id', requestId)
+        .eq('driver_id', driverId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      supabase
+        .from('airport_requests')
+        .select('status')
+        .eq('id', requestId)
+        .maybeSingle(),
+    ]);
+
+    const offerActive = offer?.status === 'pending' || offer?.status === 'accepted';
+    const requestActive = !!request && request.status !== 'cancelled' && request.status !== 'completed';
+    setIsOpen(offerActive && requestActive);
+  }, [requestId, driverId]);
+
   const loadMessages = useCallback(async () => {
     setLoadingInitial(true);
     try {
-      console.log('🟡[HOOK] Cargando mensajes para requestId:', requestId);
-      
       const { data, error } = await supabase
         .from('negotiation_messages')
         .select('*')
         .eq('request_id', requestId)
+        .eq('driver_id', driverId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      
       setMessages(data || []);
-      console.log('✅[HOOK] Mensajes cargados:', (data || []).length);
     } catch (error) {
-      console.error('❌[ERROR] Error cargando mensajes:', error);
+      console.error('Error cargando mensajes:', error);
       showError('Error al cargar mensajes');
     } finally {
       setLoadingInitial(false);
     }
-  }, [requestId]);
+  }, [requestId, driverId]);
 
-  // 💳 Verificar pago de comisión (solo aplica al conductor)
-  const checkPayment = useCallback(async (offerId?: string) => {
-    try {
-      if (!requestId || !user?.id) {
-        console.warn('⚠️[HOOK] requestId o user no disponible');
-        setHasPayment(false);
-        return;
-      }
-
-      // Primero, obtener info del viaje para saber quién es el conductor
-      const { data: tripData, error: tripError } = await supabase
-        .from('airport_requests')
-        .select('driver_id, passenger_id')
-        .eq('id', requestId)
-        .single();
-
-      if (tripError) throw tripError;
-
-      // 💾 Guardar info del viaje para optimistic updates
-      setTripInfo(tripData);
-
-      const isDriver = tripData?.driver_id === user.id;
-      const isPassenger = tripData?.passenger_id === user.id;
-
-      setIsUserDriver(isDriver);
-
-      console.log('🟡[HOOK] Verificando pago:', { requestId, userId: user.id, isDriver, isPassenger });
-
-      if (!isDriver && !isPassenger) {
-        console.warn('⚠️[HOOK] Usuario no es participante del viaje');
-        setHasPayment(false);
-        return;
-      }
-
-      // 🎯 Lógica diferenciada por rol:
-      if (isPassenger) {
-        // ✅ El PASAJERO NO paga, siempre puede chatear
-        console.log('✅[HOOK] Pasajero: puede chatear sin restricción de pago');
-        setHasPayment(true);
-        setPayment(null);
-        return;
-      }
-
-      // Si es el CONDUCTOR, verificar pago
-      if (isDriver) {
-        const { data: paymentData, error: paymentError } = await supabase
-          .from('negotiation_payments')
-          .select('*')
-          .eq('request_id', requestId)
-          .eq('driver_id', user.id)
-          .eq('status', 'deducted')
-          .single();
-
-        if (paymentError && paymentError.code !== 'PGRST116') throw paymentError; // PGRST116 = no rows
-
-        console.log('💳[HOOK] Pago del conductor:', paymentData);
-        setPayment(paymentData || null);
-        setHasPayment(!!paymentData);
-
-        if (!paymentData) {
-          console.log('⚠️[HOOK] Conductor: No hay pago registrado para este viaje');
-        } else {
-          console.log('✅[HOOK] Conductor: Pago validado, puede chatear');
-        }
-      }
-    } catch (error) {
-      console.error('❌[ERROR] Error verificando pago:', error);
-      setHasPayment(false);
-    }
-  }, [requestId, user?.id]);
-
-  // 📤 Enviar mensaje (con validación de pago)
   const sendMessage = useCallback(async (
     messageText: string,
-    messageType: 'text' | 'location_pickup' | 'price_update' | 'special_request' = 'text'
+    messageType: NegotiationMessage['message_type'] = 'text'
   ) => {
     if (!user) {
       showError('Usuario no autenticado');
       return false;
     }
-
     if (!messageText.trim()) {
       showError('El mensaje no puede estar vacío');
       return false;
     }
-
     if (messageText.length > 500) {
       showError('El mensaje es demasiado largo (máx 500 caracteres)');
       return false;
     }
 
-    try {
-      console.log('🟡[HOOK] Enviando mensaje para requestId:', requestId);
-      
-      // 💫 OPTIMISTIC UPDATE PRIMERO: Agregar mensaje al estado ANTES de enviar
-      if (tripInfo && user?.id) {
-        const optimisticMessage: NegotiationMessage = {
-          id: `temp-${Date.now()}`,
-          request_id: requestId,
-          driver_id: tripInfo.driver_id,
-          passenger_id: tripInfo.passenger_id,
-          sent_by_user_id: user.id,
-          message_text: messageText,
-          message_type: messageType,
-          created_at: new Date().toISOString(),
-          is_read: false,
-        };
-        
-        console.log('✨[HOOK] Agregando mensaje optimista ANTES de enviar:', optimisticMessage);
-        setMessages(prev => [...prev, optimisticMessage]);
-      }
-      
-      // Llamar a la función SQL que valida el pago internamente (sin bloquear UI)
-      const { error } = await supabase.rpc('send_negotiation_message', {
-        v_request_id: requestId,
-        v_message_text: messageText,
-        v_message_type: messageType
-      });
+    const tempId = `temp-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: tempId,
+      request_id: requestId,
+      driver_id: driverId,
+      passenger_id: '',
+      sent_by_user_id: user.id,
+      message_text: messageText,
+      message_type: messageType,
+      created_at: new Date().toISOString(),
+      is_read: false,
+    }]);
 
-      if (error) {
-        console.error('❌[ERROR] Error enviando mensaje:', error.message);
-        
-        // Si hay error, remover el optimistic message
-        setMessages(prev => prev.filter(m => !m.id.startsWith('temp-')));
-        
-        // Mostrar mensaje específico si no hay pago
-        if (error.message.includes('comisión')) {
-          showError('Debes pagar la comisión antes de chatear');
-        } else {
-          showError(error.message || 'Error al enviar mensaje');
-        }
-        return false;
-      }
+    const { error } = await supabase.rpc('send_chat_message', {
+      p_request_id: requestId,
+      p_driver_id: driverId,
+      p_text: messageText,
+      p_type: messageType,
+    });
 
-      console.log('✅[HOOK] Mensaje enviado exitosamente a BD');
-      showSuccess('Mensaje enviado');
-      return true;
-    } catch (error) {
-      console.error('❌[ERROR] Excepción enviando mensaje:', error);
-      
-      // Si hay excepción, remover el optimistic message
-      setMessages(prev => prev.filter(m => !m.id.startsWith('temp-')));
-      
-      showError('Error al enviar mensaje');
+    if (error) {
+      setMessages(prev => prev.filter(m => m.id !== tempId));
+      showError(error.message || 'Error al enviar mensaje');
+      await loadThreadState();
       return false;
     }
-  }, [requestId, user, tripInfo]);
 
-  // ✅ Marcar mensajes como leídos
+    setMessages(prev => prev.filter(m => m.id !== tempId));
+    showSuccess('Mensaje enviado');
+    return true;
+  }, [requestId, driverId, user, loadThreadState]);
+
   const markMessagesAsRead = useCallback(async () => {
-    try {
-      console.log('🟡[HOOK] Marcando mensajes como leídos');
-      
-      const { error } = await supabase.rpc('mark_negotiation_messages_read', {
-        v_request_id: requestId
-      });
-
-      if (error) throw error;
-      
-      // Actualizar estado local
-      setMessages(prev => prev.map(msg => ({ ...msg, is_read: true })));
-      console.log('✅[HOOK] Mensajes marcados como leídos');
-    } catch (error) {
-      console.error('❌[ERROR] Error marcando mensajes:', error);
+    const { error } = await supabase.rpc('mark_chat_thread_read', {
+      p_request_id: requestId,
+      p_driver_id: driverId,
+    });
+    if (error) {
+      console.error('Error marcando mensajes:', error);
+      return;
     }
-  }, [requestId]);
+    setMessages(prev => prev.map(msg =>
+      msg.sent_by_user_id !== user?.id ? { ...msg, is_read: true } : msg
+    ));
+  }, [requestId, driverId, user?.id]);
 
-  // 🔄 Suscripción a mensajes en tiempo real
   useEffect(() => {
-    if (!requestId) return;
+    if (!requestId || !driverId) return;
 
     loadMessages();
-    checkPayment();
+    loadThreadState();
 
-    // Suscribirse a nuevos mensajes
     const subscription = supabase
-      .channel(`negotiation_${requestId}`)
+      .channel(`negotiation_${requestId}_${driverId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'negotiation_messages',
-          filter: `request_id=eq.${requestId}`
+          filter: `request_id=eq.${requestId}`,
         },
         (payload) => {
-          console.log('🔔[REALTIME] Nuevo mensaje:', payload.new);
-          setMessages(prev => [...prev, payload.new as NegotiationMessage]);
+          const incoming = payload.new as NegotiationMessage;
+          if (incoming.driver_id !== driverId) return;
+          setMessages(prev => (prev.some(m => m.id === incoming.id) ? prev : [...prev, incoming]));
         }
       )
       .subscribe();
@@ -253,23 +159,20 @@ export const useNegotiationChat = (requestId: string) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [requestId, loadMessages, checkPayment]);
+  }, [requestId, driverId, loadMessages, loadThreadState]);
 
-  // 🗑️ Obtener conteo de mensajes no leídos
   const getUnreadCount = useCallback(() => {
-    return messages.filter(msg => !msg.is_read && msg.passenger_id === user?.id).length;
+    return messages.filter(msg => !msg.is_read && msg.sent_by_user_id !== user?.id).length;
   }, [messages, user?.id]);
 
   return {
     messages,
-    payment,
-    loadingInitial, // Solo para carga inicial
-    hasPayment,
+    loadingInitial,
+    isOpen,
     isUserDriver,
     sendMessage,
     markMessagesAsRead,
     loadMessages,
-    checkPayment,
     getUnreadCount,
   };
 };

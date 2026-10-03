@@ -152,6 +152,25 @@ Migración `supabase/migrations/20261003150000_security_phase2b2_airport_flow.sq
 
 Decisión técnica pendiente: el chat **antes** de aceptar requiere un hilo por oferta. Hoy `negotiation_messages` está ligado a la solicitud con un solo conductor asignado. Hay que decidir si se rediseña la tabla o si el chat previo se hace con ofertas.
 
+## 5.6 Fase 2c preparada: chat por hilo (rama `seguridad/fase-2`, sin aplicar)
+
+Migración `supabase/migrations/20261003160000_security_phase2c_chat_threads.sql` y cambios de cliente.
+
+Modelo: un hilo por (solicitud, conductor). Se escribe mientras la oferta esté `pending` o `accepted` y la solicitud no esté cancelada ni completada. Al rechazarse o cerrarse, el hilo queda de solo lectura con su historial.
+- `send_chat_message(p_request_id, p_driver_id, p_text, p_type)`: reemplaza `send_negotiation_message`. Valida participante y estado del hilo.
+- `mark_chat_thread_read(p_request_id, p_driver_id)`: reemplaza `mark_negotiation_messages_read`. Corrige el bug: marcaba como leídos también los mensajes propios.
+- `accept_request_direct`: crea la oferta aceptada, para que todo acuerdo tenga su hilo.
+- Política de lectura: participantes, sin depender del estado de la solicitud.
+- Se elimina el INSERT directo en `negotiation_messages`.
+
+Cliente:
+- `useNegotiationChat(requestId, driverId)`: hilo por conductor; `isOpen` reemplaza el bloqueo por pago.
+- `NegotiationChatModal`: recibe `driverId`; el historial siempre se ve y la caja de entrada aparece solo si el hilo está abierto.
+- Pantallas que abren el chat pasan `driverId`: lista de chats (conductor y pasajero), viajes activos, feed del conductor, solicitudes del pasajero.
+- Detalle de solicitud (pasajero): cada oferta pendiente tiene **Chatear** y **Rechazar** (`reject_airport_offer`).
+
+Pendiente: el chat del pasajero en solicitudes sin conductor asignado solo se abre desde el detalle de cada oferta.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.

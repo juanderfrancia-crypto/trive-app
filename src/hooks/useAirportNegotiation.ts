@@ -453,6 +453,18 @@ export const useAirportNegotiation = () => {
     }
   }, [])
 
+  // ─── Rechazar una oferta (la solicitud sigue visible para otros conductores) ───
+  const rejectOffer = async (offerId: string): Promise<void> => {
+    setError(null)
+    const { error: rejectError } = await supabase.rpc('reject_airport_offer', {
+      p_offer_id: offerId,
+    })
+    if (rejectError) {
+      setError(rejectError.message)
+      throw rejectError
+    }
+  }
+
   // ─── Cargar ofertas de una solicitud ───────────────────────────────
   const loadOffersForRequest = useCallback(async (requestId: string): Promise<AirportOffer[]> => {
     try {
@@ -1112,6 +1124,7 @@ export const useAirportNegotiation = () => {
     loadSingleRequest,
     createOffer,
     acceptOffer,
+    rejectOffer,
     acceptPassengerOffer,
     updateRequestPrice,
     cancelRequest,

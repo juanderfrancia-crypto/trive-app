@@ -19,6 +19,7 @@ interface NegotiationChatModalProps {
   visible: boolean;
   onClose: () => void;
   requestId: string;
+  driverId: string;
   driverName: string;
   otherUserId: string;
 }
@@ -27,6 +28,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
   visible,
   onClose,
   requestId,
+  driverId,
   driverName,
   otherUserId,
 }) => {
@@ -36,22 +38,18 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
   
   const {
     messages,
-    payment,
     loadingInitial,
-    hasPayment,
+    isOpen,
     isUserDriver,
     sendMessage,
     markMessagesAsRead,
-  } = useNegotiationChat(requestId);
-  
+  } = useNegotiationChat(requestId, driverId);
+
   const user = useAppStore(state => state.user);
 
-  // Debug logs
-  React.useEffect(() => {
-    console.log('📱[MODAL] Modal props:', { visible, requestId, driverName, otherUserId });
-    console.log('📱[MODAL] User role:', { userId: user?.id, isDriver: isUserDriver });
-    console.log('📱[MODAL] Hook state:', { loadingInitial, hasPayment, messagesCount: messages.length, paymentStatus: payment?.status });
-  }, [visible, requestId, loadingInitial, hasPayment, messages.length, payment?.status, driverName, otherUserId, isUserDriver, user?.id]);
+  const closedMessage = isUserDriver
+    ? 'Este hilo está cerrado: tu oferta no fue aceptada o el viaje ya no está disponible.'
+    : 'Este chat ya no está disponible.';
 
   // Marcar como leído cuando se abre el modal
   useEffect(() => {
@@ -70,7 +68,6 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
   }, [messages]);
 
   const handleSendMessage = async () => {
-    console.log('📤[MODAL] Intentando enviar:', { messageText, trimmed: messageText.trim() });
     
     if (!messageText.trim()) {
       console.warn('⚠️[MODAL] Mensaje vacío, no se envía');
@@ -81,7 +78,6 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
     const success = await sendMessage(messageText, 'text');
     
     if (success) {
-      console.log('✅[MODAL] Limpiando input después de envío exitoso');
       setMessageText('');
     }
     
@@ -90,7 +86,6 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
 
   const isOwnMessage = (fromUserId: string) => {
     const isOwn = fromUserId === user?.id;
-    console.log('📱[MODAL] Verificando mensaje propio:', { fromUserId, userId: user?.id, isOwn });
     return isOwn;
   };
   const formatTime = (timestamp: string) => {
@@ -123,43 +118,12 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
           <View style={{ width: 28 }} />
         </View>
 
-        {/* Chat Content */}
-        {!hasPayment && !loadingInitial ? (
-          // ❌ Sin pago - bloqueado (solo para conductor)
-          <View style={s.blockedContainer}>
-            <Ionicons
-              name="lock-closed"
-              size={48}
-              color={COLORS.primary}
-              style={{ marginBottom: SPACING.lg }}
-            />
-            <Text style={s.blockedTitle}>Chat Bloqueado</Text>
-            <Text style={s.blockedMessage}>
-              {isUserDriver
-                ? 'Debes pagar la comisión de $5.000 para comunicarte con el pasajero.'
-                : 'Este chat no está disponible en este momento.'}
-            </Text>
-            <Text style={s.blockedSubtext}>
-              {isUserDriver
-                ? 'Esta medida protege contra fraude.'
-                : ''}
-            </Text>
-            {payment?.status === 'deducted' && (
-              <View style={s.paymentConfirm}>
-                <Ionicons name="checkmark-circle" size={20} color="#10b981" />
-                <Text style={s.paymentConfirmText}>
-                  Pago recibido ✓
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : loadingInitial && messages.length === 0 ? (
-          // 🔄 Cargando SOLO al inicio (sin mensajes aún)
+        {/* Chat Content: el historial siempre visible; la entrada solo si el hilo está abierto */}
+        {loadingInitial && messages.length === 0 ? (
           <View style={s.loadingContainer}>
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
         ) : (
-          // ✅ Chat disponible
           <>
             {/* Mensajes */}
             <ScrollView
@@ -213,7 +177,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
               )}
             </ScrollView>
 
-            {/* Input */}
+            {isOpen ? (
             <View style={s.inputContainer}>
               <TextInput
                 style={s.input}
@@ -221,20 +185,19 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
                 placeholderTextColor={COLORS.textTertiary}
                 value={messageText}
                 onChangeText={(text) => {
-                  console.log('📝[MODAL] Input cambió:', text);
                   setMessageText(text);
                 }}
                 multiline
                 maxLength={500}
-                editable={!sending}
+                editable={!sending && isOpen}
                 selectionColor={COLORS.primary}
               />
               <TouchableOpacity
                 onPress={handleSendMessage}
-                disabled={!messageText.trim() || sending}
+                disabled={!messageText.trim() || sending || !isOpen}
                 style={[
                   s.sendButton,
-                  (!messageText.trim() || sending) && s.sendButtonDisabled,
+                  (!messageText.trim() || sending || !isOpen) && s.sendButtonDisabled,
                 ]}
               >
                 {sending ? (
@@ -244,6 +207,12 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
                 )}
               </TouchableOpacity>
             </View>
+            ) : (
+              <View style={s.closedBanner}>
+                <Ionicons name="lock-closed-outline" size={16} color={COLORS.textSecondary} />
+                <Text style={s.closedText}>{closedMessage}</Text>
+              </View>
+            )}
           </>
         )}
       </KeyboardAvoidingView>
@@ -272,40 +241,6 @@ const s = {
     color: COLORS.textTertiary,
   },
 
-  blockedContainer: {
-    flex: 1,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
-    paddingHorizontal: SPACING.lg,
-  },
-  blockedTitle: {
-    fontSize: 18,
-    fontWeight: '600' as const,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  blockedMessage: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center' as const,
-    marginBottom: SPACING.sm,
-  },
-  blockedSubtext: {
-    fontSize: 12,
-    color: COLORS.textTertiary,
-    textAlign: 'center' as const,
-  },
-  paymentConfirm: {
-    marginTop: SPACING.lg,
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: SPACING.sm,
-  },
-  paymentConfirmText: {
-    fontSize: 14,
-    fontWeight: '600' as const,
-    color: '#10b981',
-  },
 
   loadingContainer: {
     flex: 1,
@@ -372,6 +307,20 @@ const s = {
     color: 'rgba(255,255,255,0.7)',
   },
 
+  closedBanner: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    gap: SPACING.sm,
+    padding: SPACING.md,
+    backgroundColor: COLORS.surface,
+  },
+  closedText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center' as const,
+    flexShrink: 1,
+  },
   inputContainer: {
     flexDirection: 'row' as const,
     alignItems: 'flex-end' as const,

@@ -19,6 +19,7 @@ import { supabase } from '../services/supabase'
 
 interface ChatPreview {
   requestId: string
+  driverId: string
   tripId: string
   otherUserId: string
   otherUserName: string
@@ -75,6 +76,7 @@ export default function NegotiationChatsScreen() {
           const passengerProfile = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
+            driverId: user.id,
             tripId: trip.id,
             otherUserId: trip.passenger_id,
             otherUserName: passengerProfile?.name || 'Pasajero',
@@ -114,6 +116,7 @@ export default function NegotiationChatsScreen() {
           const driverProfile = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
+            driverId: trip.driver_id,
             tripId: trip.id,
             otherUserId: trip.driver_id,
             otherUserName: driverProfile?.name || 'Conductor',
@@ -268,6 +271,7 @@ export default function NegotiationChatsScreen() {
             loadChats() // Recargar para actualizar unread counts
           }}
           requestId={selectedChat.requestId}
+          driverId={selectedChat.driverId}
           driverName={selectedChat.otherUserName}
           otherUserId={selectedChat.otherUserId}
         />

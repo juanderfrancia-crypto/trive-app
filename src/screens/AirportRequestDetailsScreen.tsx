@@ -18,6 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import Button from '../components/Button'
+import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { showSuccess, showError } from '../utils/showError'
 
 export default function AirportRequestDetailsScreen() {
@@ -35,10 +36,12 @@ export default function AirportRequestDetailsScreen() {
     updateRequestPrice,
     acceptOffer,
     acceptPassengerOffer,
+    rejectOffer,
     cancelRequest,
   } = useAirportNegotiation()
 
   const [showPriceModal, setShowPriceModal] = useState(false)
+  const [chatWith, setChatWith] = useState<{ driverId: string; driverName: string } | null>(null)
   const [newPrice, setNewPrice] = useState('')
   const [updatingPrice, setUpdatingPrice] = useState(false)
   const [loadingRequest, setLoadingRequest] = useState(!requests.find(r => r.id === requestId))
@@ -80,6 +83,16 @@ export default function AirportRequestDetailsScreen() {
       showError(err.message)
     } finally {
       setUpdatingPrice(false)
+    }
+  }
+
+  const handleRejectOffer = async (offerId: string) => {
+    try {
+      await rejectOffer(offerId)
+      await loadOffersForRequest(requestId)
+      showSuccess('Propuesta rechazada')
+    } catch (err: any) {
+      showError(err?.message || 'No se pudo rechazar la propuesta')
     }
   }
 
@@ -308,6 +321,23 @@ export default function AirportRequestDetailsScreen() {
                   <Text style={styles.acceptBtnText}>Aceptar esta oferta</Text>
                   <Ionicons name="checkmark-circle" size={18} color="#fff" />
                 </TouchableOpacity>
+                <View style={styles.offerActions}>
+                  <TouchableOpacity
+                    style={styles.chatOfferBtn}
+                    onPress={() => setChatWith({ driverId: offer.driver_id, driverName: offer.driver_name || 'Conductor' })}
+                    activeOpacity={0.75}
+                  >
+                    <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+                    <Text style={styles.chatOfferBtnText}>Chatear</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.rejectOfferBtn}
+                    onPress={() => handleRejectOffer(offer.id)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={styles.rejectOfferBtnText}>Rechazar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
           </View>
@@ -337,6 +367,17 @@ export default function AirportRequestDetailsScreen() {
           </View>
         )}
       </ScrollView>
+
+      {chatWith && (
+        <NegotiationChatModal
+          visible={!!chatWith}
+          onClose={() => setChatWith(null)}
+          requestId={requestId}
+          driverId={chatWith.driverId}
+          driverName={chatWith.driverName}
+          otherUserId={chatWith.driverId}
+        />
+      )}
 
       {/* Modal para subir precio */}
       <Modal
@@ -396,6 +437,29 @@ export default function AirportRequestDetailsScreen() {
 }
 
 const styles = StyleSheet.create({
+  offerActions: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  chatOfferBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  chatOfferBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  rejectOfferBtn: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  rejectOfferBtnText: { fontSize: 13, fontWeight: '600', color: '#EF4444' },
   safe: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row',

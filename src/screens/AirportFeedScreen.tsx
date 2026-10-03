@@ -670,6 +670,7 @@ export default function AirportFeedScreen() {
           visible={showChatModal}
           onClose={() => setShowChatModal(false)}
           requestId={chatRequest.id}
+          driverId={user?.id ?? ''}
           driverName={chatRequest.passenger_name || 'Pasajero'}
           otherUserId={chatRequest.passenger_id}
         />
