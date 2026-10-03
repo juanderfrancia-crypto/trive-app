@@ -64,12 +64,37 @@ Comprobado el 2026-10-03 con el CLI y consultas de solo lectura:
 - `supabase/.temp/` excluido de git (estado local del CLI).
 - `ErrorBoundary` agregado en `App.tsx`: un error de render muestra una pantalla de reintento en vez de cerrar la app.
 
+## 5.1 Auditoría de seguridad de producción (2026-10-03, solo lectura)
+
+Datos reales ya existen: 13 perfiles, 220 reservas, 118 rutas, 82 notificaciones y 27 sesiones.
+
+Verificado con la clave pública (`anon`) que viene dentro de la app:
+
+| Tabla | RLS | Lo que expone hoy |
+|---|---|---|
+| `profiles` | activo | Lectura pública (`Anyone can view all profiles`): emails, teléfonos, saldos, roles |
+| `bookings` | activo | Lectura pública (`read_all_bookings`, `true`): 220 reservas |
+| `notifications` | **desactivado** | 82 notificaciones legibles y escribibles |
+| `user_sessions` | **desactivado** | 27 sesiones legibles y escribibles |
+| `trip_preferences`, `travel_preferences`, `rating_snapshots` | **desactivado** | sin datos hoy, pero abiertas |
+| `earnings_transactions` | activo | `INSERT` con `check = true` para `public`: cualquier usuario puede insertar ganancias |
+
+Políticas que permiten abuso por parte de usuarios autenticados:
+- `bookings.update_own_booking`: el pasajero puede cambiar cualquier columna de su reserva (estado y pago).
+- `profiles`: el rol `authenticated` puede escribir `balance`, `is_admin`, `role`, `driver_verified`, `rating` y `membership_*`.
+- Las comprobaciones de administrador leen `profiles.is_admin`, que el usuario puede cambiar a sí mismo.
+
+Dependencias del cliente que hay que respetar al cerrar esto:
+- Tarjetas de viajes y chats muestran nombre y foto de la contraparte (`profiles!passenger_id(...)`, `profiles!driver_id(...)`, 16 sitios).
+- El panel del conductor muestra teléfono y email del pasajero (`DriverPanelScreen`, línea 113).
+- Los descuentos de saldo, el crédito de referidos y el cambio de rol se hacen hoy desde el cliente.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.
 
 - **P1 · Historial de migraciones vacío.** Hay que marcar las 8 migraciones como aplicadas en el historial remoto antes de cualquier `db push`. Requiere aprobación explícita, porque escribe en producción.
-- **P2 · Seguridad de `profiles` (crítico).** El rol `authenticated` puede escribir todas las columnas, incluidas `balance`, `role`, `is_admin`, `driver_verified` y `rating`. Cualquier usuario puede darse saldo o hacerse admin. Hay además una política de lectura pública (`Anyone can view all profiles`) que hay que revisar. Cerrarlo exige cambiar el cliente primero: el descuento de saldo se hace hoy desde la app.
+- **P2 · Seguridad de datos (crítico, ver sección 5.1).** Datos personales y de reservas son legibles por cualquiera con la clave pública, y los usuarios pueden escribir saldo, rol y administración. Cerrarlo exige cambios en base de datos y en el cliente, en el mismo paso.
 - **P3 · `projectId` de EAS inconsistente.** Hay tres valores: `17d0b706…` en `app.json`, `e96c93aa…` en `src/services/pushNotifications.ts` y `e77b81ed…` en la documentación. Hay que confirmar cuál es el proyecto real en expo.dev.
 - **P4 · Borrado de cuenta incompleto.** `PrivacyScreen` solo cancela reservas y rutas y cierra sesión. Google Play exige eliminar la cuenta y sus datos, y tener una URL pública para solicitarlo.
 - **P5 · Referidos.** El crédito de $2.000 al referidor se escribe desde el cliente del conductor nuevo y RLS lo bloquea en silencio. `increment_balance` no existe; el fallback del cliente sí funciona para el bono de $1.000.
