@@ -90,37 +90,6 @@ export const useRoutes = () => {
     }
   };
 
-  const normalizeRouteAvailability = async (rawRoutes: Route[]) => {
-    if (!rawRoutes.length) return rawRoutes;
-
-    const routeIds = Array.from(new Set(rawRoutes.map((route) => route.id)));
-    const { data: bookings, error: bookingsError } = await supabase
-      .from('bookings')
-      .select('route_id, seat_number, booking_status')
-      .in('route_id', routeIds)
-      .neq('booking_status', 'cancelled');
-
-    if (bookingsError) {
-      console.warn('Error cargando reservas para calcular puestos disponibles:', bookingsError);
-      return rawRoutes;
-    }
-
-    const bookingsCount = new Map<string, number>();
-    (bookings || []).forEach((booking: any) => {
-      bookingsCount.set(
-        booking.route_id,
-        (bookingsCount.get(booking.route_id) || 0) + 1
-      );
-    });
-
-    return rawRoutes.map((route) => {
-      const reservedCount = bookingsCount.get(route.id) || 0;
-      return {
-        ...route,
-        available_seats: Math.max((route.total_seats || 0) - reservedCount, 0),
-      } as Route;
-    });
-  };
 
   const fetchRoutes = useCallback(async function fetchRoutesFn(
     origin?: string,
@@ -187,7 +156,6 @@ export const useRoutes = () => {
       }
 
       let normalizedRoutes = await enrichRoutesWithDriverInfo(filteredData);
-      normalizedRoutes = await normalizeRouteAvailability(normalizedRoutes);
 
       if (isDriverRatingSort) {
         normalizedRoutes = normalizedRoutes.sort((a, b) => {
@@ -254,7 +222,6 @@ export const useRoutes = () => {
           }
 
           let normalizedRoutes = await enrichRoutesWithDriverInfo(filteredFallbackData);
-          normalizedRoutes = await normalizeRouteAvailability(normalizedRoutes);
 
           if (isDriverRatingSort) {
             normalizedRoutes = normalizedRoutes.sort((a, b) => {
@@ -293,7 +260,7 @@ export const useRoutes = () => {
       if (error) throw error;
       if (!data) return null;
 
-      const normalizedRoutes = await normalizeRouteAvailability([data as Route]);
+      const normalizedRoutes = [data as Route];
       const enrichedRoutes = await enrichRoutesWithDriverInfo(normalizedRoutes as Route[]);
       return enrichedRoutes[0] || (data as Route);
     } catch (err: any) {

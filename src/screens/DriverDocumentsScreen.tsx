@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   View,
   Text,
+  TextInput,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
@@ -44,6 +45,13 @@ const REQUIRED_DOCUMENTS: DocumentItem[] = [
     name: 'Licencia de Conducción',
     icon: 'card-outline',
     description: 'Categoría B - Vigente',
+  },
+  {
+    id: 'tarjeta_propiedad',
+    documentType: 'tarjeta_propiedad',
+    name: 'Tarjeta de Propiedad',
+    icon: 'car-outline',
+    description: 'Del vehículo con el que vas a trabajar',
   },
   {
     id: 'soat',
@@ -99,12 +107,26 @@ export default function DriverDocumentsScreen() {
   const authUser = useAppStore((s) => s.authUser)
   const [loading, setLoading] = useState(true)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
+  const [nationalId, setNationalId] = useState('')
+  const [identitySaved, setIdentitySaved] = useState(false)
+  const [savingIdentity, setSavingIdentity] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [backendDocuments, setBackendDocuments] = useState<Map<string, DriverDocument>>(new Map())
 
   // Load documents from backend on mount and setup real-time listener
   useEffect(() => {
     if (!authUser?.id) return
+    supabase
+      .from('drivers')
+      .select('national_id')
+      .eq('id', authUser.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.national_id) {
+          setNationalId(data.national_id)
+          setIdentitySaved(true)
+        }
+      })
 
     loadDocuments()
 
@@ -474,6 +496,42 @@ export default function DriverDocumentsScreen() {
           </Text>
         </LinearGradient>
 
+        {/* Número de cédula: único por cuenta */}
+        <View style={styles.documentsSection}>
+          <Text style={styles.sectionTitle}>Número de cédula</Text>
+          <Text style={styles.identityHint}>
+            Cada cédula solo puede estar en una cuenta de Trive. Se guarda una vez.
+          </Text>
+          <View style={styles.identityRow}>
+            <TextInput
+              style={styles.identityInput}
+              value={nationalId}
+              onChangeText={setNationalId}
+              keyboardType="number-pad"
+              placeholder="Número de cédula"
+              placeholderTextColor={COLORS.textTertiary}
+              editable={!identitySaved}
+              maxLength={10}
+            />
+            <TouchableOpacity
+              style={[styles.identityButton, (identitySaved || savingIdentity) && styles.identityButtonDisabled]}
+              disabled={identitySaved || savingIdentity}
+              onPress={async () => {
+                setSavingIdentity(true)
+                const { error } = await supabase.rpc('set_driver_identity', { p_national_id: nationalId })
+                setSavingIdentity(false)
+                if (error) {
+                  Alert.alert('No se pudo guardar', error.message)
+                  return
+                }
+                setIdentitySaved(true)
+              }}
+            >
+              <Text style={styles.identityButtonText}>{identitySaved ? 'Guardada' : 'Guardar'}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Documents List */}
         <View style={styles.documentsSection}>
           <Text style={styles.sectionTitle}>Documentos Requeridos</Text>
@@ -636,6 +694,26 @@ export default function DriverDocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
+  identityHint: { fontSize: 12, color: COLORS.textTertiary, marginBottom: SPACING.sm },
+  identityRow: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
+  identityInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    fontSize: 15,
+    color: COLORS.textPrimary,
+  },
+  identityButton: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  identityButtonDisabled: { opacity: 0.5 },
+  identityButtonText: { color: COLORS.surface, fontWeight: '600' },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,

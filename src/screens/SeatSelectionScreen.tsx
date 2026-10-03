@@ -121,7 +121,7 @@ export default function SeatSelectionScreen() {
         return
       }
 
-      const routeBookings = await getRouteBookings(selectedRoute.id, true)
+      const routeBookings = await getRouteBookings(selectedRoute.id)
       const normalizedBookings = routeBookings.map((booking: any) => ({
         ...booking,
         seat_number: Number(booking.seat_number),
@@ -301,7 +301,7 @@ export default function SeatSelectionScreen() {
         return
       }
 
-      const latestBookings = await getRouteBookings(selectedRoute.id, true)
+      const latestBookings = await getRouteBookings(selectedRoute.id)
       const latestOccupiedSeats = new Set(latestBookings.map((b: any) => Number(b.seat_number)))
       const invalidSeat = selectedSeats.find((seat) => latestOccupiedSeats.has(seat))
 
@@ -317,12 +317,7 @@ export default function SeatSelectionScreen() {
         return
       }
 
-      const reservedBookings = await reservePendingBookings(
-        selectedRoute.id,
-        authUser.id,
-        selectedSeats,
-        selectedRoute.price_per_seat
-      )
+      const reservedBookings = await reservePendingBookings(selectedRoute.id, selectedSeats)
 
       const totalPrice = selectedSeats.length * selectedRoute.price_per_seat
 

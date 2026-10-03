@@ -69,12 +69,13 @@ export function getExpiryStatus(expiryDate?: string | null): ExpiryStatus | null
 }
 
 export const DOCUMENTS_WITH_EXPIRY = ['licencia', 'soat', 'tecnomecanica']
-export const DOCUMENTS_WITHOUT_EXPIRY = ['cedula', 'antecedentes']
+export const DOCUMENTS_WITHOUT_EXPIRY = ['cedula', 'tarjeta_propiedad', 'antecedentes']
 
 export const DOCUMENT_LABELS: Record<string, string> = {
   cedula: 'Cédula de Ciudadanía',
   licencia: 'Licencia de Conducción',
   soat: 'SOAT',
+  tarjeta_propiedad: 'Tarjeta de Propiedad',
   tecnomecanica: 'Tecnomecánica',
   antecedentes: 'Certificado de Antecedentes',
 }

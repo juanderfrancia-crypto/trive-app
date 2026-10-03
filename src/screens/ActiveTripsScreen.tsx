@@ -50,6 +50,9 @@ export default function ActiveTripsScreen() {
   const [refreshing, setRefreshing] = useState(false)
   const [selectedTripForChat, setSelectedTripForChat] = useState<ActiveTrip | null>(null)
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
+  const [awaitingConfirmation, setAwaitingConfirmation] = useState<
+    { id: string; origin: string; destination: string; departure_time: string }[]
+  >([])
   const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
 
   useEffect(() => {
@@ -76,8 +79,24 @@ export default function ActiveTripsScreen() {
       setLoading(true)
       if (!user?.id) {
         setActiveTrips([])
+        setAwaitingConfirmation([])
         return
       }
+
+      const { data: pending } = await supabase
+        .from('bookings')
+        .select('id, routes(origin, destination, departure_time)')
+        .eq('passenger_id', user.id)
+        .eq('booking_status', 'awaiting_confirmation')
+
+      setAwaitingConfirmation(
+        ((pending as any[]) || []).map((b) => ({
+          id: b.id,
+          origin: b.routes?.origin ?? '',
+          destination: b.routes?.destination ?? '',
+          departure_time: b.routes?.departure_time ?? '',
+        }))
+      )
 
       // Obtener bookings CONFIRMADOS del pasajero (viajes en los que ya reservó asientos)
       const { data: bookings, error: bookingsError } = await supabase
@@ -215,12 +234,27 @@ export default function ActiveTripsScreen() {
     )
   }
 
+  // El pasajero confirma (o reporta) que el viaje se hizo. Si no responde en 24 h, se confirma solo.
+  const answerConfirmation = async (bookingId: string, arrived: boolean) => {
+    try {
+      const { error } = await supabase.rpc('passenger_confirm_trip', {
+        p_booking_id: bookingId,
+        p_arrived: arrived,
+      })
+      if (error) throw error
+      showSuccess(arrived ? '¡Gracias por confirmar!' : 'Reporte enviado. Un administrador lo revisará.')
+      loadActiveTrips()
+    } catch (err: any) {
+      showError(err?.message || 'No se pudo registrar tu respuesta')
+    }
+  }
+
   const cancelTrip = async (trip: ActiveTrip) => {
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .update({ booking_status: 'cancelled', payment_status: 'refunded' })
-        .eq('id', trip.bookingId)
+      const { error } = await supabase.rpc('cancel_booking', {
+        p_booking_id: trip.bookingId,
+        p_reason: 'Cancelado por el pasajero',
+      })
 
       if (error) throw error
 
@@ -403,6 +437,24 @@ export default function ActiveTripsScreen() {
         </View>
       </View>
 
+      {awaitingConfirmation.map((item) => (
+        <View key={item.id} style={styles.confirmCard}>
+          <Text style={styles.confirmTitle}>¿Llegaste bien?</Text>
+          <Text style={styles.confirmRoute}>{item.origin} → {item.destination}</Text>
+          <Text style={styles.confirmHint}>
+            Confírmalo en las próximas 24 horas. Si no respondes, se confirma automáticamente.
+          </Text>
+          <View style={styles.confirmActions}>
+            <TouchableOpacity style={styles.confirmYes} onPress={() => answerConfirmation(item.id, true)}>
+              <Text style={styles.confirmYesText}>Sí, llegué</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.confirmNo} onPress={() => answerConfirmation(item.id, false)}>
+              <Text style={styles.confirmNoText}>Hubo un problema</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ))}
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.primary} />
@@ -464,6 +516,36 @@ export default function ActiveTripsScreen() {
 }
 
 const styles = StyleSheet.create({
+  confirmCard: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  confirmTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  confirmRoute: { fontSize: 14, color: COLORS.textSecondary, marginTop: 4 },
+  confirmHint: { fontSize: 12, color: COLORS.textTertiary, marginTop: 6 },
+  confirmActions: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
+  confirmYes: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  confirmYesText: { color: COLORS.surface, fontWeight: '600' },
+  confirmNo: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.error,
+  },
+  confirmNoText: { color: COLORS.error, fontWeight: '600' },
   safeContainer: {
     flex: 1,
     backgroundColor: COLORS.background,

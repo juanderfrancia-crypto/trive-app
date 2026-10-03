@@ -99,31 +99,15 @@ export default function PrivacyScreen() {
     )
   }
 
+  // La función del servidor anonimiza los datos, bloquea la cuenta y devuelve el control aquí.
   const confirmDeleteAccount = async () => {
     if (!user?.id) return
     setIsDeleting(true)
     try {
-      // Cancelar reservas activas del pasajero
-      await supabase
-        .from('bookings')
-        .update({ booking_status: 'cancelled' })
-        .eq('passenger_id', user.id)
-        .in('booking_status', ['pending', 'confirmed'])
-
-      // Cancelar rutas activas del conductor
-      await supabase
-        .from('routes')
-        .update({ status: 'cancelled' })
-        .eq('driver_id', user.id)
-        .eq('status', 'scheduled')
-
-      // Limpiar push token
-      await supabase
-        .from('profiles')
-        .update({ push_token: null })
-        .eq('id', user.id)
-
-      // Cerrar sesión
+      const { data, error } = await supabase.functions.invoke('delete-account')
+      if (error || !data?.ok) {
+        throw new Error(data?.error || error?.message || 'No se pudo eliminar la cuenta')
+      }
       await supabase.auth.signOut()
       setUser(null)
       setAuthUser(null)

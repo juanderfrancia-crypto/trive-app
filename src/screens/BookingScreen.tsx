@@ -35,7 +35,7 @@ export default function BookingScreen() {
   const user          = useAppStore((s) => s.user)
   const authUser      = useAppStore((s) => s.authUser)
   const setBookingData = useAppStore((s) => s.setBookingData)
-  const { createBooking, reservePendingBookings, finalizePendingBookings, releasePendingBookings, loading } = useBookings()
+  const { reservePendingBookings, finalizePendingBookings, releasePendingBookings, loading } = useBookings()
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'digital'>('cash')
   const [selectedDropoffOption, setSelectedDropoffOption] = useState<'final' | 'custom'>('final')
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
@@ -72,7 +72,7 @@ export default function BookingScreen() {
   useEffect(() => {
     return () => {
       if (!bookingFinalized && pendingBookingIds.length > 0 && selectedRoute) {
-        releasePendingBookings(pendingBookingIds, selectedRoute.id).catch((error) => {
+        releasePendingBookings(pendingBookingIds).catch((error) => {
           console.warn('Error releasing pending bookings on unmount:', error)
         })
         setBookingData(null)
@@ -155,14 +155,11 @@ export default function BookingScreen() {
       if (pendingBookingIds.length > 0) {
         // 📍 Primero actualizar dropoff_point en los bookings pending
         if (__DEV__) console.log(`📍 Actualizando dropoff_point en ${pendingBookingIds.length} bookings antes de finalizar...`)
-        const { error: updateError } = await supabase
-          .from('bookings')
-          .update({
-            dropoff_point: dropoffPoint,
-            dropoff_point_custom: isCustomDropoff,
-          })
-          .in('id', pendingBookingIds)
-          .eq('booking_status', 'pending')
+        const { error: updateError } = await supabase.rpc('set_booking_dropoff', {
+          p_booking_ids: pendingBookingIds,
+          p_dropoff_point: dropoffPoint,
+          p_dropoff_custom: isCustomDropoff,
+        })
 
         if (updateError) {
           console.error('❌ Error actualizando dropoff_point:', updateError)
@@ -173,20 +170,15 @@ export default function BookingScreen() {
         // Ahora finalizar con la RPC (preservará los dropoff_point que acabamos de establecer)
         results = await finalizePendingBookings(pendingBookingIds, paymentMethod)
       } else {
-        const bookingPromises = seat_numbers.map((seatNum: number) =>
-          createBooking(
-            selectedRoute.id,
-            authUser.id,
-            seatNum,
-            selectedRoute.price_per_seat,
-            'cash',
-            'confirmed',
-            'completed',
-            dropoffPoint,
-            isCustomDropoff
-          )
+        // Sin reserva previa: reservar y confirmar con las mismas funciones del flujo normal
+        const reserved = await reservePendingBookings(
+          selectedRoute.id,
+          seat_numbers,
+          'cash',
+          dropoffPoint,
+          isCustomDropoff
         )
-        results = await Promise.all(bookingPromises)
+        results = await finalizePendingBookings(reserved.map((b) => b.id), 'cash')
       }
 
       const allSuccessful = Array.isArray(results)

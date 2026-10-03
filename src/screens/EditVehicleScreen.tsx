@@ -70,16 +70,13 @@ export function EditVehicleScreen({ route }: any) {
       setLoading(true);
 
       // Update all routes for this driver with the new vehicle info
-      const { error } = await supabase
-        .from('routes')
-        .update({
-          vehicle_make: formData.vehicle_make,
-          vehicle_year: parseInt(formData.vehicle_year),
-          vehicle_plate: formData.vehicle_plate.toUpperCase(),
-          vehicle_color: formData.vehicle_color,
-          updated_at: new Date(),
-        })
-        .eq('driver_id', user?.id);
+      // Cada vehículo nuevo queda pendiente hasta que un administrador lo apruebe
+      const { error } = await supabase.rpc('register_vehicle', {
+        p_plate: formData.vehicle_plate,
+        p_make: formData.vehicle_make,
+        p_year: parseInt(formData.vehicle_year),
+        p_color: formData.vehicle_color,
+      });
 
       if (error) {
         throw error;

@@ -59,7 +59,7 @@ export async function checkDriverApprovalStatus(userId: string): Promise<DriverA
     }
 
     // Required documents
-    const requiredDocs = ['cedula', 'licencia', 'soat', 'tecnomecanica', 'antecedentes']
+    const requiredDocs = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica', 'antecedentes']
     const pendingDocuments: string[] = []
 
     // Check if all required documents are verified
@@ -111,7 +111,7 @@ export async function hasAllDocumentsApproved(userId: string): Promise<{ approve
     }
 
     // Required documents
-    const requiredDocs = ['cedula', 'licencia', 'soat', 'tecnomecanica', 'antecedentes']
+    const requiredDocs = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica', 'antecedentes']
     const pendingDocuments: string[] = []
 
     // Check if all required documents are verified

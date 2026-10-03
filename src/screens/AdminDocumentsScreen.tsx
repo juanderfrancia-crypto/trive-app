@@ -39,6 +39,7 @@ const DOCUMENT_LABELS: Record<string, string> = {
   cedula:        'Cédula de Ciudadanía',
   licencia:      'Licencia de Conducción',
   soat:          'SOAT',
+  tarjeta_propiedad: 'Tarjeta de Propiedad',
   tecnomecanica: 'Tecnomecánica',
   antecedentes:  'Antecedentes Penales',
 }

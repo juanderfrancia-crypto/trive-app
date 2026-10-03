@@ -12,49 +12,26 @@ export interface Review {
   created_at: string
 }
 
-// Crear un review/rating
+// Calificar un viaje completado. El servidor valida participantes y estado,
+// y calcula el promedio del evaluado.
 export const createReview = async (
   bookingId: string,
-  reviewerId: string,
-  revieweeId: string,
   rating: number,
   comment?: string,
   recommend?: boolean
-): Promise<Review | null> => {
+): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert({
-        booking_id: bookingId,
-        reviewer_id: reviewerId,
-        reviewee_id: revieweeId,
-        rating,
-        comment: comment || null,
-        recommend: recommend ?? false,
-      })
-      .select()
-      .single()
-
+    const { error } = await supabase.rpc('rate_booking', {
+      p_booking_id: bookingId,
+      p_rating: rating,
+      p_comment: comment ?? null,
+      p_recommend: recommend ?? false,
+    })
     if (error) throw error
-
-    // Actualizar el promedio del usuario evaluado
-    await updateUserAverageRating(revieweeId)
-
-    // Notificar al evaluado
-    const stars = '⭐'.repeat(rating)
-    insertNotificationForUser(revieweeId, {
-      user_id: revieweeId,
-      type: 'review_received',
-      title: 'Nueva calificación recibida',
-      message: `Recibiste una calificación de ${rating}/5 ${stars}${comment ? `: "${comment.slice(0, 60)}"` : ''}`,
-      data: { booking_id: bookingId, rating },
-      is_read: false,
-    }).catch(() => {})
-
-    return data as Review
+    return true
   } catch (error) {
     console.error('Error creating review:', error)
-    return null
+    return false
   }
 }
 
@@ -126,20 +103,6 @@ export const hasUserRated = async (
 }
 
 // Actualizar el promedio de rating en el perfil del usuario
-const updateUserAverageRating = async (userId: string): Promise<void> => {
-  try {
-    const averageRating = await getUserAverageRating(userId)
-
-    const { error } = await supabase
-      .from('profiles')
-      .update({ rating: averageRating })
-      .eq('id', userId)
-
-    if (error) throw error
-  } catch (error) {
-    console.error('Error updating average rating:', error)
-  }
-}
 
 // Obtener detalles de un booking con información del viaje
 export const getBookingDetails = async (bookingId: string) => {

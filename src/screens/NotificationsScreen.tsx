@@ -746,14 +746,8 @@ export default function NotificationsScreen() {
           onClose={() => setRatingTarget(null)}
           onSubmit={async (rating, comment, recommend) => {
             if (!currentUser?.id) throw new Error('Usuario no autenticado')
-            await createReview(
-              ratingTarget.bookingId,
-              currentUser.id,
-              ratingTarget.driverId,
-              rating,
-              comment,
-              recommend
-            )
+            const saved = await createReview(ratingTarget.bookingId, rating, comment, recommend)
+            if (!saved) throw new Error('No se pudo guardar la calificación')
             await deleteNotifications([ratingTarget.notifId])
             setRatingTarget(null)
           }}

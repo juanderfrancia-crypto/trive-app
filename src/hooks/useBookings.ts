@@ -22,68 +22,11 @@ export const useBookings = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createBooking = useCallback(async (
-    routeId: string,
-    passengerId: string,
-    seatNumber: number,
-    price: number,
-    paymentMethod: string = "cash",
-    bookingStatus: "confirmed" | "pending" = "confirmed",
-    paymentStatus: string = "pending",
-    dropoffPoint?: string,
-    dropoffPointCustom?: boolean
-  ) => {
-    try {
-      setError(null);
-      setLoading(true);
-
-      const bookingData: any = {
-        route_id: routeId,
-        passenger_id: passengerId,
-        seat_number: seatNumber,
-        price,
-        payment_method: paymentMethod,
-        payment_status: paymentStatus,
-        booking_status: bookingStatus,
-      };
-
-      // Solo agregar dropoff_point si existen
-      if (dropoffPoint) {
-        bookingData.dropoff_point = dropoffPoint;
-        bookingData.dropoff_point_custom = dropoffPointCustom ?? false;
-      }
-
-      const { data, error: bookingError } = await supabase
-        .from("bookings")
-        .insert([bookingData])
-        .select()
-        .single();
-
-      if (bookingError) {
-        if (bookingError.code === '23505' || bookingError.message.includes('unique')) {
-          const customError = new Error('Este asiento ya fue reservado. Por favor selecciona otro.');
-          ;(customError as any).code = 'SEAT_ALREADY_RESERVED';
-          throw customError;
-        }
-        throw bookingError;
-      }
-
-      return data;
-    } catch (err: any) {
-      const message = err.message || "Error creating booking";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  // El servidor fija el precio desde la ruta y crea las reservas pendientes.
   const reservePendingBookings = useCallback(async (
     routeId: string,
-    passengerId: string,
     seatNumbers: number[],
-    price: number,
-    paymentMethod: string = 'card',
+    paymentMethod: string = 'cash',
     dropoffPoint?: string,
     dropoffPointCustom?: boolean
   ) => {
@@ -91,34 +34,20 @@ export const useBookings = () => {
       setError(null);
       setLoading(true);
 
-      const insertRows = seatNumbers.map((seat_number) => {
-        const row: any = {
-          route_id: routeId,
-          passenger_id: passengerId,
-          seat_number,
-          price,
-          payment_method: paymentMethod,
-          payment_status: 'pending',
-          booking_status: 'pending',
-        };
-        
-        // Solo agregar dropoff_point si existen
-        if (dropoffPoint) {
-          row.dropoff_point = dropoffPoint;
-          row.dropoff_point_custom = dropoffPointCustom ?? false;
-        }
-        
-        return row;
-      });
-
       const { data, error: bookingError } = await withTimeout(
-        supabase.from('bookings').insert(insertRows).select(),
+        supabase.rpc('reserve_seats', {
+          p_route_id: routeId,
+          p_seat_numbers: seatNumbers,
+          p_payment_method: paymentMethod,
+          p_dropoff_point: dropoffPoint ?? null,
+          p_dropoff_custom: dropoffPointCustom ?? false,
+        }),
         12000
       );
 
       if (bookingError) {
-        if (bookingError.code === '23505' || bookingError.message.includes('unique')) {
-          const customError = new Error('Uno o más asientos ya fueron reservados. Vuelve a seleccionar.');
+        if (bookingError.code === '23505') {
+          const customError = new Error(bookingError.message);
           ;(customError as any).code = 'SEAT_ALREADY_RESERVED';
           throw customError;
         }
@@ -177,23 +106,20 @@ export const useBookings = () => {
     }
   }, []);
 
-  const releasePendingBookings = useCallback(async (bookingIds: string[], routeId: string) => {
+  const releasePendingBookings = useCallback(async (bookingIds: string[]) => {
     try {
       setError(null);
       setLoading(true);
 
-      // ✅ Solo cambiar status a cancelled
-      // ✅ El TRIGGER de DB recalculará automáticamente available_seats
-      const { data, error } = await supabase
-        .from('bookings')
-        .update({ booking_status: 'cancelled', payment_status: 'expired' })
-        .in('id', bookingIds)
-        .eq('booking_status', 'pending')
-        .select('id');
+      for (const bookingId of bookingIds) {
+        const { error: releaseError } = await supabase.rpc('cancel_booking', {
+          p_booking_id: bookingId,
+          p_reason: 'Reserva liberada por el pasajero',
+        });
+        if (releaseError) throw releaseError;
+      }
 
-      if (error) throw error;
-
-      return data;
+      return bookingIds.map((id) => ({ id }));
     } catch (err: any) {
       const message = err.message || 'Error liberando reservas pendientes';
       setError(message);
@@ -201,31 +127,6 @@ export const useBookings = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
-
-  const cleanupExpiredPendingBookings = useCallback(async (routeId: string, lockMinutes = 5) => {
-    try {
-      const cutoff = new Date(Date.now() - lockMinutes * 60000).toISOString();
-      const { data: expiredBookings, error: expiredError } = await supabase
-        .from('bookings')
-        .select('id')
-        .eq('route_id', routeId)
-        .eq('booking_status', 'pending')
-        .lt('created_at', cutoff);
-
-      if (expiredError) return;
-
-      const expiredIds = (expiredBookings as any[])?.map((booking) => booking.id) || [];
-      if (!expiredIds.length) return;
-
-      const { error: releaseError } = await supabase
-        .from('bookings')
-        .update({ booking_status: 'cancelled', payment_status: 'expired' })
-        .in('id', expiredIds);
-
-      if (releaseError) return;
-
-    } catch (_e) {}
   }, []);
 
   const getPassengerBookings = useCallback(async (passengerId: string) => {
@@ -251,30 +152,18 @@ export const useBookings = () => {
     }
   }, []);
 
-  const getRouteBookings = useCallback(async (routeId: string, includePending = false) => {
+  // Devuelve los asientos ocupados como filas { seat_number }. No expone a otros pasajeros.
+  const getRouteBookings = useCallback(async (routeId: string) => {
     try {
       setError(null);
       setLoading(true);
 
-      await cleanupExpiredPendingBookings(routeId);
-
-      // ✅ Simplificar la consulta: solo obtener bookings sin JOIN a profiles
-      let query = supabase
-        .from("bookings")
-        .select("id, route_id, passenger_id, seat_number, booking_status, created_at, payment_status, dropoff_point, dropoff_point_custom")
-        .eq("route_id", routeId);
-
-      if (includePending) {
-        // Include any booking that is not cancelled so seat availability matches DB constraints.
-        query = query.neq("booking_status", "cancelled");
-      } else {
-        query = query.eq("booking_status", "confirmed");
-      }
-
-      const { data, error: fetchError } = await query;
+      const { data, error: fetchError } = await supabase.rpc('route_occupied_seats', {
+        p_route_id: routeId,
+      });
 
       if (fetchError) throw fetchError;
-      return data || [];
+      return ((data as number[]) || []).map((seat_number) => ({ seat_number }));
     } catch (err: any) {
       const message = err.message || "Error fetching route bookings";
       setError(message);
@@ -282,21 +171,18 @@ export const useBookings = () => {
     } finally {
       setLoading(false);
     }
-  }, [cleanupExpiredPendingBookings]);
+  }, []);
 
   const cancelBooking = useCallback(async (bookingId: string) => {
     try {
       setError(null);
       setLoading(true);
 
-      // ✅ Solo cambiar status a cancelled
-      // ✅ El TRIGGER de DB recalculará automáticamente available_seats
-      const { error: updateError } = await supabase
-        .from("bookings")
-        .update({ booking_status: "cancelled", payment_status: "refunded" })
-        .eq("id", bookingId);
+      const { error: cancelError } = await supabase.rpc('cancel_booking', {
+        p_booking_id: bookingId,
+      });
 
-      if (updateError) throw updateError;
+      if (cancelError) throw cancelError;
 
       return { id: bookingId };
     } catch (err: any) {
@@ -311,7 +197,6 @@ export const useBookings = () => {
   return {
     loading,
     error,
-    createBooking,
     reservePendingBookings,
     finalizePendingBookings,
     releasePendingBookings,

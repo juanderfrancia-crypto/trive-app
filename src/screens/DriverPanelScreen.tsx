@@ -291,10 +291,11 @@ export default function DriverPanelScreen() {
     try {
       setUpdatingRouteId(routeId)
       
-      const { error } = await supabase
-        .from('routes')
-        .update({ status: newStatus })
-        .eq('id', routeId)
+      // El servidor valida la transición, cambia reservas y notifica a los pasajeros
+      const { error } = await supabase.rpc('driver_set_route_status', {
+        p_route_id: routeId,
+        p_status: newStatus,
+      })
 
       if (error) throw error
 
@@ -312,136 +313,7 @@ export default function DriverPanelScreen() {
         }
       }
 
-      if (newStatus === 'completed') {
-        const route = routes.find((routeItem) => routeItem.id === routeId)
-        if (route?.passengers?.length) {
-          // Marcar bookings como completados para que "Gastado este mes" los contabilice
-          const bookingIds = route.passengers.map((p) => p.booking_id)
-          await supabase
-            .from('bookings')
-            .update({ booking_status: 'completed', payment_status: 'completed' })
-            .in('id', bookingIds)
 
-          await Promise.all(
-            route.passengers.flatMap((passenger) => [
-              insertNotificationForUser(passenger.passenger_id, {
-                user_id: passenger.passenger_id,
-                type: 'trip_completed',
-                title: 'Viaje completado',
-                message: `El viaje ${route.origin} → ${route.destination} ha finalizado. ¡Gracias por viajar con Trive!`,
-                data: {
-                  route_id: route.id,
-                  booking_id: passenger.booking_id,
-                  driver_id: user?.id,
-                  driver_name: user?.name,
-                  origin: route.origin,
-                  destination: route.destination,
-                  audience: 'passengers_only',
-                },
-                is_read: false,
-              }),
-              insertNotificationForUser(passenger.passenger_id, {
-                user_id: passenger.passenger_id,
-                type: 'review_pending',
-                title: '¿Cómo estuvo tu viaje?',
-                message: `Califica a ${user?.name || 'tu conductor'} en el viaje ${route.origin} → ${route.destination}`,
-                data: {
-                  route_id: route.id,
-                  booking_id: passenger.booking_id,
-                  driver_id: user?.id,
-                  driver_name: user?.name,
-                  origin: route.origin,
-                  destination: route.destination,
-                  audience: 'passengers_only',
-                },
-                is_read: false,
-              }),
-            ])
-          ).catch((err) => console.error('Error notificando fin de viaje:', err))
-        }
-      }
-
-      if (newStatus === 'cancelled') {
-        const route = routes.find((routeItem) => routeItem.id === routeId)
-        if (route && user?.id) {
-          // Obtener bookings confirmados o pendientes para esta ruta
-          const { data: bookings } = await supabase
-            .from('bookings')
-            .select('id, passenger_id')
-            .eq('route_id', routeId)
-            .in('booking_status', ['confirmed', 'pending'])
-
-          // Cancelar los bookings de los pasajeros
-          if (bookings && bookings.length > 0) {
-            const bookingIds = bookings.map((b: any) => b.id)
-            await supabase
-              .from('bookings')
-              .update({ booking_status: 'cancelled', payment_status: 'refunded' })
-              .in('id', bookingIds)
-          }
-
-          // Obtener push tokens de los pasajeros
-          const passengers: Array<{ passenger_id: string; push_token?: string }> = []
-          if (bookings && bookings.length > 0) {
-            const passengerIds = bookings.map((b: any) => b.passenger_id)
-
-            const { data: profiles } = await supabase
-              .from('profiles')
-              .select('id, push_token')
-              .in('id', passengerIds)
-
-            const profileMap = new Map(
-              (profiles || []).map((p: any) => [p.id, p])
-            )
-
-            passengerIds.forEach((passengerId: string) => {
-              const profile = profileMap.get(passengerId)
-              passengers.push({ passenger_id: passengerId, push_token: profile?.push_token })
-            })
-          }
-
-          // Notificación in-app al conductor
-          insertNotificationForUser(user.id, {
-            user_id: user.id,
-            type: 'trip_update',
-            title: 'Ruta cancelada',
-            message: `Tu ruta ${route.origin} → ${route.destination} ha sido cancelada.`,
-            data: { route_id: routeId },
-            is_read: false,
-          }).catch((err) => console.error('Error notif conductor:', err))
-
-          // Notificación in-app a cada pasajero (sin audience filter para garantizar entrega)
-          if (bookings && bookings.length > 0) {
-            await Promise.all(
-              bookings.map((b: any) =>
-                insertNotificationForUser(b.passenger_id, {
-                  user_id: b.passenger_id,
-                  type: 'trip_update',
-                  title: 'Viaje cancelado',
-                  message: `El conductor canceló el viaje ${route.origin} → ${route.destination}. Tu reserva fue liberada.`,
-                  data: { route_id: routeId },
-                  is_read: false,
-                }).catch((err) => console.error(`Error notif pasajero ${b.passenger_id}:`, err))
-              )
-            )
-          }
-
-          // Push notifications
-          notifyRouteCancellation(
-            routeId,
-            user.id,
-            user.name || 'Conductor',
-            passengers,
-            {
-              origin: route.origin,
-              destination: route.destination,
-              departureTime: route.departure_time,
-            }
-          ).catch((err) => {
-            console.warn('Error push route cancellation:', err)
-          })
-        }
-      }
 
       Alert.alert(
         'Éxito',
