@@ -171,6 +171,16 @@ Cliente:
 
 Pendiente: el chat del pasajero en solicitudes sin conductor asignado solo se abre desde el detalle de cada oferta.
 
+## 5.7 Estado de la fase 2 (2026-10-03)
+
+Procedimiento completo, orden de aplicación y pruebas en dispositivo: `docs/PRUEBAS_Y_DESPLIEGUE.md`.
+
+- Aplicada en producción: fase 2a.
+- Escrita y validada en el Postgres de pruebas (72/72): fases 2b1, 2b2, 2c, 2d, 2e, 2f, 2g, 2h.
+- Funciones Edge escritas: `delete-account` (eliminación de cuenta) y `send-push` (push de notificaciones del servidor).
+- Páginas legales escritas en `docs/publico/` (privacidad y eliminación de cuenta), pendientes de revisión legal.
+- Pendiente de decisión y de configuración manual: ver el procedimiento, secciones 4 y 7.
+
 ## 6. Problemas abiertos
 
 Estos son los que hay que resolver antes de la prueba cerrada en Play Console.
