@@ -5,6 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
+import ErrorBoundary from "./src/components/ErrorBoundary";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
@@ -25,7 +26,9 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <AppNavigator />
+      <ErrorBoundary>
+        <AppNavigator />
+      </ErrorBoundary>
       <Toast config={toastConfig} position="bottom" bottomOffset={40} />
     </SafeAreaProvider>
   );
