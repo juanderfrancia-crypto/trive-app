@@ -316,6 +316,16 @@ await asSuper()
 check('La placa queda guardada normalizada (MNO456)',
   (await q(`SELECT count(*)::int c FROM vehicles WHERE driver_id='${Z}' AND plate='MNO456'`))[0].c === 1)
 
+// ---------- Administrador no verifica sus propios documentos ----------
+await asSuper()
+const docPropio = (await q(`INSERT INTO driver_documents (driver_id, document_type, file_path, status) VALUES ('${A}','soat','drivers/${A}/soat.jpg','pending') RETURNING id`))[0].id
+await asUser(A)
+check('Administrador no puede aprobar su propio documento',
+  (await err(() => db.exec(`SELECT public.approve_document_admin('${docPropio}')`)))?.message.includes('propios documentos') === true)
+await asUser(A)
+check('Administrador sí puede aprobar el documento de otro conductor',
+  (await err(() => db.exec(`SELECT public.approve_document_admin((SELECT id FROM driver_documents WHERE driver_id='${D}' AND document_type='cedula' LIMIT 1))`))) === null)
+
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
 await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)
