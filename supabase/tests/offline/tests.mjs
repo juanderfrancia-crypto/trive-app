@@ -294,6 +294,20 @@ check('Cierre automático confirma reservas sin respuesta en 24 h', Number(auto)
 check('Reserva automática queda completada',
   (await q(`SELECT booking_status FROM bookings WHERE id='${b3}'`))[0].booking_status === 'completed')
 
+// ---------- Conductor verificado al aprobar todos sus documentos ----------
+await asSuper()
+const Z = '00000000-0000-0000-0000-0000000000f1'
+await db.exec(`INSERT INTO auth.users (id,email) VALUES ('${Z}','z@x'); INSERT INTO profiles (id,name,role,driver_verified,balance) VALUES ('${Z}','Conductor nuevo','passenger',false,0)`)
+for (const tipo of ['cedula','licencia','tarjeta_propiedad','soat','tecnomecanica','antecedentes']) {
+  await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, status) VALUES ('${Z}','${tipo}','drivers/${Z}/${tipo}.jpg','pending')`)
+  await db.exec(`UPDATE driver_documents SET status='verified' WHERE driver_id='${Z}' AND document_type='${tipo}'`)
+}
+const zp = (await q(`SELECT role, driver_verified FROM profiles WHERE id='${Z}'`))[0]
+check('Al aprobar los 6 documentos, la cuenta pasa a conductor verificado', zp.role === 'driver' && zp.driver_verified === true, JSON.stringify(zp))
+await db.exec(`UPDATE driver_documents SET status='rejected' WHERE driver_id='${Z}' AND document_type='soat'`)
+const zp2 = (await q(`SELECT driver_verified FROM profiles WHERE id='${Z}'`))[0]
+check('Si un documento deja de estar aprobado, el conductor deja de estar verificado', zp2.driver_verified === false)
+
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
 await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)
