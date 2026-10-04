@@ -185,3 +185,6 @@ CREATE TRIGGER trg_booking_confirm_correct_payment_status BEFORE UPDATE ON booki
 CREATE OR REPLACE FUNCTION public.check_all_documents_verified(p_driver_id uuid) RETURNS boolean LANGUAGE sql AS $$ SELECT COUNT(*) = 5 FROM driver_documents WHERE driver_id = p_driver_id AND document_type IN ('cedula','licencia','soat','tecnomecanica','antecedentes') AND status = 'verified' $$;
 CREATE OR REPLACE FUNCTION public.update_driver_verification_status() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF check_all_documents_verified(NEW.driver_id) THEN UPDATE profiles SET is_driver_verified = true, role = 'driver' WHERE id = NEW.driver_id; END IF; RETURN NEW; END $$;
 CREATE TRIGGER on_document_verified AFTER UPDATE OF status ON driver_documents FOR EACH ROW EXECUTE FUNCTION update_driver_verification_status();
+
+-- Restricción de tipos de notificación tal como estaba en producción (antes de la fase 2o).
+ALTER TABLE public.notifications ADD CONSTRAINT notification_type_check CHECK (type IN ('booking','trip_update','driver_arrived','trip_completed','review_pending','message','trip_published','offer_received','offer_accepted','trip_confirmed','trip_started','trip_rated'));

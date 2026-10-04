@@ -309,6 +309,8 @@ const zp2 = (await q(`SELECT driver_verified FROM profiles WHERE id='${Z}'`))[0]
 check('Si un documento deja de estar aprobado, el conductor deja de estar verificado', zp2.driver_verified === false)
 
 // ---------- Placa con guion o sin guion ----------
+await asSuper()
+await db.exec(`UPDATE driver_documents SET status='verified' WHERE driver_id='${Z}' AND document_type='soat'`)
 await asUser(Z)
 const eplaca = await err(() => db.exec(`SELECT * FROM public.register_vehicle('mno-456','Mazda',2020,'Gris')`))
 check('Placa con guion (ABC-123) se registra igual que sin guion', eplaca === null)
@@ -325,6 +327,24 @@ check('Administrador no puede aprobar su propio documento',
 await asUser(A)
 check('Administrador sí puede aprobar el documento de otro conductor',
   (await err(() => db.exec(`SELECT public.approve_document_admin((SELECT id FROM driver_documents WHERE driver_id='${D}' AND document_type='cedula' LIMIT 1))`))) === null)
+
+// ---------- Coherencia de flujos (fase 2o) ----------
+await asUser(P)
+check('Pasajero no puede convertirse en conductor desde la API sin documentos aprobados',
+  (await err(() => db.exec(`UPDATE profiles SET role='driver' WHERE id='${P}'`)))?.message.includes('documentos aprobados') === true)
+await asSuper()
+const horaRuta = (await q(`INSERT INTO routes (driver_id, origin, destination, departure_time, price_per_seat, total_seats, available_seats, status) VALUES ('${D}','Puerto Tejada','Cali', (public.now_bogota() - interval '1 hour'), 10000, 2, 2, 'scheduled') RETURNING id`))[0].id
+await asUser(D)
+check('Viaje que ya salió (hora de Colombia) se puede completar',
+  (await err(() => db.exec(`SELECT public.driver_set_route_status('${horaRuta}', 'completed')`))) === null)
+await asSuper()
+const rutaFutura = (await q(`INSERT INTO routes (driver_id, origin, destination, departure_time, price_per_seat, total_seats, available_seats, status) VALUES ('${D}','Puerto Tejada','Cali', (public.now_bogota() + interval '2 hours'), 10000, 2, 2, 'scheduled') RETURNING id`))[0].id
+await asUser(D)
+check('Viaje que aún no sale no se puede completar (hora de Colombia)',
+  (await err(() => db.exec(`SELECT public.driver_set_route_status('${rutaFutura}', 'completed')`)))?.message.includes('antes de su hora') === true)
+await asSuper()
+check('La vista de cupos no expone el teléfono del conductor',
+  (await q(`SELECT count(*)::int c FROM information_schema.columns WHERE table_name='available_rides' AND column_name='driver_phone'`))[0].c === 0)
 
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
