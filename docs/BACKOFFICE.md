@@ -44,3 +44,18 @@ Hoy el permiso de administrador es `profiles.is_admin`. Se reemplaza por una **t
 
 - Tecnología de la web: React con Vite (recomendado) o Next.js.
 - Lista de cargos definitiva y quién tiene cada uno.
+
+## Decisión: la app móvil no tiene funciones de administración
+
+La app que usan pasajeros y conductores **no contiene funciones de administración**. Todo lo que opera el negocio vive en el back-office web, incluidas la verificación de documentos y vehículos, las recargas y la atención de incidencias.
+
+Consecuencias en el código actual (pendientes de retirar):
+- `src/screens/AdminDocumentsScreen.tsx` y su ruta en la navegación.
+- `src/components/AdminMenuButton.tsx` y el botón en el perfil.
+- Las llamadas a `approve_document_admin`, `reject_document_admin`, `get_pending_documents_for_admin` y `get_processed_documents_for_admin` desde la app (`src/services/driverDocuments.ts`).
+- Las escrituras a `admin_actions` desde la app (`src/services/driverDocuments.ts`).
+- Las comprobaciones de `is_admin` en el cliente.
+
+Mientras el back-office no exista, las acciones de administración se hacen **desde el SQL Editor de Supabase**, con las funciones de la base (`approve_document_admin`, `approve_vehicle`, `admin_credit_balance`). Esto es temporal y está documentado en `docs/PRUEBAS_Y_DESPLIEGUE.md`.
+
+Orden propuesto: probar el flujo del conductor con aprobaciones por SQL, y después retirar las pantallas de administración de la app antes de la prueba cerrada.
