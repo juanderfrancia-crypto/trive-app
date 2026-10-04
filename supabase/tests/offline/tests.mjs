@@ -298,6 +298,12 @@ check('Reserva automática queda completada',
 await asSuper()
 await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)
 await asUser(A)
+await asSuper()
+await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','soat','drivers/${D}/soat-viejo.jpg','soat-viejo.jpg',900,'image/jpeg','pending', now() - interval '3 days'), ('${D}','licencia','drivers/${D}/lic-nueva.jpg','lic-nueva.jpg',900,'image/jpeg','verifying', now() - interval '1 day')`)
+await asUser(A)
+const orden = await q(`SELECT document_type, status FROM public.get_pending_documents_for_admin()`)
+check('Cola de revisión: pendientes primero, y dentro del grupo el más antiguo primero',
+  orden.length >= 2 && orden[0].status === 'pending' && orden[0].document_type === 'soat' && orden.findIndex((d) => d.status === 'verifying') > 0 && orden.findIndex((d) => d.status === 'pending') < orden.findIndex((d) => d.status === 'verifying'), JSON.stringify(orden.map((d) => d.status)))
 check('Administrador ve la lista de documentos pendientes sin error',
   (await err(() => db.exec(`SELECT * FROM public.get_pending_documents_for_admin()`))) === null)
 check('Administrador ve el historial de documentos sin error',
