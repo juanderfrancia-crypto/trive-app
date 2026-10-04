@@ -118,9 +118,10 @@ export function EditVehicleScreen({ route }: any) {
             <TextInput
               style={[styles.input, errors.vehicle_make && styles.inputError]}
               placeholder="Ej: Nissan, Chevrolet, Toyota"
+              autoCapitalize="characters"
               value={formData.vehicle_make}
               onChangeText={(text) => {
-                setFormData({ ...formData, vehicle_make: text });
+                setFormData({ ...formData, vehicle_make: text.toUpperCase() });
                 if (errors.vehicle_make) {
                   setErrors({ ...errors, vehicle_make: '' });
                 }
@@ -160,7 +161,7 @@ export function EditVehicleScreen({ route }: any) {
               autoCorrect={false}
               value={formData.vehicle_plate}
               onChangeText={(text) => {
-                setFormData({ ...formData, vehicle_plate: text });
+                setFormData({ ...formData, vehicle_plate: text.toUpperCase() });
                 if (errors.vehicle_plate) {
                   setErrors({ ...errors, vehicle_plate: '' });
                 }
@@ -176,9 +177,10 @@ export function EditVehicleScreen({ route }: any) {
             <TextInput
               style={styles.input}
               placeholder="Ej: Rojo, Azul metalizado, Plateado oscuro"
+              autoCapitalize="characters"
               value={formData.vehicle_color}
               onChangeText={(text) => {
-                setFormData({ ...formData, vehicle_color: text });
+                setFormData({ ...formData, vehicle_color: text.toUpperCase() });
               }}
               editable={!loading}
             />
