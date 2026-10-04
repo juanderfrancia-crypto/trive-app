@@ -265,21 +265,26 @@ check('Extraño no ve los mensajes de otros',
 
 // ---------- Login por teléfono: upsert del propio perfil ----------
 await asUser(P2)
-check('Usuario actualiza su perfil con upsert (login por teléfono, incluye email)',
-  (await err(() => db.exec(`INSERT INTO profiles (id, name, email, phone, role) VALUES ('${P2}', 'Pasajero dos', 'p2@correo.com', '3001112233', 'passenger') ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, phone = EXCLUDED.phone, role = EXCLUDED.role`))) === null)
+const eup = await err(() => db.exec(`UPDATE profiles SET name = 'Pasajero dos', email = 'p2@correo.com', phone = '3001112233', role = 'passenger' WHERE id = '${P2}'`))
+check('El perfil propio se actualiza sin upsert (inicio de sesión por teléfono)', eup === null, eup?.message)
+const epc = await err(() => db.exec(`SELECT id, name, email, role, rating FROM profiles WHERE id = '${P2}'`))
+check('Leer el perfil propio con columnas explícitas funciona', epc === null, epc?.message)
+const eall = await err(() => db.exec(`SELECT * FROM profiles WHERE id = '${P2}'`))
+check('Leer todas las columnas del perfil (incluye phone) queda bloqueado', eall?.message.includes('permission denied') === true)
 
 // ---------- Privacidad de perfiles ----------
 await asUser(S)
 check('Extraño no ve el perfil de un pasajero sin relación',
-  (await q(`SELECT count(*)::int c FROM profiles WHERE id='${P}'`))[0].c === 0)
+  (await q(`SELECT id FROM profiles WHERE id='${P}'`)).length === 0)
 check('Cualquier usuario autenticado ve un conductor con rutas publicadas (para buscar viajes)',
-  (await q(`SELECT count(*)::int c FROM profiles WHERE id='${D}'`))[0].c === 1)
+  (await q(`SELECT id FROM profiles WHERE id='${D}'`)).length === 1)
 await asUser(P)
 check('Pasajero ve el perfil del conductor de su reserva',
-  (await q(`SELECT count(*)::int c FROM profiles WHERE id='${D}'`))[0].c === 1)
-check('Pasajero ve su propio perfil', (await q(`SELECT count(*)::int c FROM profiles WHERE id='${P}'`))[0].c === 1)
+  (await q(`SELECT id FROM profiles WHERE id='${D}'`)).length === 1)
+check('Pasajero ve su propio perfil', (await q(`SELECT id FROM profiles WHERE id='${P}'`)).length === 1)
 await asAnon()
-check('Usuario sin sesión no ve perfiles', (await q(`SELECT count(*)::int c FROM profiles`))[0].c === 0)
+check('Usuario sin sesión no puede consultar perfiles',
+  (await err(() => db.exec(`SELECT id FROM profiles`)))?.message.includes('permission denied') === true)
 check('Usuario sin sesión no ve notificaciones', (await q(`SELECT count(*)::int c FROM notifications`))[0].c === 0)
 check('Usuario sin sesión no puede llamar al cobro de comisión',
   (await err(() => db.exec(`SELECT public.create_negotiation_payment('${offerN}', 5000)`)))?.message.includes('permission denied') === true)
@@ -358,6 +363,23 @@ check('Un mensaje normal antes de aceptar sí se envía', normal.ok === true)
 await asSuper()
 check('El intento bloqueado queda registrado para revisión',
   (await q(`SELECT count(*)::int c FROM chat_policy_flags WHERE request_id='${reqChat}' AND user_id='${N}'`))[0].c === 1)
+
+// ---------- Teléfono: solo con viaje aceptado ----------
+await asSuper()
+await db.exec(`UPDATE profiles SET phone='3001111111' WHERE id='${D}'`)
+await asUser(S)
+check('Un extraño no puede leer la columna de teléfono de un conductor',
+  (await err(() => db.exec(`SELECT phone FROM profiles WHERE id='${D}'`)))?.message.includes('permission denied') === true)
+check('Un extraño sí puede leer nombre y calificación (lo necesario para buscar viajes)',
+  (await err(() => db.exec(`SELECT name, rating FROM profiles WHERE id='${D}'`))) === null)
+check('Un extraño no obtiene el teléfono de un conductor (sin viaje en común)',
+  (await q(`SELECT public.get_counterpart_phone('${D}') AS t`))[0].t === null)
+await asUser(P)
+check('El pasajero obtiene el teléfono del conductor con el que tuvo un viaje confirmado',
+  (await q(`SELECT public.get_counterpart_phone('${D}') AS t`))[0].t !== null)
+await asUser(D)
+check('Cada quien lee su propio teléfono',
+  (await q(`SELECT public.get_my_phone() AS t`))[0].t !== null)
 
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
