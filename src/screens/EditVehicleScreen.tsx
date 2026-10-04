@@ -69,7 +69,6 @@ export function EditVehicleScreen({ route }: any) {
     try {
       setLoading(true);
 
-      // Update all routes for this driver with the new vehicle info
       // Cada vehículo nuevo queda pendiente hasta que un administrador lo apruebe
       const { error } = await supabase.rpc('register_vehicle', {
         p_plate: formData.vehicle_plate,
@@ -90,7 +89,8 @@ export function EditVehicleScreen({ route }: any) {
       ]);
     } catch (err) {
       console.error('Error updating vehicle:', err);
-      Alert.alert('Error', 'No se pudo actualizar la información del vehículo');
+      const message = (err as { message?: string })?.message;
+      Alert.alert('Error', message || 'No se pudo actualizar la información del vehículo');
     } finally {
       setLoading(false);
     }
@@ -156,6 +156,8 @@ export function EditVehicleScreen({ route }: any) {
             <TextInput
               style={[styles.input, errors.vehicle_plate && styles.inputError]}
               placeholder="Ej: ABC-123"
+              autoCapitalize="none"
+              autoCorrect={false}
               value={formData.vehicle_plate}
               onChangeText={(text) => {
                 setFormData({ ...formData, vehicle_plate: text });

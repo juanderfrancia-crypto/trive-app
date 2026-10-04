@@ -142,11 +142,13 @@ export default function ProfileScreen() {
   const loadDriverData = useCallback(async () => {
     if (!user?.id) return
     console.log('🚗 [loadDriverData] Iniciando carga de datos del vehículo...')
-    const [{ data: route }, { data: routes }, { data: docs }] = await Promise.all([
+    const [{ data: vehicle }, { data: routes }, { data: docs }] = await Promise.all([
       supabase
-        .from('routes')
-        .select('id, vehicle_make, vehicle_model, vehicle_plate, vehicle_type, vehicle_photo_url, vehicle_year, vehicle_color')
+        .from('vehicles')
+        .select('id, plate, make, year, color, status, is_active')
         .eq('driver_id', user.id)
+        .in('status', ['pending', 'verified'])
+        .order('is_active', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
@@ -162,8 +164,19 @@ export default function ProfileScreen() {
         .select('document_type, status, expiry_date')
         .eq('driver_id', user.id),
     ])
-    console.log('🚗 [loadDriverData] Ruta recibida:', route)
-    if (route) setDriverVehicle(route)
+    if (vehicle) {
+      setDriverVehicle({
+        id: vehicle.id,
+        vehicle_make: vehicle.make,
+        vehicle_model: null,
+        vehicle_plate: vehicle.plate,
+        vehicle_year: vehicle.year,
+        vehicle_color: vehicle.color,
+        vehicle_status: vehicle.status,
+      })
+    } else {
+      setDriverVehicle(null)
+    }
     setRecentRoutes(routes ?? [])
     if (docs) {
       const docsMap: Record<string, any> = {}

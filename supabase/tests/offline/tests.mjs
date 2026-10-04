@@ -308,6 +308,14 @@ await db.exec(`UPDATE driver_documents SET status='rejected' WHERE driver_id='${
 const zp2 = (await q(`SELECT driver_verified FROM profiles WHERE id='${Z}'`))[0]
 check('Si un documento deja de estar aprobado, el conductor deja de estar verificado', zp2.driver_verified === false)
 
+// ---------- Placa con guion o sin guion ----------
+await asUser(Z)
+const eplaca = await err(() => db.exec(`SELECT * FROM public.register_vehicle('mno-456','Mazda',2020,'Gris')`))
+check('Placa con guion (ABC-123) se registra igual que sin guion', eplaca === null)
+await asSuper()
+check('La placa queda guardada normalizada (MNO456)',
+  (await q(`SELECT count(*)::int c FROM vehicles WHERE driver_id='${Z}' AND plate='MNO456'`))[0].c === 1)
+
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
 await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)
