@@ -60,6 +60,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
           const p = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
+            driverId: user.id,
             otherUserId: trip.passenger_id,
             otherUserName: p?.name || 'Pasajero',
             otherUserAvatar: p?.avatar_url,
@@ -85,6 +86,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
           const d = trip.profiles as any
           chatsList.push({
             requestId: trip.id,
+            driverId: trip.driver_id,
             otherUserId: trip.driver_id,
             otherUserName: d?.name || 'Conductor',
             otherUserAvatar: d?.avatar_url,

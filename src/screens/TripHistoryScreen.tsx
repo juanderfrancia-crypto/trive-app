@@ -235,8 +235,7 @@ export default function TripHistoryScreen() {
     if (!ratingTrip || !user) return
     try {
       const result = await createReview(
-        ratingTrip.id, user.id, ratingTrip.driverId!, rating,
-        comment || undefined, recommend,
+        ratingTrip.id, rating, comment || undefined, recommend,
       )
       if (result) {
         setTrips((prev) => prev.map((t) =>

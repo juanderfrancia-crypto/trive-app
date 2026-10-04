@@ -93,16 +93,24 @@ export default function DriverRegisterScreen() {
   const loadVehicleData = async () => {
     try {
       setVehicleLoading(true)
-      const { data, error } = await supabase
-        .from('routes')
-        .select('vehicle_make, vehicle_model, vehicle_year, vehicle_plate, vehicle_color')
+      const { data } = await supabase
+        .from('vehicles')
+        .select('make, year, plate, color')
         .eq('driver_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
+        .eq('is_active', true)
+        .eq('status', 'verified')
+        .maybeSingle()
 
       if (data) {
-        setVehicleData(data)
+        setVehicleData({
+          vehicle_make: data.make,
+          vehicle_model: null,
+          vehicle_year: data.year,
+          vehicle_plate: data.plate,
+          vehicle_color: data.color,
+        })
+      } else {
+        setVehicleData(null)
       }
     } catch (err) {
       if (__DEV__) console.error('No hay rutas previas', err)
@@ -145,7 +153,7 @@ export default function DriverRegisterScreen() {
       return false
     }
     if (!vehicleData) {
-      Alert.alert('Error', 'Por favor agrega información de tu vehículo primero en "Mi Vehículo"')
+      Alert.alert('Vehículo pendiente', 'Tu vehículo debe estar aprobado por Trive antes de publicar viajes. Revisa "Mi Vehículo" para ver su estado.')
       return false
     }
     

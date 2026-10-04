@@ -81,7 +81,7 @@ export function EditVehicleScreen({ route }: any) {
         throw error;
       }
 
-      Alert.alert('Éxito', 'Información del vehículo actualizada correctamente', [
+      Alert.alert('Vehículo enviado', 'Trive revisará tu vehículo. Cuando esté aprobado podrás publicar viajes con él.', [
         {
           text: 'OK',
           onPress: () => navigation.goBack(),

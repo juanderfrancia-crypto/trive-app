@@ -101,7 +101,7 @@ export default function DriverPanelScreen() {
         .from('routes')
         .select(`
           *,
-          bookings!inner(
+          bookings(
             id,
             passenger_id,
             seat_number,
@@ -115,13 +115,15 @@ export default function DriverPanelScreen() {
         `)
         .eq('driver_id', user.id)
         .in('status', ['scheduled', 'in_progress'])
-        .in('bookings.booking_status', ['confirmed', 'completed'])
         .order('departure_time', { ascending: true })
 
       if (error) throw error
 
       const routesWithPassengers = (data || []).map((route: any) => {
-        const passengers: Passenger[] = (route.bookings || []).map((b: any) => ({
+        const activeBookings = (route.bookings || []).filter((b: any) =>
+          ['confirmed', 'awaiting_confirmation', 'completed', 'disputed'].includes(b.booking_status)
+        )
+        const passengers: Passenger[] = activeBookings.map((b: any) => ({
           booking_id: b.id,
           passenger_id: b.passenger_id,
           name: b.passenger?.name || `Pasajero ${b.seat_number}`,
