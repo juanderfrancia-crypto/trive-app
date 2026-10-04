@@ -1,3 +1,4 @@
+import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import { useState } from 'react'
 import {
   View,
@@ -59,7 +60,7 @@ export default function LoginEmailScreen() {
       if (data?.user) {
         const { data: profile, error: profileError } = await (await import('../services/supabase')).supabase
           .from('profiles')
-          .select('*')
+          .select(PROFILE_COLUMNS)
           .eq('id', data.user.id)
           .maybeSingle()
 
@@ -73,7 +74,7 @@ export default function LoginEmailScreen() {
             id: profile.id,
             name: profile.name,
             email: profile.email,
-            phone: profile.phone,
+            phone: await getMyPhone(),
             role: profile.role,
             rating: profile.rating,
             balance: profile.balance || 0,

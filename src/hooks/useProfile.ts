@@ -1,3 +1,4 @@
+import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../services/supabase";
 
@@ -37,7 +38,7 @@ export const useProfile = (userId?: string) => {
         setLoading(true);
         const { data, error: fetchError } = await supabase
           .from("profiles")
-          .select("*")
+          .select(PROFILE_COLUMNS)
           .eq("id", userId)
           .maybeSingle();
 
@@ -71,7 +72,7 @@ export const useProfile = (userId?: string) => {
       setLoading(true);
       const { data, error: fetchError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_COLUMNS)
         .eq("id", id)
         .maybeSingle();
 
@@ -106,7 +107,7 @@ export const useProfile = (userId?: string) => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", updates.id)
-        .select()
+        .select(PROFILE_COLUMNS)
         .maybeSingle();
 
       if (updateError) throw updateError;
@@ -117,7 +118,7 @@ export const useProfile = (userId?: string) => {
       } else {
         const { data: updatedProfile, error: refetchError } = await supabase
           .from("profiles")
-          .select("*")
+          .select(PROFILE_COLUMNS)
           .eq("id", updates.id)
           .single();
 
@@ -141,7 +142,7 @@ export const useProfile = (userId?: string) => {
 
       const { data: existingProfile, error: fetchError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_COLUMNS)
         .eq("id", userId)
         .maybeSingle();
 
@@ -170,7 +171,7 @@ export const useProfile = (userId?: string) => {
         .from("profiles")
         .update({ role: newRole, updated_at: new Date().toISOString() })
         .eq("id", userId)
-        .select()
+        .select(PROFILE_COLUMNS)
         .maybeSingle();
 
       if (updateError) throw updateError;
@@ -179,7 +180,7 @@ export const useProfile = (userId?: string) => {
       if (!updatedProfile) {
         const { data: refetched, error: refetchError } = await supabase
           .from("profiles")
-          .select("*")
+          .select(PROFILE_COLUMNS)
           .eq("id", userId)
           .single();
 

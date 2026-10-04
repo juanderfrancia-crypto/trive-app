@@ -17,6 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
+import { getCounterpartPhone } from '../services/profileColumns'
 import { notifyTripCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
@@ -124,8 +125,7 @@ export default function ActiveTripsScreen() {
             profiles(
               id,
               name,
-              rating,
-              phone
+              rating
             )
           )
         `
@@ -178,7 +178,7 @@ export default function ActiveTripsScreen() {
             driverName: driver.name || 'Conductor',
             driverId: route.driver_id || '',
             driverRating: driver.rating || null,
-            driverPhone: driver.phone || '',
+            driverPhone: '',
             vehicleInfo: `${route.vehicle_make || ''} ${route.vehicle_model || ''} (${route.vehicle_plate || ''})`.trim(),
             seatNumber: booking.seat_number,
             price: booking.price,
@@ -371,11 +371,12 @@ export default function ActiveTripsScreen() {
           </View>
           <TouchableOpacity
             style={styles.callButton}
-            onPress={() => {
-              if (trip.driverPhone) {
-                Linking.openURL(`tel:${trip.driverPhone}`)
+            onPress={async () => {
+              const phone = await getCounterpartPhone(trip.driverId)
+              if (phone) {
+                Linking.openURL(`tel:${phone}`)
               } else {
-                Alert.alert('Sin teléfono', 'El conductor no tiene número de teléfono registrado.')
+                Alert.alert('Sin teléfono', 'No pudimos obtener el número del conductor en este momento.')
               }
             }}
           >

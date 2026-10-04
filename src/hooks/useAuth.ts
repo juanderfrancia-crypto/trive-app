@@ -1,3 +1,4 @@
+import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
 import { useState, useEffect, useRef } from "react";
 import { Alert, AppState, AppStateStatus } from "react-native";
 import { supabase } from "../services/supabase";
@@ -46,7 +47,7 @@ export const useAuth = () => {
     try {
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
-        .select("*")
+        .select(PROFILE_COLUMNS)
         .eq("id", currentSession.user.id)
         .maybeSingle();
 
@@ -59,7 +60,7 @@ export const useAuth = () => {
           id: profile.id,
           name: profile.name,
           email: profile.email,
-          phone: profile.phone,
+          phone: await getMyPhone(),
           role: profile.role,
           rating: profile.rating,
           avatar_url: profile.avatar_url,
@@ -73,19 +74,19 @@ export const useAuth = () => {
         const userEmail = currentSession.user.email || `${currentSession.user.id}@trive.local`;
         const userPhone = currentSession.user.phone || currentSession.user.user_metadata?.phone || undefined;
 
+        const { error: saveError } = await saveMyProfile(currentSession.user.id, {
+          name: userName,
+          email: userEmail,
+          phone: userPhone,
+          role: "passenger",
+          rating: 0,
+        });
+        if (saveError) throw saveError;
+
         const { data: insertedProfile, error: insertError } = await supabase
           .from("profiles")
-          .upsert([
-            {
-              id: currentSession.user.id,
-              name: userName,
-              email: userEmail,
-              phone: userPhone,
-              role: "passenger",
-              rating: 0,
-            },
-          ], { onConflict: 'id' })
-          .select()
+          .select(PROFILE_COLUMNS)
+          .eq("id", currentSession.user.id)
           .single();
 
         if (insertError) throw insertError;
@@ -94,7 +95,7 @@ export const useAuth = () => {
           id: insertedProfile.id,
           name: insertedProfile.name,
           email: insertedProfile.email,
-          phone: insertedProfile.phone,
+          phone: userPhone ?? null,
           role: insertedProfile.role,
           rating: insertedProfile.rating,
           avatar_url: insertedProfile.avatar_url,
@@ -227,7 +228,7 @@ export const useAuth = () => {
             id: p.id,
             name: p.name,
             email: p.email,
-            phone: p.phone,
+            phone: await getMyPhone(),
             role: p.role,
             rating: p.rating,
             avatar_url: p.avatar_url,
@@ -396,12 +397,8 @@ export const useAuth = () => {
         if (referredBy?.trim()) {
           profileData.referred_by = referredBy.trim().toUpperCase()
         }
-        await supabase
-          .from('profiles')
-          .upsert([profileData], { onConflict: 'id' })
-          .then(({ error }) => {
-            if (error) console.warn('Profile upsert skipped (trigger handled it):', error.message)
-          })
+        const { error: profileSaveError } = await saveMyProfile(profileData.id as string, profileData)
+        if (profileSaveError) console.warn('Profile save skipped (trigger handled it):', profileSaveError)
       }
 
       return authData;

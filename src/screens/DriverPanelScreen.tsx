@@ -110,7 +110,7 @@ export default function DriverPanelScreen() {
             created_at,
             dropoff_point,
             dropoff_point_custom,
-            passenger:profiles!passenger_id(id, name, email, phone)
+            passenger:profiles!passenger_id(id, name, email)
           )
         `)
         .eq('driver_id', user.id)
@@ -119,7 +119,17 @@ export default function DriverPanelScreen() {
 
       if (error) throw error
 
+      // Teléfonos de pasajeros confirmados: la base solo los libera al conductor de cada ruta
+      const phoneRows = await Promise.all(
+        (data || []).map(async (route: any) => {
+          const { data: rows } = await supabase.rpc('get_route_passenger_phones', { p_route_id: route.id })
+          return [route.id, new Map(((rows as any[]) || []).map((r) => [r.passenger_id, r.phone]))] as const
+        })
+      )
+      const phonesByRoute = new Map(phoneRows)
+
       const routesWithPassengers = (data || []).map((route: any) => {
+        const routePhones = phonesByRoute.get(route.id) ?? new Map()
         const activeBookings = (route.bookings || []).filter((b: any) =>
           ['confirmed', 'awaiting_confirmation', 'completed', 'disputed'].includes(b.booking_status)
         )
@@ -128,7 +138,7 @@ export default function DriverPanelScreen() {
           passenger_id: b.passenger_id,
           name: b.passenger?.name || `Pasajero ${b.seat_number}`,
           email: b.passenger?.email || '',
-          phone: b.passenger?.phone || '',
+          phone: routePhones.get(b.passenger_id) || '',
           seat_number: b.seat_number,
           booking_status: b.booking_status,
           payment_method: b.payment_method || 'cash',

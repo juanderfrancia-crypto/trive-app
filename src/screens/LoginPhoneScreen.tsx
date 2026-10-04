@@ -1,3 +1,4 @@
+import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import React, { useCallback, useRef, useState } from 'react'
 import {
   View,
@@ -114,7 +115,7 @@ export default function LoginPhoneScreen() {
       const data = await verifyOTP(formatPhone(phone), codeToVerify)
       if (data?.user) {
         const { data: profile } = await (await import('../services/supabase')).supabase
-          .from('profiles').select('*').eq('id', data.user.id).maybeSingle()
+          .from('profiles').select(PROFILE_COLUMNS).eq('id', data.user.id).maybeSingle()
 
         const isRealName = (name: string | null) => {
           if (!name || name.trim().length < 2) return false
@@ -127,7 +128,7 @@ export default function LoginPhoneScreen() {
 
         if (profile && isRealName(profile.name)) {
           // Usuario existente con nombre real → loguear directamente
-          setUser({ id: profile.id, name: profile.name, email: profile.email, phone: profile.phone, role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
+          setUser({ id: profile.id, name: profile.name, email: profile.email, phone: await getMyPhone(), role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
           setAuthUser(data.user)
           otpGuard.recordSuccess()
           await logLogin(data.user.id)
@@ -187,13 +188,15 @@ export default function LoginPhoneScreen() {
       const rawEmail = tempUser?.email ?? null
       const isFakeEmail = !rawEmail || /^[0-9a-f-]{36}@/i.test(rawEmail) || rawEmail.includes('@sms.local')
       const userEmail = isFakeEmail ? null : rawEmail
+      const { error: saveError } = await saveMyProfile(tempUser.id, { name: name.trim(), email: userEmail, phone: formatPhone(phone), role: 'passenger' })
+      if (saveError) { errorHandler.handleSupabaseError(saveError as any, 'create_profile_name', {}); return }
       const { data: savedProfile, error } = await supabaseClient
         .from('profiles')
-        .upsert({ id: tempUser.id, name: name.trim(), email: userEmail, phone: formatPhone(phone), role: 'passenger' }, { onConflict: 'id' })
-        .select()
+        .select(PROFILE_COLUMNS)
+        .eq('id', tempUser.id)
         .single()
       if (error) { errorHandler.handleSupabaseError(error, 'create_profile_name', {}); return }
-      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email, phone: savedProfile.phone, role: savedProfile.role, rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: savedProfile.membership_type || 'free', membership_expiry: savedProfile.membership_expiry || null })
+      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email, phone: formatPhone(phone), role: savedProfile.role, rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: savedProfile.membership_type || 'free', membership_expiry: savedProfile.membership_expiry || null })
       setAuthUser(tempUser)
       await logLogin(tempUser.id)
     } catch (err: any) {
@@ -222,9 +225,9 @@ export default function LoginPhoneScreen() {
       const data = (await login(email.trim(), password)) as any
       if (data?.user) {
         const { data: profile, error: profileError } = await (await import('../services/supabase')).supabase
-          .from('profiles').select('*').eq('id', data.user.id).maybeSingle()
+          .from('profiles').select(PROFILE_COLUMNS).eq('id', data.user.id).maybeSingle()
         if (profileError) { errorHandler.handleSupabaseError(profileError, 'fetch_profile', { userId: data.user.id }); return }
-        if (profile) setUser({ id: profile.id, name: profile.name, email: profile.email, phone: profile.phone, role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
+        if (profile) setUser({ id: profile.id, name: profile.name, email: profile.email, phone: await getMyPhone(), role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
         setAuthUser(data.user)
         emailGuard.recordSuccess()
         await logLogin(data.user.id)

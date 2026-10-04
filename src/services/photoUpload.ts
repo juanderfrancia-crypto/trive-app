@@ -179,7 +179,7 @@ export async function uploadProfilePhoto(userId: string, fileUri: string): Promi
       .from('profiles')
       .update({ avatar_url: photoUrl, profile_photo_url: photoUrl })
       .eq('id', userId)
-      .select()
+      .select('id, avatar_url, profile_photo_url')
       .single()
 
     if (dbError) {

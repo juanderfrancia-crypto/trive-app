@@ -1,3 +1,4 @@
+import { PROFILE_COLUMNS } from './profileColumns'
 import { getItem } from '../utils/storage'
 import { supabase } from './supabase'
 
@@ -32,7 +33,7 @@ export async function exportUserData() {
     preferencesResult,
     favoritesResult,
   ] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+    supabase.from('profiles').select(PROFILE_COLUMNS).eq('id', userId).maybeSingle(),
     supabase
       .from('bookings')
       .select('*, routes:route_id(*)')
