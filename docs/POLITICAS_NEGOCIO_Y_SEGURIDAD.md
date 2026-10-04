@@ -40,7 +40,8 @@ Todo movimiento queda en el libro contable (`wallet_transactions`).
 Para **conducir** (publicar rutas, aceptar solicitudes, hacer ofertas y chatear de negociación) hay que cumplir requisitos:
 
 - Cuenta con rol de conductor.
-- Documentos aprobados por un admin: **cédula, licencia de conducción, tarjeta de propiedad, SOAT y revisión técnico-mecánica**, todos vigentes.
+- Documentos aprobados por un admin: **cédula, licencia de conducción, tarjeta de propiedad, SOAT, revisión técnico-mecánica y certificado de antecedentes**, todos vigentes.
+- El certificado de antecedentes se exige por seguridad de los pasajeros. Se trata con las mismas reglas que la cédula: almacenamiento privado, acceso solo para verificación, y consentimiento explícito según la Ley 1581 de 2012. Su plazo de conservación lo define el abogado.
 - Cuenta activa, sin suspensiones.
 
 El **pasajero** solo necesita su número de teléfono para registrarse. No requiere documentos.
