@@ -65,3 +65,16 @@ Orden propuesto: probar el flujo del conductor con aprobaciones por SQL, y despu
 - Los administradores no deberían usar el teléfono personal: un teléfono perdido con sesión abierta daría acceso a aprobar documentos o acreditar saldo.
 - Separar el canal de los clientes del canal de los empleados hace posible auditar cada acción por persona, y reduce la superficie de ataque de la app pública.
 - Quien aprueba documentos no debe ser el mismo canal que usa el conductor para trabajar.
+
+## Requisito: verificación por expedientes de conductor
+
+La unidad de revisión es el **expediente del conductor**, no cada documento. Un conductor tiene seis documentos (cédula, licencia, tarjeta de propiedad, SOAT, técnico-mecánica y antecedentes).
+
+- Cola de **conductores**, no de documentos. Orden: el conductor que lleva más tiempo con el expediente completo, primero.
+- Una tarjeta por conductor con el estado de cada documento y el avance (ej. 4/6).
+- Acciones por documento (aprobar o rechazar con motivo) dentro del expediente.
+- **Reclamo de expediente:** un revisor lo toma y ningún otro lo trabaja a la vez. Se libera al terminar o al vencer el plazo.
+- Búsqueda por cédula, nombre o placa, y filtros por estado.
+- Paginación. Debe funcionar con cientos de conductores nuevos al día.
+
+La pantalla de administración actual dentro de la app es provisional. Solo sirve para las pruebas, y no se invierte más en ella.
