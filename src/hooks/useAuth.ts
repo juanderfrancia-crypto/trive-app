@@ -222,7 +222,7 @@ export const useAuth = () => {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
-        (payload) => {
+        async (payload) => {
           const p = payload.new as any
           setAppUser({
             id: p.id,
