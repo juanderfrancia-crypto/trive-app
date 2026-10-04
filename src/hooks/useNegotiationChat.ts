@@ -99,16 +99,17 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
       is_read: false,
     }]);
 
-    const { error } = await supabase.rpc('send_chat_message', {
+    const { data, error } = await supabase.rpc('send_chat_message', {
       p_request_id: requestId,
       p_driver_id: driverId,
       p_text: messageText,
       p_type: messageType,
     });
 
-    if (error) {
+    // El servidor devuelve ok=false cuando el mensaje no cumple la política (ej. teléfono antes de aceptar)
+    if (error || data?.ok === false) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      showError(error.message || 'Error al enviar mensaje');
+      showError(data?.message || error?.message || 'Error al enviar mensaje');
       await loadThreadState();
       return false;
     }

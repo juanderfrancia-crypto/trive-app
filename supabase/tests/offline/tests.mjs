@@ -346,6 +346,19 @@ await asSuper()
 check('La vista de cupos no expone el teléfono del conductor',
   (await q(`SELECT count(*)::int c FROM information_schema.columns WHERE table_name='available_rides' AND column_name='driver_phone'`))[0].c === 0)
 
+// ---------- Política del chat antes de aceptar ----------
+await asUser(P2)
+const reqChat = (await q(`INSERT INTO airport_requests (passenger_id, origin, destination, departure_time, offered_price, status) VALUES ('${P2}','Puerto Tejada','Aeropuerto Cali', now() + interval '1 day', 40000, 'pending') RETURNING id`))[0].id
+await asUser(N)
+await db.exec(`INSERT INTO airport_offers (request_id, driver_id, proposed_price, status) VALUES ('${reqChat}','${N}', 42000, 'pending')`)
+const bloqueado = (await q(`SELECT public.send_chat_message('${reqChat}', '${N}', 'escríbeme al 3001234567', 'text') AS r`))[0].r
+check('Antes de aceptar, un teléfono en el chat queda bloqueado', bloqueado.ok === false && bloqueado.message.includes('no se pueden compartir'), JSON.stringify(bloqueado))
+const normal = (await q(`SELECT public.send_chat_message('${reqChat}', '${N}', 'Llego a las 6 de la mañana', 'text') AS r`))[0].r
+check('Un mensaje normal antes de aceptar sí se envía', normal.ok === true)
+await asSuper()
+check('El intento bloqueado queda registrado para revisión',
+  (await q(`SELECT count(*)::int c FROM chat_policy_flags WHERE request_id='${reqChat}' AND user_id='${N}'`))[0].c === 1)
+
 // ---------- Listado de documentos para el administrador ----------
 await asSuper()
 await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)

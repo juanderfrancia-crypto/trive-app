@@ -188,3 +188,6 @@ CREATE TRIGGER on_document_verified AFTER UPDATE OF status ON driver_documents F
 
 -- Restricción de tipos de notificación tal como estaba en producción (antes de la fase 2o).
 ALTER TABLE public.notifications ADD CONSTRAINT notification_type_check CHECK (type IN ('booking','trip_update','driver_arrived','trip_completed','review_pending','message','trip_published','offer_received','offer_accepted','trip_confirmed','trip_started','trip_rated'));
+
+-- Publicación de tiempo real de Supabase (existe en producción).
+CREATE PUBLICATION supabase_realtime;
