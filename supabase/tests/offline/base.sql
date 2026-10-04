@@ -79,6 +79,7 @@ CREATE TABLE public.reviews (
 );
 CREATE TABLE public.driver_documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), driver_id uuid, document_type varchar, file_path varchar,
+  file_name varchar, file_size integer, file_type varchar, uploaded_at timestamp,
   status varchar DEFAULT 'pending', rejection_reason text, verified_at timestamp, expiry_date date,
   created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now()
 );

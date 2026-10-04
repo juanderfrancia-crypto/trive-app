@@ -294,6 +294,15 @@ check('Cierre automático confirma reservas sin respuesta en 24 h', Number(auto)
 check('Reserva automática queda completada',
   (await q(`SELECT booking_status FROM bookings WHERE id='${b3}'`))[0].booking_status === 'completed')
 
+// ---------- Listado de documentos para el administrador ----------
+await asSuper()
+await db.exec(`INSERT INTO driver_documents (driver_id, document_type, file_path, file_name, file_size, file_type, status, uploaded_at) VALUES ('${D}','cedula','drivers/${D}/cedula.jpg','cedula.jpg',1200,'image/jpeg','pending', now())`)
+await asUser(A)
+check('Administrador ve la lista de documentos pendientes sin error',
+  (await err(() => db.exec(`SELECT * FROM public.get_pending_documents_for_admin()`))) === null)
+check('Administrador ve el historial de documentos sin error',
+  (await err(() => db.exec(`SELECT * FROM public.get_processed_documents_for_admin()`))) === null)
+
 // ---------- Recarga manual por administrador ----------
 await asUser(D)
 check('Conductor no puede acreditarse saldo con la recarga de administrador',
