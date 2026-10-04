@@ -21,7 +21,9 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 - Pruebas offline de la base: 72/72.
 
 **Pendiente, en este orden:**
-1. **Rotar secretos expuestos en el chat:** la contraseña de la base ya se reseteó; falta rotar `WEBHOOK_SECRET` (se pegó una vez) y la clave de servicio embebida en el cron `check-document-expiry-daily`.
+1. **Rotar secretos expuestos en el chat (pendiente, posponido por decisión del dueño):**
+   - Hecho: contraseña de la base reseteada; `WEBHOOK_SECRET` cambiado.
+   - Pendiente: la clave `service_role` sigue escrita dentro del trabajo `check-document-expiry-daily`. Pasos: (A) regenerar la clave service_role en Settings → API Keys; (B) redesplegar `delete-account` y `send-push`; (C) guardar la clave nueva en Vault con `vault.create_secret`; (D) reprogramar el trabajo leyendo la clave de `vault.decrypted_secrets`; (E) verificar que `cron.job.command` no contiene `eyJ`. Detalle completo en la conversación del 2026-10-03 y en `docs/PRUEBAS_Y_DESPLIEGUE.md` (sección de configuración).
 2. **Prueba del conductor en el teléfono** (paso 27): registro, cédula, documentos, vehículo en revisión.
 3. **Aprobar conductor y vehículo** desde el SQL Editor o el admin de la app, para que pueda publicar.
 4. **Prueba del pasajero y de los flujos** (secciones 6 del procedimiento de despliegue).
