@@ -17,7 +17,7 @@ CREATE TABLE public.profiles (
   referral_code text, referred_by text, emergency_contact jsonb, preferred_municipality text
 );
 CREATE TABLE public.drivers (
-  id uuid PRIMARY KEY REFERENCES public.profiles(id), license_number varchar, license_expiry date,
+  id uuid PRIMARY KEY REFERENCES public.profiles(id), license_number varchar NOT NULL, license_expiry date NOT NULL,
   vehicle_registration varchar, vehicle_insurance_expiry date, verified bool DEFAULT false, total_trips int DEFAULT 0,
   total_earnings numeric DEFAULT 0, average_rating numeric, created_at timestamp DEFAULT now(), updated_at timestamp DEFAULT now()
 );
