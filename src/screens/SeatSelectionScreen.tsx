@@ -183,6 +183,23 @@ export default function SeatSelectionScreen() {
     loadBookings()
   }, [selectedRoute?.id, loadBookings, authUser, navigation, safeNavigate])
 
+  // Cupos en vivo: cuando cambian los cupos de la ruta, se recargan los asientos ocupados.
+  useEffect(() => {
+    const routeId = selectedRoute?.id
+    if (!routeId) return
+    const channel = supabase
+      .channel(`seats_${routeId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'routes', filter: `id=eq.${routeId}` },
+        () => { loadBookings(true) }
+      )
+      .subscribe()
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [selectedRoute?.id, loadBookings])
+
   useFocusEffect(
     useCallback(() => {
       if (!selectedRoute?.id || !authUser) return

@@ -109,13 +109,13 @@ export default function RecurringRoutesScreen() {
     if (!user?.id) return
     try {
       const { data } = await supabase
-        .from('routes')
-        .select('vehicle_make, vehicle_model, vehicle_year, vehicle_plate, vehicle_color')
+        .from('vehicles')
+        .select('vehicle_make:make, vehicle_year:year, vehicle_plate:plate, vehicle_color:color')
         .eq('driver_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-      if (data) setVehicleData(data)
+        .eq('is_active', true)
+        .eq('status', 'verified')
+        .maybeSingle()
+      setVehicleData(data ?? null)
     } catch {}
     setVehicleLoading(false)
   }, [user?.id])

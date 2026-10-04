@@ -289,25 +289,15 @@ export async function uploadVehiclePhoto(
     const photoUrl = await getStorageUrl('vehicle-photos', uploadedFilePath, { allowPublicUrl: true })
     console.log('✅ [uploadVehiclePhoto] URL generada:', photoUrl.substring(0, 100) + '...')
 
-    if (routeId) {
-      try {
-        console.log('📝 [uploadVehiclePhoto] Actualizando routes con routeId:', routeId)
-        const { error: dbError, data: updateData } = await supabase
-          .from('routes')
-          .update({ vehicle_photo_url: photoUrl })
-          .eq('id', routeId)
-          .select()
+    // La foto del vehículo del conductor vive en su perfil (columna permitida para el propio usuario).
+    const { error: dbError } = await supabase
+      .from('profiles')
+      .update({ vehicle_photo_url: photoUrl, updated_at: new Date().toISOString() })
+      .eq('id', driverId)
 
-        if (dbError) {
-          console.error('❌ Error updating route vehicle photo URL:', dbError)
-        } else {
-          console.log('✅ [uploadVehiclePhoto] Routes actualizado exitosamente:', updateData)
-        }
-      } catch (dbErr) {
-        console.error('❌ Error saving route vehicle photo URL:', dbErr)
-      }
-    } else {
-      console.log('ℹ️  [uploadVehiclePhoto] No routeId provided, skipping routes update')
+    if (dbError) {
+      console.error('❌ Error guardando la foto del vehículo:', dbError)
+      throw new Error('No se pudo guardar la foto del vehículo')
     }
 
     // ✅ NUEVO: Guardar vehicle_photo_url en profiles (para caching)

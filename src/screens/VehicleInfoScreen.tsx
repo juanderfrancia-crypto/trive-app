@@ -38,14 +38,15 @@ export function VehicleInfoScreen() {
   const loadVehicleInfo = async () => {
     try {
       setLoading(true);
-      // Get vehicle info from the most recent route
+      // Vehículo activo del conductor (tabla de vehículos)
       const { data, error } = await supabase
-        .from('routes')
-        .select('vehicle_make, vehicle_year, vehicle_plate, vehicle_color')
+        .from('vehicles')
+        .select('vehicle_make:make, vehicle_year:year, vehicle_plate:plate, vehicle_color:color')
         .eq('driver_id', user?.id)
+        .order('is_active', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error loading vehicle:', error);

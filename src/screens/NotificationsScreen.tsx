@@ -115,9 +115,9 @@ export default function NotificationsScreen() {
           return [
             'trip_update', 'driver_arrived', 'trip_completed', 'booking',
             'trip_published', 'offer_received', 'offer_accepted',
-            'trip_confirmed', 'trip_started', 'trip_rated',
+            'trip_confirmed', 'trip_started', 'trip_rated', 'trip_confirm',
           ].includes(notif.type)
-        if (selectedCategory === 'feed') return notif.type === 'review_pending'
+        if (selectedCategory === 'feed') return ['review_pending', 'review_received'].includes(notif.type)
         return true
       })
       .map(getNotificationWithSender)

@@ -164,6 +164,11 @@ export default function ProfileScreen() {
         .select('document_type, status, expiry_date')
         .eq('driver_id', user.id),
     ])
+    const { data: photoRow } = await supabase
+      .from('profiles')
+      .select('vehicle_photo_url')
+      .eq('id', user.id)
+      .maybeSingle()
     if (vehicle) {
       setDriverVehicle({
         id: vehicle.id,
@@ -173,6 +178,7 @@ export default function ProfileScreen() {
         vehicle_year: vehicle.year,
         vehicle_color: vehicle.color,
         vehicle_status: vehicle.status,
+        vehicle_photo_url: photoRow?.vehicle_photo_url ?? null,
       })
     } else {
       setDriverVehicle(null)

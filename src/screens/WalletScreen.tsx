@@ -25,6 +25,18 @@ interface WalletTx {
   created_at: string
 }
 
+// Etiquetas de cada tipo de movimiento del libro (ver wallet_transactions_type_check).
+const WALLET_LABELS: Record<string, string> = {
+  recharge: 'Recarga',
+  route_fee: 'Publicación de ruta',
+  airport_fee: 'Viaje de aeropuerto aceptado',
+  airport_refund: 'Reembolso de viaje de aeropuerto',
+  referral_bonus: 'Bono por referido',
+  referral_discount: 'Descuento de bienvenida',
+  admin_credit: 'Ajuste a favor',
+  admin_debit: 'Ajuste en contra',
+}
+
 export default function WalletScreen() {
   const navigation = useNavigation()
   const user    = useAppStore((s) => s.user)
@@ -230,15 +242,15 @@ export default function WalletScreen() {
                   </View>
                   <View style={s.txInfo}>
                     <Text style={s.txLabel}>
-                      {tx.type === 'recharge' ? 'Recarga' : 'Comisión publicación'}
+                      {WALLET_LABELS[tx.type] ?? 'Movimiento'}
                     </Text>
                     <Text style={s.txDate}>
                       {new Date(tx.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
                     </Text>
                   </View>
                   <View style={s.txRight}>
-                    <Text style={[s.txAmount, { color: tx.type === 'recharge' ? COLORS.success : COLORS.error }]}>
-                      {tx.type === 'recharge' ? '+' : '-'}${tx.amount.toLocaleString('es-CO')}
+                    <Text style={[s.txAmount, { color: tx.amount >= 0 ? COLORS.success : COLORS.error }]}>
+                      {tx.amount >= 0 ? '+' : '-'}${Math.abs(tx.amount).toLocaleString('es-CO')}
                     </Text>
                     <View style={[s.txStatus, { backgroundColor: statusColor(tx.status) + '20' }]}>
                       <Text style={[s.txStatusText, { color: statusColor(tx.status) }]}>

@@ -57,6 +57,13 @@ export function getNotificationRoute(
   }
 
   switch (notification.type) {
+    // Confirmar el viaje: la tarjeta de confirmación está en Viajes Activos.
+    case 'trip_confirm':
+      return { screenName: 'ActiveTrips', params: {} }
+
+    case 'review_received':
+      return { screenName: 'Reviews', params: {} }
+
     case 'trip_completed':
     case 'trip_rated':
       return {
@@ -88,6 +95,8 @@ export function getNotificationIcon(notificationType: Notification['type']): str
     offer_accepted: '✅',
     trip_confirmed: '✅',
     trip_started: '🚗',
+    trip_confirm: '🙋',
+    review_received: '⭐',
     trip_completed: '✔️',
     trip_rated: '⭐',
     trip_update: '✈️',
