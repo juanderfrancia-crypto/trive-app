@@ -59,3 +59,9 @@ Consecuencias en el código actual (pendientes de retirar):
 Mientras el back-office no exista, las acciones de administración se hacen **desde el SQL Editor de Supabase**, con las funciones de la base (`approve_document_admin`, `approve_vehicle`, `admin_credit_balance`). Esto es temporal y está documentado en `docs/PRUEBAS_Y_DESPLIEGUE.md`.
 
 Orden propuesto: probar el flujo del conductor con aprobaciones por SQL, y después retirar las pantallas de administración de la app antes de la prueba cerrada.
+
+**Motivo de la decisión (seguridad y buenas prácticas):**
+- El código de administración viaja dentro del APK que descarga el público. Aunque la pantalla esté oculta, revela las funciones de administración y cómo se llaman.
+- Los administradores no deberían usar el teléfono personal: un teléfono perdido con sesión abierta daría acceso a aprobar documentos o acreditar saldo.
+- Separar el canal de los clientes del canal de los empleados hace posible auditar cada acción por persona, y reduce la superficie de ataque de la app pública.
+- Quien aprueba documentos no debe ser el mismo canal que usa el conductor para trabajar.
