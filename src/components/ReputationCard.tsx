@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
   achievementBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: COLORS.warningLight,
     borderColor: COLORS.warning,
     borderWidth: 1,
     borderRadius: RADIUS.md,
@@ -327,10 +327,10 @@ const styles = StyleSheet.create({
 
   // Trust Level Styles
   trustPremium: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: COLORS.primary,
   },
   trustExcellent: {
-    backgroundColor: '#06B6D4',
+    backgroundColor: COLORS.primary,
   },
   trustGood: {
     backgroundColor: COLORS.success,

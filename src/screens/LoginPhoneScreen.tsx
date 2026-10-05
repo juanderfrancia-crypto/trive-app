@@ -252,7 +252,7 @@ export default function LoginPhoneScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
       <OfflineBanner />
-      <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <KeyboardAvoidingView
         style={s.kav}
@@ -545,7 +545,7 @@ function TermsText() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAFAFA' },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   kav: { flex: 1 },
   scroll: {
     flexGrow: 1,

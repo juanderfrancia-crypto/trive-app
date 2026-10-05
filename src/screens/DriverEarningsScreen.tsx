@@ -76,7 +76,7 @@ export default function DriverEarningsScreen() {
     switch (type) {
       case 'trip':         return COLORS.success
       case 'cancellation': return COLORS.error
-      case 'upcoming':     return '#0EA5E9'
+      case 'upcoming':     return COLORS.primary
       default:             return COLORS.textSecondary
     }
   }
@@ -219,10 +219,10 @@ export default function DriverEarningsScreen() {
             </Text>
           </View>
           {(earnings?.upcomingAmount || 0) > 0 && (
-            <View style={[styles.subCard, { borderLeftColor: '#0EA5E9' }]}>
-              <Ionicons name="time-outline" size={20} color="#0EA5E9" style={{ marginBottom: 6 }} />
+            <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
+              <Ionicons name="time-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.subCardLabel}>Próximos</Text>
-              <Text style={[styles.subCardValue, { color: '#0EA5E9' }]}>
+              <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
                 {formatCOP(earnings?.upcomingAmount || 0)}
               </Text>
             </View>

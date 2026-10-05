@@ -267,7 +267,7 @@ export default function CompletedTripsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: COLORS.background,
   },
   header: {
     paddingVertical: SPACING.md,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.sm,
@@ -390,7 +390,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    backgroundColor: COLORS.successLight,
   },
   ratedText: {
     marginLeft: SPACING.sm,

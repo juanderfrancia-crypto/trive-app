@@ -186,7 +186,7 @@ export default function ReferralScreen() {
             </Text>
           </View>
           <View style={[styles.step, { marginBottom: 0 }]}>
-            <View style={[styles.stepNum, { backgroundColor: '#D1FAE5' }]}>
+            <View style={[styles.stepNum, { backgroundColor: COLORS.successLight }]}>
               <Ionicons name="gift-outline" size={14} color={COLORS.success} />
             </View>
             <Text style={styles.stepText}>
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   referredDate:    { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
   activePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#D1FAE5', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.successLight, borderRadius: RADIUS.full,
     paddingHorizontal: 8, paddingVertical: 4,
   },
   activePillText:  { fontSize: 11, fontWeight: '700', color: COLORS.success },

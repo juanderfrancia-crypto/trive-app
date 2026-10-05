@@ -864,13 +864,13 @@ const s = StyleSheet.create({
   fieldGroup: { padding: SPACING.lg },
   divider: { height: 1, backgroundColor: COLORS.surfaceAlt },
   fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: '#94A3B8',
+    fontSize: 11, fontWeight: '700', color: COLORS.textTertiary,
     letterSpacing: 0.8, marginBottom: SPACING.sm,
   },
 
   inputRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
     borderRadius: RADIUS.md,
     borderWidth: 1.5, borderColor: COLORS.border,
     paddingHorizontal: SPACING.md, paddingVertical: 11,
@@ -912,7 +912,7 @@ const s = StyleSheet.create({
   dropdownEmpty: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: 6, paddingHorizontal: SPACING.md, paddingVertical: 10,
-    backgroundColor: '#F8FAFC', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
     borderWidth: 1, borderColor: COLORS.border,
   },
   dropdownEmptyText: { fontSize: 13, color: COLORS.textTertiary },
@@ -927,13 +927,13 @@ const s = StyleSheet.create({
   rangesBox: { marginTop: SPACING.sm, gap: 5 },
   rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   rangeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: COLORS.primary, opacity: 0.4 },
-  rangeText: { fontSize: 12, color: '#94A3B8' },
+  rangeText: { fontSize: 12, color: COLORS.textTertiary },
   rangeValue: { fontWeight: '600', color: COLORS.textSecondary },
 
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   counterBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: COLORS.border,
+    backgroundColor: COLORS.background, borderWidth: 1.5, borderColor: COLORS.border,
     justifyContent: 'center', alignItems: 'center',
   },
   counterBtnDisabled: { opacity: 0.4 },
@@ -946,7 +946,7 @@ const s = StyleSheet.create({
   counterLabel: { fontSize: 14, color: COLORS.textSecondary, marginLeft: SPACING.sm },
 
   notesInput: {
-    backgroundColor: '#F8FAFC', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
     borderWidth: 1.5, borderColor: COLORS.border,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
     fontSize: 15, color: COLORS.textPrimary, minHeight: 80,
@@ -968,7 +968,7 @@ const s = StyleSheet.create({
   publishBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 
   disclaimer: {
-    fontSize: 12, color: '#94A3B8', textAlign: 'center', lineHeight: 18,
+    fontSize: 12, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 18,
     marginHorizontal: SPACING.lg, marginTop: SPACING.md, marginBottom: SPACING.lg,
   },
 
@@ -994,7 +994,7 @@ const s = StyleSheet.create({
     gap: SPACING.sm,
   },
   activeRequestCard: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.border,
@@ -1020,7 +1020,7 @@ const s = StyleSheet.create({
     color: COLORS.textTertiary,
   },
   activeRequestPriceBox: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.sm,
@@ -1028,7 +1028,7 @@ const s = StyleSheet.create({
   activeRequestPrice: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#065F46',
+    color: COLORS.success,
   },
   activeRequestBottom: {
     flexDirection: 'row',
@@ -1208,21 +1208,21 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt,
   },
   requestBadgeActive: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successLight,
   },
   requestBadgeAccepted: {
-    backgroundColor: '#DBEAFE',
+    backgroundColor: COLORS.primaryTint,
   },
   requestBadgeCompleted: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successLight,
   },
   requestBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#059669',
+    color: COLORS.success,
   },
   requestBadgeCompletedText: {
     fontSize: 11,

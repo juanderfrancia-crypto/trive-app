@@ -159,13 +159,13 @@ export function StatsScreen() {
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <Ionicons key={`full-${i}`} name="star" size={18} color="#FFD700" />
+        <Ionicons key={`full-${i}`} name="star" size={18} color={COLORS.warning} />
       );
     }
 
     if (hasHalfStar) {
       stars.push(
-        <Ionicons key="half" name="star-half" size={18} color="#FFD700" />
+        <Ionicons key="half" name="star-half" size={18} color={COLORS.warning} />
       );
     }
 
@@ -220,7 +220,7 @@ export function StatsScreen() {
       {/* Trips Stats */}
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#E0E7FF' }]}>
+          <View style={[styles.statIcon, { backgroundColor: COLORS.primaryTint }]}>
             <Ionicons name="car-outline" size={28} color={COLORS.primary} />
           </View>
           <Text style={styles.statCardValue}>{stats?.total_trips || 0}</Text>
@@ -228,7 +228,7 @@ export function StatsScreen() {
         </View>
 
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#D1FAE5' }]}>
+          <View style={[styles.statIcon, { backgroundColor: COLORS.successLight }]}>
             <Ionicons name="checkmark-circle-outline" size={28} color={COLORS.success} />
           </View>
           <Text style={styles.statCardValue}>{stats?.completed_trips || 0}</Text>
@@ -236,7 +236,7 @@ export function StatsScreen() {
         </View>
 
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#FEE2E2' }]}>
+          <View style={[styles.statIcon, { backgroundColor: COLORS.errorLight }]}>
             <Ionicons name="close-circle-outline" size={28} color={COLORS.error} />
           </View>
           <Text style={styles.statCardValue}>{stats?.cancelled_trips || 0}</Text>
@@ -245,7 +245,7 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: COLORS.warningLight }]}>
-            <Ionicons name="people-outline" size={28} color="#FF9500" />
+            <Ionicons name="people-outline" size={28} color={COLORS.warning} />
           </View>
           <Text style={styles.statCardValue}>{stats?.total_passengers || 0}</Text>
           <Text style={styles.statCardLabel}>Pasajeros</Text>
@@ -344,7 +344,7 @@ export function StatsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.surfaceAlt,
   },
   centerContent: {
     justifyContent: 'center',
@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: COLORS.background,
   },
   routeTitle: {
     fontSize: 14,
@@ -544,11 +544,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: '#E0F2FE',
+    backgroundColor: COLORS.primaryTint,
   },
   routeStatusText: {
     fontSize: 12,
-    color: '#0369A1',
+    color: COLORS.primary,
     fontWeight: '700',
     textTransform: 'uppercase',
   },

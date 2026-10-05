@@ -698,11 +698,11 @@ export default function DriverPanelScreen() {
                                       <Ionicons
                                         name={passenger.payment_method === 'digital' ? 'phone-portrait-outline' : 'cash-outline'}
                                         size={10}
-                                        color={passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A'}
+                                        color={passenger.payment_method === 'digital' ? COLORS.primary : COLORS.success}
                                       />
                                       <Text style={[
                                         styles.paymentPillText,
-                                        { color: passenger.payment_method === 'digital' ? '#6C1FC6' : '#16A34A' },
+                                        { color: passenger.payment_method === 'digital' ? COLORS.primary : COLORS.success },
                                       ]}>
                                         {passenger.payment_method === 'digital' ? 'Digital' : 'Efectivo'}
                                       </Text>
@@ -746,7 +746,7 @@ export default function DriverPanelScreen() {
                 <View style={styles.earningsSection}>
                   <View style={styles.earningsLeft}>
                     <View style={styles.earningsIconWrap}>
-                      <Ionicons name="wallet" size={16} color="#059669" />
+                      <Ionicons name="wallet" size={16} color={COLORS.success} />
                     </View>
                     <View>
                       <Text style={styles.earningsLabel}>Ingresos estimados</Text>
@@ -764,7 +764,7 @@ export default function DriverPanelScreen() {
                 {seatsFilled === 0 && route.status === 'scheduled' && (
                   <View style={styles.noPassengersWarning}>
                     <View style={styles.warningIconWrap}>
-                      <Ionicons name="megaphone-outline" size={16} color="#D97706" />
+                      <Ionicons name="megaphone-outline" size={16} color={COLORS.warningDark} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.warningTitle}>Sin pasajeros aún</Text>
@@ -841,7 +841,7 @@ export default function DriverPanelScreen() {
                       activeOpacity={0.85}
                     >
                       <LinearGradient
-                        colors={['#059669', COLORS.success]}
+                        colors={[COLORS.success, COLORS.success]}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={styles.primaryActionBtn}
                       >
@@ -903,7 +903,7 @@ export default function DriverPanelScreen() {
                 setTimeout(() => navigation.navigate('RecurringRoutes' as never), 150)
               }}
             >
-              <LinearGradient colors={['#6C1FC6', '#8B5CF6']} style={styles.menuItemIcon}>
+              <LinearGradient colors={[COLORS.primary, COLORS.primary]} style={styles.menuItemIcon}>
                 <Ionicons name="repeat" size={20} color="#fff" />
               </LinearGradient>
               <View style={styles.menuItemText}>
@@ -1076,7 +1076,7 @@ const styles = StyleSheet.create({
   routeCardActive: {
     borderColor: COLORS.success,
     borderLeftWidth: 4,
-    backgroundColor: '#F7FFFE',
+    backgroundColor: COLORS.background,
     shadowColor: COLORS.success,
     shadowOpacity: 0.12,
     elevation: 4,
@@ -1125,7 +1125,7 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
   },
   routeTrackLine: {
-    width: 1.5, height: 12, backgroundColor: '#CBD5E1',
+    width: 1.5, height: 12, backgroundColor: COLORS.border,
   },
   routeTrackDotEnd: {
     backgroundColor: '#fff',
@@ -1140,7 +1140,7 @@ const styles = StyleSheet.create({
     fontSize: 15, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
   },
   destText: {
-    fontSize: 14, fontWeight: '600', color: '#334155',
+    fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
   },
   routeDateTime: {
     fontSize: 12, color: COLORS.textTertiary, fontWeight: '500', marginTop: 2,
@@ -1167,14 +1167,14 @@ const styles = StyleSheet.create({
   },
   vehiclePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: COLORS.primaryTint,
+    backgroundColor: COLORS.primaryTint, borderWidth: 1, borderColor: COLORS.primaryTint,
     borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 5,
   },
   vehiclePillText: {
-    fontSize: 12, fontWeight: '500', color: '#334155',
+    fontSize: 12, fontWeight: '500', color: COLORS.textPrimary,
   },
   vehiclePlatePill: {
-    backgroundColor: COLORS.primaryTint, borderColor: '#C7D2FE',
+    backgroundColor: COLORS.primaryTint, borderColor: COLORS.primaryTint,
   },
   vehiclePlateText: {
     fontSize: 12, fontWeight: '700', color: COLORS.primaryDark, letterSpacing: 0.5,
@@ -1218,13 +1218,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   seatEmpty: {
-    backgroundColor: '#F0F4FF',
+    backgroundColor: COLORS.primaryTint,
     borderWidth: 1,
     borderColor: COLORS.primaryTint,
   },
   seatsMore: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: COLORS.primaryTint,
+    backgroundColor: COLORS.primaryTint, borderWidth: 1, borderColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center',
   },
   seatsMoreText: {
@@ -1298,8 +1298,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 3,
     borderRadius: RADIUS.full, paddingHorizontal: 7, paddingVertical: 2,
   },
-  paymentPillDigital: { backgroundColor: '#EDE9FE' },
-  paymentPillCash:    { backgroundColor: '#F0FDF4' },
+  paymentPillDigital: { backgroundColor: COLORS.primaryTint },
+  paymentPillCash:    { backgroundColor: COLORS.successLight },
   paymentPillText: {
     fontSize: 11, fontWeight: '600',
   },
@@ -1324,7 +1324,7 @@ const styles = StyleSheet.create({
     minWidth: 16,
     height: 16,
     borderRadius: 8,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.textPrimary,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 3,
@@ -1339,26 +1339,26 @@ const styles = StyleSheet.create({
   // Earnings Section
   earningsSection: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#F0FDF4', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.successLight, borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md, paddingVertical: 12,
     marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: '#BBF7D0',
+    borderWidth: 1, borderColor: COLORS.successLight,
   },
   earningsLeft: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
   },
   earningsIconWrap: {
     width: 34, height: 34, borderRadius: 10,
-    backgroundColor: '#DCFCE7', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.successLight, justifyContent: 'center', alignItems: 'center',
   },
   earningsLabel: {
-    fontSize: 12, fontWeight: '600', color: '#166534',
+    fontSize: 12, fontWeight: '600', color: COLORS.success,
   },
   earningsDetail: {
-    fontSize: 11, color: '#4ADE80', fontWeight: '500', marginTop: 2,
+    fontSize: 11, color: COLORS.success, fontWeight: '500', marginTop: 2,
   },
   earningsValue: {
-    fontSize: 20, fontWeight: '800', color: '#16A34A', letterSpacing: -0.5,
+    fontSize: 20, fontWeight: '800', color: COLORS.success, letterSpacing: -0.5,
   },
 
   // Actions Section
@@ -1434,12 +1434,12 @@ const styles = StyleSheet.create({
   // Warning
   noPassengersWarning: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#FFFBEB',
+    backgroundColor: COLORS.warningLight,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     gap: SPACING.sm,
     marginBottom: SPACING.sm,
-    borderWidth: 1, borderColor: '#FDE68A',
+    borderWidth: 1, borderColor: COLORS.warningLight,
   },
   warningIconWrap: {
     width: 34, height: 34, borderRadius: 10,
@@ -1451,12 +1451,12 @@ const styles = StyleSheet.create({
     fontSize: 13, fontWeight: '700', color: COLORS.warningDark, marginBottom: 2,
   },
   warningText: {
-    fontSize: 12, color: '#B45309', lineHeight: 16,
+    fontSize: 12, color: COLORS.warningDark, lineHeight: 16,
   },
 
   // Dropoff Groups
   dropoffGroupItem: {
-    backgroundColor: '#FAFBFF',
+    backgroundColor: COLORS.background,
     borderRadius: RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
@@ -1483,11 +1483,11 @@ const styles = StyleSheet.create({
     fontSize: 11, color: COLORS.textSecondary, marginTop: 1,
   },
   customBadge: {
-    backgroundColor: '#EDE9FE', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full,
     paddingHorizontal: 8, paddingVertical: 3,
   },
   customBadgeText: {
-    fontSize: 10, fontWeight: '700', color: '#6C1FC6',
+    fontSize: 10, fontWeight: '700', color: COLORS.primary,
   },
   passengersInGroup: {
     paddingHorizontal: SPACING.md,

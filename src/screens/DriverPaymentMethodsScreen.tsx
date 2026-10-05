@@ -22,8 +22,8 @@ interface DriverPaymentMethod {
 }
 
 const METHOD_CONFIG: Record<MethodType, { label: string; color: string; icon: string; placeholder: string }> = {
-  nequi:     { label: 'Nequi',     color: '#6C1FC6', icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
-  daviplata: { label: 'Daviplata', color: '#E31E24', icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
+  nequi:     { label: 'Nequi',     color: COLORS.primary, icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
+  daviplata: { label: 'Daviplata', color: COLORS.error, icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
 }
 
 export default function DriverPaymentMethodsScreen() {
@@ -135,15 +135,15 @@ export default function DriverPaymentMethodsScreen() {
         <View style={s.section}>
           <Text style={s.sectionLabel}>SIEMPRE DISPONIBLE</Text>
           <View style={s.methodCard}>
-            <View style={[s.methodIcon, { backgroundColor: '#F0FDF4' }]}>
-              <Ionicons name="cash-outline" size={22} color="#16A34A" />
+            <View style={[s.methodIcon, { backgroundColor: COLORS.successLight }]}>
+              <Ionicons name="cash-outline" size={22} color={COLORS.success} />
             </View>
             <View style={s.methodInfo}>
               <Text style={s.methodLabel}>Efectivo</Text>
               <Text style={s.methodSub}>Los pasajeros pueden pagarte en efectivo al subir</Text>
             </View>
             <View style={s.methodBadge}>
-              <Ionicons name="checkmark-circle" size={18} color="#16A34A" />
+              <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
             </View>
           </View>
         </View>

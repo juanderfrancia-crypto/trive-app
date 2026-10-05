@@ -507,15 +507,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#C7D2FE',
+    borderColor: COLORS.primaryTint,
     padding: SPACING.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  priceLabel: { fontSize: 11, fontWeight: '600', color: '#3730A3' },
+  priceLabel: { fontSize: 11, fontWeight: '600', color: COLORS.primaryDark },
   priceValue: { fontSize: 28, fontWeight: '800', color: COLORS.primary, letterSpacing: -1 },
-  priceHint: { fontSize: 11, color: '#6366F1', marginTop: SPACING.xs },
+  priceHint: { fontSize: 11, color: COLORS.primary, marginTop: SPACING.xs },
   priceEditBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -554,15 +554,15 @@ const styles = StyleSheet.create({
 
   // Accepted offer
   acceptedOfferCard: {
-    backgroundColor: '#ECFDF5',
+    backgroundColor: COLORS.successLight,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#A7F3D0',
+    borderColor: COLORS.successLight,
     padding: SPACING.lg,
   },
   acceptedPrice: { marginTop: SPACING.md, alignItems: 'center' },
-  acceptedPriceLabel: { fontSize: 12, fontWeight: '600', color: '#047857' },
-  acceptedPriceValue: { fontSize: 28, fontWeight: '800', color: '#059669', letterSpacing: -1 },
+  acceptedPriceLabel: { fontSize: 12, fontWeight: '600', color: COLORS.success },
+  acceptedPriceValue: { fontSize: 28, fontWeight: '800', color: COLORS.success, letterSpacing: -1 },
 
   // Buttons
   acceptBtn: {

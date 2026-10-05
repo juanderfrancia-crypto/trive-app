@@ -140,7 +140,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAFAFA' },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
   content: { paddingBottom: 48 },
 
@@ -214,7 +214,7 @@ const s = StyleSheet.create({
     gap: SPACING.sm,
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
-    backgroundColor: '#EEF4FF',
+    backgroundColor: COLORS.primaryTint,
     padding: SPACING.lg,
     borderRadius: RADIUS.md,
     borderWidth: 1,

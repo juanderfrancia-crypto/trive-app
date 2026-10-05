@@ -22,7 +22,7 @@ const STEPS = [
     icon: 'shield-checkmark-outline' as const,
     title: 'Verificación',
     desc: 'Revisamos tus datos en 24-48 h',
-    color: '#7C3AED',
+    color: COLORS.primary,
   },
   {
     number: '3',
@@ -143,7 +143,7 @@ export default function DriverOnboardingScreen() {
         {/* Código de referido */}
         <View style={s.referralBlock}>
           <View style={s.referralHeader}>
-            <Ionicons name="gift-outline" size={18} color="#7C3AED" />
+            <Ionicons name="gift-outline" size={18} color={COLORS.primary} />
             <Text style={s.referralTitle}>¿Tienes un código de referido?</Text>
           </View>
           <Text style={s.referralSub}>Si un conductor te invitó, ingresa su código y tu primera publicación costará solo $1.000</Text>
@@ -290,14 +290,14 @@ const s = StyleSheet.create({
   referralHeader: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6,
   },
-  referralTitle: { fontSize: 14, fontWeight: '700', color: '#5B21B6' },
+  referralTitle: { fontSize: 14, fontWeight: '700', color: COLORS.primaryDark },
   referralSub:   { fontSize: 12, color: COLORS.textSecondary, lineHeight: 17, marginBottom: SPACING.md },
   referralInputWrap: {
     backgroundColor: '#fff', borderRadius: 10,
     borderWidth: 1, borderColor: 'rgba(124,58,237,0.25)',
     paddingHorizontal: 14,
   },
-  referralInput: { fontSize: 16, fontWeight: '700', color: '#5B21B6', height: 46, letterSpacing: 2 },
+  referralInput: { fontSize: 16, fontWeight: '700', color: COLORS.primaryDark, height: 46, letterSpacing: 2 },
 
   // Footer
   footer: {

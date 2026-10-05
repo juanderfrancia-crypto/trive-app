@@ -69,38 +69,38 @@ export default function TripPreferencesScreen() {
 
   const beverageOptions: PreferenceOption[] = [
     { label: '💧 Agua', value: 'agua', icon: 'water', color: COLORS.primary },
-    { label: '🧃 Jugo', value: 'jugo', icon: 'cafe', color: '#FF9500' },
+    { label: '🧃 Jugo', value: 'jugo', icon: 'cafe', color: COLORS.warning },
     { label: 'Ninguno', value: null, icon: 'close-circle', color: COLORS.textTertiary },
   ]
 
   const snackOptions: PreferenceOption[] = [
-    { label: '🍪 Dulce', value: 'dulce', icon: 'happy', color: '#FF6B6B' },
-    { label: '🥜 Salado', value: 'salado', icon: 'checkmark', color: '#4ECDC4' },
+    { label: '🍪 Dulce', value: 'dulce', icon: 'happy', color: COLORS.error },
+    { label: '🥜 Salado', value: 'salado', icon: 'checkmark', color: COLORS.success },
     { label: 'Ninguno', value: null, icon: 'close-circle', color: COLORS.textTertiary },
   ]
 
   const temperatureOptions: PreferenceOption[] = [
-    { label: '❄️ Frío', value: 'frio', icon: 'snow', color: '#5DADE2' },
-    { label: '🌡️ Ambiente', value: 'ambiente', icon: 'sunny', color: '#F4D03F' },
-    { label: '🔥 Caliente', value: 'caliente', icon: 'flame', color: '#E74C3C' },
+    { label: '❄️ Frío', value: 'frio', icon: 'snow', color: COLORS.primary },
+    { label: '🌡️ Ambiente', value: 'ambiente', icon: 'sunny', color: COLORS.warning },
+    { label: '🔥 Caliente', value: 'caliente', icon: 'flame', color: COLORS.error },
   ]
 
   const musicOptions: PreferenceOption[] = [
-    { label: '🎵 Música', value: 'si', icon: 'musical-notes', color: '#9B59B6' },
+    { label: '🎵 Música', value: 'si', icon: 'musical-notes', color: COLORS.primary },
     { label: '🔇 Silencio', value: 'no', icon: 'volume-mute', color: COLORS.textTertiary },
-    { label: '🔉 Bajo volumen', value: 'bajo', icon: 'volume-low', color: '#3498DB' },
+    { label: '🔉 Bajo volumen', value: 'bajo', icon: 'volume-low', color: COLORS.primary },
   ]
 
   const conversationOptions: PreferenceOption[] = [
     { label: '💬 Conversador', value: 'conversador', icon: 'chatbubbles', color: COLORS.primary },
     { label: '🤐 Silencioso', value: 'silencioso', icon: 'ban', color: COLORS.textTertiary },
-    { label: '😊 Neutral', value: 'neutral', icon: 'ellipsis-horizontal', color: '#95A5A6' },
+    { label: '😊 Neutral', value: 'neutral', icon: 'ellipsis-horizontal', color: COLORS.textTertiary },
   ]
 
   const carTempOptions: PreferenceOption[] = [
-    { label: '❄️ Aire frío', value: 'frio', icon: 'snow', color: '#5DADE2' },
-    { label: '🌡️ Normal', value: 'ambiente', icon: 'sunny', color: '#F4D03F' },
-    { label: '🔥 Aire caliente', value: 'caliente', icon: 'flame', color: '#E74C3C' },
+    { label: '❄️ Aire frío', value: 'frio', icon: 'snow', color: COLORS.primary },
+    { label: '🌡️ Normal', value: 'ambiente', icon: 'sunny', color: COLORS.warning },
+    { label: '🔥 Aire caliente', value: 'caliente', icon: 'flame', color: COLORS.error },
   ]
 
   if (loading) {

@@ -49,10 +49,10 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_BG: Record<string, string> = {
-  completed: '#ECFDF5',
-  cancelled: '#FEF2F2',
+  completed: COLORS.successLight,
+  cancelled: COLORS.errorLight,
   scheduled: COLORS.primaryTint,
-  in_progress: '#FFFBEB',
+  in_progress: COLORS.warningLight,
 }
 
 export default function TripHistoryScreen() {
@@ -493,7 +493,7 @@ const s = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0E1A4A',
+    color: COLORS.textPrimary,
   },
   deleteAllBtn: {
     width: 38, height: 38,
@@ -607,7 +607,7 @@ const s = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '700',
-    color: '#0E1A4A',
+    color: COLORS.textPrimary,
   },
   price: {
     fontSize: 14,
@@ -677,7 +677,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
-    backgroundColor: '#ECFDF5',
+    backgroundColor: COLORS.successLight,
   },
   ratedText: {
     fontSize: 11,
@@ -724,7 +724,7 @@ const s = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0E1A4A',
+    color: COLORS.textPrimary,
   },
   emptyText: {
     fontSize: 14,

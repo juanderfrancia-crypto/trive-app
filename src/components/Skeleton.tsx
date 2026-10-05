@@ -258,7 +258,7 @@ const sk = StyleSheet.create({
   barGray: { borderRadius: 6, backgroundColor: GRAY },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
   avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: GRAY },
-  priceBadgeSk: { width: 72, height: 30, borderRadius: RADIUS.sm, backgroundColor: '#D1FAE5' },
+  priceBadgeSk: { width: 72, height: 30, borderRadius: RADIUS.sm, backgroundColor: COLORS.successLight },
   routeBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -276,7 +276,7 @@ const sk = StyleSheet.create({
   dotGray: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.border },
   chipsRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
   chip: { width: 90, height: 28, borderRadius: RADIUS.sm, backgroundColor: GRAY },
-  acceptBtnSk: { height: 46, borderRadius: RADIUS.md, backgroundColor: '#C7D2FE' },
+  acceptBtnSk: { height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint },
 
   // ── Ride card (white) ───────────────────────────────────────────────────────
   rideCard: {

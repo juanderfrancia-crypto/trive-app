@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   sub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F4F6FB', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.md,
     marginHorizontal: SPACING.lg, marginVertical: SPACING.md,
     paddingHorizontal: SPACING.md, gap: SPACING.sm,
   },

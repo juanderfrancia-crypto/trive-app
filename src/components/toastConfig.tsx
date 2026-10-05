@@ -4,10 +4,10 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 
 const TYPE_CONFIG = {
-  success: { icon: 'checkmark-circle' as const, color: '#34D399' },
-  error:   { icon: 'close-circle'     as const, color: '#F87171' },
+  success: { icon: 'checkmark-circle' as const, color: COLORS.success },
+  error:   { icon: 'close-circle'     as const, color: COLORS.error },
   warning: { icon: 'warning'          as const, color: COLORS.warning },
-  info:    { icon: 'information-circle' as const, color: '#60A5FA' },
+  info:    { icon: 'information-circle' as const, color: COLORS.primary },
 }
 
 function TriveToast({ text1, text2, type = 'info' }: {
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.textPrimary,
     borderRadius: 100,
     paddingVertical: 12,
     paddingHorizontal: 18,
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.textTertiary,
     marginTop: 1,
     lineHeight: 17,
   },

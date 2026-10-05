@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     padding: 16,
-    backgroundColor: '#f0f7ff',
+    backgroundColor: COLORS.primaryTint,
     borderRadius: 12,
   },
   infoSection: {
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e5e5e5',
+    backgroundColor: COLORS.border,
     marginVertical: 12,
   },
   colorContainer: {
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#e5e5e5',
+    borderColor: COLORS.border,
   },
   editButton: {
     flexDirection: 'row',

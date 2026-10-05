@@ -279,7 +279,7 @@ export default function TripStatusScreen() {
 
             {/* Vehicle Card */}
             <LinearGradient
-              colors={[COLORS.primaryTint, '#BDCEFF', '#A8BBFF']}
+              colors={[COLORS.primaryTint, COLORS.primaryTint, COLORS.primaryTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.vehicleCardGradient}
@@ -917,7 +917,7 @@ const styles = StyleSheet.create({
     minWidth: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#111111',
+    backgroundColor: COLORS.textPrimary,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 4,

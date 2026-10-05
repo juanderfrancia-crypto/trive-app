@@ -517,7 +517,7 @@ export default function AirportFeedScreen() {
                             <Ionicons
                               name={star <= selectedRating ? 'star' : 'star-outline'}
                               size={32}
-                              color={star <= selectedRating ? COLORS.warning : '#CBD5E1'}
+                              color={star <= selectedRating ? COLORS.warning : COLORS.border}
                             />
                           </TouchableOpacity>
                         ))}
@@ -674,9 +674,9 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#C7D2FE',
+    borderBottomColor: COLORS.primaryTint,
   },
-  commissionText: { fontSize: 13, color: '#3730A3' },
+  commissionText: { fontSize: 13, color: COLORS.primaryDark },
   commissionBold: { fontWeight: '700' },
 
   // List
@@ -712,12 +712,12 @@ const s = StyleSheet.create({
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontSize: 12, color: COLORS.textTertiary },
   priceBadge: {
-    backgroundColor: '#D1FAE5',
+    backgroundColor: COLORS.successLight,
     borderRadius: RADIUS.sm,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  priceBadgeText: { color: '#065F46', fontSize: 14, fontWeight: '700' },
+  priceBadgeText: { color: COLORS.success, fontSize: 14, fontWeight: '700' },
 
   // Route
   routeBox: {
@@ -732,7 +732,7 @@ const s = StyleSheet.create({
   routeLine: { alignItems: 'center', gap: 0 },
   dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.success },
   lineSegment: { width: 2, height: 28, backgroundColor: COLORS.border, marginVertical: 3 },
-  dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6' },
+  dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
   routeLabels: { flex: 1, gap: 12 },
   routeCity: { fontSize: 14, fontWeight: '500', color: COLORS.textPrimary },
 
@@ -787,9 +787,9 @@ const s = StyleSheet.create({
   btnChat: {
     backgroundColor: 'rgba(59, 130, 246, 0.1)',
     borderWidth: 1,
-    borderColor: '#3B82F6',
+    borderColor: COLORS.primary,
   },
-  btnChatText: { fontSize: 13, fontWeight: '600', color: '#3B82F6' },
+  btnChatText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
   btnDisabled: { opacity: 0.5 },
 
   // Empty state
@@ -844,7 +844,7 @@ const s = StyleSheet.create({
     color: COLORS.textPrimary,
     paddingVertical: SPACING.md,
   },
-  infoText: { fontSize: 12, color: '#3B82F6', fontWeight: '500' },
+  infoText: { fontSize: 12, color: COLORS.primary, fontWeight: '500' },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -867,7 +867,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   tripBadgeAirport: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
   },
   tripBadgeCenter: {
     backgroundColor: COLORS.success,

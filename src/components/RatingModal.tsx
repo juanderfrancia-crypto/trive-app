@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     borderWidth: 1.5,
     borderColor: '#ddd',
-    backgroundColor: '#fafafa',
+    backgroundColor: COLORS.background,
   },
   toggleButtonActive: {
     borderWidth: 0,

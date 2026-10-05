@@ -238,7 +238,7 @@ export default function SettingsScreen() {
           activeOpacity={0.7}
         >
           <View style={styles.settingHeader}>
-            <View style={[styles.settingIcon, { backgroundColor: '#FEF2F2' }]}>
+            <View style={[styles.settingIcon, { backgroundColor: COLORS.errorLight }]}>
               <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
             </View>
             <View style={styles.settingContent}>
@@ -453,9 +453,9 @@ const sosStyles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
   sheet: { backgroundColor: '#fff', borderRadius: 20, padding: SPACING.lg, width: '100%', gap: SPACING.md },
   header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  title: { fontSize: 16, fontWeight: '800', color: '#0E1A4A' },
+  title: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
   sub: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
-  input: { borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 12, padding: 12, fontSize: 14, color: '#0E1A4A', backgroundColor: COLORS.surfaceAlt },
+  input: { borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 12, padding: 12, fontSize: 14, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt },
   btnRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: 4 },
   cancelBtn: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: COLORS.surfaceAlt, alignItems: 'center' },
   cancelText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },

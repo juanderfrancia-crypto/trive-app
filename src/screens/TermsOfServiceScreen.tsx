@@ -133,7 +133,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FAFAFA' },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flex: 1 },
   content: { paddingBottom: 48 },
 

@@ -1,3 +1,4 @@
+import { COLORS } from '../theme/theme'
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -19,7 +20,7 @@ interface RatingStarsProps {
 export const RatingStars: React.FC<RatingStarsProps> = ({
   rating,
   size = 16,
-  color = '#FFD700',
+  color = COLORS.warning,
   showText = true,
 }) => {
   // Redondear a media estrella

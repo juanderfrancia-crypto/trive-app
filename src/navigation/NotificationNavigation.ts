@@ -115,14 +115,14 @@ export function getNotificationColor(notificationType: Notification['type']): st
     offer_received: COLORS.warning,
     offer_accepted: COLORS.success,
     trip_confirmed: COLORS.success,
-    trip_started: '#3B82F6',
-    trip_completed: '#8B5CF6',
-    trip_rated: '#EC4899',
+    trip_started: COLORS.primary,
+    trip_completed: COLORS.primary,
+    trip_rated: COLORS.primary,
     trip_update: COLORS.primaryDark,
     booking: COLORS.primaryDark,
-    driver_arrived: '#3B82F6',
-    review_pending: '#EC4899',
-    message: '#6366F1',
+    driver_arrived: COLORS.primary,
+    review_pending: COLORS.primary,
+    message: COLORS.primary,
   }
-  return colors[notificationType] || '#6B7280'
+  return colors[notificationType] || COLORS.textSecondary
 }
