@@ -411,6 +411,120 @@ check('La recarga queda en el libro como recharge aprobada',
 check('La recarga queda en la bitácora de administrador',
   (await q(`SELECT count(*)::int c FROM admin_actions WHERE target_user_id='${D}' AND action='balance_recharge'`))[0].c === 1)
 
+// ---------- Pago directo y código de reserva (fase 2s) ----------
+await asSuper()
+const RT = '00000000-0000-0000-0000-0000000000a5' // viaje nuevo del conductor D
+await db.exec(`INSERT INTO routes (id, driver_id, origin, destination, departure_time, price_per_seat, total_seats, available_seats, status) VALUES ('${RT}','${D}','Puerto Tejada','Cali', now_bogota() + interval '1 day', 12000, 5, 5, 'scheduled')`)
+
+await asUser(P)
+const compraP = await q(`SELECT id, payment_method, reservation_code FROM public.reserve_seats('${RT}', ARRAY[1,2], 'transfer', NULL, false)`)
+check('Transferencia es un método de pago aceptado', compraP.length === 2 && compraP.every((b) => b.payment_method === 'transfer'))
+const eCard = await err(() => db.exec(`SELECT * FROM public.reserve_seats('${RT}', ARRAY[3], 'card', NULL, false)`))
+check('Tarjeta se rechaza al reservar', eCard?.message.includes('Método de pago no válido') === true)
+const eWallet = await err(() => db.exec(`SELECT * FROM public.reserve_seats('${RT}', ARRAY[3], 'wallet', NULL, false)`))
+check('Billetera se rechaza al reservar', eWallet?.message.includes('Método de pago no válido') === true)
+
+await asSuper()
+const eCardDirecto = await err(() => db.exec(`INSERT INTO bookings (route_id, passenger_id, seat_number, price, payment_method, booking_status) VALUES ('${RT}','${P}',3,12000,'card','pending')`))
+check('El servidor rechaza tarjeta también en escritura directa', eCardDirecto?.message.includes('Método de pago no válido') === true)
+await db.exec(`ALTER TABLE public.bookings DISABLE TRIGGER bookings_guard_payment_method;
+  INSERT INTO bookings (route_id, passenger_id, seat_number, price, payment_method, booking_status) VALUES ('${RT}','${P}',5,12000,'card','awaiting_confirmation');
+  ALTER TABLE public.bookings ENABLE TRIGGER bookings_guard_payment_method;`)
+const eLegado = await err(() => db.exec(`UPDATE bookings SET booking_status='cancelled', cancelled_at=now() WHERE route_id='${RT}' AND seat_number=5`))
+check('Reserva anterior con tarjeta sigue pudiendo actualizarse (compatibilidad)', eLegado === null, eLegado?.message)
+
+const cod = compraP[0].reservation_code
+const codeRe = /^TRV-[A-Z2-9]{6}$/
+check('Código con formato TRV-XXXXXX de 6 caracteres sin 0, O, 1, I, L',
+  /^TRV-[A-HJ-KM-NP-Z2-9]{6}$/.test(cod) && !/[01OIL]/.test(cod.slice(4)), cod)
+const muestras = (await q(`SELECT public.generate_reservation_code() AS c FROM generate_series(1, 300)`)).map((r) => r.c)
+check('El generador nunca produce caracteres prohibidos (300 muestras)',
+  muestras.every((c) => /^TRV-[A-HJ-KM-NP-Z2-9]{6}$/.test(c)) && codeRe.test(muestras[0]))
+check('Todos los asientos de una compra comparten el mismo código',
+  compraP[0].reservation_code === compraP[1].reservation_code && compraP[0].reservation_code !== null)
+
+await asUser(P2)
+const compraP2 = await q(`SELECT reservation_code FROM public.reserve_seats('${RT}', ARRAY[4], 'cash', NULL, false)`)
+check('Dos compras distintas tienen códigos distintos', compraP2[0].reservation_code !== cod)
+// Si el código generado ya existe, reserve_seats reintenta con otro (simulado con un generador de prueba
+// que devuelve primero un código ya usado y luego uno nuevo; se revierte al terminar).
+await asSuper()
+let reintento
+try {
+  await db.exec(`BEGIN;
+    CREATE TABLE public.gen_test (n int); INSERT INTO public.gen_test VALUES (0);
+    CREATE OR REPLACE FUNCTION public.generate_reservation_code() RETURNS text LANGUAGE plpgsql AS $$
+    DECLARE v_n int;
+    BEGIN
+      UPDATE public.gen_test SET n = n + 1 RETURNING n - 1 INTO v_n;
+      IF v_n = 0 THEN RETURN '${cod}'; END IF;
+      RETURN 'TRV-BBBBBB';
+    END $$;`)
+  await asUser(P2)
+  reintento = (await q(`SELECT reservation_code FROM public.reserve_seats('${RT}', ARRAY[3], 'cash', NULL, false)`))[0]?.reservation_code
+} catch (e) {
+  reintento = 'ERROR: ' + e.message
+} finally {
+  await db.exec('ROLLBACK')
+  await asSuper()
+}
+check('Si el código ya existe, reserve_seats reintenta y usa uno nuevo', reintento === 'TRV-BBBBBB', String(reintento))
+await asSuper()
+check('Tras el rollback el generador real vuelve a su versión',
+  /^TRV-[A-HJ-KM-NP-Z2-9]{6}$/.test((await q(`SELECT public.generate_reservation_code() AS c`))[0].c))
+
+await asUser(P)
+const finT = await q(`SELECT success FROM public.finalize_bookings_atomic(ARRAY['${compraP[0].id}'::uuid,'${compraP[1].id}'::uuid], 'transfer')`)
+check('Pasajero confirma la compra pagada por transferencia', finT[0]?.success === true)
+await asSuper()
+check('Confirmar no convierte la transferencia en efectivo',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_method='transfer'`))[0].c === 2)
+check('Al confirmar, el pago aún no está marcado ni confirmado',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_marked_at IS NULL AND payment_confirmed_at IS NULL`))[0].c === 2)
+
+await asUser(S)
+const markS = (await q(`SELECT public.passenger_mark_paid('${cod}') AS r`))[0].r
+check('Pasajero ajeno no puede marcar el pago de una reserva', markS.ok === false, markS.message)
+await asSuper()
+check('El intento ajeno no deja marca de pago',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_marked_at IS NOT NULL`))[0].c === 0)
+
+await asUser(P)
+const markP = (await q(`SELECT public.passenger_mark_paid('${cod}') AS r`))[0].r
+check('Pasajero marca su pago de la compra', markP.ok === true, markP.message)
+await asSuper()
+check('Marcar pago fija payment_marked_at en todos los asientos de la compra',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_marked_at IS NOT NULL`))[0].c === 2)
+
+await asUser(N)
+const confN = (await q(`SELECT public.driver_confirm_payment('${cod}', true) AS r`))[0].r
+check('Conductor ajeno no puede confirmar el pago', confN.ok === false, confN.message)
+await asSuper()
+check('El intento de conductor ajeno no fija payment_confirmed_at',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_confirmed_at IS NOT NULL`))[0].c === 0)
+
+await asUser(D)
+const noRecibido = (await q(`SELECT public.driver_confirm_payment('${cod}', false) AS r`))[0].r
+check('Conductor deja constancia de pago no recibido', noRecibido.ok === true, noRecibido.message)
+await asSuper()
+check('Pago no recibido no cambia el estado de la reserva',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND booking_status='confirmed' AND payment_confirmed_at IS NULL`))[0].c === 2)
+check('Pago no recibido avisa al pasajero',
+  (await q(`SELECT count(*)::int c FROM notifications WHERE user_id='${P}' AND title='Pago no recibido'`))[0].c === 1)
+
+await asUser(D)
+const recibido = (await q(`SELECT public.driver_confirm_payment('${cod}', true) AS r`))[0].r
+check('Conductor confirma que recibió el pago', recibido.ok === true, recibido.message)
+await asSuper()
+check('Confirmación fija payment_confirmed_at en todos los asientos',
+  (await q(`SELECT count(*)::int c FROM bookings WHERE reservation_code='${cod}' AND payment_confirmed_at IS NOT NULL`))[0].c === 2)
+
+await asAnon()
+check('Usuario sin sesión no puede marcar pagos',
+  (await err(() => db.exec(`SELECT public.passenger_mark_paid('${cod}')`)))?.message.includes('permission denied') === true)
+check('Usuario sin sesión no puede confirmar pagos',
+  (await err(() => db.exec(`SELECT public.driver_confirm_payment('${cod}', true)`)))?.message.includes('permission denied') === true)
+
 // ---------- Eliminación de cuenta ----------
 await asSuper()
 await db.exec(`SELECT public.anonymize_account('${P}')`)

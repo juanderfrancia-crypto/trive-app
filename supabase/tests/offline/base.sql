@@ -174,7 +174,7 @@ CREATE TRIGGER trigger_booking_completion AFTER UPDATE ON bookings FOR EACH ROW 
 CREATE OR REPLACE FUNCTION public.trg_booking_confirm_correct_payment_status() RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW.booking_status = 'confirmed' AND OLD.booking_status <> 'confirmed' THEN
-    IF NEW.payment_method NOT IN ('cash','card','wallet') THEN NEW.payment_method := 'cash'; END IF;
+    IF NEW.payment_method NOT IN ('cash','transfer') THEN NEW.payment_method := 'cash'; END IF;
     NEW.payment_status := 'pending';
   END IF;
   RETURN NEW;
