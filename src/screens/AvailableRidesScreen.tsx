@@ -7,36 +7,133 @@ import {
   FlatList,
   RefreshControl,
   Alert,
-  Image as RNImage,
 } from 'react-native'
-import { Image } from 'expo-image'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
-import { useAvailableRides } from '../hooks/useAvailableRides'
+import { useAvailableRides, AvailableRide } from '../hooks/useAvailableRides'
 import { SkeletonRideCard } from '../components/Skeleton'
 import { useAppStore } from '../store/useAppStore'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
 import { supabase } from '../services/supabase'
+import { VehicleVector } from '../components/illustrations/VehicleVector'
 
-type TabFilter = 'todos' | 'saliendo' | 'llegando'
+// Reserva2: elegir conductor. Llega con origen, destino y pasajeros (búsqueda)
+// o solo con municipio (Viajes ahora desde Inicio).
+type RideParams = {
+  municipality?: string
+  origin?: string
+  destination?: string
+  passengers?: number
+}
+
+const normalizeText = (text: string): string =>
+  text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
+
+const plural = (n: number, one: string, many: string) => (n === 1 ? one : many)
+
+// "2:30 p. m." -> { hour: "2:30", period: "p. m." }
+function formatHourParts(iso: string) {
+  const full = new Date(iso).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true })
+  const match = full.match(/^(\S+)\s+(.+)$/)
+  return match ? { hour: match[1], period: match[2] } : { hour: full, period: '' }
+}
+
+const isToday = (iso: string) => new Date(iso).toDateString() === new Date().toDateString()
+
+type RideCardProps = {
+  ride: AvailableRide
+  passengers: number
+  isSearch: boolean
+  selected: boolean
+  onSelect: (id: string) => void
+}
+
+function RideCard({ ride, passengers, isSearch, selected, onSelect }: RideCardProps) {
+  const seats = ride.seats_available_count ?? 0
+  const fits = seats >= passengers
+  const isFull = seats === 0
+  const { hour, period } = formatHourParts(ride.departure_time)
+
+  let status: { text: string; color: string }
+  if (isFull) {
+    status = {
+      text: isSearch
+        ? `Sin cupos para ${passengers} ${plural(passengers, 'pasajero', 'pasajeros')}`
+        : 'Sin cupos',
+      color: COLORS.error,
+    }
+  } else if (!fits) {
+    status = {
+      text: `${seats} ${plural(seats, 'cupo libre', 'cupos libres')} · tu grupo no cabe`,
+      color: COLORS.warningDark,
+    }
+  } else {
+    status = {
+      text: `${seats} ${plural(seats, 'cupo libre', 'cupos libres')}`,
+      color: COLORS.success,
+    }
+  }
+
+  return (
+    <TouchableOpacity
+      activeOpacity={fits ? 0.85 : 1}
+      onPress={() => { if (fits) onSelect(ride.id) }}
+      accessibilityState={{ selected, disabled: !fits }}
+      style={[styles.card, selected && styles.cardSelected, isFull && styles.cardDimmed]}
+    >
+      <View style={styles.cardTop}>
+        <View style={styles.timeCol}>
+          <Text style={styles.hour}>{hour}</Text>
+          <Text style={styles.period}>{period}</Text>
+        </View>
+        <View style={styles.vDivider} />
+        <View style={styles.middle}>
+          <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
+          <View style={styles.driverRow}>
+            <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
+            <Ionicons name="star" size={12} color={COLORS.warning} />
+            <Text style={styles.ratingText}>{Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+          </View>
+          {!!ride.vehicle_plate && (
+            <View style={styles.platePill}>
+              <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
+            </View>
+          )}
+        </View>
+        <VehicleVector type={ride.vehicle_type} />
+      </View>
+
+      <View style={styles.hDivider} />
+
+      <View style={styles.cardBottom}>
+        <Text style={[styles.status, { color: status.color }]}>{status.text}</Text>
+        <Text style={styles.price}>{formatCOP(ride.price_per_seat)}</Text>
+      </View>
+    </TouchableOpacity>
+  )
+}
 
 export default function AvailableRidesScreen() {
   const navigation = useNavigation()
-  const route      = useRoute<any>()
+  const route = useRoute()
+  const params = (route.params ?? {}) as RideParams
   const { rides, loading, error, refetch } = useAvailableRides()
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
-  const authUser         = useAppStore((s) => s.authUser)
-  const user             = useAppStore((s) => s.user)
+  const authUser = useAppStore((s) => s.authUser)
+  const user = useAppStore((s) => s.user)
   const [refreshing, setRefreshing] = useState(false)
-  const [tab, setTab] = useState<TabFilter>('todos')
-  const [municipality, setMunicipality] = useState<string | null>(route.params?.municipality ?? null)
+  const [municipality, setMunicipality] = useState<string | null>(params.municipality ?? null)
   const [showPicker, setShowPicker] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
-  // 🔄 Refetch whenever the screen is focused (e.g., returning from SeatSelection)
+  const isSearch = !!(params.origin && params.destination)
+  const passengers = isSearch ? (params.passengers ?? 1) : 1
+
   useFocusEffect(
     useCallback(() => {
       refetch()
@@ -57,236 +154,87 @@ export default function AvailableRidesScreen() {
     }
   }
 
-  const filteredRides = useMemo(() => {
+  const visibleRides = useMemo(() => {
+    const now = Date.now()
+    if (isSearch) {
+      const originQ = normalizeText(params.origin ?? '')
+      const destQ = normalizeText(params.destination ?? '')
+      return rides.filter((r) =>
+        isToday(r.departure_time) &&
+        new Date(r.departure_time).getTime() > now &&
+        normalizeText(r.origin).includes(originQ) &&
+        normalizeText(r.destination).includes(destQ)
+      )
+    }
     if (!municipality) return rides
-    const mun = municipality.toLowerCase()
-    return rides.filter((r: any) => {
-      const origin = (r.origin ?? '').toLowerCase()
-      const dest   = (r.destination ?? '').toLowerCase()
-      if (tab === 'saliendo') return origin.includes(mun)
-      if (tab === 'llegando') return dest.includes(mun)
-      return origin.includes(mun) || dest.includes(mun)
-    })
-  }, [rides, municipality, tab])
+    const mun = normalizeText(municipality)
+    return rides.filter((r) => normalizeText(r.origin).includes(mun) || normalizeText(r.destination).includes(mun))
+  }, [rides, isSearch, params.origin, params.destination, municipality])
 
-  const handleReserve = (ride: any) => {
+  const selectedRide = visibleRides.find((r) => r.id === selectedId) ?? null
+
+  const handleContinue = () => {
+    if (!selectedRide) return
     if (!authUser) {
       Alert.alert('Inicia sesión', 'Debes iniciar sesión para reservar un viaje.', [
         { text: 'Aceptar', onPress: () => navigation.navigate('Login' as never) },
       ])
       return
     }
-
-    // Set selected route in store
-    setSelectedRoute(ride)
-
-    // Navigate to seat selection
+    setSelectedRoute(selectedRide)
     navigation.navigate('SeatSelection' as never)
-  }
-
-  const formatTime = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-  }, [])
-
-  const getMinutesUntilDeparture = useCallback((dateString: string) => {
-    const diffMins = Math.round((new Date(dateString).getTime() - Date.now()) / 60000)
-    if (diffMins < 60) return `en ${diffMins} min`
-    if (diffMins < 1440) return `en ${Math.round(diffMins / 60)}h`
-    return `en ${Math.round(diffMins / 1440)}d`
-  }, [])
-
-  const getVehicleImage = (vehicleType: string | null) => {
-    if (!vehicleType) return null
-    const type = vehicleType.toLowerCase()
-    if (type.includes('van') || type.includes('minivan')) return require('../../assets/vehicles/van.png')
-    // Por defecto: sedan, chevy, auto, etc. → sedanblanco
-    return require('../../assets/vehicles/sedanblanco.png')
-  }
-
-  const renderRideCard = ({ item: ride }: any) => {
-    const occupied     = (ride.total_seats ?? 0) - (ride.seats_available_count ?? 0)
-    const total        = ride.total_seats ?? 1
-    const pct          = Math.min((occupied / total) * 100, 100)
-    const isAlmostFull = pct >= 70 && ride.seats_available_count > 0
-    const isFull       = ride.seats_available_count === 0
-    const initials     = (ride.driver_name ?? 'C').split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
-
-    return (
-      <View style={styles.rideCard}>
-        {/* ── Ruta + precio ── */}
-        <View style={styles.routeSection}>
-          <View style={styles.routeTrack}>
-            <View style={styles.trackDot} />
-            <View style={styles.trackLine} />
-            <View style={[styles.trackDot, styles.trackDotEnd]} />
-          </View>
-          <View style={styles.routeNames}>
-            <Text style={styles.originText} numberOfLines={1}>{ride.origin}</Text>
-            <Text style={styles.destText} numberOfLines={1}>{ride.destination}</Text>
-          </View>
-          <View style={styles.routeMeta}>
-            <Text style={styles.priceText}>${Math.round(ride.price_per_seat).toLocaleString('es-CO')}</Text>
-            <Text style={styles.departureLine}>
-              {new Date(ride.departure_time).toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })} · {formatTime(ride.departure_time)}
-            </Text>
-            <Text style={styles.minutesText}>{getMinutesUntilDeparture(ride.departure_time)}</Text>
-          </View>
-        </View>
-
-        <View style={styles.divider} />
-
-        {/* ── Conductor + Vehículo ── */}
-        <View style={styles.driverSection}>
-          <View style={styles.avatarWrap}>
-            {ride.driver_photo ? (
-              <Image source={{ uri: ride.driver_photo }} style={styles.avatar} contentFit="cover" cachePolicy="memory-disk" />
-            ) : (
-              <LinearGradient
-                colors={[COLORS.primaryDark, '#0a2a6e']}
-                style={styles.avatarPlaceholder}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              >
-                <Text style={styles.avatarInitials}>{initials}</Text>
-              </LinearGradient>
-            )}
-          </View>
-          <View style={styles.driverDetails}>
-            <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
-            <View style={styles.driverMetaRow}>
-              {!!ride.vehicle_plate && (
-                <View style={styles.platePill}>
-                  <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
-                </View>
-              )}
-              <Ionicons name="star" size={11} color={COLORS.warning} />
-              <Text style={styles.ratingVal}>{ride.driver_rating.toFixed(1)}</Text>
-            </View>
-          </View>
-          {ride.vehicle_type && getVehicleImage(ride.vehicle_type) && (
-            <RNImage
-              source={getVehicleImage(ride.vehicle_type)!}
-              style={styles.vehicleImageSmall}
-              resizeMode="contain"
-            />
-          )}
-        </View>
-
-        {/* ── Vía (opcional) ── */}
-        {!!ride.description && (
-          <View style={styles.viaStrip}>
-            <Ionicons name="git-branch-outline" size={11} color={COLORS.accent} />
-            <Text style={styles.viaText} numberOfLines={1}>{ride.description}</Text>
-          </View>
-        )}
-
-        <View style={styles.divider} />
-
-        {/* ── Ocupación + botón ── */}
-        <View style={styles.bottomRow}>
-          <View style={styles.occupancyWrap}>
-            {isAlmostFull && <Text style={styles.almostFullText}>¡CASI LLENO!</Text>}
-            <View style={styles.occupancyLabelRow}>
-              <Text style={[styles.occupancyFraction, isFull && { color: COLORS.error }]}>{occupied}/{total}</Text>
-              <Text style={styles.occupancyWord}> cupos</Text>
-            </View>
-            <View style={styles.progressBg}>
-              <View style={[
-                styles.progressFill,
-                { width: `${pct}%` as any },
-                isAlmostFull && { backgroundColor: '#D97706' },
-                isFull && { backgroundColor: COLORS.error },
-              ]} />
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.reserveBtn, isFull && styles.reserveBtnDisabled]}
-            onPress={() => handleReserve(ride)}
-            disabled={isFull}
-            activeOpacity={0.85}
-          >
-            {isFull ? (
-              <Text style={styles.reserveTextDisabled}>Sin cupos</Text>
-            ) : (
-              <LinearGradient
-                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={styles.reserveBtnInner}
-              >
-                <Text style={styles.reserveText}>Reservar</Text>
-                <Ionicons name="arrow-forward" size={13} color="#fff" />
-              </LinearGradient>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    )
   }
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="car-outline" size={64} color={COLORS.textTertiary} />
       <Text style={styles.emptyTitle}>No hay viajes disponibles</Text>
-      <Text style={styles.emptyText}>
-        Prueba con diferentes ciudades o horarios
-      </Text>
-      <TouchableOpacity style={styles.emptyButton} onPress={onRefresh}>
-        <Text style={styles.emptyButtonText}>Actualizar</Text>
+      <Text style={styles.emptyText}>Prueba con diferentes ciudades o horarios</Text>
+      <TouchableOpacity style={styles.secondaryBtn} onPress={onRefresh}>
+        <Text style={styles.secondaryBtnText}>Actualizar</Text>
       </TouchableOpacity>
     </View>
   )
 
   const renderError = () => (
-    <View style={styles.errorContainer}>
+    <View style={styles.emptyContainer}>
       <Ionicons name="alert-circle" size={48} color={COLORS.error} />
-      <Text style={styles.errorTitle}>Error cargando viajes</Text>
-      <Text style={styles.errorText}>{error}</Text>
-      <TouchableOpacity style={styles.errorButton} onPress={onRefresh}>
-        <Text style={styles.errorButtonText}>Reintentar</Text>
+      <Text style={[styles.emptyTitle, { color: COLORS.error }]}>Error cargando viajes</Text>
+      <Text style={styles.emptyText}>{error}</Text>
+      <TouchableOpacity style={styles.secondaryBtn} onPress={onRefresh}>
+        <Text style={styles.secondaryBtnText}>Reintentar</Text>
       </TouchableOpacity>
     </View>
   )
 
+  const rideCount = `${visibleRides.length} ${plural(visibleRides.length, 'viaje', 'viajes')}`
+
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      {/* Header */}
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityLabel="Volver">
+          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Viajes Ahora</Text>
-          {municipality ? (
-            <TouchableOpacity style={styles.municipalityBadge} onPress={() => setShowPicker(true)} activeOpacity={0.7}>
-              <Ionicons name="location" size={11} color={COLORS.primary} />
-              <Text style={styles.municipalityText} numberOfLines={1}>{municipality}</Text>
-              <Ionicons name="chevron-down" size={11} color={COLORS.primary} />
-            </TouchableOpacity>
+        <View style={styles.headerContent}>
+          {isSearch ? (
+            <>
+              <Text style={styles.stepLabel}>Paso 2 de 5 · Elige conductor</Text>
+              <Text style={styles.title} numberOfLines={1}>{params.origin} → {params.destination}</Text>
+              <Text style={styles.subtitle}>
+                Hoy · {passengers} {plural(passengers, 'pasajero', 'pasajeros')} · {rideCount}
+              </Text>
+            </>
           ) : (
-            <TouchableOpacity onPress={() => setShowPicker(true)} activeOpacity={0.7}>
-              <Text style={styles.municipalityEmpty}>Toca para elegir tu municipio</Text>
-            </TouchableOpacity>
+            <>
+              <Text style={styles.title}>Viajes ahora</Text>
+              <TouchableOpacity onPress={() => setShowPicker(true)} activeOpacity={0.7}>
+                <Text style={styles.subtitle} numberOfLines={1}>
+                  {municipality ? `${municipality} · cambiar municipio` : 'Toca para elegir tu municipio'}
+                </Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
-        <TouchableOpacity style={styles.filterBtn} onPress={() => setShowPicker(true)} activeOpacity={0.7}>
-          <Ionicons name="options-outline" size={20} color={COLORS.primary} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Tabs */}
-      <View style={styles.tabsRow}>
-        {(['todos', 'saliendo', 'llegando'] as TabFilter[]).map((t) => (
-          <TouchableOpacity
-            key={t}
-            style={[styles.tab, tab === t && styles.tabActive]}
-            onPress={() => setTab(t)}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.tabText, tab === t && styles.tabTextActive]}>
-              {t === 'todos' ? 'Todos' : t === 'saliendo' ? `Saliendo de aquí` : `Llegando aquí`}
-            </Text>
-          </TouchableOpacity>
-        ))}
       </View>
 
       {loading && rides.length === 0 ? (
@@ -297,17 +245,42 @@ export default function AvailableRidesScreen() {
         </View>
       ) : error && rides.length === 0 ? (
         renderError()
-      ) : filteredRides.length === 0 ? (
+      ) : visibleRides.length === 0 ? (
         renderEmpty()
       ) : (
         <FlatList
-          data={filteredRides}
-          renderItem={renderRideCard}
+          data={visibleRides}
+          renderItem={({ item }) => (
+            <RideCard
+              ride={item}
+              passengers={passengers}
+              isSearch={isSearch}
+              selected={item.id === selectedId}
+              onSelect={setSelectedId}
+            />
+          )}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          scrollIndicatorInsets={{ right: 1 }}
+          showsVerticalScrollIndicator={false}
         />
+      )}
+
+      {visibleRides.length > 0 && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.cta, !selectedRide && styles.ctaDisabled]}
+            onPress={handleContinue}
+            disabled={!selectedRide}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.ctaText, !selectedRide && styles.ctaTextDisabled]}>
+              {selectedRide
+                ? `Elegir ${formatHourParts(selectedRide.departure_time).hour} ${formatHourParts(selectedRide.departure_time).period}`
+                : 'Elige un viaje'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       )}
 
       <MunicipalityPickerModal
@@ -321,262 +294,90 @@ export default function AvailableRidesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
   },
   backBtn: {
-    width: 36, height: 36, borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
-  municipalityBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    marginTop: 2,
-  },
-  municipalityText: {
-    fontSize: 12, fontWeight: '600', color: COLORS.primary,
-    maxWidth: 180,
-  },
-  municipalityEmpty: {
-    fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
-  },
-  filterBtn: {
-    width: 36, height: 36, borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
-  },
-  tabsRow: {
-    flexDirection: 'row', paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm, gap: SPACING.sm,
-    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
-  },
-  tab: {
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: RADIUS.full, backgroundColor: '#F4F6FB',
-  },
-  tabActive: { backgroundColor: COLORS.primary },
-  tabText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
-  tabTextActive: { color: '#fff' },
-  loaderContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-  },
-  loaderText: {
-    fontSize: 14, color: COLORS.textSecondary, marginTop: SPACING.md,
-  },
-  emptyContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyTitle: {
-    fontSize: 17, fontWeight: '700', color: COLORS.text, marginTop: SPACING.md,
-  },
-  emptyText: {
-    fontSize: 14, color: COLORS.textSecondary,
-    marginTop: SPACING.sm, textAlign: 'center',
-  },
-  emptyButton: {
-    marginTop: SPACING.lg, paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg, backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  emptyButtonText: {
-    fontSize: 14, fontWeight: '600', color: COLORS.surface,
-  },
-  errorContainer: {
-    flex: 1, justifyContent: 'center', alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  errorTitle: {
-    fontSize: 17, fontWeight: '700', color: COLORS.error, marginTop: SPACING.md,
-  },
-  errorText: {
-    fontSize: 14, color: COLORS.textSecondary,
-    marginTop: SPACING.sm, textAlign: 'center',
-  },
-  errorButton: {
-    marginTop: SPACING.lg, paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg, backgroundColor: COLORS.error,
-    borderRadius: RADIUS.md,
-  },
-  errorButtonText: {
-    fontSize: 14, fontWeight: '600', color: COLORS.surface,
-  },
-  listContent: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.lg,
-  },
-  rideCard: {
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
-    marginBottom: SPACING.sm,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
-    overflow: 'hidden',
-  },
+  headerContent: { flex: 1 },
+  stepLabel: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
+  title: { marginTop: 4, fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.2 },
+  subtitle: { marginTop: 2, fontSize: 14, color: COLORS.textSecondary },
 
-  // ── Sección ruta ──
-  routeSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingTop: SPACING.sm,
-    paddingBottom: 8,
-    gap: 8,
+  listContent: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg },
+
+  card: {
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: COLORS.white,
   },
-  routeTrack: {
-    alignItems: 'center',
-    gap: 2,
-    paddingTop: 1,
-  },
-  trackDot: {
-    width: 7, height: 7, borderRadius: 3.5,
-    backgroundColor: COLORS.primary,
-    borderWidth: 1.5, borderColor: '#fff',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.4, shadowRadius: 2, elevation: 2,
-  },
-  trackLine: {
-    width: 1.5, height: 10, backgroundColor: '#CBD5E1',
-  },
-  trackDotEnd: {
-    backgroundColor: '#fff',
+  cardSelected: {
     borderColor: COLORS.primary,
     borderWidth: 2,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  routeNames: {
-    flex: 1,
-    gap: 5,
-  },
-  originText: {
-    fontSize: 13, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
-  },
-  destText: {
-    fontSize: 13, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
-  },
-  routeMeta: {
-    alignItems: 'flex-end',
-    gap: 0,
-  },
-  priceText: {
-    fontSize: 15, fontWeight: '800', color: COLORS.primaryDark, letterSpacing: -0.3,
-  },
-  departureLine: {
-    fontSize: 10, color: COLORS.textTertiary, fontWeight: '500',
-  },
-  minutesText: {
-    fontSize: 11, color: COLORS.success, fontWeight: '700',
-  },
-
-  divider: {
-    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: SPACING.md,
-  },
-
-  // ── Sección conductor ──
-  driverSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    gap: SPACING.sm,
-  },
-  avatarWrap: {
-    width: 42, height: 42, borderRadius: 21,
-    overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
-    flexShrink: 0,
-  },
-  avatar: { width: 42, height: 42 },
-  avatarPlaceholder: {
-    width: 42, height: 42, justifyContent: 'center', alignItems: 'center',
-  },
-  avatarInitials: {
-    fontSize: 15, fontWeight: '800', color: '#fff', letterSpacing: -0.3,
-  },
-  driverDetails: {
-    flex: 1, gap: 2,
-  },
-  driverName: {
-    fontSize: 13, fontWeight: '700', color: COLORS.textPrimary,
-  },
-  driverMetaRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap',
-  },
-  vehicleText: {
-    fontSize: 9, color: COLORS.textTertiary, fontWeight: '500',
-  },
+  cardDimmed: { opacity: 0.55 },
+  cardTop: { flexDirection: 'row', alignItems: 'center' },
+  timeCol: { minWidth: 58, alignItems: 'center' },
+  hour: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  period: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
+  vDivider: { width: 1, height: 52, backgroundColor: COLORS.border, marginHorizontal: 14 },
+  middle: { flex: 1, paddingRight: 6 },
+  routeText: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  driverName: { fontSize: 13, color: COLORS.textSecondary, flexShrink: 1 },
+  ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
   platePill: {
-    backgroundColor: '#F0F4FF', paddingHorizontal: 4, paddingVertical: 1,
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primaryTint,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primaryTint,
   },
-  plateText: {
-    fontSize: 9, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3,
-  },
-  ratingWrap: {
-    flexDirection: 'row', alignItems: 'center', gap: 2,
-    backgroundColor: '#FFFBEB', paddingHorizontal: 5, paddingVertical: 2,
-    borderRadius: RADIUS.full, borderWidth: 1, borderColor: '#FDE68A',
-    flexShrink: 0,
-  },
-  ratingVal: {
-    fontSize: 10, fontWeight: '700', color: COLORS.warningDark,
-  },
-  vehicleImageSmall: { width: 100, height: 75, flexShrink: 0 },
+  plateText: { fontSize: 12, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.4 },
 
-  // ── Vía ──
-  viaStrip: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    marginHorizontal: SPACING.md, marginBottom: 5,
-    backgroundColor: `${COLORS.accent}10`,
-    paddingHorizontal: 6, paddingVertical: 3,
-    borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent,
-  },
-  viaText: { flex: 1, fontSize: 10, color: COLORS.accent, fontWeight: '500' },
+  hDivider: { height: 1, backgroundColor: COLORS.borderLight, marginVertical: 12 },
+  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  status: { fontSize: 13, fontWeight: '700' },
+  price: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
 
-  // ── Fila inferior ──
-  bottomRow: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: SPACING.md, paddingVertical: 8,
-    gap: SPACING.md,
-  },
-  occupancyWrap: { flex: 1, gap: 3 },
-  almostFullText: {
-    fontSize: 9, fontWeight: '800', color: COLORS.warningDark, letterSpacing: 0.3,
-  },
-  occupancyLabelRow: {
-    flexDirection: 'row', alignItems: 'baseline',
-  },
-  occupancyFraction: { fontSize: 12, fontWeight: '800', color: COLORS.primary },
-  occupancyWord: { fontSize: 10, color: COLORS.textSecondary, fontWeight: '500' },
-  progressBg: {
-    height: 5, backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full, overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
-  },
-  reserveBtn: {
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.xl },
+  emptyTitle: { marginTop: SPACING.md, fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  emptyText: { marginTop: SPACING.sm, fontSize: 14, color: COLORS.textSecondary, textAlign: 'center' },
+  secondaryBtn: {
+    marginTop: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
-    overflow: 'hidden',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
-  reserveBtnInner: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingVertical: 10, paddingHorizontal: 16,
-  },
-  reserveBtnDisabled: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.md,
-    paddingVertical: 10, paddingHorizontal: 16,
-    shadowOpacity: 0, elevation: 0,
-    alignItems: 'center' as const,
-  },
-  reserveText: { fontSize: 13, fontWeight: '700', color: '#fff' },
-  reserveTextDisabled: { fontSize: 13, fontWeight: '600', color: COLORS.textTertiary },
+  secondaryBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+
+  footer: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, paddingTop: SPACING.sm },
+  cta: { height: 54, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  ctaDisabled: { backgroundColor: COLORS.surfaceAlt },
+  ctaText: { fontSize: 16, fontWeight: '700', color: COLORS.textInverse },
+  ctaTextDisabled: { color: COLORS.textTertiary },
 })

@@ -2,6 +2,9 @@ import { useState, useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { withTimeout } from "../utils/withTimeout";
 
+// Efectivo o transferencia directa entre pasajero y conductor. Trive no retiene pagos.
+export type PaymentMethod = 'cash' | 'transfer';
+
 export interface Booking {
   id: string;
   route_id: string;
@@ -9,6 +12,8 @@ export interface Booking {
   seat_number: number;
   price: number;
   payment_method?: string;
+  // Código TRV-XXXXXX generado por el servidor. Aún no está en los tipos generados.
+  reservation_code?: string | null;
   payment_status: string;
   booking_status: string;
   notes?: string;
@@ -26,7 +31,7 @@ export const useBookings = () => {
   const reservePendingBookings = useCallback(async (
     routeId: string,
     seatNumbers: number[],
-    paymentMethod: string = 'cash',
+    paymentMethod: PaymentMethod = 'cash',
     dropoffPoint?: string,
     dropoffPointCustom?: boolean
   ) => {
@@ -35,13 +40,13 @@ export const useBookings = () => {
       setLoading(true);
 
       const { data, error: bookingError } = await withTimeout(
-        supabase.rpc('reserve_seats', {
+        Promise.resolve(supabase.rpc('reserve_seats', {
           p_route_id: routeId,
           p_seat_numbers: seatNumbers,
           p_payment_method: paymentMethod,
           p_dropoff_point: dropoffPoint ?? null,
           p_dropoff_custom: dropoffPointCustom ?? false,
-        }),
+        })),
         12000
       );
 
@@ -66,17 +71,17 @@ export const useBookings = () => {
 
   const finalizePendingBookings = useCallback(async (
     bookingIds: string[],
-    paymentMethod: string = 'cash'
+    paymentMethod: PaymentMethod = 'cash'
   ) => {
     try {
       setError(null);
       setLoading(true);
 
       const { data, error } = await withTimeout(
-        supabase.rpc('finalize_bookings_atomic', {
+        Promise.resolve(supabase.rpc('finalize_bookings_atomic', {
           p_booking_ids: bookingIds,
           p_payment_method: paymentMethod,
-        }),
+        })),
         15000
       );
 

@@ -1,39 +1,34 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Image } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { useRoutes } from '../hooks/useRoutes'
-import { useDriverReviews } from '../hooks/useDriverReviews'
 import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import OfflineBanner from '../components/OfflineBanner'
-import Button from '../components/Button'
-import Card from '../components/Card'
-import Badge from '../components/Badge'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
-import { BookingProgressIndicator } from '../components/BookingProgressIndicator'
 
+const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
+
+// Reserva3: elegir asientos en vivo. Los asientos ocupados vienen del servidor
+// y se recargan cuando la ruta cambia.
 export default function SeatSelectionScreen() {
   const navigation = useNavigation()
-  const selectedRoute  = useAppStore((s) => s.selectedRoute)
+  const selectedRoute = useAppStore((s) => s.selectedRoute)
   const setBookingData = useAppStore((s) => s.setBookingData)
-  const authUser       = useAppStore((s) => s.authUser)
-  const user           = useAppStore((s) => s.user)
+  const authUser = useAppStore((s) => s.authUser)
+  const user = useAppStore((s) => s.user)
   const { getRouteBookings, reservePendingBookings, loading } = useBookings()
   const { getRouteById } = useRoutes()
   const [bookings, setBookings] = useState<any[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
-  const [vehiclePhotoUrl, setVehiclePhotoUrl] = useState<string | null>(null)
-  const [driverPhotoUrl, setDriverPhotoUrl] = useState<string | null>(null)
   const { isOnline } = useNetworkStatus()
   const isMountedRef = useRef(true)
-  const { reviews } = useDriverReviews(selectedRoute?.driver_id)
   const isFetchingRef = useRef(false)
   const navTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([])
 
@@ -87,24 +82,6 @@ export default function SeatSelectionScreen() {
           safeNavigate(() => navigation.goBack(), 800)
         }
         return
-      }
-
-      // Busca foto del vehículo y avatar del conductor desde profiles
-      const photoFromRoute = currentRoute.vehicle_photo_url
-      const { data: driverProfile } = await supabase
-        .from('profiles')
-        .select('vehicle_photo_url, avatar_url')
-        .eq('id', currentRoute.driver_id)
-        .maybeSingle()
-
-      if (photoFromRoute) {
-        setVehiclePhotoUrl(photoFromRoute)
-      } else if (driverProfile?.vehicle_photo_url) {
-        setVehiclePhotoUrl(driverProfile.vehicle_photo_url)
-      }
-
-      if (driverProfile?.avatar_url) {
-        setDriverPhotoUrl(driverProfile.avatar_url)
       }
 
       if (currentRoute.status !== 'scheduled') {
@@ -203,8 +180,6 @@ export default function SeatSelectionScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!selectedRoute?.id || !authUser) return
-
-      // Cuando la pantalla gana foco, cargar sin validaciones agresivas
       loadBookings(true)
       return () => {}
     }, [loadBookings, selectedRoute?.id, authUser])
@@ -212,8 +187,8 @@ export default function SeatSelectionScreen() {
 
   if (!selectedRoute) {
     return (
-      <SafeAreaView style={styles.safeContainer}>
-        <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       </SafeAreaView>
@@ -222,29 +197,12 @@ export default function SeatSelectionScreen() {
 
   const occupiedSeats = new Set(bookings.map((b: any) => Number(b.seat_number)))
   const totalSeats = selectedRoute.total_seats || 5
-  const availableSeatsCount = totalSeats - occupiedSeats.size
+  const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1)
+  const seatRows: number[][] = []
+  for (let i = 0; i < seatNumbers.length; i += 2) seatRows.push(seatNumbers.slice(i, i + 2))
 
-  // Generate seat array
-  const seatsArray = Array.from({ length: totalSeats }, (_, i) => {
-    const seatId = i + 1
-    return {
-      id: seatId,
-      available: !occupiedSeats.has(seatId),
-    }
-  })
-
-  const toggleSeat = (seatId: number) => {
-    setSelectedSeats((prev) => {
-      if (prev.includes(seatId)) {
-        return prev.filter((s) => s !== seatId)
-      } else {
-        return [...prev, seatId].sort((a, b) => a - b)
-      }
-    })
-  }
-
-  const handleSeatPress = (seatId: number, available: boolean) => {
-    if (!available) {
+  const handleSeatPress = (seatId: number, isOccupied: boolean) => {
+    if (isOccupied) {
       errorHandler.handle(
         'Este asiento ya está reservado. Por favor elige otro.',
         ErrorType.VALIDATION,
@@ -254,7 +212,11 @@ export default function SeatSelectionScreen() {
       )
       return
     }
-    toggleSeat(seatId)
+    setSelectedSeats((prev) =>
+      prev.includes(seatId)
+        ? prev.filter((s) => s !== seatId)
+        : [...prev, seatId].sort((a, b) => a - b)
+    )
   }
 
   const handleContinue = async () => {
@@ -280,7 +242,6 @@ export default function SeatSelectionScreen() {
       return
     }
 
-    if (!selectedRoute) return
     if (!authUser || !user) {
       errorHandler.handle(
         'Debes iniciar sesión correctamente para reservar',
@@ -336,33 +297,27 @@ export default function SeatSelectionScreen() {
 
       const reservedBookings = await reservePendingBookings(selectedRoute.id, selectedSeats)
 
-      const totalPrice = selectedSeats.length * selectedRoute.price_per_seat
+      // El total y el código los entrega el servidor en las reservas pendientes.
+      const serverTotal = reservedBookings.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
+      const reservationCode = reservedBookings.find((b) => b.reservation_code)?.reservation_code ?? null
 
       setBookingData({
         route_id: selectedRoute.id,
         seat_numbers: selectedSeats,
         total_seats: selectedSeats.length,
         price_per_seat: selectedRoute.price_per_seat,
-        total_price: totalPrice,
+        total_price: serverTotal,
         origin: selectedRoute.origin,
         destination: selectedRoute.destination,
         departure_time: selectedRoute.departure_time,
         driver_name: selectedRoute.driver_name,
         vehicle_info: `${selectedRoute.vehicle_make} ${selectedRoute.vehicle_color}`,
-        license_plate: selectedRoute.license_plate,
+        license_plate: selectedRoute.vehicle_plate,
         pending_booking_ids: reservedBookings.map((booking) => booking.id),
+        reservation_code: reservationCode,
       })
 
-      Alert.alert(
-        '✅ ¡Éxito!',
-        `Asientos reservados: ${selectedSeats.join(', ')}`,
-        [
-          {
-            text: 'Ver Mi Reserva',
-            onPress: () => navigation.navigate('Booking' as never),
-          },
-        ]
-      )
+      navigation.navigate('Booking' as never)
     } catch (error: any) {
       console.error('Error reservando asientos:', error)
       if (error.code === 'SEAT_ALREADY_RESERVED') {
@@ -396,923 +351,234 @@ export default function SeatSelectionScreen() {
     }
   }
 
-  const departureDate = new Date(selectedRoute.departure_time)
-  const formattedDate = departureDate.toLocaleDateString('es-CO', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  })
-  const departureTime = departureDate.toLocaleTimeString('es-CO', {
-    hour: '2-digit',
+  const departureTime = new Date(selectedRoute.departure_time).toLocaleTimeString('es-CO', {
+    hour: 'numeric',
     minute: '2-digit',
+    hour12: true,
   })
-
-  const driverInitial = selectedRoute.driver_name?.charAt(0).toUpperCase() || 'C'
+  const seatCount = selectedSeats.length
+  const hasSelection = seatCount > 0
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <BookingProgressIndicator step={2} />
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* Header */}
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <OfflineBanner />
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} accessibilityLabel="Volver">
             <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Selecciona tus asientos</Text>
-            <Text style={styles.subtitle}>Toca los asientos disponibles</Text>
+          <View style={styles.stepBlock}>
+            <View style={styles.stepRow}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <View key={n} style={[styles.stepSeg, n <= 3 && styles.stepSegActive]} />
+              ))}
+            </View>
+            <Text style={styles.stepLabel}>Paso 3 de 5 · Asientos</Text>
           </View>
         </View>
 
+        <Text style={styles.title}>Elige tus asientos</Text>
+        <Text style={styles.subtitle}>
+          {selectedRoute.driver_name || 'Conductor'} · {departureTime} · Se actualiza en vivo
+        </Text>
+
         {initialLoading ? (
-          <View style={styles.loadingContainer}>
+          <View style={styles.loading}>
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
         ) : (
           <>
-            {/* Vehicle Card */}
-            <LinearGradient
-              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.vehicleCardGradient}
-            >
-              <View style={styles.vehicleHeader}>
-                <View>
-                  <Text style={styles.vehicleName}>{selectedRoute.vehicle_make || 'Vehículo'}</Text>
-                  <Text style={styles.vehicleDetails}>
-                    {selectedRoute.vehicle_year} · {selectedRoute.vehicle_color}
-                  </Text>
+            <View style={styles.mapCard}>
+              <View style={styles.mapTop}>
+                <View style={styles.wheelPill}>
+                  <Text style={styles.wheelText}>Volante</Text>
                 </View>
-                <LinearGradient
-                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.plateBadge}
-                >
-                  <Text style={styles.plateText}>{selectedRoute.vehicle_plate || '---'}</Text>
-                </LinearGradient>
+                <Text style={styles.frontText}>Adelante</Text>
               </View>
 
-              {/* Seats Grid - Real Car Layout */}
-              <View style={styles.seatsSection}>
-                {/* FRONT ROW: Driver + Copiloto (Seat 1) */}
-                <View style={styles.frontRow}>
-                  {/* Driver seat */}
-                  <View style={styles.driverSeat}>
-                    <Ionicons name="person" size={20} color={COLORS.textTertiary} />
-                    <Text style={styles.driverLabel}>Conductor</Text>
-                  </View>
-
-                  {/* Copiloto - Seat 1 */}
-                  {seatsArray.length > 0 && (() => {
-                    const seat = seatsArray[0]
-                    const isSelected = selectedSeats.includes(seat.id)
-                    const isOccupied = !seat.available
-
+              <View style={styles.grid}>
+                {seatRows.map((row) =>
+                  row.map((seatId) => {
+                    const isOccupied = occupiedSeats.has(seatId)
+                    const isSelected = selectedSeats.includes(seatId)
                     return (
                       <TouchableOpacity
+                        key={seatId}
                         style={[
                           styles.seat,
-                          styles.seatFront,
-                          isOccupied && styles.seatOccupied,
-                          isSelected && styles.seatSelected,
+                          isOccupied ? styles.seatOccupied : isSelected ? styles.seatSelected : styles.seatFree,
                         ]}
-                        onPress={() => handleSeatPress(seat.id, seat.available)}
+                        onPress={() => handleSeatPress(seatId, isOccupied)}
                         activeOpacity={0.7}
+                        accessibilityLabel={`Asiento ${seatId}`}
+                        accessibilityState={{ selected: isSelected, disabled: isOccupied }}
                       >
                         <Text
                           style={[
                             styles.seatText,
-                            isOccupied && styles.seatTextOccupied,
-                            isSelected && styles.seatTextSelected,
+                            isOccupied ? styles.seatTextOccupied : isSelected ? styles.seatTextSelected : styles.seatTextFree,
                           ]}
                         >
-                          {seat.id}
+                          {seatId}
                         </Text>
-                        {isOccupied && (
-                          <View style={styles.occupiedOverlay}>
-                            <Ionicons name="close" size={14} color={COLORS.textTertiary} />
-                          </View>
-                        )}
                       </TouchableOpacity>
                     )
-                  })()}
-                </View>
-
-                {/* BACK ROW: Seats 2, 3, 4+ */}
-                {seatsArray.length > 1 && (
-                  <View style={styles.backRow}>
-                    {seatsArray.slice(1).map((seat) => {
-                      const isSelected = selectedSeats.includes(seat.id)
-                      const isOccupied = !seat.available
-
-                      return (
-                        <TouchableOpacity
-                          key={seat.id}
-                          style={[
-                            styles.seat,
-                            isOccupied && styles.seatOccupied,
-                            isSelected && styles.seatSelected,
-                          ]}
-                          onPress={() => handleSeatPress(seat.id, seat.available)}
-                          activeOpacity={0.7}
-                        >
-                          <Text
-                            style={[
-                              styles.seatText,
-                              isOccupied && styles.seatTextOccupied,
-                              isSelected && styles.seatTextSelected,
-                            ]}
-                          >
-                            {seat.id}
-                          </Text>
-                          {isOccupied && (
-                            <View style={styles.occupiedOverlay}>
-                              <Ionicons name="close" size={14} color={COLORS.textTertiary} />
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                      )
-                    })}
-                  </View>
+                  })
                 )}
-
-                {/* Legend */}
-                <View style={styles.legend}>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.white, borderWidth: 1.5, borderColor: COLORS.border }]} />
-                    <Text style={styles.legendText}>Disponible</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
-                    <Text style={styles.legendText}>Seleccionado</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.surfaceAlt }]} />
-                    <Text style={styles.legendText}>Ocupado</Text>
-                  </View>
-                </View>
               </View>
-            </LinearGradient>
 
-            {/* Selected Seats Counter */}
-            <View style={styles.selectionCardGradient}>
-              <View style={styles.selectionInfo}>
-                <View
-                  style={[
-                    styles.selectionIcon,
-                    selectedSeats.length > 0 && styles.selectionIconActive,
-                  ]}
-                >
-                  <Ionicons
-                    name={selectedSeats.length > 0 ? 'checkmark' : 'information-circle'}
-                    size={20}
-                    color={selectedSeats.length > 0 ? '#fff' : COLORS.textSecondary}
-                  />
+              <View style={styles.legend}>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, styles.seatFree]} />
+                  <Text style={styles.legendText}>Libre</Text>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[
-                      styles.selectionTitle,
-                      selectedSeats.length > 0 && styles.selectionTitleActive,
-                    ]}
-                  >
-                    {selectedSeats.length === 0
-                      ? 'Sin asientos seleccionados'
-                      : selectedSeats.length === 1
-                      ? '1 asiento seleccionado'
-                      : `${selectedSeats.length} asientos seleccionados`}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.selectionSubtitle,
-                      selectedSeats.length > 0 && styles.selectionSubtitleActive,
-                    ]}
-                  >
-                    {selectedSeats.length > 0
-                      ? `Asientos: ${selectedSeats.join(', ')}`
-                      : 'Toca los asientos disponibles'}
-                  </Text>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
+                  <Text style={[styles.legendText, { color: COLORS.primary }]}>Tuyo</Text>
+                </View>
+                <View style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: COLORS.surfaceAlt }]} />
+                  <Text style={[styles.legendText, { color: COLORS.textTertiary }]}>Ocupado</Text>
                 </View>
               </View>
             </View>
 
-            {/* Trip Card */}
-            <LinearGradient
-              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.tripCardGradient}
-            >
-              <View style={styles.routeRow}>
-                <View style={styles.routePoint}>
-                  <View style={styles.routeDotStart} />
-                  <Text style={styles.routeTextOrigin}>{selectedRoute.origin}</Text>
-                </View>
-                <View style={styles.routeLine} />
-                <View style={styles.routePoint}>
-                  <View style={styles.routeDotEnd} />
-                  <Text style={styles.routeTextDestination}>{selectedRoute.destination}</Text>
-                </View>
-              </View>
-
-              <View style={styles.tripInfo}>
-                <View style={styles.infoItem}>
-                  <Ionicons name="time-outline" size={18} color={COLORS.textSecondary} />
-                  <Text style={[styles.infoText, { color: COLORS.textPrimary }]}>{departureTime}</Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="cash-outline" size={18} color={COLORS.textSecondary} />
-                  <Text style={[styles.infoText, { color: COLORS.textPrimary }]}>
-                    ${selectedRoute.price_per_seat.toLocaleString('es-CO')} / asiento
-                  </Text>
-                </View>
-                <View style={styles.infoItem}>
-                  <Ionicons name="calendar-outline" size={18} color={COLORS.textSecondary} />
-                  <Text style={[styles.infoText, { color: COLORS.textPrimary }]}>{formattedDate}</Text>
-                </View>
-              </View>
-            </LinearGradient>
-
-            {/* Driver Card */}
-            <View style={styles.driverCardGradient}>
-              <View style={styles.driverHeader}>
-                {/* Avatar */}
-                {driverPhotoUrl ? (
-                  <Image
-                    source={{ uri: driverPhotoUrl }}
-                    style={styles.driverAvatarPhoto}
-                  />
-                ) : (
-                  <View style={styles.driverAvatar}>
-                    <Text style={styles.driverInitial}>{driverInitial}</Text>
-                  </View>
-                )}
-                <View style={styles.driverInfo}>
-                  <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
-                  <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={14} color={COLORS.accent} />
-                    <Text style={styles.ratingText}>{selectedRoute.driver_rating || '0'}</Text>
-                    <Text style={styles.ratingLabel}> ({selectedRoute.driver_trips || 0} viajes)</Text>
-                  </View>
-                  <Text style={styles.vehicleLabel}>
-                    {[selectedRoute.vehicle_make, selectedRoute.vehicle_color].filter(Boolean).join(' · ')}
-                  </Text>
-                </View>
-
-                {/* Foto del vehículo */}
-                <View style={styles.vehiclePhotoWrap}>
-                  {vehiclePhotoUrl ? (
-                    <Image
-                      source={{ uri: vehiclePhotoUrl }}
-                      style={styles.vehiclePhoto}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <View style={styles.vehiclePhotoPlaceholder}>
-                      <Ionicons name="car-outline" size={26} color={COLORS.textTertiary} />
-                    </View>
-                  )}
-                </View>
-              </View>
+            <View style={styles.noteBox}>
+              <Text style={styles.noteText}>
+                Si alguien reserva el mismo asiento antes que tú, te avisamos y eliges otro.
+              </Text>
             </View>
-
-            {/* Reseñas del conductor */}
-            {reviews.length > 0 && (
-              <View style={styles.reviewsSection}>
-                <Text style={styles.reviewsTitle}>Reseñas del conductor</Text>
-                {reviews.map((r) => (
-                  <View key={r.id} style={styles.reviewCard}>
-                    <View style={styles.reviewTop}>
-                      <View style={styles.reviewStars}>
-                        {[1,2,3,4,5].map((s) => (
-                          <Ionicons
-                            key={s}
-                            name={s <= r.rating ? 'star' : 'star-outline'}
-                            size={13}
-                            color={COLORS.warning}
-                          />
-                        ))}
-                      </View>
-                      <Text style={styles.reviewAuthor}>{r.reviewer_name || 'Pasajero'}</Text>
-                    </View>
-                    {!!r.comment && (
-                      <Text style={styles.reviewComment} numberOfLines={2}>{r.comment}</Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* Summary */}
-            <View style={styles.summaryCardGradient}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Asientos disponibles</Text>
-                <Text style={styles.summaryValue}>{availableSeatsCount} de {totalSeats}</Text>
-              </View>
-              {selectedSeats.length > 0 && (
-                <>
-                  <View style={styles.summaryDivider} />
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>
-                      Asientos ({selectedSeats.length} × ${selectedRoute.price_per_seat.toLocaleString('es-CO')})
-                    </Text>
-                    <Text style={styles.summaryPrice}>
-                      ${(selectedSeats.length * selectedRoute.price_per_seat).toLocaleString('es-CO')}
-                    </Text>
-                  </View>
-                </>
-              )}
-            </View>
-
-            {/* Continue Button */}
-            <Button
-              variant={selectedSeats.length === 0 ? "outline" : "primary"}
-              size="lg"
-              loading={loading}
-              icon={selectedSeats.length === 0 ? 'alert-circle' : 'arrow-forward'}
-              disabled={selectedSeats.length === 0 || loading}
-              onPress={handleContinue}
-            >
-              {selectedSeats.length === 0
-                ? 'Selecciona tus asientos'
-                : loading
-                ? 'Reservando...'
-                : `Continuar - $${(selectedSeats.length * selectedRoute.price_per_seat).toLocaleString('es-CO')}`}
-            </Button>
           </>
         )}
       </ScrollView>
+
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={[styles.cta, !hasSelection && styles.ctaDisabled]}
+          onPress={handleContinue}
+          disabled={!hasSelection || loading}
+          activeOpacity={0.85}
+        >
+          {loading ? (
+            <ActivityIndicator color={COLORS.textInverse} />
+          ) : (
+            <>
+              <Text style={[styles.ctaText, !hasSelection && styles.ctaTextDisabled]}>
+                {hasSelection
+                  ? `Continuar · ${seatCount} ${seatCount === 1 ? 'asiento' : 'asientos'}`
+                  : 'Selecciona tus asientos'}
+              </Text>
+              {hasSelection && (
+                <Text style={styles.ctaPrice}>{formatCOP(selectedRoute.price_per_seat)} c/u</Text>
+              )}
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   )
 }
 
+const SEAT_SIZE = 56
+
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xl,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  content: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md, paddingBottom: SPACING.lg },
 
-  // Header
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.md,
-    gap: SPACING.md,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.sm,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  title: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-  subtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 100,
-  },
-
-  // Vehicle Card
-  vehicleCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.lg,
-    borderTopColor: COLORS.shadowWhiteLight,
-    borderTopWidth: 1.5,
-  },
-  vehicleCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  vehicleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
-  vehicleName: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-  vehicleDetails: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  plateBadge: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
-    overflow: 'hidden',
-  },
-  plateText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textInverse,
-    fontWeight: '700',
-  },
-
-  // Seats
-  seatsSection: {
-    alignItems: 'center',
-  },
-
-  // Front Row: Driver + Copiloto
-  frontRow: {
-    flexDirection: 'row',
+    backgroundColor: COLORS.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
   },
+  stepBlock: { flex: 1 },
+  stepRow: { flexDirection: 'row', gap: 6 },
+  stepSeg: { flex: 1, height: 4, borderRadius: 2, backgroundColor: COLORS.border },
+  stepSegActive: { backgroundColor: COLORS.primary },
+  stepLabel: { marginTop: 8, fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
 
-  // Back Row: Passenger seats
-  backRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  title: { marginTop: 18, fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.2 },
+  subtitle: { marginTop: 2, fontSize: 14, color: COLORS.textSecondary },
+
+  loading: { paddingVertical: SPACING.xxxl, alignItems: 'center' },
+
+  mapCard: {
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 24,
+    paddingVertical: 22,
+    paddingHorizontal: 26,
+  },
+  mapTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  wheelPill: {
+    width: 40,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
   },
+  wheelText: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary },
+  frontText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
 
-  seatFront: {
-    // Same as seat, no additional styling needed
-  },
-
-  driverSeatRow: {
-    marginBottom: SPACING.lg,
-  },
-  driverSeat: {
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  driverLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textTertiary,
-  },
-  seatsGrid: {
+  grid: {
+    alignSelf: 'center',
+    width: SEAT_SIZE * 2 + 24,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.md,
-    maxWidth: 220,
-    marginBottom: SPACING.lg,
+    justifyContent: 'space-between',
+    rowGap: 14,
+    marginTop: 18,
   },
   seat: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.white,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    justifyContent: 'center',
+    width: SEAT_SIZE,
+    height: 50,
+    borderRadius: 14,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    justifyContent: 'center',
   },
-  seatOccupied: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowOpacity: 0,
-    elevation: 0,
-    opacity: 0.65,
-  },
-  seatSelected: {
-    backgroundColor: COLORS.primary,
+  seatFree: {
+    backgroundColor: COLORS.primaryTint,
     borderWidth: 2,
-    borderColor: COLORS.primaryDark,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 8,
+    borderColor: COLORS.primary,
   },
-  seatText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    fontWeight: '700',
-  },
-  seatTextOccupied: {
-    color: COLORS.textTertiary,
-  },
-  seatTextSelected: {
-    color: COLORS.textInverse,
-  },
-  occupiedOverlay: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-  },
-  legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: SPACING.lg,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 4,
-  },
-  legendText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-  },
+  seatSelected: { backgroundColor: COLORS.primary },
+  seatOccupied: { backgroundColor: COLORS.surfaceAlt },
+  seatText: { fontSize: 16, fontWeight: '800' },
+  seatTextFree: { color: COLORS.primary },
+  seatTextSelected: { color: COLORS.textInverse },
+  seatTextOccupied: { color: COLORS.textTertiary },
 
-  // Selection Card
-  selectionCard: {
-    backgroundColor: COLORS.surface,
+  legend: { flexDirection: 'row', gap: 14, marginTop: 18, justifyContent: 'center' },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+
+  noteBox: {
+    marginTop: 16,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.textTertiary,
-  },
-  selectionCardActive: {
-    borderLeftColor: COLORS.success,
-  },
-  selectionCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOWS.md,
-  },
-  selectionCardGradientActive: {
-    opacity: 1,
-  },
-  selectionInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  selectionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    padding: 14,
     backgroundColor: COLORS.surfaceAlt,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-  selectionIconActive: {
-    backgroundColor: COLORS.success,
-  },
-  selectionTitle: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-  },
-  selectionTitleActive: {
-    color: COLORS.textPrimary,
-  },
-  selectionSubtitleActive: {
-    color: COLORS.textPrimary,
-  },
-  selectionSubtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
+  noteText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
 
-  // Trip Card
-  tripCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  tripCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
-    ...SHADOWS.md,
-  },
-  routeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
-  },
-  routePoint: {
-    alignItems: 'center',
-  },
-  routeDotStart: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.primary,
-    marginBottom: SPACING.xs,
-  },
-  routeDotEnd: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.accent,
-    marginBottom: SPACING.xs,
-  },
-  routeLine: {
-    flex: 1,
-    height: 2,
-    backgroundColor: COLORS.borderLight,
-    marginHorizontal: SPACING.sm,
-  },
-  routeTextOrigin: {
-    ...TYPOGRAPHY.labelMedium,
-    color: '#1a1a1a',
-    fontWeight: '600',
-  },
-  routeTextDestination: {
-    ...TYPOGRAPHY.labelMedium,
-    color: '#1a1a1a',
-    fontWeight: '600',
-  },
-  tripInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: SPACING.sm,
-    marginTop: SPACING.sm,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  infoText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textPrimary,
-  },
-
-  // Driver Card
-  driverCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  driverCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOWS.md,
-  },
-  driverHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  driverAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  driverAvatarPhoto: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.full,
-  },
-  driverInitial: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textInverse,
-    fontWeight: '700',
-  },
-  driverInfo: {
-    flex: 1,
-  },
-  driverName: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  ratingText: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.accent,
-    fontWeight: '600',
-    marginLeft: 4,
-  },
-  ratingLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-  },
-  vehicleLabel: {
-    fontSize: 12,
-    color: COLORS.textTertiary,
-    marginTop: 4,
-  },
-  vehiclePhotoWrap: {
-    width: 92,
-    height: 68,
-    borderRadius: 10,
-    overflow: 'hidden',
-    flexShrink: 0,
-    marginLeft: 8,
-  },
-  vehiclePhoto: {
-    width: '100%',
-    height: '100%',
-  },
-  vehiclePhotoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: COLORS.surfaceAlt,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-
-  // Reviews
-  reviewsSection: {
-    backgroundColor: '#fff',
+  footer: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.xl, paddingTop: SPACING.sm },
+  cta: {
+    height: 54,
     borderRadius: 16,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
-    gap: SPACING.sm,
-  },
-  reviewsTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#0E1A4A',
-    marginBottom: 4,
-  },
-  reviewCard: {
-    gap: 4,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: '#F0F2FF',
-  },
-  reviewTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  reviewStars: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  reviewAuthor: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
-  },
-  reviewComment: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    lineHeight: 17,
-  },
-
-  // Summary
-  summaryCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  summaryCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    overflow: 'hidden',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    ...SHADOWS.md,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryDivider: {
-    height: 1,
-    backgroundColor: COLORS.borderLight,
-    marginVertical: SPACING.md,
-  },
-  summaryLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-  },
-  summaryValue: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
-  summaryPrice: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-
-  // Continue Button
-  continueBtn: {
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.md,
-    height: 56,
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACING.md,
-    ...SHADOWS.orangeSoft,
-    borderTopColor: COLORS.shadowWhiteMid,
-    borderTopWidth: 2,
-    borderLeftColor: COLORS.shadowWhiteDark,
-    borderLeftWidth: 1,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
   },
-  continueBtnGradient: {
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  continueBtnInner: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 14,
-    gap: 10,
-  },
-  continueBtnDisabled: {
-    backgroundColor: COLORS.surfaceAlt,
-    shadowOpacity: 0,
-    elevation: 0,
-    borderTopWidth: 0,
-    borderLeftWidth: 0,
-  },
-  continueBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '700',
-  },
-  continueBtnTextDisabled: {
-    color: COLORS.textSecondary,
-  },
+  ctaDisabled: { backgroundColor: COLORS.surfaceAlt, justifyContent: 'center' },
+  ctaText: { fontSize: 16, fontWeight: '700', color: COLORS.textInverse },
+  ctaTextDisabled: { color: COLORS.textTertiary },
+  ctaPrice: { fontSize: 14, fontWeight: '700', color: COLORS.textInverse },
 })
