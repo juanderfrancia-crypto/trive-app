@@ -4,13 +4,20 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import SearchScreen from '../screens/SearchScreen'
+import DriverPanelScreen from '../screens/DriverPanelScreen'
 import AirportHubScreen from '../screens/AirportHubScreen'
 import NotificationsScreen from '../screens/NotificationsScreen'
 import ProfileScreen from '../screens/ProfileScreen'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
+import { isDriverRole } from '../utils/userRole'
 
 const Tab = createBottomTabNavigator()
+
+function TripsTab() {
+  const isDriver = useAppStore((s) => isDriverRole(s.user))
+  return isDriver ? <DriverPanelScreen /> : <SearchScreen />
+}
 
 export default function TabNavigator() {
   const notificationUnreadCount = useAppStore((s) => s.notificationUnreadCount)
@@ -83,7 +90,7 @@ export default function TabNavigator() {
       })}
     >
       <Tab.Screen name="Home"    component={HomeScreen}          options={{ title: 'Inicio' }} />
-      <Tab.Screen name="Search"  component={SearchScreen}        options={{ title: 'Viajes' }} />
+      <Tab.Screen name="Search"  component={TripsTab}           options={{ title: 'Viajes' }} />
       <Tab.Screen name="Requests" component={AirportHubScreen}   options={{ title: 'Solicitudes' }} />
       <Tab.Screen
         name="Alerts"
