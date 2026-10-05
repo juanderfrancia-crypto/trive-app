@@ -3,9 +3,9 @@ import { StyleSheet } from 'react-native'
 
 export const COLORS = {
   // Primarios - Azul Tecnológico
-  primary: '#154AA8', // Azul Tech vibrante con energía
-  primaryLight: '#2E5FBF', // Azul claro para hover/light states
-  primaryDark: '#0D3A88', // Azul oscuro para press states
+  primary: '#1230B8', // Azul secundario de la marca
+  primaryLight: '#1A3FCC', // Azul claro para hover/light states
+  primaryDark: '#0E2699', // Azul oscuro para press states
   primaryDarkest: '#082D66', // Azul muy oscuro para gradientes 3D
   white: '#FFFFFF',
 
@@ -36,18 +36,18 @@ export const COLORS = {
   success: '#10B981', // Verde éxito
   warning: '#F59E0B', // Amarillo/Naranja advertencia
   error: '#EF4444', // Rojo error
-  info: '#154AA8', // Igual al primary para consistencia
+  info: '#1230B8', // Igual al primary para consistencia
   
   // Fondos - Tonos grises sutiles con tech feel
-  background: '#FAFAFA', // Gris muy claro, casi blanco
+  background: '#FFFFFF', // Blanco: color principal de la interfaz
   surface: '#FFFFFF', // Blanco puro para cards/containers
-  surfaceAlt: '#F5F5F5', // Gris muy claro alternativo
+  surfaceAlt: '#F4F6FA', // Superficie secundaria
   surfaceHover: '#F0F0F0', // Gris claro para hover states
   backgroundAlt: '#F5F5F5', // Alias de surfaceAlt
   
   // Texto - Negro profundo y grises (no azul/púrpura)
-  textPrimary: '#0F0F0F', // Negro profundo para máximo contraste
-  textSecondary: '#5A5A5A', // Gris oscuro profesional
+  textPrimary: '#0F1A2E', // Negro azulado: texto principal
+  textSecondary: '#5B6B84', // Gris azulado: texto secundario
   textTertiary: '#8B8B8B', // Gris medio
   textInverse: '#FFFFFF', // Blanco para texto sobre azul
   
