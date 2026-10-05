@@ -6,6 +6,7 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
 import ErrorBoundary from "./src/components/ErrorBoundary";
+import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
@@ -23,6 +24,16 @@ configureNotificationHandler();
 try { if (_crashlytics) _crashlytics().setCrashlyticsCollectionEnabled(!__DEV__) } catch {}
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+  });
+
+  if (!fontsLoaded) return null;
+
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />

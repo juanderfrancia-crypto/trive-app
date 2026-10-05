@@ -1,13 +1,6 @@
 import React from 'react'
-import {
-  View,
-  Text,
-  Modal,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Image,
-} from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 

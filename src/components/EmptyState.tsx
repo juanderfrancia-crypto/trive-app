@@ -1,10 +1,6 @@
 import React from 'react'
-import {
-  View,
-  Text,
-  StyleSheet,
-  ViewStyle,
-} from 'react-native'
+import { View, StyleSheet, ViewStyle } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
 import Button from './Button'

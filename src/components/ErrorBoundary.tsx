@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import { Text } from './AppText'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 
 type Props = { children: ReactNode }

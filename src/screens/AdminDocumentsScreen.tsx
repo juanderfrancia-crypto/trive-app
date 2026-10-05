@@ -1,16 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  Alert,
-  Image,
-  Modal,
-  TextInput,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Image, Modal, TextInput } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'

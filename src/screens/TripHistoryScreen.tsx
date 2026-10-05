@@ -1,8 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import {
-  View, Text, TouchableOpacity, StyleSheet,
-  FlatList, ActivityIndicator, Alert, StatusBar,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { Ionicons } from '@expo/vector-icons'

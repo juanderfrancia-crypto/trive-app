@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react'
-import {
-  TouchableOpacity,
-  StyleSheet,
-  View,
-  Text,
-  Modal,
-  ScrollView,
-} from 'react-native'
+import { TouchableOpacity, StyleSheet, View, Modal, ScrollView } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppStore } from '../store/useAppStore'

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native'
+import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'

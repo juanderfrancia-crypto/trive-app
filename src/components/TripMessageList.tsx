@@ -1,5 +1,6 @@
 import React, { useRef, useEffect } from 'react'
-import { View, Text, FlatList, StyleSheet } from 'react-native'
+import { View, FlatList, StyleSheet } from 'react-native'
+import { Text } from './AppText'
 import { TripMessage } from '../services/trip_messages'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 

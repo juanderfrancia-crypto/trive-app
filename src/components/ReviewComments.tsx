@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, StyleSheet, ScrollView, FlatList } from 'react-native'
+import { View, StyleSheet, ScrollView, FlatList } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { ReviewComment } from '../services/driverReputation'

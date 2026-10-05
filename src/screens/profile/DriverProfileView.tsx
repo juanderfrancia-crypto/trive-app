@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { Text } from '../../components/AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { getExpiryStatus, DOCUMENT_LABELS } from '../../utils/documentHelpers'

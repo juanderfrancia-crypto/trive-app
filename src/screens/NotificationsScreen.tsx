@@ -1,9 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import type { ComponentProps } from 'react'
-import {
-  View, Text, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal,
-  ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'

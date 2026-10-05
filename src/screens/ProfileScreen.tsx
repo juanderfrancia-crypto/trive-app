@@ -3,10 +3,8 @@ import Svg, { Circle, Path } from 'react-native-svg'
 import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar, Share,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar, Share } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'

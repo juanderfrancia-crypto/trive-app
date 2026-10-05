@@ -1,15 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  Modal,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { Text } from './AppText';
 import { Ionicons } from '@expo/vector-icons';
 import { useNegotiationChat } from '../hooks/useNegotiationChat';
 import { useAppStore } from '../store/useAppStore';

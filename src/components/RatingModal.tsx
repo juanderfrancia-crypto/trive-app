@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { Modal, View, Text, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
+import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { showSuccess, showError } from '../utils/showError'

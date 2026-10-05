@@ -1,17 +1,6 @@
 import { useCallback, useState } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-  Modal,
-  TextInput,
-  Pressable,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, Pressable } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'

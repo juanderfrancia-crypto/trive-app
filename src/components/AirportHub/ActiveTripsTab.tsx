@@ -1,11 +1,6 @@
 import { useState, useCallback } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  StyleSheet,
-} from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
+import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'

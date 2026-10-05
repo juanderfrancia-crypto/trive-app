@@ -1,16 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-  Share,
-  StatusBar,
-} from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, RefreshControl, Share, StatusBar } from 'react-native'
+import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'

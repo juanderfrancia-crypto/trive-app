@@ -1,14 +1,6 @@
 import React, { useRef } from 'react'
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  View,
-  ActivityIndicator,
-  Animated,
-  ViewStyle,
-  TextStyle,
-} from 'react-native'
+import { TouchableOpacity, StyleSheet, View, ActivityIndicator, Animated, ViewStyle, TextStyle } from 'react-native'
+import { Text } from './AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'

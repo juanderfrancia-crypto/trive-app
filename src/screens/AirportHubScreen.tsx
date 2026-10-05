@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { View, StyleSheet, Pressable, Text, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
+import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
