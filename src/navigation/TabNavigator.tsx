@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import SearchScreen from '../screens/SearchScreen'
-import DriverPanelScreen from '../screens/DriverPanelScreen'
+import DriverTripsScreen from '../screens/driver/DriverTripsScreen'
 import AirportHubScreen from '../screens/AirportHubScreen'
 import NotificationsScreen from '../screens/NotificationsScreen'
 import ProfileScreen from '../screens/ProfileScreen'
@@ -16,7 +16,7 @@ const Tab = createBottomTabNavigator()
 
 function TripsTab() {
   const isDriver = useAppStore((s) => isDriverRole(s.user))
-  return isDriver ? <DriverPanelScreen /> : <SearchScreen />
+  return isDriver ? <DriverTripsScreen /> : <SearchScreen />
 }
 
 export default function TabNavigator() {
