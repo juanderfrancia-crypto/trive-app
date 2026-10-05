@@ -12,6 +12,7 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { supabase } from '../services/supabase'
 import OfflineBanner from '../components/OfflineBanner'
+import CancellationPolicyCard from '../components/CancellationPolicyCard'
 
 const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
 
@@ -122,6 +123,8 @@ export default function BookingScreen() {
               <Text style={styles.summaryValue}>Pago directo a {driverFirstName} · {formatCOP(confirmation.total)}</Text>
             </View>
           </View>
+
+          <CancellationPolicyCard />
 
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>

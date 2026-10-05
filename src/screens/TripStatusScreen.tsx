@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert, Share } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -14,6 +14,7 @@ import Button from '../components/Button'
 import Card from '../components/Card'
 import Badge from '../components/Badge'
 import { TripMessagesModal } from '../components/TripMessagesModal'
+import CancellationPolicyCard from '../components/CancellationPolicyCard'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 
 export default function TripStatusScreen() {
@@ -96,6 +97,29 @@ export default function TripStatusScreen() {
     const remMin = diffMin % 60
     if (remMin === 0) return `Salida en ${diffH}h`
     return `Salida en ${diffH}h ${remMin}min`
+  }
+
+  // Mensaje para compartir: solo ruta, fecha/hora y nombre de pila del conductor.
+  // Sin teléfonos, correos ni la ubicación exacta del pasajero.
+  const handleShareTrip = async () => {
+    const when = new Date(selectedRoute.departure_time)
+    const dateText = when.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+    const timeText = when.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true })
+    const firstName = selectedRoute.driver_name?.split(' ')[0]
+    const message = [
+      'Voy en un viaje con Trive:',
+      `${selectedRoute.origin} → ${selectedRoute.destination}`,
+      `Salida: ${dateText}, ${timeText}`,
+      firstName ? `Conductor: ${firstName}` : null,
+    ]
+      .filter(Boolean)
+      .join('\n')
+
+    try {
+      await Share.share({ message })
+    } catch {
+      showError('No se pudo compartir el viaje')
+    }
   }
 
   const handleCancelBooking = () => {
@@ -390,6 +414,8 @@ export default function TripStatusScreen() {
               </View>
             </LinearGradient>
 
+            <CancellationPolicyCard />
+
             {/* Action Buttons */}
             <LinearGradient
               colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
@@ -407,7 +433,18 @@ export default function TripStatusScreen() {
               </TouchableOpacity>
             </LinearGradient>
 
-            <TouchableOpacity 
+            <TouchableOpacity
+              style={styles.shareBtn}
+              onPress={handleShareTrip}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Compartir mi viaje"
+            >
+              <Ionicons name="share-social-outline" size={20} color={COLORS.primary} />
+              <Text style={styles.shareBtnText}>Compartir mi viaje</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.cancelBtn, cancelLoading && { opacity: 0.6 }]}
               onPress={handleCancelBooking}
               disabled={cancelLoading}
@@ -930,6 +967,23 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 14,
+  },
+  shareBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  shareBtnText: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.primary,
+    fontWeight: '700',
   },
   cancelBtn: {
     flexDirection: 'row',

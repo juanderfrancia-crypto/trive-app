@@ -4,7 +4,7 @@ import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { useRoutes } from '../hooks/useRoutes'
@@ -389,6 +389,27 @@ export default function SeatSelectionScreen() {
           </View>
         ) : (
           <>
+            {/* Ficha del conductor: solo datos que llegan en available_rides (rating y reseñas). */}
+            <View style={styles.driverCard}>
+              <View style={styles.driverAvatar}>
+                <Text style={styles.driverInitial}>
+                  {(selectedRoute.driver_name || 'C').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.driverBody}>
+                <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
+                <View style={styles.driverStats}>
+                  <Ionicons name="star" size={13} color={COLORS.accent} />
+                  <Text style={styles.driverStatValue}>
+                    {Number(selectedRoute.driver_rating ?? 0).toFixed(1)}
+                  </Text>
+                  <Text style={styles.driverStatMuted}>
+                    · {Number(selectedRoute.driver_review_count ?? 0)} reseñas
+                  </Text>
+                </View>
+              </View>
+            </View>
+
             <View style={styles.mapCard}>
               <View style={styles.mapTop}>
                 <View style={styles.wheelPill}>
@@ -506,6 +527,33 @@ const styles = StyleSheet.create({
   subtitle: { marginTop: 2, fontSize: 14, color: COLORS.textSecondary },
 
   loading: { paddingVertical: SPACING.xxxl, alignItems: 'center' },
+
+  driverCard: {
+    marginTop: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+    ...SHADOWS.card,
+  },
+  driverAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  driverInitial: { ...TYPOGRAPHY.h4, color: COLORS.primary },
+  driverBody: { flex: 1 },
+  driverName: { ...TYPOGRAPHY.bodyMedium, color: COLORS.textPrimary, fontWeight: '700' },
+  driverStats: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
+  driverStatValue: { ...TYPOGRAPHY.labelMedium, color: COLORS.textPrimary, fontWeight: '700' },
+  driverStatMuted: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary },
 
   mapCard: {
     marginTop: 20,
