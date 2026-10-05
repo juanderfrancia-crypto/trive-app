@@ -270,7 +270,7 @@ export default function DriverDetailsBottomSheet({
               <Ionicons
                 name="checkmark-circle"
                 size={20}
-                color="#FFFFFF"
+                color={COLORS.white}
                 style={{ marginRight: SPACING.sm }}
               />
               <Text style={styles.reserveButtonText}>
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
 
   bottomSheet: {
     maxHeight: '85%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     ...SHADOWS.lg,
@@ -306,13 +306,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: COLORS.border,
   },
   handleBar: {
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D1D5DB',
+    backgroundColor: COLORS.border,
   },
 
   // Header
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: COLORS.surfaceAlt,
   },
   headerContent: {
     flex: 1,
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   driverAvatarText: {
     ...TYPOGRAPHY.h4,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '700',
   },
   driverName: {
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -414,11 +414,11 @@ const styles = StyleSheet.create({
 
   // Route Info Card
   routeInfoCard: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
   },
   routeInfoTitle: {
     ...TYPOGRAPHY.h4,
@@ -453,7 +453,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: COLORS.border,
     gap: SPACING.md,
   },
   reserveButton: {
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   },
   reserveButtonText: {
     ...TYPOGRAPHY.body3,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '700',
   },
 })

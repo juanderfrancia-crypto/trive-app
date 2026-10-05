@@ -308,7 +308,7 @@ export default function LoginPhoneScreen() {
                 activeOpacity={0.88}
               >
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={s.btnGradient}
@@ -374,7 +374,7 @@ export default function LoginPhoneScreen() {
 
               {otpGuard.isLocked && (
                 <View style={s.lockBanner}>
-                  <Ionicons name="lock-closed" size={14} color="#92400E" />
+                  <Ionicons name="lock-closed" size={14} color={COLORS.warningDark} />
                   <Text style={s.lockText}>Demasiados intentos. Espera {otpGuard.formatCountdown()}</Text>
                 </View>
               )}
@@ -493,7 +493,7 @@ export default function LoginPhoneScreen() {
 
               {emailGuard.isLocked && (
                 <View style={s.lockBanner}>
-                  <Ionicons name="lock-closed" size={14} color="#92400E" />
+                  <Ionicons name="lock-closed" size={14} color={COLORS.warningDark} />
                   <Text style={s.lockText}>Demasiados intentos. Espera {emailGuard.formatCountdown()}</Text>
                 </View>
               )}
@@ -505,7 +505,7 @@ export default function LoginPhoneScreen() {
                 activeOpacity={0.88}
               >
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={s.btnGradient}
@@ -602,7 +602,7 @@ const s = StyleSheet.create({
     height: 62,
     gap: 12,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
   },
   inputText: {
     flex: 1,
@@ -635,7 +635,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     height: 62,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
   },
   countryBadge: {
     flexDirection: 'row',
@@ -652,7 +652,7 @@ const s = StyleSheet.create({
   phoneDivider: {
     width: 1,
     height: 24,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginHorizontal: 14,
   },
   phoneInput: {
@@ -797,7 +797,7 @@ const s = StyleSheet.create({
     height: 62,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     backgroundColor: '#fff',
     fontSize: 24,
     fontWeight: '700',
@@ -829,17 +829,17 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#FCD34D',
+    borderColor: COLORS.warning,
   },
   lockText: {
     fontSize: 13,
-    color: '#92400E',
+    color: COLORS.warningDark,
     fontWeight: '600',
     flex: 1,
   },

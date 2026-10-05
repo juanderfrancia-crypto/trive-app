@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageTextMe: {
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   messageTextThem: {
     color: COLORS.textPrimary,

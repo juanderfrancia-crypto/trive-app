@@ -25,7 +25,7 @@ export default function OfflineBanner() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Ionicons name="cloud-offline-outline" size={20} color="#FFFFFF" style={styles.icon} />
+        <Ionicons name="cloud-offline-outline" size={20} color={COLORS.white} style={styles.icon} />
         <Text style={styles.text}>Sin conexión a internet</Text>
       </View>
     </View>
@@ -34,7 +34,7 @@ export default function OfflineBanner() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.error,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   },
   text: {
     ...TYPOGRAPHY.bodySmall,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '600',
   },
 })

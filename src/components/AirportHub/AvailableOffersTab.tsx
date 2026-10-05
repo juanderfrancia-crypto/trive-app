@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.md,
     marginTop: SPACING.md,
     padding: SPACING.sm,
-    backgroundColor: '#eef2ff',
+    backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.md,
   },
   commissionText: { flex: 1, fontSize: TYPOGRAPHY.size.xs, color: COLORS.textSecondary },

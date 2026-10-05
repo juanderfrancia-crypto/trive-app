@@ -158,7 +158,7 @@ export default function AvailableRidesScreen() {
                   <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
                 </View>
               )}
-              <Ionicons name="star" size={11} color="#FBBF24" />
+              <Ionicons name="star" size={11} color={COLORS.warning} />
               <Text style={styles.ratingVal}>{ride.driver_rating.toFixed(1)}</Text>
             </View>
           </View>
@@ -209,7 +209,7 @@ export default function AvailableRidesScreen() {
               <Text style={styles.reserveTextDisabled}>Sin cupos</Text>
             ) : (
               <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={styles.reserveBtnInner}
               >
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   },
   backBtn: {
     width: 36, height: 36, borderRadius: RADIUS.md,
-    backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
   municipalityBadge: {
@@ -348,12 +348,12 @@ const styles = StyleSheet.create({
   },
   filterBtn: {
     width: 36, height: 36, borderRadius: RADIUS.md,
-    backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
   },
   tabsRow: {
     flexDirection: 'row', paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm, gap: SPACING.sm,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
   tab: {
     paddingHorizontal: 12, paddingVertical: 6,
@@ -411,12 +411,12 @@ const styles = StyleSheet.create({
     paddingBottom: SPACING.lg,
   },
   rideCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: '#E8EDFF',
-    shadowColor: '#1230B8',
+    borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   originText: {
-    fontSize: 13, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    fontSize: 13, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
   },
   destText: {
     fontSize: 13, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
     gap: 0,
   },
   priceText: {
-    fontSize: 15, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: COLORS.primaryDark, letterSpacing: -0.3,
   },
   departureLine: {
     fontSize: 10, color: COLORS.textTertiary, fontWeight: '500',
@@ -477,7 +477,7 @@ const styles = StyleSheet.create({
   },
 
   divider: {
-    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md,
+    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: SPACING.md,
   },
 
   // ── Sección conductor ──
@@ -505,7 +505,7 @@ const styles = StyleSheet.create({
     flex: 1, gap: 2,
   },
   driverName: {
-    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 13, fontWeight: '700', color: COLORS.textPrimary,
   },
   driverMetaRow: {
     flexDirection: 'row', alignItems: 'center', gap: 3, flexWrap: 'wrap',
@@ -515,7 +515,7 @@ const styles = StyleSheet.create({
   },
   platePill: {
     backgroundColor: '#F0F4FF', paddingHorizontal: 4, paddingVertical: 1,
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primaryTint,
   },
   plateText: {
     fontSize: 9, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.3,
@@ -527,7 +527,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   ratingVal: {
-    fontSize: 10, fontWeight: '700', color: '#92400E',
+    fontSize: 10, fontWeight: '700', color: COLORS.warningDark,
   },
   vehicleImageSmall: { width: 100, height: 75, flexShrink: 0 },
 
@@ -549,7 +549,7 @@ const styles = StyleSheet.create({
   },
   occupancyWrap: { flex: 1, gap: 3 },
   almostFullText: {
-    fontSize: 9, fontWeight: '800', color: '#92400E', letterSpacing: 0.3,
+    fontSize: 9, fontWeight: '800', color: COLORS.warningDark, letterSpacing: 0.3,
   },
   occupancyLabelRow: {
     flexDirection: 'row', alignItems: 'baseline',
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
   occupancyFraction: { fontSize: 12, fontWeight: '800', color: COLORS.primary },
   occupancyWord: { fontSize: 10, color: COLORS.textSecondary, fontWeight: '500' },
   progressBg: {
-    height: 5, backgroundColor: '#E8EDFF', borderRadius: RADIUS.full, overflow: 'hidden',
+    height: 5, backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full, overflow: 'hidden',
   },
   progressFill: {
     height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
@@ -572,7 +572,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 16,
   },
   reserveBtnDisabled: {
-    backgroundColor: '#F1F5F9', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.md,
     paddingVertical: 10, paddingHorizontal: 16,
     shadowOpacity: 0, elevation: 0,
     alignItems: 'center' as const,

@@ -1,3 +1,4 @@
+import { COLORS } from '../theme/theme'
 import React, { useEffect, useRef } from 'react'
 import { View, Animated, Easing, StyleSheet, Dimensions } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -141,7 +142,7 @@ export function SkeletonRideCard() {
 }
 
 const LIGHT = 'rgba(255,255,255,0.2)'
-const GRAY  = '#E5E7EB'
+const GRAY  = COLORS.border
 
 const sk = StyleSheet.create({
   // ── Route card (white) ──────────────────────────────────────────────────
@@ -150,15 +151,15 @@ const sk = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E8EDFF',
-    shadowColor: '#1230B8',
+    borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.07,
     shadowRadius: 8,
     elevation: 3,
   },
   routeCardInner: { 
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 0, 
     paddingVertical: 0 
   },
@@ -212,7 +213,7 @@ const sk = StyleSheet.create({
   
   dividerLight: { 
     height: 1, 
-    backgroundColor: '#E5E7EB', 
+    backgroundColor: COLORS.border, 
     marginHorizontal: SPACING.lg,
     marginBottom: 0, 
     marginTop: 0 
@@ -243,10 +244,10 @@ const sk = StyleSheet.create({
 
   // ── Airport card (white) ────────────────────────────────────────────────────
   airportCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     padding: SPACING.lg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -261,27 +262,27 @@ const sk = StyleSheet.create({
   routeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     gap: SPACING.md,
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: COLORS.surfaceAlt,
   },
   routeLine: { alignItems: 'center', gap: 3 },
-  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D5DB' },
-  lineSegment: { width: 1.5, height: 18, backgroundColor: '#D1D5DB' },
-  dotGray: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#D1D5DB' },
+  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.border },
+  lineSegment: { width: 1.5, height: 18, backgroundColor: COLORS.border },
+  dotGray: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.border },
   chipsRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.md },
   chip: { width: 90, height: 28, borderRadius: RADIUS.sm, backgroundColor: GRAY },
   acceptBtnSk: { height: 46, borderRadius: RADIUS.md, backgroundColor: '#C7D2FE' },
 
   // ── Ride card (white) ───────────────────────────────────────────────────────
   rideCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     marginBottom: SPACING.md,
@@ -298,7 +299,7 @@ const sk = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: RADIUS.md,
     padding: SPACING.sm,
     marginBottom: SPACING.sm,

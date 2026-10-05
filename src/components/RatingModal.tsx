@@ -331,11 +331,11 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   toggleButtonActiveNo: {
-    backgroundColor: '#ef4444',
+    backgroundColor: COLORS.error,
     borderWidth: 0,
   },
   toggleButtonActiveYes: {
-    backgroundColor: '#10b981',
+    backgroundColor: COLORS.success,
     borderWidth: 0,
   },
   toggleButtonText: {

@@ -224,7 +224,7 @@ export default function RegisterScreen() {
             disabled={isSubmitting || authLoading}
           >
             <LinearGradient
-              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.registerBtnGradient}
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     marginTop: 8,
-    shadowColor: '#1230B8',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,

@@ -241,7 +241,7 @@ export default function AirportRequestScreen() {
 
       {/* Header con gradiente */}
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={s.header}
@@ -367,7 +367,7 @@ export default function AirportRequestScreen() {
                   </View>
                   <View style={s.activeRequestBottom}>
                     <View style={[s.activeRequestBadge, req.offered_price > req.initial_price && s.activeRequestBadgeUpdated]}>
-                      <Ionicons name="alert-circle" size={13} color={req.offered_price > req.initial_price ? '#F59E0B' : COLORS.primary} />
+                      <Ionicons name="alert-circle" size={13} color={req.offered_price > req.initial_price ? COLORS.warning : COLORS.primary} />
                       <Text style={[s.activeRequestBadgeText, req.offered_price > req.initial_price && s.activeRequestBadgeTextUpdated]}>
                         {req.offered_price > req.initial_price ? 'Precio aumentado' : 'Esperando ofertas'}
                       </Text>
@@ -608,7 +608,7 @@ export default function AirportRequestScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={['#0E2699', '#1230B8', '#1A3FCC']}
+            colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={s.publishBtn}
@@ -815,7 +815,7 @@ export default function AirportRequestScreen() {
                       <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
                     </View>
                     <View style={[s.requestBadge, s.requestBadgeCompleted]}>
-                      <Ionicons name="checkmark-circle" size={13} color="#10B981" />
+                      <Ionicons name="checkmark-circle" size={13} color={COLORS.success} />
                       <Text style={s.requestBadgeCompletedText}>Completado</Text>
                     </View>
                   </View>
@@ -863,7 +863,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
   },
   fieldGroup: { padding: SPACING.lg },
-  divider: { height: 1, backgroundColor: '#F1F5F9' },
+  divider: { height: 1, backgroundColor: COLORS.surfaceAlt },
   fieldLabel: {
     fontSize: 11, fontWeight: '700', color: '#94A3B8',
     letterSpacing: 0.8, marginBottom: SPACING.sm,
@@ -873,12 +873,12 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F8FAFC',
     borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: '#E2E8F0',
+    borderWidth: 1.5, borderColor: COLORS.border,
     paddingHorizontal: SPACING.md, paddingVertical: 11,
   },
   inputRowSelected: {
     borderColor: COLORS.primary,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
   },
   inputIcon: { marginRight: SPACING.sm },
   input: { flex: 1, fontSize: 15, color: COLORS.textPrimary, padding: 0 },
@@ -889,7 +889,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
@@ -901,10 +901,10 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     paddingHorizontal: SPACING.md, paddingVertical: 11,
   },
-  dropdownItemBorder: { borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  dropdownItemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
   dropdownIcon: {
     width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center',
   },
   dropdownTexts: { flex: 1 },
@@ -914,7 +914,7 @@ const s = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
     marginTop: 6, paddingHorizontal: SPACING.md, paddingVertical: 10,
     backgroundColor: '#F8FAFC', borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: '#E2E8F0',
+    borderWidth: 1, borderColor: COLORS.border,
   },
   dropdownEmptyText: { fontSize: 13, color: COLORS.textTertiary },
 
@@ -934,13 +934,13 @@ const s = StyleSheet.create({
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   counterBtn: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: '#E2E8F0',
+    backgroundColor: '#F8FAFC', borderWidth: 1.5, borderColor: COLORS.border,
     justifyContent: 'center', alignItems: 'center',
   },
   counterBtnDisabled: { opacity: 0.4 },
   counterValueBox: {
     width: 44, height: 38, borderRadius: RADIUS.md,
-    backgroundColor: '#EEF2FF', borderWidth: 1.5, borderColor: COLORS.primary + '40',
+    backgroundColor: COLORS.primaryTint, borderWidth: 1.5, borderColor: COLORS.primary + '40',
     justifyContent: 'center', alignItems: 'center',
   },
   counterValueText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
@@ -948,7 +948,7 @@ const s = StyleSheet.create({
 
   notesInput: {
     backgroundColor: '#F8FAFC', borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: '#E2E8F0',
+    borderWidth: 1.5, borderColor: COLORS.border,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
     fontSize: 15, color: COLORS.textPrimary, minHeight: 80,
     textAlignVertical: 'top',
@@ -958,7 +958,7 @@ const s = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.lg,
     borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 6 },
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
   },
   publishBtnDisabled: { opacity: 0.6 },
@@ -978,7 +978,7 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: COLORS.surfaceAlt,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -998,7 +998,7 @@ const s = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
     padding: SPACING.md,
   },
   activeRequestTop: {
@@ -1040,13 +1040,13 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
   },
   activeRequestBadgeUpdated: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
   },
   activeRequestBadgeText: {
     fontSize: 11,
@@ -1054,7 +1054,7 @@ const s = StyleSheet.create({
     color: COLORS.primary,
   },
   activeRequestBadgeTextUpdated: {
-    color: '#92400E',
+    color: COLORS.warningDark,
   },
 
   // Trip type selector
@@ -1076,7 +1076,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
   },
   tripTypeBtnActive: {
     backgroundColor: COLORS.primary,
@@ -1105,7 +1105,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.full,
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     marginRight: SPACING.sm,
   },
   destChipSelected: {
@@ -1173,7 +1173,7 @@ const s = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1198,7 +1198,7 @@ const s = StyleSheet.create({
   requestTo: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#EF4444',
+    color: COLORS.error,
     marginTop: 4,
   },
   requestPrice: {
@@ -1217,7 +1217,7 @@ const s = StyleSheet.create({
   },
   requestDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: COLORS.surfaceAlt,
     marginHorizontal: SPACING.lg,
   },
   requestCardFooter: {
@@ -1240,7 +1240,7 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: 3,
     borderRadius: RADIUS.full,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
   },
   requestBadgeActive: {
     backgroundColor: '#D1FAE5',
@@ -1249,7 +1249,7 @@ const s = StyleSheet.create({
     backgroundColor: '#DBEAFE',
   },
   requestBadgeInProgress: {
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
   },
   requestBadgeCompleted: {
     flexDirection: 'row',
@@ -1265,7 +1265,7 @@ const s = StyleSheet.create({
   requestBadgeCompletedText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#10B981',
+    color: COLORS.success,
   },
 
   // Active trips styling
@@ -1316,7 +1316,7 @@ const s = StyleSheet.create({
   // Completed trips styling
   completedTripCard: {
     borderLeftWidth: 4,
-    borderLeftColor: '#10B981',
+    borderLeftColor: COLORS.success,
     opacity: 0.9,
   },
 
@@ -1325,7 +1325,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: COLORS.border,
     paddingHorizontal: SPACING.sm,
   },
   tab: {

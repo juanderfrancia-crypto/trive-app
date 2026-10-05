@@ -1,3 +1,4 @@
+import { COLORS } from '../theme/theme'
 /**
  * NotificationNavigation.ts
  *
@@ -110,15 +111,15 @@ export function getNotificationIcon(notificationType: Notification['type']): str
 
 export function getNotificationColor(notificationType: Notification['type']): string {
   const colors: Record<string, string> = {
-    trip_published: '#0E2699',
-    offer_received: '#F59E0B',
-    offer_accepted: '#10B981',
-    trip_confirmed: '#10B981',
+    trip_published: COLORS.primaryDark,
+    offer_received: COLORS.warning,
+    offer_accepted: COLORS.success,
+    trip_confirmed: COLORS.success,
     trip_started: '#3B82F6',
     trip_completed: '#8B5CF6',
     trip_rated: '#EC4899',
-    trip_update: '#0E2699',
-    booking: '#0E2699',
+    trip_update: COLORS.primaryDark,
+    booking: COLORS.primaryDark,
     driver_arrived: '#3B82F6',
     review_pending: '#EC4899',
     message: '#6366F1',

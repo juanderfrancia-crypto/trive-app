@@ -115,13 +115,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
   closeBtn: {
     width: 36, height: 36, borderRadius: RADIUS.md,
-    backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
   },
-  title: { fontSize: 16, fontWeight: '700', color: '#0E1C4E' },
+  title: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   sub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   searchWrap: {
     flexDirection: 'row', alignItems: 'center',
@@ -134,9 +134,9 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingVertical: 13,
-    borderBottomWidth: 1, borderBottomColor: '#F8F9FF',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
-  itemSelected: { backgroundColor: '#EEF2FF' },
+  itemSelected: { backgroundColor: COLORS.primaryTint },
   itemLeft: { flex: 1 },
   itemName: { fontSize: 15, fontWeight: '500', color: COLORS.textPrimary },
   itemNameSelected: { fontWeight: '700', color: COLORS.primary },

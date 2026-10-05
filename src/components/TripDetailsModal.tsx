@@ -33,9 +33,9 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
 }) => {
   const getStatusInfo = () => {
     if (trip.status === 'accepted') {
-      return { label: 'Aceptado', icon: 'checkmark-circle', color: '#10b981' }
+      return { label: 'Aceptado', icon: 'checkmark-circle', color: COLORS.success }
     }
-    return { label: 'En Progreso', icon: 'navigate-circle', color: '#f59e0b' }
+    return { label: 'En Progreso', icon: 'navigate-circle', color: COLORS.warning }
   }
 
   const statusInfo = getStatusInfo()
@@ -263,7 +263,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   ratingPlaceholder: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: COLORS.warningLight,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.md,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '600',
-    color: '#92400e',
+    color: COLORS.warningDark,
   },
   routeCard: {
     backgroundColor: COLORS.background,

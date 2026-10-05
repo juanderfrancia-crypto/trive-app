@@ -59,11 +59,16 @@ export const COLORS = {
   grayDark: '#374151', // Gris oscuro para elementos
   
   // Bordes - Grises sutiles
-  border: '#E8E8E8', // Gris sutil
-  borderLight: '#F0F0F0', // Gris muy claro para divisiones suaves
-  
+  border: '#E6E9F0', // Gris azulado sutil
+  borderLight: '#F4F6FA', // Gris muy claro para divisiones suaves
+
   // Divisores
-  divider: '#E8E8E8',
+  divider: '#E6E9F0',
+
+  // Tintes de marca y advertencia
+  primaryTint: '#E8ECFB',
+  warningLight: '#FEF3E2',
+  warningDark: '#B45309',
 }
 
 export const TYPOGRAPHY = {

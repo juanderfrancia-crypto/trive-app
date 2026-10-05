@@ -116,7 +116,7 @@ export default function ReviewComments({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     ...SHADOWS.md,
@@ -158,7 +158,7 @@ const styles = StyleSheet.create({
 
   // Comment Card
   commentCard: {
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
     borderLeftWidth: 4,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     ...TYPOGRAPHY.body3,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '600',
   },
   userName: {

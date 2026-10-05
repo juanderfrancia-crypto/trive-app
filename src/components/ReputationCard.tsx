@@ -156,7 +156,7 @@ function getTrustLabel(rating: number) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     ...SHADOWS.md,
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: '100%',
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
   },
 
   weightedBadge: {
@@ -244,7 +244,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.sm,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   statDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginHorizontal: SPACING.md,
   },
 
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFBEB',
-    borderColor: '#FCD34D',
+    borderColor: COLORS.warning,
     borderWidth: 1,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
   },
   trustText: {
     ...TYPOGRAPHY.body3,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '600',
   },
 
@@ -333,12 +333,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#06B6D4',
   },
   trustGood: {
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.success,
   },
   trustFair: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: COLORS.warning,
   },
   trustLow: {
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.error,
   },
 })

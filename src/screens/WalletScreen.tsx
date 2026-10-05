@@ -272,7 +272,7 @@ export default function WalletScreen() {
 function statusColor(status: string) {
   switch (status) {
     case 'approved': return COLORS.success
-    case 'pending':  return '#F59E0B'
+    case 'pending':  return COLORS.warning
     default:         return COLORS.error
   }
 }

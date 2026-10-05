@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   stepCircleCompleted: {
-    backgroundColor: COLORS.success || '#10B981',
-    borderColor: COLORS.success || '#10B981',
+    backgroundColor: COLORS.success || COLORS.success,
+    borderColor: COLORS.success || COLORS.success,
   },
   stepNumber: {
     fontSize: 14,

@@ -172,10 +172,10 @@ export default function VerifyEmailScreen() {
 
   return (
     <View style={styles.safeContainer}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <LinearGradient
-        colors={['#FFFFFF', '#F9FAFB', '#F3F4F6']}
+        colors={[COLORS.white, COLORS.surfaceAlt, COLORS.surfaceAlt]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBg}
@@ -308,7 +308,7 @@ export default function VerifyEmailScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   gradientBg: {
     position: 'absolute',
@@ -463,7 +463,7 @@ const styles = StyleSheet.create({
   },
   verifyBtnText: {
     ...TYPOGRAPHY.button,
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '600',
   },
   buttonDisabled: {

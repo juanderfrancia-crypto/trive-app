@@ -33,10 +33,10 @@ interface TripItem {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  completed: '#10B981',
+  completed: COLORS.success,
   cancelled: COLORS.error,
-  scheduled: '#1A3FCC',
-  in_progress: '#F59E0B',
+  scheduled: COLORS.primaryLight,
+  in_progress: COLORS.warning,
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -51,7 +51,7 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_BG: Record<string, string> = {
   completed: '#ECFDF5',
   cancelled: '#FEF2F2',
-  scheduled: '#EEF2FF',
+  scheduled: COLORS.primaryTint,
   in_progress: '#FFFBEB',
 }
 
@@ -283,14 +283,14 @@ export default function TripHistoryScreen() {
   const renderItem = ({ item }: { item: TripItem }) => {
     const status = effectiveStatus(item)
     const accentColor = STATUS_COLOR[status] ?? COLORS.textSecondary
-    const statusBg = STATUS_BG[status] ?? '#F4F6FF'
+    const statusBg = STATUS_BG[status] ?? COLORS.surfaceAlt
     const canRate = status === 'completed' && !item.hasRated && !!item.driverId
 
     return (
       <View style={s.card}>
         {/* Ícono de ruta */}
         <LinearGradient
-          colors={['#0E2699', '#1230B8', '#1A3FCC']}
+          colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={s.routeIcon}
         >
@@ -345,17 +345,17 @@ export default function TripHistoryScreen() {
             {!isDriver && canRate ? (
               <TouchableOpacity onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={s.rateBtn}
                 >
-                  <Ionicons name="star" size={12} color="#FBBF24" />
+                  <Ionicons name="star" size={12} color={COLORS.warning} />
                   <Text style={s.rateBtnText}>Calificar conductor</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : !isDriver && item.hasRated ? (
               <View style={s.ratedBadge}>
-                <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
                 <Text style={s.ratedText}>Calificado</Text>
               </View>
             ) : null}
@@ -376,12 +376,12 @@ export default function TripHistoryScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F4F6FF" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surfaceAlt} />
 
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity style={s.headerIconBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color="#1230B8" />
+          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={s.title}>{isDriver ? 'Historial de Rutas' : 'Historial de Viajes'}</Text>
         {filtered.length > 0 ? (
@@ -405,7 +405,7 @@ export default function TripHistoryScreen() {
             >
               {isActive ? (
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={s.filterChip}
                 >
@@ -423,16 +423,16 @@ export default function TripHistoryScreen() {
 
       {loading ? (
         <View style={s.centered}>
-          <ActivityIndicator size="large" color="#1230B8" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={s.loadingText}>Cargando viajes...</Text>
         </View>
       ) : filtered.length === 0 ? (
         <View style={s.empty}>
           <LinearGradient
-            colors={['#EEF2FF', '#E4EBFF']}
+            colors={[COLORS.primaryTint, COLORS.primaryTint]}
             style={s.emptyIconWrap}
           >
-            <Ionicons name="receipt-outline" size={32} color="#1A3FCC" />
+            <Ionicons name="receipt-outline" size={32} color={COLORS.primaryLight} />
           </LinearGradient>
           <Text style={s.emptyTitle}>Sin viajes</Text>
           <Text style={s.emptyText}>
@@ -469,7 +469,7 @@ export default function TripHistoryScreen() {
 const s = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
   },
 
   // Header
@@ -479,14 +479,14 @@ const s = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     borderBottomWidth: 1,
-    borderBottomColor: '#D6E0FF',
+    borderBottomColor: COLORS.primaryTint,
   },
   headerIconBtn: {
     width: 38, height: 38,
     borderRadius: 12,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -522,7 +522,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.full,
     backgroundColor: '#fff',
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
   },
   filterText: {
     fontSize: 13,
@@ -549,8 +549,8 @@ const s = StyleSheet.create({
     borderRadius: 18,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: '#E9EBF2',
-    shadowColor: '#0E2699',
+    borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
@@ -588,19 +588,19 @@ const s = StyleSheet.create({
   dotOrigin: {
     width: 7, height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#1A3FCC',
+    backgroundColor: COLORS.primaryLight,
     flexShrink: 0,
   },
   dotDest: {
     width: 7, height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.success,
     flexShrink: 0,
   },
   routeLine: {
     width: 2,
     height: 8,
-    backgroundColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint,
     marginLeft: 2.5,
   },
   routeText: {
@@ -612,7 +612,7 @@ const s = StyleSheet.create({
   price: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1230B8',
+    color: COLORS.primary,
     flexShrink: 0,
   },
 
@@ -682,14 +682,14 @@ const s = StyleSheet.create({
   ratedText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#10B981',
+    color: COLORS.success,
   },
 
   // Botón eliminar
   deleteBtn: {
     width: 28, height: 28,
     borderRadius: 8,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,

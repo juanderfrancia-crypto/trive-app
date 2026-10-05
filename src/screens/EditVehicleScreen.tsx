@@ -266,11 +266,11 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   inputError: {
-    borderColor: '#EF4444',
+    borderColor: COLORS.error,
     backgroundColor: '#FEE2E2',
   },
   errorText: {
-    color: '#EF4444',
+    color: COLORS.error,
     fontSize: 12,
     marginTop: 6,
     fontWeight: '500',

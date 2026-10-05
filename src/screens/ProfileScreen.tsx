@@ -195,7 +195,7 @@ export default function ProfileScreen() {
   // Configure StatusBar when profile screen gets focus
   useFocusEffect(useCallback(() => {
     StatusBar.setBarStyle('dark-content')
-    StatusBar.setBackgroundColor('#FFFFFF')
+    StatusBar.setBackgroundColor(COLORS.white)
   }, []))
 
   // ── Focus refresh ──────────────────────────────────────────────────────────
@@ -396,7 +396,7 @@ export default function ProfileScreen() {
           {/* Rating */}
           <View style={pv.dataRow}>
             <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="star" size={18} color="#FCD34D" /></View>
+              <View style={pv.dataIcon}><Ionicons name="star" size={18} color={COLORS.warning} /></View>
               <View>
                 <Text style={pv.dataLabel}>Calificación</Text>
                 <Text style={pv.dataValue}>{(profile?.rating ?? 0).toFixed(1)} / 5.0</Text>
@@ -438,7 +438,7 @@ export default function ProfileScreen() {
           <View style={pv.dataRowDivider} />
           <View style={pv.dataRow}>
             <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="mail" size={18} color="#FCD34D" /></View>
+              <View style={pv.dataIcon}><Ionicons name="mail" size={18} color={COLORS.warning} /></View>
               <View>
                 <Text style={pv.dataLabel}>Email</Text>
                 <Text style={pv.dataValue} numberOfLines={1}>{user?.email || '—'}</Text>
@@ -543,7 +543,7 @@ export default function ProfileScreen() {
       <View style={s.section}>
         <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
           <View style={pv.helpRow}>
-            <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color="#1230B8" /></View>
+            <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color={COLORS.primary} /></View>
             <View style={pv.helpText}>
               <Text style={pv.payName}>Configuración</Text>
               <Text style={pv.paySub}>Ajustes y preferencias</Text>
@@ -589,13 +589,13 @@ export default function ProfileScreen() {
             disabled={uploadingPhoto}
           >
             {uploadingPhoto ? (
-              <View style={[dv.heroPhotoImg, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#1230B8' }]}>
+              <View style={[dv.heroPhotoImg, { justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.primary }]}>
                 <ActivityIndicator color="#fff" />
               </View>
             ) : avatarUri ? (
               <Image source={{ uri: avatarUri }} style={dv.heroPhotoImg} resizeMode="cover" />
             ) : (
-              <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={dv.heroPhotoImg}>
+              <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={dv.heroPhotoImg}>
                 <Text style={dv.heroPhotoInitials}>{initials}</Text>
               </LinearGradient>
             )}
@@ -611,7 +611,7 @@ export default function ProfileScreen() {
                 <Text style={dv.heroName} numberOfLines={1}>{user?.name || 'Conductor'}</Text>
                 <Ionicons name="pencil-outline" size={12} color={COLORS.textTertiary} />
               </TouchableOpacity>
-              <Ionicons name="checkmark-circle" size={16} color="#FBBF24" />
+              <Ionicons name="checkmark-circle" size={16} color={COLORS.warning} />
             </View>
 
             <View style={dv.conductorBadge}>
@@ -623,19 +623,19 @@ export default function ProfileScreen() {
             {/* Stats en fila */}
             <View style={dv.heroStats}>
               <View style={dv.heroStat}>
-                <Ionicons name="star" size={11} color="#FBBF24" />
+                <Ionicons name="star" size={11} color={COLORS.warning} />
                 <Text style={dv.heroStatVal}>{rating}</Text>
                 <Text style={dv.heroStatLabel}>calificación</Text>
               </View>
               <View style={dv.heroStatDivider} />
               <View style={dv.heroStat}>
-                <Ionicons name="time-outline" size={11} color="#1A3FCC" />
+                <Ionicons name="time-outline" size={11} color={COLORS.primaryLight} />
                 <Text style={dv.heroStatVal}>{yearsOnApp === 0 ? 'Nuevo' : `${yearsOnApp}a`}</Text>
                 <Text style={dv.heroStatLabel}>en Trive</Text>
               </View>
               <View style={dv.heroStatDivider} />
               <View style={dv.heroStat}>
-                <Ionicons name="car-outline" size={11} color="#1A3FCC" />
+                <Ionicons name="car-outline" size={11} color={COLORS.primaryLight} />
                 <Text style={dv.heroStatVal}>{totalTrips}</Text>
                 <Text style={dv.heroStatLabel}>viajes</Text>
               </View>
@@ -695,7 +695,7 @@ export default function ProfileScreen() {
               activeOpacity={0.7}
             >
               <View style={[dv.actionIcon, { backgroundColor: 'rgba(18,48,184,0.07)' }]}>
-                <Ionicons name="speedometer-outline" size={20} color="#1A3FCC" />
+                <Ionicons name="speedometer-outline" size={20} color={COLORS.primaryLight} />
               </View>
               <View style={dv.actionInfo}>
                 <Text style={dv.actionTitle}>Panel del Conductor</Text>
@@ -926,7 +926,7 @@ export default function ProfileScreen() {
                 <View key={type}>
                   {idx > 0 && <View style={s.divider} />}
                   <View style={dv.docRow}>
-                    <View style={dv.docIcon}><Ionicons name={icon as any} size={20} color="#1A3FCC" /></View>
+                    <View style={dv.docIcon}><Ionicons name={icon as any} size={20} color={COLORS.primaryLight} /></View>
                     <View style={dv.docInfo}>
                       <Text style={dv.docTitle}>{label}</Text>
                       <Text style={[dv.docSub, { color: statusColor }]}>{statusLabel}</Text>
@@ -958,7 +958,7 @@ export default function ProfileScreen() {
               {recentRoutes.map((route, idx) => (
                 <View key={route.id}>
                   <View style={dv.routeRow}>
-                    <View style={dv.routeIcon}><Ionicons name="time-outline" size={18} color="#1A3FCC" /></View>
+                    <View style={dv.routeIcon}><Ionicons name="time-outline" size={18} color={COLORS.primaryLight} /></View>
                     <View style={dv.routeInfo}>
                       <Text style={dv.routeName} numberOfLines={1}>
                         {route.origin} → {route.destination}
@@ -1018,7 +1018,7 @@ export default function ProfileScreen() {
 
             <TouchableOpacity style={dv.actionRow} onPress={handleLogout} activeOpacity={0.7}>
               <View style={[dv.actionIcon, { backgroundColor: 'rgba(239, 68, 68, 0.07)' }]}>
-                <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+                <Ionicons name="log-out-outline" size={20} color={COLORS.error} />
               </View>
               <View style={dv.actionInfo}>
                 <Text style={dv.actionTitle}>Cerrar sesión</Text>
@@ -1079,7 +1079,7 @@ export default function ProfileScreen() {
                 <Text style={nm.cancelText}>Cancelar</Text>
               </TouchableOpacity>
               <LinearGradient
-                colors={(savingName || newName.trim().length < 2) ? ['#D1D5DB', '#D1D5DB'] : ['#0E2699', '#1230B8', '#1A3FCC']}
+                colors={(savingName || newName.trim().length < 2) ? [COLORS.border, COLORS.border] : [COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={[nm.saveBtn, (savingName || newName.trim().length < 2) && nm.saveBtnDisabled]}
               >
@@ -1106,14 +1106,14 @@ export default function ProfileScreen() {
                 <Text style={cm.sheetSub}>Los chats desaparecen cuando el viaje finaliza</Text>
               </View>
               <TouchableOpacity onPress={() => setChatsListVisible(false)} style={cm.closeBtn}>
-                <Ionicons name="close" size={20} color="#1230B8" />
+                <Ionicons name="close" size={20} color={COLORS.primary} />
               </TouchableOpacity>
             </View>
 
             {visibleChats.length === 0 ? (
               <View style={cm.empty}>
-                <LinearGradient colors={['#EEF2FF', '#E4EBFF']} style={cm.emptyIconWrap}>
-                  <Ionicons name="chatbubbles-outline" size={32} color="#1A3FCC" />
+                <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={cm.emptyIconWrap}>
+                  <Ionicons name="chatbubbles-outline" size={32} color={COLORS.primaryLight} />
                 </LinearGradient>
                 <Text style={cm.emptyTitle}>Sin chats activos</Text>
                 <Text style={cm.emptyText}>Aparecen aquí mientras tengas una reserva activa</Text>
@@ -1130,7 +1130,7 @@ export default function ProfileScreen() {
                       activeOpacity={0.85}
                     >
                       <LinearGradient
-                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                         style={cm.avatar}
                       >
@@ -1148,7 +1148,7 @@ export default function ProfileScreen() {
                           )}
                         </View>
                         <View style={cm.routeRow}>
-                          <Ionicons name="navigate-outline" size={11} color="#1230B8" />
+                          <Ionicons name="navigate-outline" size={11} color={COLORS.primary} />
                           <Text style={cm.routeText} numberOfLines={1}>{chat.origin} → {chat.destination}</Text>
                         </View>
                       </View>
@@ -1208,13 +1208,13 @@ const s = StyleSheet.create({
   sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: SPACING.lg, marginBottom: 4, marginTop: SPACING.lg },
 
   menuCard: {
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#D6E0FF',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
   },
-  divider: { height: 1, backgroundColor: '#E4EBFF', marginLeft: 56 },
+  divider: { height: 1, backgroundColor: COLORS.primaryTint, marginLeft: 56 },
 
-  avatarWrap: { position: 'relative', borderWidth: 3, borderColor: '#FCD34D', overflow: 'hidden', shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
+  avatarWrap: { position: 'relative', borderWidth: 3, borderColor: COLORS.warning, overflow: 'hidden', shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
   avatarBg:   { justifyContent: 'center', alignItems: 'center' },
   avatarInitial: { fontWeight: '800', color: '#fff' },
   avatarBadge: {
@@ -1268,9 +1268,9 @@ const pv = StyleSheet.create({
   contactInfo: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
   premiumBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-    backgroundColor: '#FCD34D', paddingHorizontal: 12, paddingVertical: 5,
+    backgroundColor: COLORS.warning, paddingHorizontal: 12, paddingVertical: 5,
     borderRadius: RADIUS.full,
-    shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2,
+    shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2,
   },
   premiumText: { fontSize: 11, fontWeight: '800', color: '#78350F', letterSpacing: 0.3 },
 
@@ -1291,7 +1291,7 @@ const pv = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: SPACING.md },
   statCard: {
     flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 8,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 8,
   },
   statIcon: {
     width: 48, height: 48, borderRadius: RADIUS.md,
@@ -1320,14 +1320,14 @@ const pv = StyleSheet.create({
   paySub:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
 
   helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
-  helpIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FCD34D', justifyContent: 'center', alignItems: 'center', shadowColor: '#FCD34D', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
-  settingsIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: '#1230B8', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
+  helpIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.warning, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
+  settingsIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
   helpText: { flex: 1 },
   chatBadge: {
     position: 'absolute',
     top: -4,
     right: -4,
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.error,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -1341,26 +1341,26 @@ const pv = StyleSheet.create({
 
   secondaryActionBtn: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, overflow: 'hidden',
+    borderWidth: 1, borderColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
-  secondaryActionText: { fontSize: 14, fontWeight: '700', color: '#1230B8', letterSpacing: 0.2, flex: 1 },
+  secondaryActionText: { fontSize: 14, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.2, flex: 1 },
 
   // Data Card
   dataCard: {
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg,
+    borderWidth: 1, borderColor: COLORS.primaryTint,
     paddingVertical: SPACING.md, overflow: 'hidden',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
   },
   dataRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
   },
   dataRowDivider: {
-    height: 1, backgroundColor: '#D6E0FF', marginVertical: SPACING.xs,
+    height: 1, backgroundColor: COLORS.primaryTint, marginVertical: SPACING.xs,
   },
   dataLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, flex: 1 },
   dataIcon: {
@@ -1371,7 +1371,7 @@ const pv = StyleSheet.create({
   dataLabel: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
   dataValue: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginTop: 2 },
   dataRight: { alignItems: 'flex-end' },
-  dataYear: { fontSize: 12, fontWeight: '600', color: '#FCD34D' },
+  dataYear: { fontSize: 12, fontWeight: '600', color: COLORS.warning },
   dataYearSmall: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
 
   footer: {
@@ -1410,7 +1410,7 @@ const dv = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.white,
   },
   heroPhotoInitials: {
     fontSize: 36,
@@ -1489,7 +1489,7 @@ const dv = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
@@ -1540,10 +1540,10 @@ const dv = StyleSheet.create({
 
   vehicleCard: {
     flexDirection: 'row', gap: SPACING.md,
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    borderWidth: 1, borderColor: '#D6E0FF',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
+    borderWidth: 1, borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.11, shadowRadius: 14, elevation: 5,
   },
   vehiclePhotoWrap: {
     width: 120,
@@ -1583,7 +1583,7 @@ const dv = StyleSheet.create({
   vehicleInfo:   { flex: 1, padding: SPACING.md, justifyContent: 'center', gap: 4 },
   vehicleName:   { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
   vehicleMeta:   { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
-  vehiclePlate:  { fontSize: 13, fontWeight: '700', color: '#1230B8', letterSpacing: 0.5 },
+  vehiclePlate:  { fontSize: 13, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
   vehicleMetaText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   vehicleStatus: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   statusDot:     { width: 7, height: 7, borderRadius: 4, backgroundColor: COLORS.success },
@@ -1613,7 +1613,7 @@ const dv = StyleSheet.create({
   updateDocBtn: {
     marginTop: SPACING.sm, borderRadius: RADIUS.md,
     overflow: 'hidden',
-    shadowColor: '#0E2699',
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.30,
     shadowRadius: 12,
@@ -1625,39 +1625,39 @@ const dv = StyleSheet.create({
   updateDocText: { fontSize: 14, fontWeight: '700', color: '#fff' },
   walletBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderWidth: 1, borderColor: '#D6E0FF',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 10, elevation: 4,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    borderWidth: 1, borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.09, shadowRadius: 10, elevation: 4,
     marginBottom: SPACING.sm,
   },
   walletLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   walletRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   walletLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   walletSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  walletBalance: { fontSize: 16, fontWeight: '800', color: '#1230B8' },
+  walletBalance: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
   settingsBtn: {
     marginTop: SPACING.sm,
     borderRadius: RADIUS.md,
     borderWidth: 1.5,
-    borderColor: '#D6E0FF',
-    backgroundColor: '#F8F9FF',
+    borderColor: COLORS.primaryTint,
+    backgroundColor: COLORS.surfaceAlt,
     paddingVertical: 12,
     paddingHorizontal: SPACING.md,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
-  settingsBtnText: { fontSize: 14, fontWeight: '700', color: '#1230B8' },
+  settingsBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
-  seeAll:  { fontSize: 13, fontWeight: '700', color: '#1230B8' },
+  seeAll:  { fontSize: 13, fontWeight: '700', color: COLORS.primary },
   routeRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
   routeIcon: { width: 36, height: 36, borderRadius: RADIUS.sm, backgroundColor: 'rgba(18,48,184,0.07)', justifyContent: 'center', alignItems: 'center' },
   routeInfo: { flex: 1 },
   routeName:  { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 3 },
   routeMeta:  { fontSize: 12, color: COLORS.textSecondary },
   routeRight: { alignItems: 'flex-end', gap: 4 },
-  routePrice: { fontSize: 14, fontWeight: '800', color: '#1230B8' },
+  routePrice: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
   routeStatusPill: { backgroundColor: COLORS.borderLight, paddingHorizontal: 6, paddingVertical: 2, borderRadius: RADIUS.full },
   routeStatusDone: { backgroundColor: `${COLORS.success}15` },
   routeStatusText: { fontSize: 9, fontWeight: '800', color: COLORS.textTertiary, letterSpacing: 0.3 },
@@ -1675,7 +1675,7 @@ const nm = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
     padding: SPACING.xl, paddingBottom: 40, gap: SPACING.lg,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
   },
   title:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
   input:  {
@@ -1695,16 +1695,16 @@ const nm = StyleSheet.create({
 const cm = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   sheet: {
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '82%',
     paddingBottom: SPACING.xxxl,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint,
     alignSelf: 'center',
     marginTop: 12, marginBottom: 4,
   },
@@ -1716,13 +1716,13 @@ const cm = StyleSheet.create({
     paddingTop: SPACING.md,
     paddingBottom: SPACING.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#D6E0FF',
+    borderBottomColor: COLORS.primaryTint,
   },
   sheetTitle: { fontSize: 18, fontWeight: '800', color: '#0E1A4A' },
   sheetSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   closeBtn: {
     width: 36, height: 36, borderRadius: 10,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center',
   },
   scrollContent: { padding: SPACING.lg, gap: SPACING.md, paddingBottom: SPACING.xl },
@@ -1737,8 +1737,8 @@ const cm = StyleSheet.create({
     borderRadius: 16,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: '#E9EBF2',
-    shadowColor: '#0E2699',
+    borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -1755,7 +1755,7 @@ const cm = StyleSheet.create({
   activeDot: {
     position: 'absolute', bottom: 2, right: 2,
     width: 10, height: 10, borderRadius: 5,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.success,
     borderWidth: 2, borderColor: '#fff',
   },
   chatInfo: { flex: 1, gap: 4 },
@@ -1765,18 +1765,18 @@ const cm = StyleSheet.create({
     backgroundColor: '#ECFDF5', borderRadius: RADIUS.full,
     paddingHorizontal: 7, paddingVertical: 2,
   },
-  inProgressText: { fontSize: 10, fontWeight: '700', color: '#10B981' },
+  inProgressText: { fontSize: 10, fontWeight: '700', color: COLORS.success },
   routeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   routeText: { fontSize: 12, color: COLORS.textSecondary, flex: 1 },
   badge: {
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     borderRadius: 10, minWidth: 20, height: 20,
     justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5, flexShrink: 0,
   },
   badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
   deleteBtn: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
 })

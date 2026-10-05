@@ -150,7 +150,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0,0,0,0.06)',
   },
@@ -187,7 +187,7 @@ const s = StyleSheet.create({
   section: {
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.md,
     padding: SPACING.lg,
     borderWidth: 1,

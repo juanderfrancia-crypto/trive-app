@@ -103,7 +103,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
               />
               {/* Fade suave hacia la tarjeta blanca */}
               <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.75)', '#FFFFFF']}
+                colors={['transparent', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.75)', COLORS.white]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 0, y: 1 }}
                 style={styles.imageFade}
@@ -144,7 +144,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
               key={idx}
               style={[
                 styles.progressSeg,
-                { backgroundColor: idx <= currentIndex ? '#1230B8' : '#E5E7EB' },
+                { backgroundColor: idx <= currentIndex ? COLORS.primary : COLORS.border },
               ]}
             />
           ))}
@@ -157,7 +157,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
           activeOpacity={0.88}
         >
           <LinearGradient
-            colors={['#0E2699', '#1230B8', '#1A3FCC']}
+            colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.btnGradient}
@@ -180,7 +180,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
 
   // ── Hero área ───────────────────────────────────────────────
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     height: HERO_H,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   imageFade: {
     position: 'absolute',
@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
   brand: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: COLORS.white,
     letterSpacing: 3,
     textShadowColor: 'rgba(0,0,0,0.35)',
     textShadowOffset: { width: 0, height: 1 },
@@ -251,14 +251,14 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.white,
     letterSpacing: 0.2,
   },
 
   // ── Tarjeta blanca ──────────────────────────────────────────
   textCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 28,
     paddingTop: 4,
     paddingBottom: 12,
@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: 2.5,
-    color: '#1230B8',
+    color: COLORS.primary,
     marginBottom: 6,
   },
   title: {
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 12,
-    shadowColor: '#1230B8',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 12,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   btnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
     letterSpacing: 0.2,
   },
 
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 11,
     fontWeight: '600',
-    color: '#D1D5DB',
+    color: COLORS.border,
     letterSpacing: 1.5,
     paddingBottom: 4,
   },

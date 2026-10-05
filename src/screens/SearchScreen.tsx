@@ -151,7 +151,7 @@ function DriverCard({
           </View>
         </View>
         <View style={card.ratingWrap}>
-          <Ionicons name="star" size={13} color="#FBBF24" />
+          <Ionicons name="star" size={13} color={COLORS.warning} />
           <Text style={card.ratingVal}>{(route.driver_rating ?? 0).toFixed(1)}</Text>
         </View>
       </View>
@@ -204,7 +204,7 @@ function DriverCard({
             <Text style={card.reserveTextDisabled}>Sin cupos</Text>
           ) : (
             <LinearGradient
-              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
               style={card.reserveBtnInner}
             >
@@ -466,7 +466,7 @@ export default function SearchScreen() {
             style={[s.chip, filter === 'available' && s.chipActive]}
             onPress={() => setFilter(filter === 'available' ? 'all' : 'available')}
           >
-            <Ionicons name="checkmark-circle" size={14} color={filter === 'available' ? '#fff' : '#1230B8'} />
+            <Ionicons name="checkmark-circle" size={14} color={filter === 'available' ? '#fff' : COLORS.primary} />
             <Text style={[s.chipText, filter === 'available' && s.chipTextActive]}>Con puestos</Text>
           </TouchableOpacity>
 
@@ -476,7 +476,7 @@ export default function SearchScreen() {
           {search && (
             <>
               <TouchableOpacity
-                style={[s.chip, { backgroundColor: '#F3F4F6', borderColor: '#D1D5DB' }]}
+                style={[s.chip, { backgroundColor: COLORS.surfaceAlt, borderColor: COLORS.border }]}
                 onPress={() => {
                   setSearch('')
                   setTransportType('all')
@@ -494,8 +494,8 @@ export default function SearchScreen() {
             const icons: Record<TransportFilter, string> = { all: 'grid', auto: 'car-sport', taxi: 'car', busetica: 'bus', buseta: 'bus' }
             const labels: Record<TransportFilter, string> = { all: 'Todos', auto: 'Auto', taxi: 'Taxi', busetica: 'Minivan', buseta: 'Buseta' }
             const activeColors: Record<TransportFilter, string> = {
-              all:      '#1230B8',
-              auto:     '#1230B8',
+              all:      COLORS.primary,
+              auto:     COLORS.primary,
               taxi:     '#F5C518',
               busetica: '#111111',
               buseta:   '#111111',
@@ -586,13 +586,13 @@ export default function SearchScreen() {
 // ── Card styles ───────────────────────────────────────────────────────────────
 const card = StyleSheet.create({
   wrap: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: '#E8EDFF',
-    shadowColor: '#1230B8',
+    borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -633,7 +633,7 @@ const card = StyleSheet.create({
     gap: 8,
   },
   originText: {
-    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
   },
   destText: {
     fontSize: 15, fontWeight: '700', color: '#334155', letterSpacing: -0.2,
@@ -646,14 +646,14 @@ const card = StyleSheet.create({
     marginBottom: 2,
   },
   priceText: {
-    fontSize: 17, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
+    fontSize: 17, fontWeight: '800', color: COLORS.primaryDark, letterSpacing: -0.3,
   },
   timeText: {
     fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
   },
 
   divider: {
-    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md,
+    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: SPACING.md,
   },
 
   // ── Sección conductor ──
@@ -681,7 +681,7 @@ const card = StyleSheet.create({
     flex: 1, gap: 4,
   },
   driverNameText: {
-    fontSize: 14, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
   },
   driverMetaRow: {
     flexDirection: 'row', alignItems: 'center', gap: 5, flexWrap: 'wrap',
@@ -695,7 +695,7 @@ const card = StyleSheet.create({
   vehicleText: { fontSize: 11, color: COLORS.textTertiary, fontWeight: '500' },
   platePill: {
     backgroundColor: '#F0F4FF', paddingHorizontal: 5, paddingVertical: 1,
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primaryTint,
   },
   plateText: { fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5 },
   ratingWrap: {
@@ -704,7 +704,7 @@ const card = StyleSheet.create({
     borderRadius: RADIUS.full, borderWidth: 1, borderColor: '#FDE68A',
     flexShrink: 0,
   },
-  ratingVal: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+  ratingVal: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
 
   // ── Vía ──
   viaStrip: {
@@ -719,7 +719,7 @@ const card = StyleSheet.create({
   // ── Preparando ──
   preparingBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     paddingHorizontal: SPACING.md, paddingVertical: 6,
     borderLeftWidth: 3, borderLeftColor: '#9CA3AF',
     marginBottom: 2,
@@ -734,7 +734,7 @@ const card = StyleSheet.create({
   },
   occupancyWrap: { flex: 1, gap: 5 },
   almostFullText: {
-    fontSize: 10, fontWeight: '800', color: '#92400E', letterSpacing: 0.4,
+    fontSize: 10, fontWeight: '800', color: COLORS.warningDark, letterSpacing: 0.4,
   },
   occupancyLabelRow: {
     flexDirection: 'row', alignItems: 'baseline',
@@ -742,7 +742,7 @@ const card = StyleSheet.create({
   occupancyFraction: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
   occupancyWord: { fontSize: 11, color: COLORS.textSecondary, fontWeight: '500' },
   progressBg: {
-    height: 5, backgroundColor: '#E8EDFF', borderRadius: RADIUS.full, overflow: 'hidden',
+    height: 5, backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full, overflow: 'hidden',
   },
   progressFill: {
     height: '100%', backgroundColor: COLORS.primary, borderRadius: RADIUS.full,
@@ -758,7 +758,7 @@ const card = StyleSheet.create({
     paddingVertical: 10, paddingHorizontal: 16,
   },
   reserveBtnDisabled: {
-    backgroundColor: '#F1F5F9', borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.md,
     paddingVertical: 10, paddingHorizontal: 16,
     shadowOpacity: 0, elevation: 0,
     alignItems: 'center',
@@ -853,7 +853,7 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.full, backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1, borderColor: COLORS.borderLight,
   },
-  chipActive: { backgroundColor: '#1230B8', borderColor: '#1230B8' },
+  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   chipText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
   chipTextActive: { color: '#fff' },
   chipSep: { width: 1, height: 20, backgroundColor: COLORS.borderLight },

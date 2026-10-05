@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   chatBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 13,

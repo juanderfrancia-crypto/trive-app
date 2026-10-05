@@ -161,7 +161,7 @@ export default function AirportRequestDetailsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -182,7 +182,7 @@ export default function AirportRequestDetailsScreen() {
               <View style={styles.routePoints}>
                 <View style={styles.routeDot} />
                 <View style={styles.routeLine} />
-                <View style={[styles.routeDot, { backgroundColor: '#EF4444' }]} />
+                <View style={[styles.routeDot, { backgroundColor: COLORS.error }]} />
               </View>
               <View style={styles.routeTexts}>
                 <Text style={styles.routeLabel}>ORIGEN</Text>
@@ -257,7 +257,7 @@ export default function AirportRequestDetailsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.driverName}>{acceptedOffer.driver_name}</Text>
                   <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={13} color="#FBBF24" />
+                    <Ionicons name="star" size={13} color={COLORS.warning} />
                     <Text style={styles.ratingText}>
                       {acceptedOffer.driver_rating?.toFixed(1) || '0.0'}
                     </Text>
@@ -297,7 +297,7 @@ export default function AirportRequestDetailsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.driverName}>{offer.driver_name}</Text>
                       <View style={styles.ratingRow}>
-                        <Ionicons name="star" size={13} color="#FBBF24" />
+                        <Ionicons name="star" size={13} color={COLORS.warning} />
                         <Text style={styles.ratingText}>
                           {offer.driver_rating?.toFixed(1) || '0.0'}
                         </Text>
@@ -361,7 +361,7 @@ export default function AirportRequestDetailsScreen() {
               onPress={handleCancel}
               activeOpacity={0.7}
             >
-              <Ionicons name="close-circle-outline" size={18} color="#EF4444" />
+              <Ionicons name="close-circle-outline" size={18} color={COLORS.error} />
               <Text style={styles.cancelBtnText}>Cancelar solicitud</Text>
             </TouchableOpacity>
           </View>
@@ -457,9 +457,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: COLORS.error,
   },
-  rejectOfferBtnText: { fontSize: 13, fontWeight: '600', color: '#EF4444' },
+  rejectOfferBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.error },
   safe: { flex: 1, backgroundColor: COLORS.background },
   header: {
     flexDirection: 'row',
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
 
   // Price card
   priceCard: {
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: '#C7D2FE',
@@ -581,11 +581,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     borderWidth: 1,
-    borderColor: '#EF4444',
+    borderColor: COLORS.error,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
   },
-  cancelBtnText: { fontSize: 14, fontWeight: '600', color: '#EF4444' },
+  cancelBtnText: { fontSize: 14, fontWeight: '600', color: COLORS.error },
 
   // Empty state
   emptyState: {

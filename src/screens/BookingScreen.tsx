@@ -303,7 +303,7 @@ export default function BookingScreen() {
 
         {/* Route Card */}
         <LinearGradient
-          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+          colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.tripCardGradient}
@@ -321,7 +321,7 @@ export default function BookingScreen() {
               </View>
             </View>
             <View style={[styles.routePoint, styles.routePointColumn]}>
-              <View style={[styles.routeDotEnd, { backgroundColor: '#10B981' }]} />
+              <View style={[styles.routeDotEnd, { backgroundColor: COLORS.success }]} />
               <Text style={styles.routeLabel}>Hacia</Text>
               <Text style={[styles.routeText, styles.routeTextWhite]} numberOfLines={2}>{selectedRoute.destination}</Text>
             </View>
@@ -345,7 +345,7 @@ export default function BookingScreen() {
 
         {/* Seats Card */}
         <LinearGradient
-          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
+          colors={[COLORS.primaryTint, '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.seatsCardGradient}
@@ -365,7 +365,7 @@ export default function BookingScreen() {
 
         {/* Passenger Card */}
         <LinearGradient
-          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+          colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.passengerCardGradient}
@@ -385,7 +385,7 @@ export default function BookingScreen() {
 
         {/* Vehicle Card */}
         <LinearGradient
-          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
+          colors={[COLORS.primaryTint, '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.vehicleCardGradient}
@@ -419,7 +419,7 @@ export default function BookingScreen() {
                   </View>
                 )}
               </View>
-              <View style={[styles.vehiclePhotoHalf, { borderTopWidth: 1, borderTopColor: '#F3F4F6' }]}>
+              <View style={[styles.vehiclePhotoHalf, { borderTopWidth: 1, borderTopColor: COLORS.surfaceAlt }]}>
                 {vehiclePhotoUrl ? (
                   <Image source={{ uri: vehiclePhotoUrl }} style={styles.vehiclePhotoImg} resizeMode="cover" />
                 ) : (
@@ -434,7 +434,7 @@ export default function BookingScreen() {
 
         {/* Dropoff Point Card */}
         <LinearGradient
-          colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+          colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.dropoffCardGradient}
@@ -490,7 +490,7 @@ export default function BookingScreen() {
 
         {/* Payment Method */}
         <LinearGradient
-          colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
+          colors={[COLORS.primaryTint, '#BDCEFF', '#A8BBFF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.paymentCardGradient}
@@ -548,7 +548,7 @@ export default function BookingScreen() {
 
         {/* Price Summary */}
         <LinearGradient
-          colors={['#FFFFFF', COLORS.surfaceAlt]}
+          colors={[COLORS.white, COLORS.surfaceAlt]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.priceCardGradient}
@@ -572,7 +572,7 @@ export default function BookingScreen() {
 
         {/* Action Buttons */}
         <LinearGradient
-          colors={loading ? [COLORS.border, COLORS.border] : ['#0E2699', '#1230B8', '#1A3FCC']}
+          colors={loading ? [COLORS.border, COLORS.border] : [COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.confirmBtnGradient}
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
   },
   carIconContainer: {
     position: 'absolute',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: SPACING.xs,
     borderWidth: 1.5,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
   },
   vehiclePhotoPlaceholder: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1013,7 +1013,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   digitalInfoBox: {
-    marginTop: 12, backgroundColor: '#F8F9FF', borderRadius: 10,
+    marginTop: 12, backgroundColor: COLORS.surfaceAlt, borderRadius: 10,
     borderWidth: 1, borderColor: `${COLORS.primary}25`, padding: 12, gap: 10,
   },
   digitalInfoTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.3 },

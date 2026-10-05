@@ -106,10 +106,10 @@ export default function LoginEmailScreen() {
   return (
     <View style={styles.safeContainer}>
       <OfflineBanner />
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
       <LinearGradient
-        colors={['#FFFFFF', '#F9FAFB', '#F3F4F6']}
+        colors={[COLORS.white, COLORS.surfaceAlt, COLORS.surfaceAlt]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientBg}
@@ -195,7 +195,7 @@ export default function LoginEmailScreen() {
 
             {isLocked && (
               <View style={styles.lockBanner}>
-                <Ionicons name="lock-closed" size={15} color="#92400E" />
+                <Ionicons name="lock-closed" size={15} color={COLORS.warningDark} />
                 <Text style={styles.lockBannerText}>
                   Demasiados intentos. Espera {formatCountdown()}
                 </Text>
@@ -209,7 +209,7 @@ export default function LoginEmailScreen() {
               activeOpacity={0.85}
             >
               <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.loginBtnGradient}
@@ -248,7 +248,7 @@ export default function LoginEmailScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   gradientBg: {
     position: 'absolute',
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   scrollContent: {
     flexGrow: 1,
@@ -349,7 +349,7 @@ const styles = StyleSheet.create({
   loginBtn: {
     borderRadius: 12,
     overflow: 'hidden',
-    shadowColor: '#1230B8',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 10,
@@ -372,17 +372,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#FCD34D',
+    borderColor: COLORS.warning,
   },
   lockBannerText: {
     fontSize: 13,
-    color: '#92400E',
+    color: COLORS.warningDark,
     fontWeight: '600',
     flex: 1,
   },

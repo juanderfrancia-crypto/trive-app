@@ -148,7 +148,7 @@ export default function ReferralScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* ── Code card ──────────────────────────────────────────────────── */}
-        <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.codeCard}>
+        <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.codeCard}>
           <Text style={styles.codeLabel}>TU CÓDIGO DE REFERIDO</Text>
           {savingCode ? (
             <ActivityIndicator color="#fff" style={{ marginVertical: 12 }} />
@@ -249,7 +249,7 @@ export default function ReferralScreen() {
 
         {referred.length === 0 && (
           <View style={styles.emptyWrap}>
-            <LinearGradient colors={['#EEF2FF', '#E4EBFF']} style={styles.emptyIcon}>
+            <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.emptyIcon}>
               <Ionicons name="people-outline" size={28} color={COLORS.primary} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>Aún no tienes referidos</Text>
@@ -264,7 +264,7 @@ export default function ReferralScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#F4F6FF' },
+  safe:   { flex: 1, backgroundColor: COLORS.surfaceAlt },
   center: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: 40, paddingTop: SPACING.md },
@@ -272,11 +272,11 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md,
-    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E9EBF2',
+    backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#F4F6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
   headerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   codeCard: {
     borderRadius: 20, padding: SPACING.xl, alignItems: 'center',
     marginBottom: SPACING.lg,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 8 },
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3, shadowRadius: 20, elevation: 10,
   },
   codeLabel: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5, marginBottom: 8 },
@@ -304,14 +304,14 @@ const styles = StyleSheet.create({
   howCard: {
     backgroundColor: '#fff', borderRadius: 18, padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: '#E9EBF2',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 },
+    borderWidth: 1, borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
   },
   howTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: SPACING.md },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
   stepNum: {
-    width: 26, height: 26, borderRadius: 8, backgroundColor: '#EEF2FF',
+    width: 26, height: 26, borderRadius: 8, backgroundColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center', flexShrink: 0, marginTop: 1,
   },
   stepNumText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
@@ -321,28 +321,28 @@ const styles = StyleSheet.create({
   // Stats
   statsRow: {
     flexDirection: 'row', backgroundColor: '#fff', borderRadius: 18,
-    borderWidth: 1, borderColor: '#E9EBF2', marginBottom: SPACING.lg,
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 },
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: SPACING.lg,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
     overflow: 'hidden',
   },
   statBox: { flex: 1, alignItems: 'center', paddingVertical: SPACING.lg },
   statVal: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
   statLbl: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2, fontWeight: '500' },
-  statDivider: { width: 1, backgroundColor: '#E9EBF2', marginVertical: SPACING.md },
+  statDivider: { width: 1, backgroundColor: COLORS.border, marginVertical: SPACING.md },
 
   // List
   listSection: {
     backgroundColor: '#fff', borderRadius: 18, padding: SPACING.lg,
-    borderWidth: 1, borderColor: '#E9EBF2',
-    shadowColor: '#0E2699', shadowOffset: { width: 0, height: 4 },
+    borderWidth: 1, borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.08, shadowRadius: 12, elevation: 3,
   },
   listTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginBottom: SPACING.md },
-  referredRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#F4F6FF' },
+  referredRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderTopWidth: 1, borderTopColor: COLORS.surfaceAlt },
   referredAvatar: {
     width: 38, height: 38, borderRadius: 10,
-    backgroundColor: '#EEF2FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
   },
   referredInitial: { fontSize: 15, fontWeight: '700', color: COLORS.primary },
   referredName:    { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
@@ -355,7 +355,7 @@ const styles = StyleSheet.create({
   activePillText:  { fontSize: 11, fontWeight: '700', color: COLORS.success },
   pendingPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#FEF3C7', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.warningLight, borderRadius: RADIUS.full,
     paddingHorizontal: 8, paddingVertical: 4,
   },
   pendingPillText: { fontSize: 11, fontWeight: '600', color: COLORS.warning },

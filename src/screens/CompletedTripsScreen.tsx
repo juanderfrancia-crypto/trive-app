@@ -65,7 +65,7 @@ export default function CompletedTripsScreen() {
           <Ionicons
             name={star <= value ? 'star' : 'star-outline'}
             size={36}
-            color={star <= value ? '#FBBF24' : '#D1D5DB'}
+            color={star <= value ? COLORS.warning : COLORS.border}
           />
         </TouchableOpacity>
       ))}
@@ -90,7 +90,7 @@ export default function CompletedTripsScreen() {
             </View>
           </View>
           <View style={styles.statusBadge}>
-            <Ionicons name="checkmark-circle" size={16} color="#10B981" />
+            <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
             <Text style={styles.statusText}>Completado</Text>
           </View>
         </View>
@@ -145,7 +145,7 @@ export default function CompletedTripsScreen() {
           <>
             <View style={styles.cardDivider} />
             <View style={styles.ratedBadge}>
-              <Ionicons name="checkmark" size={14} color="#10B981" />
+              <Ionicons name="checkmark" size={14} color={COLORS.success} />
               <Text style={styles.ratedText}>Ya calificado</Text>
             </View>
           </>
@@ -157,7 +157,7 @@ export default function CompletedTripsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.header}
@@ -177,7 +177,7 @@ export default function CompletedTripsScreen() {
           </View>
         ) : completedTrips.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done-outline" size={56} color="#D1D5DB" />
+            <Ionicons name="checkmark-done-outline" size={56} color={COLORS.border} />
             <Text style={styles.emptyText}>No hay viajes completados aún</Text>
           </View>
         ) : (
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -351,11 +351,11 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
     fontSize: 12,
     fontWeight: '600',
-    color: '#10B981',
+    color: COLORS.success,
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginVertical: SPACING.md,
   },
   cardDetails: {
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
   },
   rateBtn: {
-    backgroundColor: '#FBBF24',
+    backgroundColor: COLORS.warning,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.sm,
   },
@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     fontSize: 13,
     fontWeight: '600',
-    color: '#10B981',
+    color: COLORS.success,
   },
   modal: {
     flex: 1,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: COLORS.border,
   },
   modalTitle: {
     fontSize: 16,
@@ -451,12 +451,12 @@ const styles = StyleSheet.create({
   },
   commentInput: {
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     marginBottom: SPACING.lg,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: COLORS.surfaceAlt,
     fontSize: 13,
     color: '#000',
   },
@@ -472,7 +472,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cancelBtn: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
   },
   cancelBtnText: {
     fontSize: 13,

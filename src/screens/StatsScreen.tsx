@@ -171,7 +171,7 @@ export function StatsScreen() {
 
     for (let i = fullStars + (hasHalfStar ? 1 : 0); i < 5; i++) {
       stars.push(
-        <Ionicons key={`empty-${i}`} name="star-outline" size={18} color="#D1D5DB" />
+        <Ionicons key={`empty-${i}`} name="star-outline" size={18} color={COLORS.border} />
       );
     }
 
@@ -229,7 +229,7 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: '#D1FAE5' }]}>
-            <Ionicons name="checkmark-circle-outline" size={28} color="#10B981" />
+            <Ionicons name="checkmark-circle-outline" size={28} color={COLORS.success} />
           </View>
           <Text style={styles.statCardValue}>{stats?.completed_trips || 0}</Text>
           <Text style={styles.statCardLabel}>Completados</Text>
@@ -237,14 +237,14 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: '#FEE2E2' }]}>
-            <Ionicons name="close-circle-outline" size={28} color="#EF4444" />
+            <Ionicons name="close-circle-outline" size={28} color={COLORS.error} />
           </View>
           <Text style={styles.statCardValue}>{stats?.cancelled_trips || 0}</Text>
           <Text style={styles.statCardLabel}>Cancelados</Text>
         </View>
 
         <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#FEF3C7' }]}>
+          <View style={[styles.statIcon, { backgroundColor: COLORS.warningLight }]}>
             <Ionicons name="people-outline" size={28} color="#FF9500" />
           </View>
           <Text style={styles.statCardValue}>{stats?.total_passengers || 0}</Text>
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   ratingDivider: {
     width: 1,
     height: 60,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
     marginHorizontal: 16,
   },
   reviewCount: {
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   },
   perfDivider: {
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: COLORS.border,
   },
   routeItem: {
     marginBottom: 14,

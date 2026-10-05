@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     borderWidth: 1.5,
     borderColor: COLORS.primary,
-    backgroundColor: '#eef2ff',
+    backgroundColor: COLORS.primaryTint,
   },
   topCreateBtnText: {
     fontSize: TYPOGRAPHY.size.sm,

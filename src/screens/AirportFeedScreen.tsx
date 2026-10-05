@@ -243,7 +243,7 @@ export default function AirportFeedScreen() {
         {/* Indicador de precio actualizado */}
         {item.initial_price !== item.offered_price && (
           <View style={s.priceUpdateBanner}>
-            <Ionicons name="information-circle" size={14} color="#F59E0B" />
+            <Ionicons name="information-circle" size={14} color={COLORS.warning} />
             <Text style={s.priceUpdateText}>
               El pasajero subió la oferta: ${item.initial_price.toLocaleString('es-CO')} → ${item.offered_price.toLocaleString('es-CO')}
             </Text>
@@ -389,7 +389,7 @@ export default function AirportFeedScreen() {
     <SafeAreaView style={s.safe}>
       {/* Header con gradiente */}
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={s.header}
@@ -546,7 +546,7 @@ export default function AirportFeedScreen() {
                             <Ionicons
                               name={star <= selectedRating ? 'star' : 'star-outline'}
                               size={32}
-                              color={star <= selectedRating ? '#F59E0B' : '#CBD5E1'}
+                              color={star <= selectedRating ? COLORS.warning : '#CBD5E1'}
                             />
                           </TouchableOpacity>
                         ))}
@@ -711,7 +711,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.lg,
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -729,7 +729,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
     shadowColor: '#000',
@@ -771,7 +771,7 @@ const s = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   routeLine: { alignItems: 'center', gap: 0 },
-  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' },
+  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.success },
   lineSegment: { width: 2, height: 28, backgroundColor: COLORS.border, marginVertical: 3 },
   dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#3B82F6' },
   routeLabels: { flex: 1, gap: 12 },
@@ -783,7 +783,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
@@ -796,13 +796,13 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
     marginBottom: SPACING.md,
   },
-  priceUpdateText: { fontSize: 12, color: '#92400E', fontWeight: '500' },
+  priceUpdateText: { fontSize: 12, color: COLORS.warningDark, fontWeight: '500' },
 
   // Buttons
   buttonRow: { flexDirection: 'row', gap: SPACING.sm },
@@ -885,7 +885,7 @@ const s = StyleSheet.create({
     color: COLORS.textPrimary,
     paddingVertical: SPACING.md,
   },
-  warningText: { fontSize: 12, color: '#F59E0B', fontWeight: '500' },
+  warningText: { fontSize: 12, color: COLORS.warning, fontWeight: '500' },
   infoText: { fontSize: 12, color: '#3B82F6', fontWeight: '500' },
   submitBtn: {
     flexDirection: 'row',
@@ -912,10 +912,10 @@ const s = StyleSheet.create({
     backgroundColor: '#3B82F6',
   },
   tripBadgeCenter: {
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.success,
   },
   tripBadgeCustom: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: COLORS.warning,
   },
   tripBadgeText: {
     fontSize: 11,
@@ -928,7 +928,7 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: COLORS.border,
     paddingHorizontal: SPACING.sm,
   },
   tab: {

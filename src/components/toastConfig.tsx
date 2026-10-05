@@ -1,3 +1,4 @@
+import { COLORS } from '../theme/theme'
 import React from 'react'
 import { View, Text, StyleSheet } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
@@ -5,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 const TYPE_CONFIG = {
   success: { icon: 'checkmark-circle' as const, color: '#34D399' },
   error:   { icon: 'close-circle'     as const, color: '#F87171' },
-  warning: { icon: 'warning'          as const, color: '#FBBF24' },
+  warning: { icon: 'warning'          as const, color: COLORS.warning },
   info:    { icon: 'information-circle' as const, color: '#60A5FA' },
 }
 
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F9FAFB',
+    color: COLORS.surfaceAlt,
     letterSpacing: -0.1,
   },
   message: {

@@ -299,7 +299,7 @@ export default function RecurringRoutesScreen() {
           onPress={() => { resetForm(); setShowCreate(true) }}
           activeOpacity={0.8}
         >
-          <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.addBtnGrad}>
+          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.addBtnGrad}>
             <Ionicons name="add" size={22} color="#fff" />
           </LinearGradient>
         </TouchableOpacity>
@@ -319,7 +319,7 @@ export default function RecurringRoutesScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {templates.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <LinearGradient colors={['#EEF2FF', '#E4EBFF']} style={styles.emptyIcon}>
+            <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.emptyIcon}>
               <Ionicons name="repeat" size={32} color={COLORS.primary} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>Sin rutas frecuentes</Text>
@@ -329,7 +329,7 @@ export default function RecurringRoutesScreen() {
               onPress={() => { resetForm(); setShowCreate(true) }}
               activeOpacity={0.85}
             >
-              <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.emptyBtnGrad}>
+              <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.emptyBtnGrad}>
                 <Ionicons name="add" size={18} color="#fff" />
                 <Text style={styles.emptyBtnText}>Crear mi primera plantilla</Text>
               </LinearGradient>
@@ -342,7 +342,7 @@ export default function RecurringRoutesScreen() {
               <View key={tpl.id} style={styles.card}>
                 {/* Card header */}
                 <View style={styles.cardHeader}>
-                  <LinearGradient colors={['#EEF2FF', '#E4EBFF']} style={styles.cardIcon}>
+                  <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.cardIcon}>
                     <Ionicons name={vt?.icon ?? 'car-outline'} size={20} color={COLORS.primary} />
                   </LinearGradient>
                   <View style={{ flex: 1 }}>
@@ -350,10 +350,10 @@ export default function RecurringRoutesScreen() {
                     <Text style={styles.cardRoute} numberOfLines={1}>{tpl.origin} → {tpl.destination}</Text>
                   </View>
                   <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(tpl)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="pencil" size={14} color="#1230B8" />
+                    <Ionicons name="pencil" size={14} color={COLORS.primary} />
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="trash" size={14} color="#EF4444" />
+                    <Ionicons name="trash" size={14} color={COLORS.error} />
                   </TouchableOpacity>
                 </View>
 
@@ -389,7 +389,7 @@ export default function RecurringRoutesScreen() {
                     onPress={() => { setPublishTarget(tpl); setPubVia(tpl.description || '') }}
                     activeOpacity={0.85}
                   >
-                    <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.publishBtnGrad}>
+                    <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.publishBtnGrad}>
                       <Ionicons name="flash" size={16} color="#fff" />
                       <Text style={styles.publishBtnText}>Publicar ahora</Text>
                     </LinearGradient>
@@ -439,7 +439,7 @@ export default function RecurringRoutesScreen() {
               <FormField label="Vía / parada (opcional)" placeholder='Ej: La Paila' value={fVia} onChangeText={setFVia} />
 
               <TouchableOpacity style={styles.saveBtn} onPress={handleAddTemplate} activeOpacity={0.85}>
-                <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.saveBtnGrad}>
+                <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.saveBtnGrad}>
                   <Text style={styles.saveBtnText}>{editTarget ? 'Actualizar plantilla' : 'Guardar plantilla'}</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -554,7 +554,7 @@ export default function RecurringRoutesScreen() {
                       <ActivityIndicator color="#fff" />
                     </View>
                   ) : (
-                    <LinearGradient colors={['#0E2699', '#1230B8', '#1A3FCC']} style={styles.saveBtnGrad}>
+                    <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.saveBtnGrad}>
                       <Ionicons name="flash" size={18} color="#fff" />
                       <Text style={styles.saveBtnText}>Confirmar y publicar</Text>
                     </LinearGradient>
@@ -592,7 +592,7 @@ function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: '#F4F6FF' },
+  safe:   { flex: 1, backgroundColor: COLORS.surfaceAlt },
   center: { justifyContent: 'center', alignItems: 'center' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: 40, paddingTop: SPACING.sm },
@@ -602,11 +602,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md,
     backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: '#E9EBF2',
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   backBtn: {
     width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#F4F6FF', justifyContent: 'center', alignItems: 'center',
+    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
   },
   headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
   headerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
@@ -617,15 +617,15 @@ const styles = StyleSheet.create({
   balanceStrip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingHorizontal: SPACING.lg, paddingVertical: 10,
-    backgroundColor: '#EEF2FF',
-    borderBottomWidth: 1, borderBottomColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint,
+    borderBottomWidth: 1, borderBottomColor: COLORS.primaryTint,
   },
   balanceText: { flex: 1, fontSize: 13, color: COLORS.textSecondary },
   costPill: {
-    backgroundColor: '#D6E0FF', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full,
     paddingHorizontal: 10, paddingVertical: 3,
   },
-  costPillText: { fontSize: 12, fontWeight: '600', color: '#0E2699' },
+  costPillText: { fontSize: 12, fontWeight: '600', color: COLORS.primaryDark },
 
   // Empty state
   emptyWrap:    { alignItems: 'center', paddingTop: 60, gap: 12 },
@@ -642,8 +642,8 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: '#E9EBF2',
-    shadowColor: '#0E2699',
+    borderWidth: 1, borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.10,
     shadowRadius: 16,
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   cardRoute:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   editBtn: {
     width: 32, height: 32, borderRadius: 10,
-    backgroundColor: '#EEF2FF', borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint, borderWidth: 1, borderColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center', marginRight: 6,
   },
   deleteBtn: {
@@ -691,11 +691,11 @@ const styles = StyleSheet.create({
   },
   handle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#D6E0FF', alignSelf: 'center', marginTop: 12, marginBottom: 8,
+    backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginTop: 12, marginBottom: 8,
   },
   modalHeader: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: '#E9EBF2',
+    paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border,
     marginBottom: SPACING.md,
   },
   modalTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
@@ -703,9 +703,9 @@ const styles = StyleSheet.create({
   // Form
   formLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6, marginTop: SPACING.md },
   formInput: {
-    borderWidth: 1, borderColor: '#D6E0FF', borderRadius: 12,
+    borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: COLORS.textPrimary, backgroundColor: '#F8F9FF',
+    fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt,
   },
 
   // Vehicle type chips
@@ -713,7 +713,7 @@ const styles = StyleSheet.create({
   vtChip: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: '#D6E0FF', backgroundColor: '#F8F9FF',
+    borderWidth: 1, borderColor: COLORS.primaryTint, backgroundColor: COLORS.surfaceAlt,
   },
   vtChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   vtChipText:   { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
@@ -730,7 +730,7 @@ const styles = StyleSheet.create({
   // Publish modal extras
   pubSummary: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#EEF2FF', borderRadius: 12, padding: 12, marginBottom: 4,
+    backgroundColor: COLORS.primaryTint, borderRadius: 12, padding: 12, marginBottom: 4,
   },
   pubRoute: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center' },
   pubMeta:  { alignItems: 'center', marginBottom: SPACING.lg },
@@ -739,7 +739,7 @@ const styles = StyleSheet.create({
   optRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   optChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: '#D6E0FF', backgroundColor: '#F8F9FF',
+    borderWidth: 1, borderColor: COLORS.primaryTint, backgroundColor: COLORS.surfaceAlt,
   },
   optChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   optChipText:   { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
@@ -747,16 +747,16 @@ const styles = StyleSheet.create({
 
   customRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
   customInput: {
-    borderWidth: 1, borderColor: '#D6E0FF', borderRadius: 10,
+    borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 8,
-    fontSize: 15, color: COLORS.textPrimary, backgroundColor: '#F8F9FF', width: 70,
+    fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt, width: 70,
   },
   customLabel: { fontSize: 13, color: COLORS.textSecondary },
 
   costWarn: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    backgroundColor: '#EEF2FF', borderRadius: 12, padding: 12, marginTop: SPACING.lg,
-    borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint, borderRadius: 12, padding: 12, marginTop: SPACING.lg,
+    borderWidth: 1, borderColor: COLORS.primaryTint,
   },
   costWarnText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
 })

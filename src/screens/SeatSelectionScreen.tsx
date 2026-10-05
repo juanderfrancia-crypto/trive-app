@@ -432,7 +432,7 @@ export default function SeatSelectionScreen() {
           <>
             {/* Vehicle Card */}
             <LinearGradient
-              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.vehicleCardGradient}
@@ -445,7 +445,7 @@ export default function SeatSelectionScreen() {
                   </Text>
                 </View>
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.plateBadge}
@@ -541,11 +541,11 @@ export default function SeatSelectionScreen() {
                 {/* Legend */}
                 <View style={styles.legend}>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#D1D5DB' }]} />
+                    <View style={[styles.legendDot, { backgroundColor: COLORS.white, borderWidth: 1.5, borderColor: COLORS.border }]} />
                     <Text style={styles.legendText}>Disponible</Text>
                   </View>
                   <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: '#1230B8' }]} />
+                    <View style={[styles.legendDot, { backgroundColor: COLORS.primary }]} />
                     <Text style={styles.legendText}>Seleccionado</Text>
                   </View>
                   <View style={styles.legendItem}>
@@ -600,7 +600,7 @@ export default function SeatSelectionScreen() {
 
             {/* Trip Card */}
             <LinearGradient
-              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tripCardGradient}
@@ -691,7 +691,7 @@ export default function SeatSelectionScreen() {
                             key={s}
                             name={s <= r.rating ? 'star' : 'star-outline'}
                             size={13}
-                            color="#FBBF24"
+                            color={COLORS.warning}
                           />
                         ))}
                       </View>
@@ -751,7 +751,7 @@ export default function SeatSelectionScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   container: {
     flex: 1,
@@ -813,7 +813,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
@@ -898,9 +898,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: RADIUS.md,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: '#D1D5DB',
+    borderColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.sm,
@@ -914,10 +914,10 @@ const styles = StyleSheet.create({
     opacity: 0.65,
   },
   seatSelected: {
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     borderWidth: 2,
-    borderColor: '#0E2699',
-    shadowColor: '#1230B8',
+    borderColor: COLORS.primaryDark,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
@@ -977,9 +977,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     ...SHADOWS.md,
   },
   selectionCardGradientActive: {
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     ...SHADOWS.md,
   },
   routeRow: {
@@ -1047,7 +1047,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     marginBottom: SPACING.xs,
   },
   routeDotEnd: {
@@ -1077,7 +1077,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: COLORS.border,
     paddingTop: SPACING.sm,
     marginTop: SPACING.sm,
   },
@@ -1104,9 +1104,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     ...SHADOWS.md,
   },
   driverHeader: {
@@ -1175,12 +1175,12 @@ const styles = StyleSheet.create({
   vehiclePhotoPlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
   },
 
   // Reviews
@@ -1190,8 +1190,8 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.md,
     borderWidth: 1,
-    borderColor: '#E9EBF2',
-    shadowColor: '#0E2699',
+    borderColor: COLORS.border,
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -1243,9 +1243,9 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: COLORS.border,
     ...SHADOWS.md,
   },
   summaryRow: {

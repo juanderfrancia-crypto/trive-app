@@ -52,7 +52,7 @@ const MEMBERSHIP_CFG: Record<string, { bg: string; text: string; icon: string; l
   free:    { bg: 'rgba(107,114,128,0.12)', text: '#4B5563', icon: 'shield-outline',   label: 'Gratis'  },
   basic:   { bg: 'rgba(59,130,246,0.12)',  text: '#1D4ED8', icon: 'shield-checkmark', label: 'Básico'  },
   premium: { bg: 'rgba(168,85,247,0.12)',  text: '#6D28D9', icon: 'star',             label: 'Premium' },
-  vip:     { bg: 'rgba(217,70,39,0.12)',   text: '#92400E', icon: 'crown',            label: 'VIP'     },
+  vip:     { bg: 'rgba(217,70,39,0.12)',   text: COLORS.warningDark, icon: 'crown',            label: 'VIP'     },
 }
 
 export default function HomeScreen() {
@@ -341,7 +341,7 @@ export default function HomeScreen() {
       }}
     >
       <LinearGradient
-        colors={['#FFFFFF', '#FFFFFF']}
+        colors={[COLORS.white, COLORS.white]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.routeCardInner}
@@ -402,7 +402,7 @@ export default function HomeScreen() {
                   <Text style={styles.plateText}>{route.vehicle_plate}</Text>
                 </View>
               )}
-              <Ionicons name="star" size={11} color="#FBBF24" />
+              <Ionicons name="star" size={11} color={COLORS.warning} />
               <Text style={styles.ratingText}>{route.driver_rating?.toFixed(1) ?? '0.0'}</Text>
             </View>
           </View>
@@ -495,7 +495,7 @@ export default function HomeScreen() {
                       <Text style={isDriver ? styles.pillTextDark : styles.pillTextWhite}>{driverProfile?.total_trips ?? 0} viajes</Text>
                     </View>
                     <View style={isDriver ? styles.pillGlassDark : styles.pillGlass}>
-                      <Ionicons name="star" size={13} color="#FBBF24" />
+                      <Ionicons name="star" size={13} color={COLORS.warning} />
                       <Text style={isDriver ? styles.pillTextDark : styles.pillTextWhite}>{user?.rating ?? '--'}</Text>
                     </View>
                   </>
@@ -563,7 +563,7 @@ export default function HomeScreen() {
                   <View>
                     <Text style={styles.upcomingDriverName}>{upcomingTrip.driverName}</Text>
                     <View style={styles.ratingRow}>
-                      <Ionicons name="star" size={11} color="#FBBF24" />
+                      <Ionicons name="star" size={11} color={COLORS.warning} />
                       <Text style={[styles.ratingText, { color: COLORS.textSecondary }]}>{upcomingTrip.driverRating.toFixed(1)}</Text>
                     </View>
                   </View>
@@ -577,10 +577,10 @@ export default function HomeScreen() {
               {/* SOS row */}
               <TouchableOpacity style={styles.sosRow} onPress={handleSOS} activeOpacity={0.75}>
                 <View style={styles.sosIconWrap}>
-                  <Ionicons name="alert-circle" size={16} color="#EF4444" />
+                  <Ionicons name="alert-circle" size={16} color={COLORS.error} />
                 </View>
                 <Text style={styles.sosRowText}>SOS · Enviar mi ubicación</Text>
-                <Ionicons name="chevron-forward" size={13} color="#EF4444" />
+                <Ionicons name="chevron-forward" size={13} color={COLORS.error} />
               </TouchableOpacity>
 
               <View style={styles.upcomingCta}>
@@ -723,7 +723,7 @@ export default function HomeScreen() {
               activeOpacity={0.88}
             >
               <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.ctaGradient}
@@ -858,7 +858,7 @@ export default function HomeScreen() {
                 setTimeout(() => navigation.navigate('DriverRegister' as never), 150)
               }}
             >
-              <LinearGradient colors={['#0E2699', '#1A3FCC']} style={styles.addMenuItemIcon}>
+              <LinearGradient colors={[COLORS.primaryDark, COLORS.primaryLight]} style={styles.addMenuItemIcon}>
                 <Ionicons name="add-circle" size={20} color="#fff" />
               </LinearGradient>
               <View style={{ flex: 1 }}>
@@ -897,7 +897,7 @@ export default function HomeScreen() {
 
 // ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#FFFFFF' },
+  safe: { flex: 1, backgroundColor: COLORS.white },
   scroll: { flex: 1, backgroundColor: COLORS.background },
   scrollContent: { paddingBottom: 32 },
 
@@ -1057,7 +1057,7 @@ const styles = StyleSheet.create({
   upcomingRoutePoints: { alignItems: 'center', gap: 0 },
   routePointBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
   routePointLine: { width: 2, height: 28, backgroundColor: COLORS.borderLight, marginVertical: 3 },
-  routePointRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
+  routePointRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.error },
   upcomingRouteLabels: { flex: 1, gap: 22 },
   upcomingCity: { fontSize: 15, fontWeight: '500', color: COLORS.textPrimary },
   upcomingFooter: {
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEE2E2',
     justifyContent: 'center', alignItems: 'center',
   },
-  sosRowText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#EF4444' },
+  sosRowText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.error },
   upcomingCta: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4,
     backgroundColor: `${COLORS.primary}08`,
@@ -1145,7 +1145,7 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.error,
     opacity: 0.5,
     flexShrink: 0,
   },
@@ -1192,7 +1192,7 @@ const styles = StyleSheet.create({
   dotCol: { alignItems: 'center', width: 20, marginRight: SPACING.md },
   dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
   dotLine: { width: 2, minHeight: 18, backgroundColor: COLORS.borderLight, marginTop: 3 },
-  dotRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' },
+  dotRed:  { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.error },
   searchField: { flex: 1 },
   searchLabel: { fontSize: 10, fontWeight: '600', color: COLORS.textTertiary, letterSpacing: 0.5, marginBottom: 2 },
   searchInput: { 
@@ -1243,9 +1243,9 @@ const styles = StyleSheet.create({
   recentChipText: { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
 
   searchBtn: {
-    backgroundColor: '#1230B8', borderRadius: RADIUS.md, height: 48,
+    backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 48,
     flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: SPACING.sm,
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6,
     overflow: 'hidden',
     paddingHorizontal: SPACING.xl,
     width: '95%',
@@ -1258,7 +1258,7 @@ const styles = StyleSheet.create({
   // ── CTA ──────────────────────────────────────────────────────────────────────
   ctaWrapper: {
     borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: '#1230B8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10,
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10,
     width: '100%',
   },
   ctaGradient: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.xl, paddingVertical: SPACING.lg, gap: SPACING.lg, height: 64 },
@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
   },
   airportBannerActive: {
     borderColor: '#C7D2FE',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
   },
   airportTextWrap: { flex: 1 },
   airportBannerTitle:   { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
@@ -1313,7 +1313,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 4,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.white,
   },
   airportBadgeText: {
     color: '#fff',
@@ -1335,12 +1335,12 @@ const styles = StyleSheet.create({
   },
   routeCard: {
     width: CARD_W, borderRadius: RADIUS.xl, overflow: 'hidden',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E8EDFF',
+    borderColor: COLORS.primaryTint,
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
-    shadowColor: '#1230B8',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -1364,13 +1364,13 @@ const styles = StyleSheet.create({
   },
   routeNames: { flex: 1, gap: 8 },
   priceText: {
-    fontSize: 17, fontWeight: '800', color: '#0E2699', letterSpacing: -0.3,
+    fontSize: 17, fontWeight: '800', color: COLORS.primaryDark, letterSpacing: -0.3,
   },
   timeText: {
     fontSize: 11, color: COLORS.textTertiary, fontWeight: '500',
   },
   routeOrigin: {
-    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
     textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 5,
   },
   routeDest: {
@@ -1390,7 +1390,7 @@ const styles = StyleSheet.create({
     fontSize: 11, fontWeight: '500', color: COLORS.textTertiary,
     textShadowColor: 'transparent', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3,
   },
-  routeDivider: { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: SPACING.md, marginBottom: 0, marginTop: 0 },
+  routeDivider: { height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: SPACING.md, marginBottom: 0, marginTop: 0 },
   routeViaRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginHorizontal: SPACING.md, marginBottom: 8, paddingHorizontal: 8, paddingVertical: 5, backgroundColor: `${COLORS.accent}10`, borderRadius: 6, borderLeftWidth: 2, borderLeftColor: COLORS.accent },
   routeViaText: { flex: 1, fontSize: 11, color: COLORS.accent, fontWeight: '500' },
   routeDriver: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: SPACING.md, paddingVertical: 12, gap: SPACING.sm },
@@ -1415,7 +1415,7 @@ const styles = StyleSheet.create({
   },
   driverInfo: { flex: 1, gap: 4 },
   driverName: {
-    fontSize: 14, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 14, fontWeight: '700', color: COLORS.textPrimary,
   },
   ratingRow:  { 
     flexDirection: 'row', alignItems: 'center', gap: 3,
@@ -1425,11 +1425,11 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#FDE68A',
     alignSelf: 'flex-start', flexShrink: 0
   },
-  ratingText: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+  ratingText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
   minutesText: { fontSize: 11, color: COLORS.success, fontWeight: '700' },
   platePill: {
     backgroundColor: '#F0F4FF', paddingHorizontal: 5, paddingVertical: 1,
-    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: '#D6E0FF',
+    borderRadius: RADIUS.sm, borderWidth: 1, borderColor: COLORS.primaryTint,
   },
   plateText: {
     fontSize: 10, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5,
@@ -1462,7 +1462,7 @@ const styles = StyleSheet.create({
     borderRadius: 29,
     overflow: 'hidden',
     alignSelf: 'center',
-    shadowColor: '#0E2699',
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
@@ -1487,7 +1487,7 @@ const styles = StyleSheet.create({
   },
   addMenuHandle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#D6E0FF', alignSelf: 'center', marginBottom: 16,
+    backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginBottom: 16,
   },
   addMenuTitle: {
     fontSize: 13, fontWeight: '600', color: COLORS.textSecondary,
@@ -1502,12 +1502,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center', flexShrink: 0,
   },
   addMenuItemTitle: {
-    fontSize: 15, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
   },
   addMenuItemSub: {
     fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
   },
   addMenuDivider: {
-    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 58,
+    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: 58,
   },
 })

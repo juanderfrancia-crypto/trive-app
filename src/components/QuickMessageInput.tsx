@@ -62,9 +62,9 @@ export const QuickMessageInput = React.memo(
           activeOpacity={0.7}
         >
           {sending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={COLORS.white} />
           ) : (
-            <Ionicons name="send" size={18} color={canSend ? '#FFFFFF' : COLORS.textTertiary} />
+            <Ionicons name="send" size={18} color={canSend ? COLORS.white : COLORS.textTertiary} />
           )}
         </TouchableOpacity>
       </View>

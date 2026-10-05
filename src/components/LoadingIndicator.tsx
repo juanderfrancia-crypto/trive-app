@@ -52,7 +52,7 @@ export default function LoadingIndicator({
 
   const colorMap: Record<LoadingIndicatorColor, string> = {
     primary: COLORS.primary,
-    white: '#FFFFFF',
+    white: COLORS.white,
     success: COLORS.success,
     error: COLORS.error,
   }

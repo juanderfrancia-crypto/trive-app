@@ -257,7 +257,7 @@ export default function NotificationsScreen() {
             <Ionicons
               name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
               size={20}
-              color={isSelected ? '#1230B8' : COLORS.textTertiary}
+              color={isSelected ? COLORS.primary : COLORS.textTertiary}
             />
           </View>
         )}
@@ -266,7 +266,7 @@ export default function NotificationsScreen() {
           {/* Icon */}
           {isBooking ? (
             <LinearGradient
-              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.iconWrap}
             >
@@ -274,7 +274,7 @@ export default function NotificationsScreen() {
             </LinearGradient>
           ) : isChat ? (
             <LinearGradient
-              colors={['#1535BE', '#1230B8']}
+              colors={['#1535BE', COLORS.primary]}
               start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
               style={styles.iconWrap}
             >
@@ -313,7 +313,7 @@ export default function NotificationsScreen() {
               <View style={styles.bookingInfo}>
                 {origin && destination && (
                   <View style={styles.routeMiniRow}>
-                    <Ionicons name="navigate-outline" size={11} color="#1230B8" />
+                    <Ionicons name="navigate-outline" size={11} color={COLORS.primary} />
                     <Text style={styles.routeMiniText} numberOfLines={1}>
                       {origin} → {destination}
                     </Text>
@@ -321,7 +321,7 @@ export default function NotificationsScreen() {
                 )}
                 {seatNumbers && seatNumbers.length > 0 && (
                   <View style={styles.routeMiniRow}>
-                    <Ionicons name="person-outline" size={11} color="#1230B8" />
+                    <Ionicons name="person-outline" size={11} color={COLORS.primary} />
                     <Text style={styles.routeMiniText}>
                       Asiento{seatNumbers.length > 1 ? 's' : ''}: {seatNumbers.join(', ')}
                     </Text>
@@ -329,7 +329,7 @@ export default function NotificationsScreen() {
                 )}
                 {driverName && (
                   <View style={styles.routeMiniRow}>
-                    <Ionicons name="car-outline" size={11} color="#1230B8" />
+                    <Ionicons name="car-outline" size={11} color={COLORS.primary} />
                     <Text style={styles.routeMiniText}>{driverName}</Text>
                   </View>
                 )}
@@ -370,14 +370,14 @@ export default function NotificationsScreen() {
         <View style={styles.headerRight}>
           {!!unreadCount && (
             <TouchableOpacity style={styles.headerIconBtn} onPress={markAllAsRead}>
-              <Ionicons name="checkmark-done-outline" size={16} color="#1230B8" />
+              <Ionicons name="checkmark-done-outline" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-            <Ionicons name="trash-outline" size={16} color="#1230B8" />
+            <Ionicons name="trash-outline" size={16} color={COLORS.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => setSelectionMode(true)}>
-            <Ionicons name="checkbox-outline" size={16} color="#1230B8" />
+            <Ionicons name="checkbox-outline" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       )
@@ -396,7 +396,7 @@ export default function NotificationsScreen() {
           <Ionicons name="trash-bin-outline" size={16} color={COLORS.error} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={exitSelection}>
-          <Ionicons name="close-outline" size={18} color="#1230B8" />
+          <Ionicons name="close-outline" size={18} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
     )
@@ -422,7 +422,7 @@ export default function NotificationsScreen() {
             >
               {isActive ? (
                 <LinearGradient
-                  colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={styles.filterButton}
                 >
@@ -484,7 +484,7 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.headerIconBtn}
@@ -495,7 +495,7 @@ export default function NotificationsScreen() {
           <Ionicons
             name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
             size={18}
-            color="#1230B8"
+            color={COLORS.primary}
           />
         </TouchableOpacity>
 
@@ -553,7 +553,7 @@ export default function NotificationsScreen() {
                 <View style={styles.modalHeader}>
                   {_dIsBooking ? (
                     <LinearGradient
-                      colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                      colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                       style={styles.modalIcon}
                     >
@@ -561,7 +561,7 @@ export default function NotificationsScreen() {
                     </LinearGradient>
                   ) : _dIsChat ? (
                     <LinearGradient
-                      colors={['#1535BE', '#1230B8']}
+                      colors={['#1535BE', COLORS.primary]}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                       style={styles.modalIcon}
                     >
@@ -594,61 +594,61 @@ export default function NotificationsScreen() {
 
                   {(_dIsBooking || _dIsChat) && (_dOrigin || _dDest || _dSeats || _dDriver || _dPassenger || _dPrice !== undefined || _dFmtDate) && (
                     <LinearGradient
-                      colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+                      colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                       style={styles.modalInfoCard}
                     >
                       {_dPassenger && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="person-outline" size={15} color="#1230B8" />
+                          <Ionicons name="person-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Pasajero</Text>
                           <Text style={styles.modalInfoValue}>{_dPassenger}</Text>
                         </View>
                       )}
                       {_dDriver && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="car-outline" size={15} color="#1230B8" />
+                          <Ionicons name="car-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Conductor</Text>
                           <Text style={styles.modalInfoValue}>{_dDriver}</Text>
                         </View>
                       )}
                       {_dOrigin && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="radio-button-on-outline" size={15} color="#1230B8" />
+                          <Ionicons name="radio-button-on-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Origen</Text>
                           <Text style={styles.modalInfoValue}>{_dOrigin}</Text>
                         </View>
                       )}
                       {_dDest && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="location-outline" size={15} color="#1230B8" />
+                          <Ionicons name="location-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Destino</Text>
                           <Text style={styles.modalInfoValue}>{_dDest}</Text>
                         </View>
                       )}
                       {_dSeats && _dSeats.length > 0 && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="grid-outline" size={15} color="#1230B8" />
+                          <Ionicons name="grid-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Asiento{_dSeats.length > 1 ? 's' : ''}</Text>
                           <Text style={styles.modalInfoValue}>{_dSeats.join(', ')}</Text>
                         </View>
                       )}
                       {_dPrice !== undefined && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="cash-outline" size={15} color="#1230B8" />
+                          <Ionicons name="cash-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Valor</Text>
                           <Text style={styles.modalInfoValue}>${_dPrice.toLocaleString('es-CO')}</Text>
                         </View>
                       )}
                       {_dFmtDate && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="calendar-outline" size={15} color="#1230B8" />
+                          <Ionicons name="calendar-outline" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Fecha</Text>
                           <Text style={styles.modalInfoValue}>{_dFmtDate}</Text>
                         </View>
                       )}
                       {_dBookingId && (
-                        <View style={[styles.modalInfoRow, { marginTop: 4, borderTopWidth: 1, borderTopColor: '#D6E0FF', paddingTop: 8 }]}>
+                        <View style={[styles.modalInfoRow, { marginTop: 4, borderTopWidth: 1, borderTopColor: COLORS.primaryTint, paddingTop: 8 }]}>
                           <Ionicons name="receipt-outline" size={13} color={COLORS.textTertiary} />
                           <Text style={[styles.modalInfoLabel, { color: COLORS.textTertiary, fontSize: 10 }]}>ID reserva</Text>
                           <Text style={[styles.modalInfoValue, { color: COLORS.textTertiary, fontSize: 10 }]}>{_dBookingId}</Text>
@@ -662,7 +662,7 @@ export default function NotificationsScreen() {
                       {_dIsReviewPending && (
                         <View style={styles.starsPreviewRow}>
                           {[1,2,3,4,5].map((s) => (
-                            <Ionicons key={s} name="star" size={22} color="#FBBF24" />
+                            <Ionicons key={s} name="star" size={22} color={COLORS.warning} />
                           ))}
                         </View>
                       )}
@@ -680,7 +680,7 @@ export default function NotificationsScreen() {
                         }}
                       >
                         <LinearGradient
-                          colors={_dIsReviewPending ? ['#D97706', '#F59E0B'] : ['#0E2699', '#1230B8', '#1A3FCC']}
+                          colors={_dIsReviewPending ? ['#D97706', COLORS.warning] : [COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                           style={styles.rateDriverBtnInner}
                         >
@@ -760,7 +760,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
   },
   header: {
     flexDirection: 'row',
@@ -768,9 +768,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     borderBottomWidth: 1,
-    borderBottomColor: '#D6E0FF',
+    borderBottomColor: COLORS.primaryTint,
   },
   headerRight: {
     flexDirection: 'row',
@@ -783,13 +783,13 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
   },
   title: {
     ...TYPOGRAPHY.h4,
-    color: '#0E2699',
+    color: COLORS.primaryDark,
     fontWeight: '800',
   },
   // Filter chips
@@ -807,9 +807,9 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -828,15 +828,15 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.lg,
     marginBottom: SPACING.sm,
     borderRadius: 10,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   selectionText: {
     ...TYPOGRAPHY.bodySmall,
-    color: '#0E2699',
+    color: COLORS.primaryDark,
     fontWeight: '700',
   },
   listContent: {
@@ -846,21 +846,21 @@ const styles = StyleSheet.create({
   },
   // Cards
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: SPACING.md,
     borderWidth: 1,
-    borderColor: '#E9EBF2',
+    borderColor: COLORS.border,
     ...SHADOWS.xs,
     position: 'relative',
   },
   cardUnread: {
-    backgroundColor: '#F4F6FF',
-    borderColor: '#D6E0FF',
+    backgroundColor: COLORS.surfaceAlt,
+    borderColor: COLORS.primaryTint,
   },
   cardSelected: {
-    borderColor: '#1230B8',
-    backgroundColor: '#EEF2FF',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primaryTint,
   },
   unreadDot: {
     position: 'absolute',
@@ -869,7 +869,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     zIndex: 2,
   },
   selectIndicator: {
@@ -912,7 +912,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   categoryPillBlue: {
-    backgroundColor: '#E4EBFF',
+    backgroundColor: COLORS.primaryTint,
   },
   categoryText: {
     fontSize: 10,
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   categoryTextBlue: {
-    color: '#1230B8',
+    color: COLORS.primary,
   },
   timeText: {
     ...TYPOGRAPHY.caption,
@@ -949,7 +949,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 6,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
   },
   routeMiniRow: {
     flexDirection: 'row',
@@ -958,7 +958,7 @@ const styles = StyleSheet.create({
   },
   routeMiniText: {
     fontSize: 11,
-    color: '#1230B8',
+    color: COLORS.primary,
     flex: 1,
   },
   starsRow: {
@@ -1017,7 +1017,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingHorizontal: SPACING.lg,
@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#D6E0FF',
+    backgroundColor: COLORS.primaryTint,
     alignSelf: 'center',
     marginBottom: SPACING.md,
   },
@@ -1063,7 +1063,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1079,14 +1079,14 @@ const styles = StyleSheet.create({
   },
   modalSenderName: {
     fontWeight: '700',
-    color: '#0E2699',
+    color: COLORS.primaryDark,
   },
   modalInfoCard: {
     borderRadius: 14,
     padding: SPACING.md,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     marginBottom: SPACING.md,
   },
   modalInfoRow: {
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: '#D6E0FF',
+    borderTopColor: COLORS.primaryTint,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
     backgroundColor: '#fff',
@@ -1140,10 +1140,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 42,
     maxHeight: 100,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.md,
     paddingVertical: 10,
     fontSize: 14,
@@ -1153,7 +1153,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 12,
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },

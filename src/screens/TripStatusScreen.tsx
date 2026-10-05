@@ -187,7 +187,7 @@ export default function TripStatusScreen() {
           <>
             {/* Status Card */}
             <LinearGradient
-              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.statusCardGradient}
@@ -219,7 +219,7 @@ export default function TripStatusScreen() {
 
             {/* Seats Card */}
             <LinearGradient
-              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.seatsCardGradient}
@@ -279,7 +279,7 @@ export default function TripStatusScreen() {
 
             {/* Vehicle Card */}
             <LinearGradient
-              colors={['#D6E0FF', '#BDCEFF', '#A8BBFF']}
+              colors={[COLORS.primaryTint, '#BDCEFF', '#A8BBFF']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.vehicleCardGradient}
@@ -332,7 +332,7 @@ export default function TripStatusScreen() {
               </View>
 
               <LinearGradient
-                colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.quickChatBtn}
@@ -363,7 +363,7 @@ export default function TripStatusScreen() {
 
             {/* Trip Info Card */}
             <LinearGradient
-              colors={['#F8F9FF', '#EEF2FF', '#E4EBFF']}
+              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.tripInfoCardGradient}
@@ -391,7 +391,7 @@ export default function TripStatusScreen() {
 
             {/* Action Buttons */}
             <LinearGradient
-              colors={['#0E2699', '#1230B8', '#1A3FCC']}
+              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.newTripBtnGradient}
@@ -665,7 +665,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.textSecondary,
   },
   seatAvailable: {
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
   },
   seatSelected: {
     backgroundColor: COLORS.success,
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     borderRadius: 4,
   },
   progressLabels: {
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#1230B8',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -925,7 +925,7 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
   },
   chatBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 14,
@@ -1024,7 +1024,7 @@ const styles = StyleSheet.create({
   },
   passengerItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: COLORS.border,
   },
   passengerInfo: {
     flexDirection: 'row',

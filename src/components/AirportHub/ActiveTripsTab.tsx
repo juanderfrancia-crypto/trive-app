@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tripStatusBadge: {
-    backgroundColor: '#10b981',
+    backgroundColor: COLORS.success,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.full,

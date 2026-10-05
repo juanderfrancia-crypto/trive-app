@@ -455,7 +455,7 @@ export default function DriverPanelScreen() {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       {/* Header */}
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
         style={[styles.header, { paddingTop: insets.top + 8 }]}
       >
@@ -595,7 +595,7 @@ export default function DriverPanelScreen() {
                   ) : null}
                   {route.vehicle_plate ? (
                     <View style={[styles.vehiclePill, styles.vehiclePlatePill]}>
-                      <Ionicons name="card-outline" size={12} color="#0E2699" />
+                      <Ionicons name="card-outline" size={12} color={COLORS.primaryDark} />
                       <Text style={styles.vehiclePlateText}>{route.vehicle_plate}</Text>
                     </View>
                   ) : null}
@@ -677,7 +677,7 @@ export default function DriverPanelScreen() {
                                 style={[styles.passengerItem, pIdx < dropoffGroup.passengers.length - 1 && styles.passengerItemBorder]}
                               >
                                 <LinearGradient
-                                  colors={['#0E2699', '#1230B8']}
+                                  colors={[COLORS.primaryDark, COLORS.primary]}
                                   style={styles.passengerAvatar}
                                 >
                                   <Text style={styles.passengerInitials}>
@@ -784,7 +784,7 @@ export default function DriverPanelScreen() {
                       activeOpacity={0.85}
                     >
                       <LinearGradient
-                        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+                        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={styles.primaryActionBtn}
                       >
@@ -841,7 +841,7 @@ export default function DriverPanelScreen() {
                       activeOpacity={0.85}
                     >
                       <LinearGradient
-                        colors={['#059669', '#10B981']}
+                        colors={['#059669', COLORS.success]}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={styles.primaryActionBtn}
                       >
@@ -883,7 +883,7 @@ export default function DriverPanelScreen() {
                 setTimeout(() => handleCreateRoute(), 150)
               }}
             >
-              <LinearGradient colors={['#0E2699', '#1A3FCC']} style={styles.menuItemIcon}>
+              <LinearGradient colors={[COLORS.primaryDark, COLORS.primaryLight]} style={styles.menuItemIcon}>
                 <Ionicons name="add-circle" size={20} color="#fff" />
               </LinearGradient>
               <View style={styles.menuItemText}>
@@ -1060,13 +1060,13 @@ const styles = StyleSheet.create({
 
   // Route Card
   routeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
     borderWidth: 1,
-    borderColor: '#E8EDFF',
-    shadowColor: '#1230B8',
+    borderColor: COLORS.primaryTint,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
     shadowRadius: 10,
@@ -1074,16 +1074,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   routeCardActive: {
-    borderColor: '#10B981',
+    borderColor: COLORS.success,
     borderLeftWidth: 4,
     backgroundColor: '#F7FFFE',
-    shadowColor: '#10B981',
+    shadowColor: COLORS.success,
     shadowOpacity: 0.12,
     elevation: 4,
   },
   inProgressBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.success,
     marginHorizontal: -SPACING.lg,
     marginTop: -SPACING.lg,
     marginBottom: SPACING.md,
@@ -1137,7 +1137,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   originText: {
-    fontSize: 15, fontWeight: '800', color: '#0E1C4E', letterSpacing: -0.3,
+    fontSize: 15, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3,
   },
   destText: {
     fontSize: 14, fontWeight: '600', color: '#334155',
@@ -1167,21 +1167,21 @@ const styles = StyleSheet.create({
   },
   vehiclePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: COLORS.primaryTint,
     borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 5,
   },
   vehiclePillText: {
     fontSize: 12, fontWeight: '500', color: '#334155',
   },
   vehiclePlatePill: {
-    backgroundColor: '#EEF2FF', borderColor: '#C7D2FE',
+    backgroundColor: COLORS.primaryTint, borderColor: '#C7D2FE',
   },
   vehiclePlateText: {
-    fontSize: 12, fontWeight: '700', color: '#0E2699', letterSpacing: 0.5,
+    fontSize: 12, fontWeight: '700', color: COLORS.primaryDark, letterSpacing: 0.5,
   },
 
   sectionDivider: {
-    height: 1, backgroundColor: '#F1F5F9', marginVertical: SPACING.md,
+    height: 1, backgroundColor: COLORS.surfaceAlt, marginVertical: SPACING.md,
   },
 
   // Seats Section
@@ -1220,11 +1220,11 @@ const styles = StyleSheet.create({
   seatEmpty: {
     backgroundColor: '#F0F4FF',
     borderWidth: 1,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
   },
   seatsMore: {
     width: 30, height: 30, borderRadius: 8,
-    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: '#D6E0FF',
+    backgroundColor: '#F0F4FF', borderWidth: 1, borderColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center',
   },
   seatsMoreText: {
@@ -1267,7 +1267,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', paddingVertical: 10,
   },
   passengerItemBorder: {
-    borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+    borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt,
   },
   passengerAvatar: {
     width: 38, height: 38, borderRadius: 19,
@@ -1281,14 +1281,14 @@ const styles = StyleSheet.create({
     flex: 1, gap: 4,
   },
   passengerName: {
-    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 13, fontWeight: '700', color: COLORS.textPrimary,
   },
   passengerMeta: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   seatPill: {
     flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: '#F4F6FF', borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.full,
     paddingHorizontal: 7, paddingVertical: 2,
   },
   seatPillText: {
@@ -1330,7 +1330,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   chatBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 9,
     fontWeight: '700',
     lineHeight: 12,
@@ -1378,8 +1378,8 @@ const styles = StyleSheet.create({
   },
   secondaryActionsRow: {
     flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F8F9FF', borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: '#E8EDFF',
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.md,
+    borderWidth: 1, borderColor: COLORS.primaryTint,
     overflow: 'hidden',
   },
   secondaryActionBtn: {
@@ -1387,7 +1387,7 @@ const styles = StyleSheet.create({
     gap: 6, paddingVertical: 12,
   },
   secondaryActionSep: {
-    width: 1, height: 20, backgroundColor: '#E8EDFF',
+    width: 1, height: 20, backgroundColor: COLORS.primaryTint,
   },
   secondaryActionText: {
     fontSize: 13, fontWeight: '600',
@@ -1406,7 +1406,7 @@ const styles = StyleSheet.create({
   },
   menuHandle: {
     width: 40, height: 4, borderRadius: 2,
-    backgroundColor: '#D6E0FF', alignSelf: 'center', marginBottom: 16,
+    backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginBottom: 16,
   },
   menuTitle: {
     fontSize: 13, fontWeight: '600', color: COLORS.textTertiary,
@@ -1422,13 +1422,13 @@ const styles = StyleSheet.create({
   },
   menuItemText: { flex: 1 },
   menuItemTitle: {
-    fontSize: 15, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
   },
   menuItemSub: {
     fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
   },
   menuDivider: {
-    height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 58,
+    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: 58,
   },
 
   // Warning
@@ -1443,12 +1443,12 @@ const styles = StyleSheet.create({
   },
   warningIconWrap: {
     width: 34, height: 34, borderRadius: 10,
-    backgroundColor: '#FEF3C7',
+    backgroundColor: COLORS.warningLight,
     justifyContent: 'center', alignItems: 'center',
     flexShrink: 0,
   },
   warningTitle: {
-    fontSize: 13, fontWeight: '700', color: '#92400E', marginBottom: 2,
+    fontSize: 13, fontWeight: '700', color: COLORS.warningDark, marginBottom: 2,
   },
   warningText: {
     fontSize: 12, color: '#B45309', lineHeight: 16,
@@ -1460,13 +1460,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     marginBottom: SPACING.sm,
     borderWidth: 1,
-    borderColor: '#E8EDFF',
+    borderColor: COLORS.primaryTint,
     overflow: 'hidden',
   },
   dropoffHeader: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: SPACING.md, paddingVertical: 10,
-    backgroundColor: '#EEF2FF',
+    backgroundColor: COLORS.primaryTint,
     gap: 8,
   },
   dropoffIconContainer: {
@@ -1477,7 +1477,7 @@ const styles = StyleSheet.create({
   },
   dropoffInfo: { flex: 1 },
   dropoffLocation: {
-    fontSize: 13, fontWeight: '700', color: '#0E1C4E',
+    fontSize: 13, fontWeight: '700', color: COLORS.textPrimary,
   },
   dropoffCount: {
     fontSize: 11, color: COLORS.textSecondary, marginTop: 1,

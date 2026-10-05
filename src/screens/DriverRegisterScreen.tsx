@@ -328,7 +328,7 @@ export default function DriverRegisterScreen() {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       {/* Header con gradiente — arranca desde arriba cubriendo la status bar */}
       <LinearGradient
-        colors={['#0E2699', '#1230B8', '#1A3FCC']}
+        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: insets.top + 4 }]}
@@ -428,7 +428,7 @@ export default function DriverRegisterScreen() {
 
           {/* Helper text: Flujo informal */}
           <View style={styles.helperTextContainer}>
-            <Ionicons name="flash" size={15} color="#1230B8" />
+            <Ionicons name="flash" size={15} color={COLORS.primary} />
             <Text style={styles.helperText}>
               Publica tu ruta ahora y comienza de inmediato
             </Text>
@@ -823,7 +823,7 @@ export default function DriverRegisterScreen() {
               Repite este viaje rápido desde Rutas Frecuentes
             </Text>
           </View>
-          <Ionicons name="bookmark" size={16} color={saveAsTemplate ? '#1230B8' : COLORS.textTertiary} />
+          <Ionicons name="bookmark" size={16} color={saveAsTemplate ? COLORS.primary : COLORS.textTertiary} />
         </TouchableOpacity>
 
         {/* Buttons */}
@@ -834,7 +834,7 @@ export default function DriverRegisterScreen() {
           activeOpacity={0.85}
         >
           <LinearGradient
-            colors={['#0E2699', '#1230B8', '#1A3FCC']}
+            colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.submitBtnInner}
@@ -928,10 +928,10 @@ export default function DriverRegisterScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
   },
   container: {
-    backgroundColor: '#F4F6FF',
+    backgroundColor: COLORS.surfaceAlt,
     paddingHorizontal: SPACING.lg,
   },
 
@@ -988,14 +988,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: RADIUS.md,
-    backgroundColor: '#E4EBFF',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0E2699',
+    color: COLORS.primaryDark,
   },
 
   // Input
@@ -1108,25 +1108,25 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.lg,
     borderWidth: 1.5,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
   },
   templateToggleActive: {
-    backgroundColor: '#EEF2FF',
-    borderColor: '#1230B8',
+    backgroundColor: COLORS.primaryTint,
+    borderColor: COLORS.primary,
   },
   toggleCheck: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#D6E0FF',
+    borderColor: COLORS.primaryTint,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
   },
   toggleCheckActive: {
-    backgroundColor: '#1230B8',
-    borderColor: '#1230B8',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   toggleLabel: {
     fontSize: 14,
@@ -1134,7 +1134,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   toggleLabelActive: {
-    color: '#0E2699',
+    color: COLORS.primaryDark,
   },
   toggleSub: {
     fontSize: 11,
@@ -1147,7 +1147,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
     marginBottom: SPACING.md,
-    shadowColor: '#0E2699',
+    shadowColor: COLORS.primaryDark,
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 14,
@@ -1468,14 +1468,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     marginBottom: SPACING.md,
-    backgroundColor: '#E4EBFF',
+    backgroundColor: COLORS.primaryTint,
     borderLeftWidth: 3,
-    borderLeftColor: '#1230B8',
+    borderLeftColor: COLORS.primary,
     borderRadius: RADIUS.md,
   },
   helperText: {
     fontSize: 12,
-    color: '#1230B8',
+    color: COLORS.primary,
     fontWeight: '600',
     flex: 1,
   },
