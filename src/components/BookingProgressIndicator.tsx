@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surfaceVariant || '#E5E7EB',
+    backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.xs,

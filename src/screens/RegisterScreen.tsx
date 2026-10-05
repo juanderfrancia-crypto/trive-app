@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS } from '../theme/colors'
+import { COLORS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surfaceLow,
+    backgroundColor: COLORS.surfaceAlt,
     borderRadius: 12,
     paddingHorizontal: 16,
     height: 56,

@@ -7,6 +7,7 @@ export const COLORS = {
   primaryLight: '#2E5FBF', // Azul claro para hover/light states
   primaryDark: '#0D3A88', // Azul oscuro para press states
   primaryDarkest: '#082D66', // Azul muy oscuro para gradientes 3D
+  white: '#FFFFFF',
 
   // Secundarios - Azul Cálido/Celeste
   accent: '#2E7DC0', // Azul cálido para acentos y complementos
@@ -145,9 +146,15 @@ export const TYPOGRAPHY = {
     fontWeight: '400' as any,
     lineHeight: 20,
   },
+  body3: {
+    fontSize: 12,
+    fontWeight: '400' as any,
+    lineHeight: 16,
+  },
   size: {
     xs: 12,
     sm: 14,
+    base: 14,
     md: 16,
     lg: 18,
     xl: 20,

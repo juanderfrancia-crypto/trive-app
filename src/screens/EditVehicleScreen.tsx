@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
-import { COLORS } from '../theme/colors';
+import { COLORS } from '../theme/theme';
 
 interface VehicleFormData {
   vehicle_make: string;

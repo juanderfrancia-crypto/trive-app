@@ -1,5 +1,5 @@
 import { View, ActivityIndicator, StyleSheet, Image } from 'react-native'
-import { COLORS } from '../theme/colors'
+import { COLORS } from '../theme/theme'
 
 export default function LoadingScreen() {
   return (
