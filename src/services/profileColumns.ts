@@ -2,12 +2,7 @@ import { supabase } from './supabase'
 
 // Columnas del perfil que la app puede leer. El teléfono no está aquí:
 // cada quien lo obtiene con getMyPhone() (la base solo lo libera a quien corresponde).
-export const PROFILE_COLUMNS =
-  'id, name, email, avatar_url, role, rating, total_trips, total_spent, is_driver_verified, ' +
-  'created_at, updated_at, is_driver, is_passenger, driver_active, is_admin, driver_verified, ' +
-  'driver_verified_at, profile_photo_url, push_token, notification_preferences, membership_type, ' +
-  'membership_expiry, vehicle_photo_url, last_seen, balance, referral_code, referred_by, ' +
-  'emergency_contact, preferred_municipality'
+export const PROFILE_COLUMNS = 'id, name, email, avatar_url, role, rating, total_trips, total_spent, is_driver_verified, created_at, updated_at, is_driver, is_passenger, driver_active, is_admin, driver_verified, driver_verified_at, profile_photo_url, push_token, notification_preferences, membership_type, membership_expiry, vehicle_photo_url, last_seen, balance, referral_code, referred_by, emergency_contact, preferred_municipality' as const
 
 // Mi teléfono. Devuelve null si no hay sesión o no tiene teléfono registrado.
 export const getMyPhone = async (): Promise<string | null> => {
