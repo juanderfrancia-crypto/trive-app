@@ -1,7 +1,8 @@
+import IllustratedCard from '../components/illustrations/IllustratedCard'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, ImageBackground, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar,
+  ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -466,8 +467,7 @@ export default function ProfileScreen() {
       {/* CTA card */}
       <View style={s.section}>
         <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-          <ImageBackground source={require('../../assets/banners/modoc.png')} style={pv.ctaCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
-            <View style={pv.ctaOverlay} pointerEvents="none" />
+          <IllustratedCard scene="wheel" tone="brand" style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
             <View style={pv.ctaOportunidad}>
               <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
             </View>
@@ -476,7 +476,7 @@ export default function ProfileScreen() {
             <View style={pv.ctaBtn}>
               <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
             </View>
-          </ImageBackground>
+          </IllustratedCard>
         </TouchableOpacity>
       </View>
 
@@ -484,15 +484,14 @@ export default function ProfileScreen() {
       <View style={s.section}>
         <View style={pv.statsRow}>
           <TouchableOpacity style={pv.statCard} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.75}>
-            <ImageBackground source={require('../../assets/banners/viajesp.png')} style={pv.statCardBg} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.lg }}>
-              <View style={pv.statCardOverlay} pointerEvents="none" />
+            <IllustratedCard scene="trips" tone="brand" style={[pv.statCardBg, { borderRadius: RADIUS.lg }]}>
               <View style={pv.statIcon}><Ionicons name="time-outline" size={26} color="#fff" /></View>
               <Text style={pv.statTitleW}>Mis Viajes</Text>
               <Text style={pv.statSubW}>{passengerStats?.totalTrips ?? 0} completados</Text>
               <View style={pv.statProgressBar}>
                 <View style={[pv.statProgressFill, { width: `${Math.min(100, ((passengerStats?.totalTrips ?? 0) / 20) * 100)}%` }]} />
               </View>
-            </ImageBackground>
+            </IllustratedCard>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -500,8 +499,7 @@ export default function ProfileScreen() {
             onPress={() => setChatsListVisible(true)}
             activeOpacity={0.75}
           >
-            <ImageBackground source={require('../../assets/banners/chats.png')} style={pv.statCardBg} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.lg }}>
-              <View style={pv.statCardOverlay} pointerEvents="none" />
+            <IllustratedCard scene="chat" tone="brand" style={[pv.statCardBg, { borderRadius: RADIUS.lg }]}>
               <View style={[pv.statIcon, { position: 'relative' }]}>
                 <Ionicons name="chatbubble-ellipses-outline" size={26} color="#fff" />
                 {totalUnread > 0 && (
@@ -519,7 +517,7 @@ export default function ProfileScreen() {
               <View style={pv.statProgressBar}>
                 <View style={[pv.statProgressFill, { width: `${Math.min(100, ((activeBookings.length ?? 0) / 5) * 100)}%` }]} />
               </View>
-            </ImageBackground>
+            </IllustratedCard>
           </TouchableOpacity>
         </View>
       </View>
@@ -672,8 +670,7 @@ export default function ProfileScreen() {
 
         {/* Ganancias del mes */}
         <View style={s.section}>
-          <ImageBackground source={require('../../assets/banners/Ganancias.png')} style={dv.earningsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
-            <View style={dv.cardOverlay} pointerEvents="none" />
+          <IllustratedCard scene="earnings" tone="brand" style={[dv.earningsCard, { borderRadius: RADIUS.xl }]}>
             <Text style={dv.earningsLabel}>GANANCIAS DEL MES</Text>
             <Text style={dv.earningsAmount}>
               ${monthEarnings.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -682,7 +679,7 @@ export default function ProfileScreen() {
               <Text style={dv.detailsText}>Ver detalles</Text>
               <Ionicons name="arrow-forward" size={14} color={COLORS.accentLight} />
             </TouchableOpacity>
-          </ImageBackground>
+          </IllustratedCard>
         </View>
 
         {/* Acciones principales del conductor */}
@@ -742,8 +739,7 @@ export default function ProfileScreen() {
 
         {/* Viajes completados */}
         <View style={s.section}>
-          <ImageBackground source={require('../../assets/banners/viajesc.png')} style={dv.tripsCard} resizeMode="cover" imageStyle={{ borderRadius: RADIUS.xl }}>
-            <View style={dv.cardOverlay} pointerEvents="none" />
+          <IllustratedCard scene="trips" tone="brand" style={[dv.tripsCard, { borderRadius: RADIUS.xl }]}>
             <View style={dv.tripsIcon}><Ionicons name="swap-horizontal-outline" size={22} color="#fff" /></View>
             <Text style={dv.tripsLabel}>VIAJES COMPLETADOS</Text>
             <View style={dv.tripsCountRow}>
@@ -759,7 +755,7 @@ export default function ProfileScreen() {
                 ? `Llevas ${totalTrips} viajes completados. ¡Sigue así!`
                 : 'Completa tu primer viaje para empezar a ganar.'}
             </Text>
-          </ImageBackground>
+          </IllustratedCard>
         </View>
 
         {/* Mi Vehículo */}
@@ -1275,7 +1271,6 @@ const pv = StyleSheet.create({
   premiumText: { fontSize: 11, fontWeight: '800', color: '#78350F', letterSpacing: 0.3 },
 
   ctaCard: { borderRadius: RADIUS.xl, overflow: 'hidden', padding: SPACING.xl, paddingBottom: SPACING.xxl },
-  ctaOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: RADIUS.xl },
   ctaOportunidad: {
     alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: SPACING.md, paddingVertical: 4,
@@ -1300,7 +1295,6 @@ const pv = StyleSheet.create({
     marginBottom: 6,
   },
   statCardBg: { flex: 1, padding: SPACING.lg, gap: 8, minHeight: 130 },
-  statCardOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.48)', borderRadius: RADIUS.lg },
   statTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   statSub:   { fontSize: 12, color: COLORS.textSecondary },
   statTitleW: { fontSize: 15, fontWeight: '700', color: '#fff' },
@@ -1499,11 +1493,6 @@ const dv = StyleSheet.create({
     padding: SPACING.lg,
     overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2,
-  },
-  cardOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: RADIUS.xl,
   },
   earningsLabel:  { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.8)', letterSpacing: 1, marginBottom: SPACING.sm },
   earningsAmount: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: -1, marginBottom: SPACING.lg },

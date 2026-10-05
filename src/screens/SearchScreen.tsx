@@ -1,3 +1,4 @@
+import IllustratedCard from '../components/illustrations/IllustratedCard'
 import { useState, useCallback, useMemo, useEffect } from 'react'
 import {
   View,
@@ -223,14 +224,14 @@ function InfoCards() {
   return (
     <View style={info.row}>
       <View style={info.card}>
-        <Image source={require('../../assets/banners/frecuente.png')} style={info.img} resizeMode="cover" />
+        <IllustratedCard scene="frequent" tone="light" style={info.img} />
         <View style={info.overlay}>
           <Text style={info.titleDark}>Viaja{'\n'}seguido</Text>
           <Text style={info.subtitleDark}>Rutas diarias con{'\n'}conductores de confianza</Text>
         </View>
       </View>
       <View style={info.card}>
-        <Image source={require('../../assets/banners/pago.png')} style={info.img} resizeMode="cover" />
+        <IllustratedCard scene="payment" tone="light" style={info.img} />
         <View style={info.overlay}>
           <Text style={info.titleDark}>Paga como{'\n'}prefieras</Text>
           <Text style={info.subtitleDark}>Digital o en efectivo{'\n'}al conductor</Text>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ImageBackground, TextInput, ActivityIndicator } from 'react-native'
+import IllustratedCard from '../components/illustrations/IllustratedCard'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
@@ -77,16 +78,7 @@ export default function DriverOnboardingScreen() {
       <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
         {/* ── Hero ── */}
-        <ImageBackground
-          source={require('../../assets/banners/condu.png')}
-          style={s.hero}
-          resizeMode="cover"
-          imageStyle={{ borderRadius: RADIUS.xl }}
-        >
-          <LinearGradient
-            colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.65)']}
-            style={s.heroOverlay}
-          />
+        <IllustratedCard scene="wheel" tone="brand" style={[s.hero, { borderRadius: RADIUS.xl }]} sceneWidth={150}>
           <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
             <Ionicons name="arrow-back" size={20} color="#fff" />
           </TouchableOpacity>
@@ -98,7 +90,7 @@ export default function DriverOnboardingScreen() {
             <Text style={s.heroTitle}>Conviértete en{'\n'}conductor Trive</Text>
             <Text style={s.heroSub}>Gana dinero en tu tiempo libre compartiendo tus viajes</Text>
           </View>
-        </ImageBackground>
+        </IllustratedCard>
 
         {/* ── Cómo funciona ── */}
         <View style={s.block}>
@@ -216,7 +208,6 @@ const s = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'space-between',
   },
-  heroOverlay: { ...StyleSheet.absoluteFillObject, borderRadius: RADIUS.xl },
   backBtn: {
     margin: SPACING.md,
     width: 38, height: 38, borderRadius: 19,
