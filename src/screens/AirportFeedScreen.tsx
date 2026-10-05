@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react'
+import { useCallback, useState } from 'react'
 import {
   View,
   Text,
@@ -31,7 +31,6 @@ export default function AirportFeedScreen() {
     loadDriverFeed,
     loadDriverActiveTrips,
     createOffer,
-    startTrip,
     completeTrip,
     rateTrip,
   } = useAirportNegotiation()
@@ -50,14 +49,14 @@ export default function AirportFeedScreen() {
   const [selectedRating, setSelectedRating] = useState(0)
   const [ratingComment, setRatingComment] = useState('')
   
-  // 💬 Estado para chat de negociación
+  //  Estado para chat de negociación
   const [showChatModal, setShowChatModal] = useState(false)
   const [chatRequest, setChatRequest] = useState<AirportRequest | null>(null)
 
   // Filtrar solicitudes según el tab activo
   const availableRequests = requests.filter(r => r.status === 'pending' && r.driver_id !== user?.id)
   const myOffers = requests.filter(r => r.status === 'pending' && r.driver_id !== user?.id) // TODO: filtrar por ofertas del conductor
-  const activeTrips = requests.filter(r => r.driver_id === user?.id && (r.status === 'accepted' || r.status === 'in_progress'))
+  const activeTrips = requests.filter(r => r.driver_id === user?.id && r.status === 'accepted')
   const completedTrips = requests.filter(r => r.driver_id === user?.id && r.status === 'completed')
 
   useFocusEffect(
@@ -100,13 +99,13 @@ export default function AirportFeedScreen() {
       return
     }
 
-    // ✅ Usar "proposal" para identificar que estamos en el modal
+    //  Usar "proposal" para identificar que estamos en el modal
     try {
       setProcessing('proposal')
       const result = await createOffer(selectedRequest.id, user.id, price)
       
       // Mostrar éxito
-      showSuccess('✅ Tu propuesta fue enviada. El pasajero la verá al instante.')
+      showSuccess('Tu propuesta fue enviada. El pasajero la verá al instante.')
       
       // Cerrar modal y resetear
       setTimeout(() => {
@@ -131,7 +130,7 @@ export default function AirportFeedScreen() {
     try {
       setProcessing(`rating_${ratingTrip.id}`)
       await rateTrip(ratingTrip.id, selectedRating, ratingComment)
-      showSuccess('✅ ¡Gracias por calificar el viaje!')
+      showSuccess(' ¡Gracias por calificar el viaje!')
       
       setTimeout(() => {
         setShowRatingModal(false)
@@ -294,7 +293,7 @@ export default function AirportFeedScreen() {
               activeOpacity={0.75}
             >
               <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
-              <Text style={s.btnChatText}>💬 Chat</Text>
+              <Text style={s.btnChatText}>Chat</Text>
             </TouchableOpacity>
 
             {item.status === 'accepted' && (
@@ -303,36 +302,8 @@ export default function AirportFeedScreen() {
                 onPress={async () => {
                   try {
                     setProcessing(item.id)
-                    await startTrip(item.id)
-                    showSuccess('✅ Viaje iniciado. ¡Bienvenido!')
-                  } catch (err: any) {
-                    showError(err.message || 'Error al iniciar viaje')
-                  } finally {
-                    setProcessing(null)
-                  }
-                }}
-                disabled={isProcessing}
-                activeOpacity={0.75}
-              >
-                {isProcessing ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <>
-                    <Ionicons name="play-circle-outline" size={16} color="#fff" />
-                    <Text style={s.btnAcceptText}>🚗 Iniciar viaje</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-
-            {item.status === 'in_progress' && (
-              <TouchableOpacity
-                style={[s.btnWrapper, s.btnAccept, isProcessing && s.btnDisabled]}
-                onPress={async () => {
-                  try {
-                    setProcessing(item.id)
                     await completeTrip(item.id)
-                    showSuccess('✅ Viaje completado. ¡Gracias por tu servicio!')
+                    showSuccess('Viaje completado. ¡Gracias por tu servicio!')
                   } catch (err: any) {
                     showError(err.message || 'Error al completar viaje')
                   } finally {
@@ -347,7 +318,7 @@ export default function AirportFeedScreen() {
                 ) : (
                   <>
                     <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                    <Text style={s.btnAcceptText}>✔️ Completar viaje</Text>
+                    <Text style={s.btnAcceptText}>Completar viaje</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -369,7 +340,7 @@ export default function AirportFeedScreen() {
               activeOpacity={0.75}
             >
               <Ionicons name="star-outline" size={16} color="#fff" />
-              <Text style={s.btnAcceptText}>⭐ Calificar</Text>
+              <Text style={s.btnAcceptText}>Calificar</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -637,7 +608,7 @@ export default function AirportFeedScreen() {
 
                     {proposedPrice && parseInt(proposedPrice.replace(/\D/g, '')) >= selectedRequest.offered_price && (
                       <Text style={s.infoText}>
-                        ℹ️ El pasajero verá tu propuesta y decidirá si la acepta
+                        ℹ El pasajero verá tu propuesta y decidirá si la acepta
                       </Text>
                     )}
                   </View>
@@ -664,7 +635,7 @@ export default function AirportFeedScreen() {
         </View>
       </Modal>
 
-      {/* 💬 Modal de Chat de Negociación */}
+      {/*  Modal de Chat de Negociación */}
       {chatRequest && (
         <NegotiationChatModal
           visible={showChatModal}
@@ -692,19 +663,7 @@ const s = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerHero: { flex: 1, alignItems: 'center', gap: 3 },
-  headerTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerTitle: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
-  headerBadge: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 10,
-    minWidth: 22,
-    height: 22,
-    paddingHorizontal: 7,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
 
   // Commission strip
   commissionStrip: {
@@ -885,7 +844,6 @@ const s = StyleSheet.create({
     color: COLORS.textPrimary,
     paddingVertical: SPACING.md,
   },
-  warningText: { fontSize: 12, color: COLORS.warning, fontWeight: '500' },
   infoText: { fontSize: 12, color: '#3B82F6', fontWeight: '500' },
   submitBtn: {
     flexDirection: 'row',

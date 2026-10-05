@@ -119,12 +119,12 @@ export const useAirportNegotiation = () => {
       // Actualizar estado local para que aparezca inmediatamente
       setRequests(prev => [newRequest, ...prev])
 
-      // 🔔 Enviar notificación de viaje publicado al pasajero
-      console.log('🟡 [HOOK] Enviando notificación de viaje publicado')
+      //  Enviar notificación de viaje publicado al pasajero
+      console.log(' [HOOK] Enviando notificación de viaje publicado')
       insertNotificationForUser(data.passenger_id, {
         user_id: data.passenger_id,
         type: 'trip_published',
-        title: '📍 ¡Viaje publicado!',
+        title: ' ¡Viaje publicado!',
         message: `Tu solicitud de ${data.origin} a ${data.destination} está buscando conductores`,
         data: {
           request_id: newRequest.id,
@@ -134,9 +134,9 @@ export const useAirportNegotiation = () => {
         },
         is_read: false,
       }).catch((notifErr) => {
-        console.error('⚠️ [HOOK] Error enviando notificación de publicación:', notifErr)
+        console.error(' [HOOK] Error enviando notificación de publicación:', notifErr)
       })
-      console.log('✅ [HOOK] Notificación de viaje publicado enviada')
+      console.log(' [HOOK] Notificación de viaje publicado enviada')
       
       return newRequest
     } catch (err: any) {
@@ -217,7 +217,7 @@ export const useAirportNegotiation = () => {
     }
   }, [])
 
-  // ─── Cargar viajes activos del conductor (accepted e in_progress) ──────────
+  // ─── Cargar viajes activos del conductor (aceptados) ──────────
   const loadDriverActiveTrips = useCallback(async (driverId: string): Promise<AirportRequest[]> => {
     try {
       setError(null)
@@ -227,7 +227,7 @@ export const useAirportNegotiation = () => {
         .from('airport_requests')
         .select('*')
         .eq('driver_id', driverId)
-        .in('status', ['accepted', 'in_progress'])
+        .eq('status', 'accepted')
         .order('departure_time', { ascending: true })
 
       if (fetchError) throw fetchError
@@ -300,7 +300,7 @@ export const useAirportNegotiation = () => {
     }
   }, [])
 
-  // ─── Cargar viajes activos del pasajero (accepted e in_progress) ─────────────
+  // ─── Cargar viajes activos del pasajero (aceptados) ─────────────
   const loadPassengerActiveTrips = useCallback(async (passengerId: string): Promise<AirportRequest[]> => {
     try {
       setError(null)
@@ -310,7 +310,7 @@ export const useAirportNegotiation = () => {
         .from('airport_requests')
         .select('*')
         .eq('passenger_id', passengerId)
-        .in('status', ['accepted', 'in_progress'])
+        .eq('status', 'accepted')
         .order('departure_time', { ascending: true })
 
       if (fetchError) throw fetchError
@@ -600,7 +600,7 @@ export const useAirportNegotiation = () => {
         insertNotificationForUser(reqData.passenger_id, {
           user_id: reqData.passenger_id,
           type: 'trip_update',
-          title: '✈️ Nueva oferta de conductor',
+          title: 'Nueva oferta de conductor',
           message: `${driverName} propone $${displayPrice.toLocaleString('es-CO')}`,
           data: {
             request_id: requestId,
@@ -638,39 +638,60 @@ export const useAirportNegotiation = () => {
         throw rpcError
       }
 
-      console.log('✅[HOOK] Oferta aceptada exitosamente - La RPC dedujo el pago');
+      console.log('[HOOK] Oferta aceptada exitosamente - La RPC dedujo el pago');
 
-      // Obtener detalles finales para notificación
-      const { data: reqData } = await supabase
-        .from('airport_requests')
-        .select('passenger_id, origin, destination, offered_price, driver_id')
-        .eq('id', requestId)
-        .single()
-
-      const { data: { user: driverAuth } } = await supabase.auth.getUser()
-      const { data: driverProfile } = await supabase
-        .from('profiles')
-        .select('name')
-        .eq('id', driverAuth?.id ?? '')
-        .maybeSingle()
-
-      if (reqData && driverProfile) {
-        insertNotificationForUser(reqData.passenger_id, {
-          user_id: reqData.passenger_id,
-          type: 'trip_update',
-          title: '✈️ ¡Tienes conductor!',
-          message: `${driverProfile.name} aceptó tu solicitud`,
-          data: {
-            request_id: requestId,
-            driver_id: reqData.driver_id,
-            driver_name: driverProfile.name,
-            price: reqData.offered_price,
-          },
-          is_read: false,
-        }).catch(() => {})
-      }
+      await notifyPassengerDriverAccepted(requestId)
     } catch (err: any) {
       const message = err.message || 'Error al aceptar oferta'
+      setError(message)
+      throw err
+    }
+  }
+
+  const notifyPassengerDriverAccepted = async (requestId: string): Promise<void> => {
+    const { data: reqData } = await supabase
+      .from('airport_requests')
+      .select('passenger_id, origin, destination, offered_price, driver_id')
+      .eq('id', requestId)
+      .single()
+
+    const { data: { user: driverAuth } } = await supabase.auth.getUser()
+    const { data: driverProfile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('id', driverAuth?.id ?? '')
+      .maybeSingle()
+
+    if (reqData && driverProfile) {
+      insertNotificationForUser(reqData.passenger_id, {
+        user_id: reqData.passenger_id,
+        type: 'trip_update',
+        title: '¡Tienes conductor!',
+        message: `${driverProfile.name} aceptó tu solicitud`,
+        data: {
+          request_id: requestId,
+          driver_id: reqData.driver_id,
+          driver_name: driverProfile.name,
+          price: reqData.offered_price,
+        },
+        is_read: false,
+      }).catch(() => {})
+    }
+  }
+
+  // ─── Aceptar solicitud directa (conductor). El servidor descuenta los $5.000 de la billetera ───
+  const acceptRequestDirect = async (requestId: string): Promise<void> => {
+    try {
+      setError(null)
+
+      const { error: rpcError } = await supabase
+        .rpc('accept_request_direct', { p_request_id: requestId })
+
+      if (rpcError) throw rpcError
+
+      await notifyPassengerDriverAccepted(requestId)
+    } catch (err: any) {
+      const message = err.message || 'Error al aceptar solicitud'
       setError(message)
       throw err
     }
@@ -681,22 +702,22 @@ export const useAirportNegotiation = () => {
   const acceptPassengerOffer = async (offerId: string, requestId: string): Promise<void> => {
     try {
       setError(null)
-      console.log('🟡 [HOOK] acceptPassengerOffer iniciado:', { offerId, requestId })
+      console.log(' [HOOK] acceptPassengerOffer iniciado:', { offerId, requestId })
 
       // Solo aceptar la oferta sin verificar balance (pasajeros no pagan comisión)
-      console.log('🟡 [HOOK] Llamando RPC accept_airport_offer...')
+      console.log(' [HOOK] Llamando RPC accept_airport_offer...')
       const { data: rpcData, error: rpcError } = await supabase
         .rpc('accept_airport_offer', { offer_id: offerId })
 
-      console.log('🟡 [HOOK] Respuesta RPC:', { rpcData, rpcError })
+      console.log(' [HOOK] Respuesta RPC:', { rpcData, rpcError })
       if (rpcError) {
-        console.error('❌ [HOOK] Error en RPC:', rpcError)
+        console.error(' [HOOK] Error en RPC:', rpcError)
         throw rpcError
       }
-      console.log('✅ [HOOK] RPC ejecutado exitosamente')
+      console.log(' [HOOK] RPC ejecutado exitosamente')
 
       // Obtener detalles del conductor, viaje y pasajero para notificaciones
-      console.log('🟡 [HOOK] Obteniendo detalles de oferta, conductor y solicitud...')
+      console.log(' [HOOK] Obteniendo detalles de oferta, conductor y solicitud...')
       const { data: offer, error: offerError } = await supabase
         .from('airport_offers')
         .select('driver_id')
@@ -704,11 +725,11 @@ export const useAirportNegotiation = () => {
         .single()
 
       if (offerError) {
-        console.error('⚠️ [HOOK] Error obteniendo oferta:', offerError)
+        console.error(' [HOOK] Error obteniendo oferta:', offerError)
       }
 
       if (offer) {
-        console.log('🟡 [HOOK] Oferta encontrada, driver_id:', offer.driver_id)
+        console.log(' [HOOK] Oferta encontrada, driver_id:', offer.driver_id)
         
         // Obtener datos del viaje
         const { data: tripData, error: tripError } = await supabase
@@ -718,7 +739,7 @@ export const useAirportNegotiation = () => {
           .single()
 
         if (tripError) {
-          console.error('⚠️ [HOOK] Error obteniendo datos del viaje:', tripError)
+          console.error(' [HOOK] Error obteniendo datos del viaje:', tripError)
         }
 
         if (tripData) {
@@ -737,13 +758,13 @@ export const useAirportNegotiation = () => {
             .single()
 
           if (!profileError && driverProfile && !passengerError && passengerProfile) {
-            console.log('🟡 [HOOK] Enviando notificaciones al conductor y pasajero')
+            console.log(' [HOOK] Enviando notificaciones al conductor y pasajero')
 
-            // 🔔 Notificación al CONDUCTOR: Viaje confirmado
+            //  Notificación al CONDUCTOR: Viaje confirmado
             insertNotificationForUser(offer.driver_id, {
               user_id: offer.driver_id,
               type: 'trip_confirmed',
-              title: '✅ ¡Viaje confirmado!',
+              title: ' ¡Viaje confirmado!',
               message: `${passengerProfile.name} aceptó tu oferta en ${tripData.origin}`,
               data: {
                 request_id: requestId,
@@ -756,14 +777,14 @@ export const useAirportNegotiation = () => {
               },
               is_read: false,
             }).catch((notifErr) => {
-              console.error('⚠️ [HOOK] Error enviando notificación al conductor:', notifErr)
+              console.error(' [HOOK] Error enviando notificación al conductor:', notifErr)
             })
 
-            // 🔔 Notificación al PASAJERO: Conductor confirmado
+            //  Notificación al PASAJERO: Conductor confirmado
             insertNotificationForUser(tripData.passenger_id, {
               user_id: tripData.passenger_id,
               type: 'trip_confirmed',
-              title: '✅ ¡Conductor confirmado!',
+              title: ' ¡Conductor confirmado!',
               message: `${driverProfile.name} está listo para tu viaje`,
               data: {
                 request_id: requestId,
@@ -777,17 +798,17 @@ export const useAirportNegotiation = () => {
               },
               is_read: false,
             }).catch((notifErr) => {
-              console.error('⚠️ [HOOK] Error enviando notificación al pasajero:', notifErr)
+              console.error(' [HOOK] Error enviando notificación al pasajero:', notifErr)
             })
 
-            console.log('✅ [HOOK] Notificaciones enviadas')
+            console.log(' [HOOK] Notificaciones enviadas')
           }
         }
       }
-      console.log('✅ [HOOK] acceptPassengerOffer completado exitosamente')
+      console.log(' [HOOK] acceptPassengerOffer completado exitosamente')
     } catch (err: any) {
       const message = err.message || 'Error al aceptar oferta'
-      console.error('❌ [HOOK] Excepción en acceptPassengerOffer:', message, err)
+      console.error(' [HOOK] Excepción en acceptPassengerOffer:', message, err)
       setError(message)
       throw err
     }
@@ -858,7 +879,7 @@ export const useAirportNegotiation = () => {
         insertNotificationForUser(current.driver_id, {
           user_id: current.driver_id,
           type: 'trip_update',
-          title: '❌ Solicitud cancelada',
+          title: 'Solicitud cancelada',
           message: 'El pasajero canceló la solicitud de aeropuerto',
           data: { request_id: requestId },
           is_read: false,
@@ -922,71 +943,21 @@ export const useAirportNegotiation = () => {
     }
   }, [])
 
-  // ─── Iniciar viaje (conductor marca como "En Ruta") ────────────────────
-  const startTrip = async (requestId: string): Promise<void> => {
-    try {
-      setError(null)
-      console.log('🟡 [HOOK] Iniciando startTrip para requestId:', requestId)
-
-      const { error: rpcError } = await supabase
-        .rpc('start_trip', { v_request_id: requestId })
-
-      if (rpcError) {
-        console.error('❌ [HOOK] Error en startTrip RPC:', rpcError)
-        throw rpcError
-      }
-
-      console.log('✅ [HOOK] Viaje iniciado exitosamente')
-
-      // Actualizar el estado local
-      setRequests(prev =>
-        prev.map(r => r.id === requestId ? { ...r, status: 'in_progress' as any } : r)
-      )
-
-      // Obtener detalles para notificación
-      const { data: tripData } = await supabase
-        .from('airport_requests')
-        .select('passenger_id, driver_id, origin, destination, offered_price')
-        .eq('id', requestId)
-        .single()
-
-      if (tripData && tripData.passenger_id) {
-        // Notificar al pasajero que el viaje comenzó
-        insertNotificationForUser(tripData.passenger_id, {
-          user_id: tripData.passenger_id,
-          type: 'trip_started',
-          title: '🚗 ¡Tu viaje comenzó!',
-          message: 'El conductor está en camino',
-          data: {
-            request_id: requestId,
-            driver_id: tripData.driver_id,
-          },
-          is_read: false,
-        }).catch(() => {})
-      }
-    } catch (err: any) {
-      const message = err.message || 'Error al iniciar viaje'
-      console.error('❌ [HOOK] Error en startTrip:', message)
-      setError(message)
-      throw err
-    }
-  }
-
   // ─── Completar viaje (conductor marca como "Completado") ─────────────────
   const completeTrip = async (requestId: string, notes?: string): Promise<void> => {
     try {
       setError(null)
-      console.log('🟡 [HOOK] Iniciando completeTrip para requestId:', requestId)
+      console.log(' [HOOK] Iniciando completeTrip para requestId:', requestId)
 
       const { error: rpcError } = await supabase
         .rpc('complete_trip', { v_request_id: requestId, v_trip_notes: notes })
 
       if (rpcError) {
-        console.error('❌ [HOOK] Error en completeTrip RPC:', rpcError)
+        console.error(' [HOOK] Error en completeTrip RPC:', rpcError)
         throw rpcError
       }
 
-      console.log('✅ [HOOK] Viaje completado exitosamente')
+      console.log(' [HOOK] Viaje completado exitosamente')
 
       // Actualizar el estado local
       setRequests(prev =>
@@ -1005,7 +976,7 @@ export const useAirportNegotiation = () => {
         insertNotificationForUser(tripData.passenger_id, {
           user_id: tripData.passenger_id,
           type: 'trip_completed',
-          title: '✔️ ¡Viaje completado!',
+          title: ' ¡Viaje completado!',
           message: 'Ya puedes calificar al conductor',
           data: {
             request_id: requestId,
@@ -1016,7 +987,7 @@ export const useAirportNegotiation = () => {
       }
     } catch (err: any) {
       const message = err.message || 'Error al completar viaje'
-      console.error('❌ [HOOK] Error en completeTrip:', message)
+      console.error(' [HOOK] Error en completeTrip:', message)
       setError(message)
       throw err
     }
@@ -1026,7 +997,7 @@ export const useAirportNegotiation = () => {
   const rateTrip = async (tripId: string, rating: number, comment?: string): Promise<void> => {
     try {
       setError(null)
-      console.log('🟡 [HOOK] Iniciando rateTrip para tripId:', tripId, 'rating:', rating)
+      console.log(' [HOOK] Iniciando rateTrip para tripId:', tripId, 'rating:', rating)
 
       if (rating < 1 || rating > 5) {
         throw new Error('La calificación debe estar entre 1 y 5')
@@ -1040,11 +1011,11 @@ export const useAirportNegotiation = () => {
         })
 
       if (rpcError) {
-        console.error('❌ [HOOK] Error en rateTrip RPC:', rpcError)
+        console.error(' [HOOK] Error en rateTrip RPC:', rpcError)
         throw rpcError
       }
 
-      console.log('✅ [HOOK] Viaje calificado exitosamente')
+      console.log(' [HOOK] Viaje calificado exitosamente')
 
       // Obtener detalles del viaje para saber a quién notificar
       const { data: tripData } = await supabase
@@ -1062,7 +1033,7 @@ export const useAirportNegotiation = () => {
           insertNotificationForUser(recipientId, {
             user_id: recipientId,
             type: 'trip_rated',
-            title: '⭐ Te han calificado',
+            title: 'Te han calificado',
             message: `Recibiste una calificación de ${rating} estrellas`,
             data: {
               request_id: tripId,
@@ -1074,7 +1045,7 @@ export const useAirportNegotiation = () => {
       }
     } catch (err: any) {
       const message = err.message || 'Error al calificar viaje'
-      console.error('❌ [HOOK] Error en rateTrip:', message)
+      console.error(' [HOOK] Error en rateTrip:', message)
       setError(message)
       throw err
     }
@@ -1105,11 +1076,11 @@ export const useAirportNegotiation = () => {
   const subscribeTripRatings = useCallback((requestId: string, onRatingAdded?: (rating: TripRating) => void) => {
     const channel = subscribeToTripRatings(requestId, {
       onInsert: (rating) => {
-        console.log('🟡 [HOOK] Nueva calificación recibida:', rating)
+        console.log(' [HOOK] Nueva calificación recibida:', rating)
         onRatingAdded?.(rating as TripRating)
       },
       onError: (error) => {
-        console.error('❌ [HOOK] Error en suscripción de ratings:', error)
+        console.error(' [HOOK] Error en suscripción de ratings:', error)
       },
     })
 
@@ -1131,11 +1102,11 @@ export const useAirportNegotiation = () => {
     loadSingleRequest,
     createOffer,
     acceptOffer,
+    acceptRequestDirect,
     rejectOffer,
     acceptPassengerOffer,
     updateRequestPrice,
     cancelRequest,
-    startTrip,
     completeTrip,
     rateTrip,
     loadTripRatings,

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -9,11 +9,12 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import type { HubTabProps } from './types'
+import { formatDeparture, formatPrice } from './formatters'
 
 export default function PendingRequestsTab({ isDriver }: HubTabProps) {
   const navigation = useNavigation<any>()
@@ -69,49 +70,32 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
   }
 
   const renderRequestItem = ({ item: request }: { item: AirportRequest }) => (
-    <TouchableOpacity
-      style={styles.requestCard}
-      activeOpacity={0.7}
-      onPress={() => openDetails(request.id)}
-    >
-      <View style={styles.requestLeft}>
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusIcon}>⏳</Text>
-        </View>
-      </View>
-
-      <View style={styles.requestContent}>
-        <View style={styles.requestHeader}>
-          <Text style={styles.requestStatus}>Pendiente</Text>
-          <Text style={styles.requestPrice}>
-            ${request.offered_price.toLocaleString('es-CO')}
-          </Text>
+    <View style={styles.card}>
+      <TouchableOpacity activeOpacity={0.8} onPress={() => openDetails(request.id)}>
+        <View style={styles.cardTop}>
+          <Text style={styles.when}>{formatDeparture(request.departure_time)}</Text>
+          <View style={styles.pendingPill}>
+            <Text style={styles.pendingPillText}>Pendiente</Text>
+          </View>
         </View>
 
-        <Text style={styles.requestRoute} numberOfLines={2}>
+        <Text style={styles.route} numberOfLines={2}>
           {request.origin} → {request.destination}
         </Text>
-
-        <Text style={styles.requestTime}>
-          Salida:{' '}
-          {new Date(request.departure_time).toLocaleString('es-CO', {
-            day: 'numeric',
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+        <Text style={styles.meta}>
+          {request.passengers} {request.passengers === 1 ? 'pasajero' : 'pasajeros'} · Oferta inicial{' '}
+          {formatPrice(request.offered_price)}
         </Text>
-
-        <Text style={styles.tapHint}>Toca para ver ofertas de conductores</Text>
-      </View>
-
-      <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => handleDeleteRequest(request.id)}
-      >
-        <Ionicons name="trash-outline" size={18} color={COLORS.error} />
       </TouchableOpacity>
-    </TouchableOpacity>
+
+      <TouchableOpacity style={styles.btnPrimary} onPress={() => openDetails(request.id)} activeOpacity={0.85}>
+        <Text style={styles.btnPrimaryText}>Ver ofertas</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.cancelLink} onPress={() => handleDeleteRequest(request.id)}>
+        <Text style={styles.cancelText}>Cancelar solicitud</Text>
+      </TouchableOpacity>
+    </View>
   )
 
   const renderEmpty = () => (
@@ -124,7 +108,7 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
         Publica un viaje al aeropuerto o a cualquier destino para que los conductores te encuentren
       </Text>
       <TouchableOpacity style={styles.createBtn} onPress={openCreate} activeOpacity={0.85}>
-        <Ionicons name="add-circle" size={20} color="#fff" />
+        <Ionicons name="add-circle" size={20} color={COLORS.white} />
         <Text style={styles.createBtnText}>Nueva solicitud</Text>
       </TouchableOpacity>
     </View>
@@ -166,17 +150,17 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
+  container: { flex: 1, backgroundColor: COLORS.background },
   topCreateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
-    marginHorizontal: SPACING.md,
+    marginHorizontal: SPACING.xl,
     marginTop: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryTint,
   },
@@ -186,75 +170,83 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   },
   listContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
     flexGrow: 1,
   },
-  requestCard: {
-    flexDirection: 'row',
+  card: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    alignItems: 'center',
-    gap: SPACING.md,
-    ...SHADOWS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
   },
-  requestLeft: { justifyContent: 'center', alignItems: 'center' },
-  statusBadge: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.lg,
-    backgroundColor: '#fff3e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusIcon: { fontSize: 24 },
-  requestContent: { flex: 1 },
-  requestHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
   },
-  requestStatus: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  requestPrice: {
-    fontSize: TYPOGRAPHY.size.md,
+  when: {
+    fontSize: 13,
     fontWeight: '700',
-    color: COLORS.primary,
-  },
-  requestRoute: {
-    fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-    lineHeight: 18,
   },
-  requestTime: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textTertiary,
+  pendingPill: {
+    backgroundColor: COLORS.warningLight,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
   },
-  tapHint: {
+  pendingPillText: {
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.primary,
+    fontWeight: '700',
+    color: COLORS.warningDark,
+  },
+  route: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+  },
+  meta: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
     marginTop: SPACING.xs,
-    fontWeight: '600',
   },
-  deleteButton: { padding: SPACING.sm, marginLeft: SPACING.sm },
+  btnPrimary: {
+    height: 42,
+    marginTop: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnPrimaryText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  cancelLink: {
+    alignItems: 'center',
+    marginTop: SPACING.md,
+  },
+  cancelText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '700',
+    color: COLORS.error,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
   },
   emptyIconBg: {
     width: 80,
     height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -262,7 +254,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
     textAlign: 'center',
   },
@@ -280,11 +272,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
+    borderRadius: RADIUS.md,
   },
   createBtnText: {
     fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '700',
-    color: '#fff',
+    color: COLORS.white,
   },
 })

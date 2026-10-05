@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -149,7 +149,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
 
       setChats(chatsList)
     } catch (err) {
-      console.error('❌ Error loading chats:', err)
+      console.error('Error loading chats:', err)
       Alert.alert('Error', 'No se pudieron cargar los chats')
     } finally {
       setLoading(false)
@@ -262,7 +262,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   listContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
     flexGrow: 1,
@@ -299,12 +299,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.surface,
   },
-  unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
+  unreadBadgeText: { color: COLORS.white, fontSize: 10, fontWeight: '700' },
   chatContent: { flex: 1 },
   chatName: {
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   chatRoute: {
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   emptySubtitle: {

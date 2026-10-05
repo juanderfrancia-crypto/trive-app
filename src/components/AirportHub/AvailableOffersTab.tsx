@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
   View,
   Text,
@@ -13,12 +13,14 @@ import {
 } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
+import { NegotiationChatModal } from '../NegotiationChatModal'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../../utils/showError'
 import type { HubTabProps } from './types'
+import { formatDeparture, formatPrice } from './formatters'
 
 export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
@@ -27,6 +29,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     loading,
     loadDriverFeed,
     createOffer,
+    acceptRequestDirect,
   } = useAirportNegotiation()
 
   const [refreshing, setRefreshing] = useState(false)
@@ -34,6 +37,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const [showProposalModal, setShowProposalModal] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
   const [proposedPrice, setProposedPrice] = useState('')
+  const [chatRequest, setChatRequest] = useState<AirportRequest | null>(null)
 
   const availableRequests = requests.filter((r) => r.status === 'pending')
 
@@ -81,22 +85,22 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     }
   }
 
-  const handleAcceptPrice = (item: AirportRequest) => {
-    if (!user?.id) return
+  const handleAccept = (item: AirportRequest) => {
     Alert.alert(
-      'Enviar oferta',
-      `¿Ofreces aceptar el viaje de ${item.passenger_name ?? 'el pasajero'} por $${item.offered_price.toLocaleString('es-CO')}?\n\nEl pasajero deberá confirmarte. Se descontarán $5.000 al confirmar.`,
+      'Aceptar viaje',
+      `¿Aceptas el viaje de ${item.passenger_name ?? 'el pasajero'} por ${formatPrice(item.offered_price)}? Se descontarán $5.000 de tu billetera.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
-          text: 'Enviar oferta',
+          text: 'Aceptar viaje',
           onPress: async () => {
             try {
               setProcessing(item.id)
-              await createOffer(item.id, user.id)
-              showSuccess('Oferta enviada. Te avisamos cuando el pasajero la acepte.')
+              await acceptRequestDirect(item.id)
+              showSuccess('Viaje aceptado. Lo encontrarás en Aceptadas.')
+              await load()
             } catch (err: any) {
-              showError(err.message || 'Error al enviar oferta')
+              showError(err.message || 'No se pudo aceptar el viaje')
             } finally {
               setProcessing(null)
             }
@@ -106,58 +110,65 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     )
   }
 
-  const formatDateTime = (iso: string) => {
-    const d = new Date(iso)
-    const date = d.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short' })
-    const time = d.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
-    return `${date} · ${time}`
-  }
-
   const renderOfferItem = ({ item }: { item: AirportRequest }) => {
     const isProcessing = processing === item.id
     return (
-      <View style={styles.offerCard}>
-        <View style={styles.offerHeader}>
-          <Text style={styles.passengerName} numberOfLines={1}>
-            {item.passenger_name ?? 'Pasajero'}
-          </Text>
-          <Text style={styles.offerPrice}>${item.offered_price.toLocaleString('es-CO')}</Text>
+      <View style={styles.card}>
+        <View style={styles.cardTop}>
+          <Text style={styles.when}>{formatDeparture(item.departure_time)}</Text>
+          <View style={styles.newPill}>
+            <Text style={styles.newPillText}>Nueva</Text>
+          </View>
         </View>
 
-        <Text style={styles.offerRoute} numberOfLines={2}>
+        <Text style={styles.route} numberOfLines={2}>
           {item.origin} → {item.destination}
         </Text>
-
-        <Text style={styles.offerMeta}>
-          {formatDateTime(item.departure_time)} · {item.passengers}{' '}
-          {item.passengers === 1 ? 'persona' : 'personas'}
+        <Text style={styles.meta}>
+          {item.passenger_name ?? 'Pasajero'} · {item.passengers}{' '}
+          {item.passengers === 1 ? 'pasajero' : 'pasajeros'}
         </Text>
+
+        <View style={styles.priceBox}>
+          <View>
+            <Text style={styles.priceLabel}>Ofrece</Text>
+            <Text style={styles.priceValue}>{formatPrice(item.offered_price)}</Text>
+          </View>
+          <View style={styles.costBox}>
+            <Text style={styles.priceLabel}>Tu costo</Text>
+            <Text style={styles.costValue}>$5.000 de tu billetera</Text>
+          </View>
+        </View>
 
         <View style={styles.buttonRow}>
           <TouchableOpacity
-            style={[styles.btnOutline, processing === 'proposal' && styles.btnDisabled]}
-            onPress={() => handlePropose(item)}
-            disabled={!!processing}
-          >
-            <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
-            <Text style={styles.btnOutlineText}>Proponer</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.btnPrimary, isProcessing && styles.btnDisabled]}
-            onPress={() => handleAcceptPrice(item)}
+            style={[styles.btnPrimary, !!processing && styles.btnDisabled]}
+            onPress={() => handleAccept(item)}
             disabled={!!processing}
           >
             {isProcessing ? (
-              <ActivityIndicator size="small" color="#fff" />
+              <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
-              <>
-                <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
-                <Text style={styles.btnPrimaryText}>Aceptar precio</Text>
-              </>
+              <Text style={styles.btnPrimaryText}>Aceptar viaje</Text>
             )}
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btnOutline, !!processing && styles.btnDisabled]}
+            onPress={() => setChatRequest(item)}
+            disabled={!!processing}
+          >
+            <Text style={styles.btnOutlineText}>Chatear</Text>
+          </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.proposeLink}
+          onPress={() => handlePropose(item)}
+          disabled={!!processing}
+        >
+          <Text style={styles.proposeText}>Proponer otro precio</Text>
+        </TouchableOpacity>
       </View>
     )
   }
@@ -184,13 +195,6 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.commissionStrip}>
-        <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
-        <Text style={styles.commissionText}>
-          Al confirmar el pasajero se descuentan <Text style={styles.commissionBold}>$5.000</Text> de tu billetera
-        </Text>
-      </View>
-
       {loading && availableRequests.length === 0 ? (
         <SkeletonList count={4} />
       ) : (
@@ -207,13 +211,24 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
         />
       )}
 
+      {chatRequest && (
+        <NegotiationChatModal
+          visible={!!chatRequest}
+          onClose={() => setChatRequest(null)}
+          requestId={chatRequest.id}
+          driverId={user?.id ?? ''}
+          driverName={chatRequest.passenger_name ?? 'Pasajero'}
+          otherUserId={chatRequest.passenger_id}
+        />
+      )}
+
       <Modal visible={showProposalModal} transparent animationType="slide" onRequestClose={() => setShowProposalModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Proponer precio</Text>
             {selectedRequest && (
               <Text style={styles.modalSub}>
-                Precio del pasajero: ${selectedRequest.offered_price.toLocaleString('es-CO')}
+                Precio del pasajero: {formatPrice(selectedRequest.offered_price)}
               </Text>
             )}
             <TextInput
@@ -234,7 +249,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
                 disabled={processing === 'proposal'}
               >
                 {processing === 'proposal' ? (
-                  <ActivityIndicator color="#fff" />
+                  <ActivityIndicator color={COLORS.white} />
                 ) : (
                   <Text style={styles.modalConfirmText}>Enviar propuesta</Text>
                 )}
@@ -248,93 +263,130 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
-  commissionStrip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginHorizontal: SPACING.md,
-    marginTop: SPACING.md,
-    padding: SPACING.sm,
-    backgroundColor: COLORS.primaryTint,
-    borderRadius: RADIUS.md,
-  },
-  commissionText: { flex: 1, fontSize: TYPOGRAPHY.size.xs, color: COLORS.textSecondary },
-  commissionBold: { fontWeight: '700', color: COLORS.primary },
+  container: { flex: 1, backgroundColor: COLORS.background },
   listContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
     flexGrow: 1,
   },
-  offerCard: {
+  card: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    ...SHADOWS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
   },
-  offerHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  passengerName: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.text,
-    flex: 1,
-  },
-  offerPrice: {
-    fontSize: TYPOGRAPHY.size.md,
+  when: {
+    fontSize: 13,
     fontWeight: '700',
-    color: COLORS.success,
-  },
-  offerRoute: {
-    fontSize: TYPOGRAPHY.size.sm,
     color: COLORS.textSecondary,
-    lineHeight: 18,
   },
-  offerMeta: {
+  newPill: {
+    backgroundColor: COLORS.warningLight,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  newPillText: {
     fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textTertiary,
+    fontWeight: '700',
+    color: COLORS.warningDark,
   },
-  buttonRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
-  btnOutline: {
-    flex: 1,
+  route: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+  },
+  meta: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.xs,
+  },
+  priceBox: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
     borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  btnOutlineText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  priceLabel: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+  },
+  priceValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  costBox: { alignItems: 'flex-end' },
+  costValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
   btnPrimary: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: SPACING.sm,
+    height: 42,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  btnPrimaryText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  btnPrimaryText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  btnOutline: {
+    flex: 1,
+    height: 42,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnOutlineText: {
+    fontSize: TYPOGRAPHY.size.sm,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
   btnDisabled: { opacity: 0.6 },
+  proposeLink: {
+    alignItems: 'center',
+    marginTop: SPACING.md,
+  },
+  proposeText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
   },
   emptyIconBg: {
     width: 80,
     height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: '#e3f2fd',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -342,7 +394,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   emptySubtitle: {
@@ -353,24 +405,29 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: `${COLORS.textPrimary}73`,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     padding: SPACING.lg,
-    paddingBottom: SPACING.xl * 2,
+    paddingBottom: SPACING.xxl,
   },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: SPACING.sm },
+  modalTitle: {
+    fontSize: TYPOGRAPHY.size.lg,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginBottom: SPACING.sm,
+  },
   modalSub: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
   modalInput: {
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     padding: SPACING.md,
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.size.md,
     fontWeight: '600',
     marginBottom: SPACING.lg,
   },
@@ -391,5 +448,5 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
   },
-  modalConfirmText: { fontWeight: '700', color: '#fff' },
+  modalConfirmText: { fontWeight: '700', color: COLORS.white },
 })

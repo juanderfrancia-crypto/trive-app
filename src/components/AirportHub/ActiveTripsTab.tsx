@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -6,25 +6,24 @@ import {
   FlatList,
   StyleSheet,
 } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { TripDetailsModal } from '../TripDetailsModal'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
+import { formatDeparture, formatPrice } from './formatters'
 
 interface ActiveTrip {
   id: string
   origin: string
   destination: string
   price: number
-  status: string
+  departureTime: string
   otherUserName: string
   otherUserId: string
-  otherUserAvatar?: string
 }
 
 export default function ActiveTripsTab({ isDriver }: HubTabProps) {
@@ -47,12 +46,12 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
         const { data: driverTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, passenger_id, origin, destination, offered_price, status,
-             profiles!passenger_id (name, avatar_url)`
+            `id, passenger_id, origin, destination, offered_price, departure_time,
+             profiles!passenger_id (name)`
           )
           .eq('driver_id', user.id)
           .eq('status', 'accepted')
-          .order('created_at', { ascending: false })
+          .order('departure_time', { ascending: true })
 
         for (const trip of driverTrips ?? []) {
           tripsList.push({
@@ -60,22 +59,21 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             origin: trip.origin,
             destination: trip.destination,
             price: trip.offered_price,
-            status: trip.status,
+            departureTime: trip.departure_time,
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
             otherUserId: trip.passenger_id,
-            otherUserAvatar: (trip.profiles as any)?.avatar_url,
           })
         }
       } else {
         const { data: passengerTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, driver_id, origin, destination, offered_price, status,
-             profiles!driver_id (name, avatar_url)`
+            `id, driver_id, origin, destination, offered_price, departure_time,
+             profiles!driver_id (name)`
           )
           .eq('passenger_id', user.id)
           .eq('status', 'accepted')
-          .order('created_at', { ascending: false })
+          .order('departure_time', { ascending: true })
 
         for (const trip of passengerTrips ?? []) {
           if (!trip.driver_id) continue
@@ -84,17 +82,16 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             origin: trip.origin,
             destination: trip.destination,
             price: trip.offered_price,
-            status: trip.status,
+            departureTime: trip.departure_time,
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
             otherUserId: trip.driver_id,
-            otherUserAvatar: (trip.profiles as any)?.avatar_url,
           })
         }
       }
 
       setTrips(tripsList)
     } catch (err) {
-      console.error('❌ Error loading trips:', err)
+      console.error('Error loading trips:', err)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -108,46 +105,43 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
   )
 
   const renderTripItem = ({ item: trip }: { item: ActiveTrip }) => (
-    <View style={styles.tripCard}>
-      <View style={styles.tripHeader}>
-        <Text style={styles.tripUser}>{trip.otherUserName}</Text>
-        <View style={styles.tripStatusBadge}>
-          <Ionicons
-            name={trip.status === 'accepted' ? 'checkmark-circle' : 'navigate-circle'}
-            size={16}
-            color={COLORS.white}
-          />
-          <Text style={styles.tripStatus}>
-            {trip.status === 'accepted' ? 'Confirmado' : 'En ruta'}
-          </Text>
+    <View style={styles.card}>
+      <View style={styles.cardTop}>
+        <Text style={styles.when}>{formatDeparture(trip.departureTime)}</Text>
+        <View style={styles.acceptedPill}>
+          <Text style={styles.acceptedPillText}>Aceptada</Text>
         </View>
       </View>
 
-      <Text style={styles.tripRoute} numberOfLines={2}>
+      <Text style={styles.route} numberOfLines={2}>
         {trip.origin} → {trip.destination}
       </Text>
-      <Text style={styles.tripPrice}>${trip.price.toLocaleString('es-CO')}</Text>
+      <Text style={styles.meta}>
+        {isDriver
+          ? `Pasajero: ${trip.otherUserName} · Acordado ${formatPrice(trip.price)}`
+          : `Conductor: ${trip.otherUserName} · Acordado ${formatPrice(trip.price)}`}
+      </Text>
 
-      <View style={styles.tripActions}>
+      <View style={styles.buttonRow}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.detailButton]}
-          onPress={() => {
-            setSelectedTrip(trip)
-            setDetailsModalVisible(true)
-          }}
-        >
-          <Ionicons name="information-circle" size={14} color={COLORS.primary} />
-          <Text style={styles.detailButtonText}>Ver</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.actionButton, styles.chatButton]}
+          style={styles.chatButton}
           onPress={() => {
             setSelectedTrip(trip)
             setChatModalVisible(true)
           }}
+          activeOpacity={0.85}
         >
-          <Ionicons name="chatbubble" size={14} color={COLORS.white} />
-          <Text style={styles.chatButtonText}>Chat</Text>
+          <Text style={styles.chatButtonText}>{isDriver ? 'Abrir chat' : 'Chatear'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.detailButton}
+          onPress={() => {
+            setSelectedTrip(trip)
+            setDetailsModalVisible(true)
+          }}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.detailButtonText}>Ver detalle</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -155,10 +149,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconBg}>
-        <Ionicons name="car-outline" size={48} color={COLORS.primary} />
-      </View>
-      <Text style={styles.emptyTitle}>Sin viajes en curso</Text>
+      <Text style={styles.emptyTitle}>Sin viajes aceptados</Text>
       <Text style={styles.emptySubtitle}>
         {isDriver
           ? 'Los viajes que aceptes aparecerán aquí'
@@ -196,7 +187,12 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
               setSelectedTrip(null)
             }}
             trip={{
-              ...selectedTrip,
+              id: selectedTrip.id,
+              origin: selectedTrip.origin,
+              destination: selectedTrip.destination,
+              price: selectedTrip.price,
+              status: 'accepted',
+              otherUserName: selectedTrip.otherUserName,
               userRole: isDriver ? 'conductor' : 'pasajero',
             }}
           />
@@ -219,104 +215,94 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
+  container: { flex: 1, backgroundColor: COLORS.background },
   listContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
     flexGrow: 1,
   },
-  tripCard: {
+  card: {
     backgroundColor: COLORS.background,
     borderRadius: RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.sm,
-    ...SHADOWS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.lg,
   },
-  tripHeader: {
+  cardTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: SPACING.md,
   },
-  tripUser: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.text,
-    flex: 1,
+  when: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
   },
-  tripStatusBadge: {
-    backgroundColor: COLORS.success,
+  acceptedPill: {
+    backgroundColor: COLORS.successLight,
+    borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
-    flexDirection: 'row',
-    gap: SPACING.xs,
-    alignItems: 'center',
   },
-  tripStatus: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '600',
-    color: COLORS.white,
-  },
-  tripRoute: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  },
-  tripPrice: {
-    fontSize: TYPOGRAPHY.size.md,
+  acceptedPillText: {
+    fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
-    color: COLORS.primary,
+    color: COLORS.success,
   },
-  tripActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    justifyContent: 'flex-end',
+  route: {
+    fontSize: TYPOGRAPHY.size.md,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+  },
+  meta: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
-  actionButton: {
+  buttonRow: {
     flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+  },
+  chatButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
     alignItems: 'center',
-    gap: SPACING.xs,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
+    justifyContent: 'center',
   },
-  detailButton: {
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-  },
-  detailButtonText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: '700',
+  chatButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
     color: COLORS.primary,
   },
-  chatButton: { backgroundColor: COLORS.primary },
-  chatButtonText: {
-    fontSize: TYPOGRAPHY.size.xs,
+  detailButton: {
+    flex: 1,
+    height: 40,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailButtonText: {
+    fontSize: 13,
     fontWeight: '700',
-    color: COLORS.white,
+    color: COLORS.textPrimary,
   },
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.full,
-    backgroundColor: '#e3f2fd',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   emptySubtitle: {

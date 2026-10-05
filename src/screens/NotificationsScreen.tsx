@@ -1,31 +1,110 @@
 import { useState, useMemo, useEffect } from 'react'
+import type { ComponentProps } from 'react'
 import {
-  View, Text, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, StatusBar, Modal,
+  View, Text, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal,
   ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useNotificationCenter } from '../context/NotificationsContext'
 import { Notification } from '../hooks/useNotifications'
 import { useAppStore } from '../store/useAppStore'
+import { isDriverRole } from '../utils/userRole'
 import RatingModal from '../components/RatingModal'
 import { createReview } from '../services/reviews'
 import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
 
-type NotificationCategory = 'all' | 'chat' | 'ruta' | 'feed'
+type NotifType = Notification['type']
+type IconName = ComponentProps<typeof Ionicons>['name']
+type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas' | 'mensajes'
+type FilterDef = { id: FilterId; label: string; types: NotifType[] | null }
+type DayGroup = 'Hoy' | 'Ayer' | 'Anteriores'
 
 interface NotificationWithSender extends Notification {
   senderName?: string
 }
 
+const TRIP_TYPES: NotifType[] = [
+  'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'trip_confirm', 'trip_confirmed',
+  'trip_started', 'review_pending', 'review_received', 'trip_rated',
+]
+
+const DRIVER_FILTERS: FilterDef[] = [
+  { id: 'all', label: 'Todas', types: null },
+  { id: 'solicitudes', label: 'Solicitudes', types: ['trip_published', 'offer_received', 'offer_accepted'] },
+  { id: 'reservas', label: 'Reservas', types: TRIP_TYPES },
+  { id: 'mensajes', label: 'Mensajes', types: ['message'] },
+]
+
+const PASSENGER_FILTERS: FilterDef[] = [
+  { id: 'all', label: 'Todas', types: null },
+  { id: 'viajes', label: 'Viajes', types: TRIP_TYPES },
+  { id: 'mensajes', label: 'Mensajes', types: ['message'] },
+  { id: 'ofertas', label: 'Ofertas', types: ['offer_received', 'offer_accepted'] },
+]
+
+const DAY_GROUPS: DayGroup[] = ['Hoy', 'Ayer', 'Anteriores']
+
+const TRIP_ACTION_TYPES: NotifType[] = ['booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending']
+
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+
+const dayGroupOf = (iso: string): DayGroup => {
+  const diff = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / 86400000)
+  if (diff <= 0) return 'Hoy'
+  if (diff === 1) return 'Ayer'
+  return 'Anteriores'
+}
+
+const timeLabelOf = (iso: string): string => {
+  const d = new Date(iso)
+  if (dayGroupOf(iso) === 'Anteriores') return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+  return d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
+}
+
+const tileOf = (type: NotifType): { icon: IconName; bg: string; fg: string } => {
+  switch (type) {
+    case 'trip_published':
+    case 'offer_received':
+    case 'offer_accepted':
+      return { icon: 'star', bg: COLORS.warningLight, fg: COLORS.warningDark }
+    case 'trip_confirm':
+      return { icon: 'checkmark', bg: COLORS.primary, fg: COLORS.white }
+    case 'trip_completed':
+      return { icon: 'checkmark-circle-outline', bg: COLORS.surfaceAlt, fg: COLORS.primary }
+    case 'review_pending':
+    case 'review_received':
+    case 'trip_rated':
+      return { icon: 'star', bg: COLORS.successLight, fg: COLORS.success }
+    case 'message':
+      return { icon: 'person', bg: COLORS.primaryTint, fg: COLORS.primary }
+    case 'booking':
+      return { icon: 'ticket-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+    case 'trip_update':
+    case 'driver_arrived':
+    case 'trip_started':
+    case 'trip_confirmed':
+      return { icon: 'navigate-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+    default:
+      return { icon: 'notifications-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+  }
+}
+
+const ctaOf = (type: NotifType): string | null => {
+  if (type === 'trip_confirm') return 'Confirmar'
+  if (type === 'review_pending') return 'Calificar'
+  if (type === 'trip_published') return 'Ver solicitud'
+  return null
+}
+
 export default function NotificationsScreen() {
   const navigation = useNavigation()
   const currentUser = useAppStore((s) => s.user)
+  const isDriver = isDriverRole(currentUser)
   const {
     notifications,
     loading,
@@ -37,7 +116,7 @@ export default function NotificationsScreen() {
     fetchNotifications,
   } = useNotificationCenter()
   const [refreshing, setRefreshing] = useState(false)
-  const [selectedCategory, setSelectedCategory] = useState<NotificationCategory>('all')
+  const [selectedCategory, setSelectedCategory] = useState<FilterId>('all')
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailNotif, setDetailNotif] = useState<NotificationWithSender | null>(null)
@@ -50,6 +129,9 @@ export default function NotificationsScreen() {
     driverName: string
     notifId: string
   } | null>(null)
+
+  const filters = isDriver ? DRIVER_FILTERS : PASSENGER_FILTERS
+  const activeFilter = filters.find((f) => f.id === selectedCategory) ?? filters[0]
 
   useEffect(() => {
     setReplyText('')
@@ -90,11 +172,9 @@ export default function NotificationsScreen() {
     setRefreshing(false)
   }
 
-  // Obtener nombre del remitente basado en datos
   const getNotificationWithSender = (notif: Notification): NotificationWithSender => {
     let senderName = 'Sistema'
 
-    // Si el mensaje tiene sender_id en data, es de otro usuario
     if (notif.data?.sender_id && typeof notif.data.sender_id === 'string') {
       senderName = notif.data.sender_name || 'Usuario'
     } else if (notif.data?.from_user_name) {
@@ -104,67 +184,14 @@ export default function NotificationsScreen() {
     return { ...notif, senderName }
   }
 
-  // Filtrar notificaciones por categoría
-  const filteredNotifications = useMemo(() => {
-    if (selectedCategory === 'all') return notifications.map(getNotificationWithSender)
-
-    return notifications
-      .filter((notif) => {
-        if (selectedCategory === 'chat') return notif.type === 'message'
-        if (selectedCategory === 'ruta')
-          return [
-            'trip_update', 'driver_arrived', 'trip_completed', 'booking',
-            'trip_published', 'offer_received', 'offer_accepted',
-            'trip_confirmed', 'trip_started', 'trip_rated', 'trip_confirm',
-          ].includes(notif.type)
-        if (selectedCategory === 'feed') return ['review_pending', 'review_received'].includes(notif.type)
-        return true
-      })
+  const sections = useMemo(() => {
+    const withSender = notifications
+      .filter((n) => !activeFilter.types || activeFilter.types.includes(n.type))
       .map(getNotificationWithSender)
-  }, [notifications, selectedCategory])
-
-  const getCategoryStyle = (type: Notification['type'], senderName?: string) => {
-    const initials = (senderName || 'U')
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((p) => p[0]?.toUpperCase() || '')
-      .join('')
-
-    const styles: Record<
-      string,
-      { color: string; bgColor: string; icon: string; category: string; initials?: string }
-    > = {
-      message: { color: '#0B53C1', bgColor: '#E6F0FF', icon: 'chatbubble', category: 'Chat', initials },
-      trip_update: {
-        color: '#2E5FBF',
-        bgColor: '#E9F0FF',
-        icon: 'navigate-outline',
-        category: 'Nueva ruta',
-      },
-      driver_arrived: { color: '#2E5FBF', bgColor: '#E9F0FF', icon: 'pin', category: 'Ruta' },
-      trip_completed: { color: '#2E5FBF', bgColor: '#E9F0FF', icon: 'checkmark-circle', category: 'Ruta' },
-      booking: { color: '#2E5FBF', bgColor: '#E9F0FF', icon: 'bus', category: 'Reserva' },
-      review_pending: { color: '#A88700', bgColor: '#F3E8A0', icon: 'star-outline', category: 'Feedback' },
-    }
-    return styles[type] || styles['message']
-  }
-
-  // Formato de fecha
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
-
-    if (diffMins < 1) return 'Ahora'
-    if (diffMins < 60) return `hace ${diffMins} min`
-    if (diffHours < 24) return `hace ${diffHours}h`
-    if (diffDays < 2) return 'ayer'
-    return `hace ${diffDays}d`
-  }
+    return DAY_GROUPS
+      .map((title) => ({ title, data: withSender.filter((n) => dayGroupOf(n.created_at) === title) }))
+      .filter((section) => section.data.length > 0)
+  }, [notifications, activeFilter])
 
   const toggleSelect = (id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -212,159 +239,82 @@ export default function NotificationsScreen() {
     )
   }
 
-  const NotificationCard = ({ item }: { item: NotificationWithSender }) => {
-    const style = getCategoryStyle(item.type, item.senderName)
-    const isUnread = !item.is_read
-    const isSelected = selectedIds.includes(item.id)
-    const isChat = item.type === 'message'
-    const isBooking = ['booking', 'trip_update', 'driver_arrived', 'trip_completed'].includes(item.type)
+  const handlePress = (item: NotificationWithSender) => {
+    if (selectionMode) { toggleSelect(item.id); return }
+    if (!item.is_read) markAsRead(item.id)
 
-    const handlePress = () => {
-      if (selectionMode) { toggleSelect(item.id); return }
-      if (isUnread) markAsRead(item.id)
-
-      const route = getNotificationRoute(item, currentUser?.role)
-      if (route?.screenName) {
-        if (route.screenName === 'Main') {
-          ;(navigation as any).navigate('Main', route.params)
-        } else {
-          ;(navigation as any).navigate(route.screenName, route.params)
-        }
-        return
+    const route = getNotificationRoute(item, currentUser?.role)
+    if (route?.screenName) {
+      if (route.screenName === 'Main') {
+        ;(navigation as any).navigate('Main', route.params)
+      } else {
+        ;(navigation as any).navigate(route.screenName, route.params)
       }
-
-      setDetailNotif(item)
+      return
     }
 
-    const origin      = item.data?.origin      as string | undefined
-    const destination = item.data?.destination as string | undefined
-    const seatNumbers = item.data?.seat_numbers as number[] | undefined
-    const driverName  = item.data?.driver_name  as string | undefined
+    setDetailNotif(item)
+  }
+
+  const renderNotification = (item: NotificationWithSender) => {
+    const tile = tileOf(item.type)
+    const cta = ctaOf(item.type)
+    const isUnread = !item.is_read
+    const isSelected = selectedIds.includes(item.id)
 
     return (
       <TouchableOpacity
         style={[styles.card, isUnread && styles.cardUnread, isSelected && styles.cardSelected]}
-        onPress={handlePress}
+        onPress={() => handlePress(item)}
         onLongPress={() => { if (!selectionMode) setSelectionMode(true); toggleSelect(item.id) }}
-        activeOpacity={0.92}
+        activeOpacity={0.9}
       >
-        {/* Unread dot */}
-        {isUnread && <View style={styles.unreadDot} />}
-
-        {/* Selection checkbox */}
         {selectionMode && (
-          <View style={styles.selectIndicator}>
-            <Ionicons
-              name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
-              size={20}
-              color={isSelected ? COLORS.primary : COLORS.textTertiary}
-            />
-          </View>
+          <Ionicons
+            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+            size={20}
+            color={isSelected ? COLORS.primary : COLORS.textTertiary}
+          />
         )}
 
-        <View style={styles.cardRow}>
-          {/* Icon */}
-          {isBooking ? (
-            <LinearGradient
-              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.iconWrap}
-            >
-              <Ionicons name={style.icon as any} size={18} color="#fff" />
-            </LinearGradient>
-          ) : isChat ? (
-            <LinearGradient
-              colors={['#1535BE', COLORS.primary]}
-              start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-              style={styles.iconWrap}
-            >
-              <Text style={styles.avatarText}>{style.initials || 'U'}</Text>
-            </LinearGradient>
-          ) : (
-            <View style={[styles.iconWrap, { backgroundColor: style.bgColor }]}>
-              <Ionicons name={style.icon as any} size={18} color={style.color} />
-            </View>
-          )}
-
-          {/* Content */}
-          <View style={styles.content}>
-            <View style={styles.contentTop}>
-              <View style={[styles.categoryPill, isBooking && styles.categoryPillBlue]}>
-                <Text style={[styles.categoryText, isBooking && styles.categoryTextBlue]}>
-                  {style.category.toUpperCase()}
-                </Text>
-              </View>
-              <Text style={styles.timeText}>{formatDate(item.created_at)}</Text>
-            </View>
-
-            {isChat && item.senderName ? (
-              <Text style={styles.messageText} numberOfLines={2}>
-                <Text style={styles.senderName}>{item.senderName}: </Text>
-                {item.message}
-              </Text>
-            ) : (
-              <Text style={[styles.messageText, !isUnread && styles.messageTextRead]} numberOfLines={3}>
-                {item.message}
-              </Text>
-            )}
-
-            {/* Info de reserva si está disponible */}
-            {isBooking && (origin || seatNumbers || driverName) && (
-              <View style={styles.bookingInfo}>
-                {origin && destination && (
-                  <View style={styles.routeMiniRow}>
-                    <Ionicons name="navigate-outline" size={11} color={COLORS.primary} />
-                    <Text style={styles.routeMiniText} numberOfLines={1}>
-                      {origin} → {destination}
-                    </Text>
-                  </View>
-                )}
-                {seatNumbers && seatNumbers.length > 0 && (
-                  <View style={styles.routeMiniRow}>
-                    <Ionicons name="person-outline" size={11} color={COLORS.primary} />
-                    <Text style={styles.routeMiniText}>
-                      Asiento{seatNumbers.length > 1 ? 's' : ''}: {seatNumbers.join(', ')}
-                    </Text>
-                  </View>
-                )}
-                {driverName && (
-                  <View style={styles.routeMiniRow}>
-                    <Ionicons name="car-outline" size={11} color={COLORS.primary} />
-                    <Text style={styles.routeMiniText}>{driverName}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-
-            {item.type === 'review_pending' && (
-              <View style={styles.starsRow}>
-                {[1,2,3,4,5].map((s) => (
-                  <Ionicons key={s} name="star-outline" size={14} color="#D4AF37" />
-                ))}
-              </View>
-            )}
-          </View>
+        <View style={[styles.tile, { backgroundColor: tile.bg }]}>
+          <Ionicons name={tile.icon} size={20} color={tile.fg} />
         </View>
 
-        {!selectionMode && (
-          <TouchableOpacity
-            style={styles.deleteBtn}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            onPress={() => {
-              Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
-                { text: 'Cancelar', style: 'cancel' },
-                { text: 'Eliminar', style: 'destructive', onPress: async () => { await deleteNotifications([item.id]) } },
-              ])
-            }}
-          >
-            <Ionicons name="trash-outline" size={15} color={COLORS.textTertiary} />
-          </TouchableOpacity>
-        )}
+        <View style={styles.body}>
+          <Text style={styles.cardTitle} numberOfLines={2}>{item.title || 'Alerta'}</Text>
+          <Text style={styles.cardMessage} numberOfLines={3}>
+            {item.type === 'message' && item.senderName ? `${item.senderName}: ${item.message}` : item.message}
+          </Text>
+          {cta && (
+            <View style={styles.ctaPill}>
+              <Text style={styles.ctaText}>{cta}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.side}>
+          <Text style={styles.timeText}>{timeLabelOf(item.created_at)}</Text>
+          {isUnread && <View style={styles.unreadDot} />}
+          {!selectionMode && (
+            <TouchableOpacity
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => {
+                Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
+                  { text: 'Cancelar', style: 'cancel' },
+                  { text: 'Eliminar', style: 'destructive', onPress: async () => { await deleteNotifications([item.id]) } },
+                ])
+              }}
+            >
+              <Ionicons name="trash-outline" size={15} color={COLORS.textTertiary} />
+            </TouchableOpacity>
+          )}
+        </View>
       </TouchableOpacity>
     )
   }
 
-  const HeaderActions = () => {
+  const renderHeaderActions = () => {
     if (!selectionMode) {
       return (
         <View style={styles.headerRight}>
@@ -402,80 +352,68 @@ export default function NotificationsScreen() {
     )
   }
 
-  const CategoryFilter = () => {
-    const categories: { id: NotificationCategory; label: string }[] = [
-      { id: 'all', label: 'Todas' },
-      { id: 'chat', label: 'Chat' },
-      { id: 'ruta', label: 'Ruta' },
-      { id: 'feed', label: 'Feed' },
-    ]
-
-    return (
-      <View style={styles.filterContainer}>
-        {categories.map((cat) => {
-          const isActive = selectedCategory === cat.id
-          return (
-            <TouchableOpacity
-              key={cat.id}
-              onPress={() => setSelectedCategory(cat.id)}
-              style={styles.filterButtonWrap}
-            >
-              {isActive ? (
-                <LinearGradient
-                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={styles.filterButton}
-                >
-                  <Text style={[styles.filterText, styles.filterTextActive]}>{cat.label}</Text>
-                </LinearGradient>
-              ) : (
-                <View style={styles.filterButton}>
-                  <Text style={styles.filterText}>{cat.label}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-          )
-        })}
-      </View>
-    )
-  }
+  const renderFilters = () => (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      style={styles.filterScroll}
+      contentContainerStyle={styles.filterContainer}
+    >
+      {filters.map((cat) => {
+        const isActive = activeFilter.id === cat.id
+        return (
+          <TouchableOpacity
+            key={cat.id}
+            onPress={() => setSelectedCategory(cat.id)}
+            style={[styles.filterPill, isActive && styles.filterPillActive]}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.filterText, isActive && styles.filterTextActive]}>{cat.label}</Text>
+          </TouchableOpacity>
+        )
+      })}
+    </ScrollView>
+  )
 
   const EmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons name="notifications-off-outline" size={48} color={COLORS.textTertiary} />
       <Text style={styles.emptySubtitle}>
-        {selectedCategory === 'all' ? 'No hay más notificaciones' : 'No hay alertas en esta categoría'}
+        {activeFilter.id === 'all' ? 'No hay más notificaciones' : 'No hay alertas en esta categoría'}
       </Text>
     </View>
   )
 
   const ListFooter = () => (
-    <View style={styles.footerEmptyHint}>
-      <Ionicons name="notifications-off-outline" size={32} color={COLORS.textTertiary} />
-      <Text style={styles.footerEmptyText}>No hay más notificaciones</Text>
+    <View style={styles.footer}>
+      {isDriver && (
+        <View style={styles.noteBox}>
+          <Text style={styles.noteText}>
+            Las alertas de pago se activarán cuando exista la confirmación de pagos recibidos.
+          </Text>
+        </View>
+      )}
     </View>
   )
 
-  // Variables para el modal de detalle (calculadas en el componente, no en un sub-componente)
-  const _dStyle             = detailNotif ? getCategoryStyle(detailNotif.type, detailNotif.senderName) : null
-  const _dIsBooking         = detailNotif ? ['booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending'].includes(detailNotif.type) : false
-  const _dIsChat            = detailNotif?.type === 'message'
-  const _dIsTripCompleted   = detailNotif?.type === 'trip_completed'
-  const _dIsReviewPending   = detailNotif?.type === 'review_pending'
-  const _dOrigin            = detailNotif?.data?.origin        as string | undefined
-  const _dDest              = detailNotif?.data?.destination   as string | undefined
-  const _dSeats             = detailNotif?.data?.seat_numbers  as number[] | undefined
-  const _dDriver            = detailNotif?.data?.driver_name   as string | undefined
-  const _dDriverId          = detailNotif?.data?.driver_id     as string | undefined
-  const _dPassenger         = detailNotif?.data?.passenger_name as string | undefined
-  const _dPrice             = detailNotif?.data?.price         as number | undefined
-  const _dTripDate          = detailNotif?.data?.trip_date     as string | undefined
-  const _dBookingId         = detailNotif?.data?.booking_id    as string | undefined
-  const _dFmtDate           = _dTripDate
+  const _dStyle            = detailNotif ? tileOf(detailNotif.type) : null
+  const _dIsBooking        = detailNotif ? TRIP_ACTION_TYPES.includes(detailNotif.type) : false
+  const _dIsChat           = detailNotif?.type === 'message'
+  const _dIsTripCompleted  = detailNotif?.type === 'trip_completed'
+  const _dIsReviewPending  = detailNotif?.type === 'review_pending'
+  const _dOrigin           = detailNotif?.data?.origin         as string | undefined
+  const _dDest             = detailNotif?.data?.destination    as string | undefined
+  const _dSeats            = detailNotif?.data?.seat_numbers   as number[] | undefined
+  const _dDriver           = detailNotif?.data?.driver_name    as string | undefined
+  const _dDriverId         = detailNotif?.data?.driver_id      as string | undefined
+  const _dPassenger        = detailNotif?.data?.passenger_name as string | undefined
+  const _dPrice            = detailNotif?.data?.price          as number | undefined
+  const _dTripDate         = detailNotif?.data?.trip_date      as string | undefined
+  const _dBookingId        = detailNotif?.data?.booking_id     as string | undefined
+  const _dFmtDate          = _dTripDate
     ? new Date(_dTripDate).toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
     : null
 
-  /** Desde pestaña Alertas: ir al Inicio. Desde pantalla apilada (ej. Viajes→alertas): volver atrás. */
   const headerCanGoBack = navigation.canGoBack()
   const onHeaderLeftPress = () => {
     if (headerCanGoBack) navigation.goBack()
@@ -486,25 +424,25 @@ export default function NotificationsScreen() {
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.headerIconBtn}
-          onPress={onHeaderLeftPress}
-          accessibilityRole="button"
-          accessibilityLabel={headerCanGoBack ? 'Volver' : 'Ir al inicio'}
-        >
-          <Ionicons
-            name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
-            size={18}
-            color={COLORS.primary}
-          />
-        </TouchableOpacity>
-
+        <View style={styles.headerRow}>
+          <TouchableOpacity
+            style={styles.headerIconBtn}
+            onPress={onHeaderLeftPress}
+            accessibilityRole="button"
+            accessibilityLabel={headerCanGoBack ? 'Volver' : 'Ir al inicio'}
+          >
+            <Ionicons
+              name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
+              size={18}
+              color={COLORS.primary}
+            />
+          </TouchableOpacity>
+          {renderHeaderActions()}
+        </View>
         <Text style={styles.title}>Alertas</Text>
-
-        <HeaderActions />
       </View>
 
-      <CategoryFilter />
+      {renderFilters()}
 
       {selectionMode && (
         <View style={styles.selectionBar}>
@@ -516,24 +454,29 @@ export default function NotificationsScreen() {
 
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <Ionicons name="hourglass-outline" size={36} color={COLORS.textTertiary} />
+          <ActivityIndicator color={COLORS.primary} />
           <Text style={styles.loadingText}>Cargando alertas...</Text>
         </View>
-      ) : filteredNotifications.length === 0 ? (
+      ) : sections.length === 0 ? (
         <EmptyState />
       ) : (
-        <FlatList
-          data={filteredNotifications}
+        <SectionList
+          sections={sections}
           keyExtractor={(item) => item.id}
-          renderItem={(props) => <NotificationCard {...props} />}
+          renderItem={({ item }) => renderNotification(item)}
+          renderSectionHeader={({ section }) => (
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+          )}
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />
           }
           ListFooterComponent={<ListFooter />}
+          stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
         />
       )}
+
       <Modal
         visible={!!detailNotif}
         transparent
@@ -551,34 +494,12 @@ export default function NotificationsScreen() {
             {detailNotif && _dStyle && (
               <>
                 <View style={styles.modalHeader}>
-                  {_dIsBooking ? (
-                    <LinearGradient
-                      colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                      style={styles.modalIcon}
-                    >
-                      <Ionicons name={_dStyle.icon as any} size={22} color="#fff" />
-                    </LinearGradient>
-                  ) : _dIsChat ? (
-                    <LinearGradient
-                      colors={['#1535BE', COLORS.primary]}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                      style={styles.modalIcon}
-                    >
-                      <Text style={styles.modalAvatarText}>{_dStyle.initials || 'U'}</Text>
-                    </LinearGradient>
-                  ) : (
-                    <View style={[styles.modalIcon, { backgroundColor: _dStyle.bgColor }]}>
-                      <Ionicons name={_dStyle.icon as any} size={22} color={_dStyle.color} />
-                    </View>
-                  )}
+                  <View style={[styles.modalIcon, { backgroundColor: _dStyle.bg }]}>
+                    <Ionicons name={_dStyle.icon} size={22} color={_dStyle.fg} />
+                  </View>
                   <View style={styles.modalHeaderText}>
-                    <View style={[styles.categoryPill, _dIsBooking && styles.categoryPillBlue]}>
-                      <Text style={[styles.categoryText, _dIsBooking && styles.categoryTextBlue]}>
-                        {_dStyle.category.toUpperCase()}
-                      </Text>
-                    </View>
-                    <Text style={styles.modalTime}>{formatDate(detailNotif.created_at)}</Text>
+                    <Text style={styles.modalTitle} numberOfLines={2}>{detailNotif.title || 'Alerta'}</Text>
+                    <Text style={styles.modalTime}>{timeLabelOf(detailNotif.created_at)}</Text>
                   </View>
                   <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setDetailNotif(null)}>
                     <Ionicons name="close" size={18} color={COLORS.textSecondary} />
@@ -593,11 +514,7 @@ export default function NotificationsScreen() {
                   </Text>
 
                   {(_dIsBooking || _dIsChat) && (_dOrigin || _dDest || _dSeats || _dDriver || _dPassenger || _dPrice !== undefined || _dFmtDate) && (
-                    <LinearGradient
-                      colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                      style={styles.modalInfoCard}
-                    >
+                    <View style={styles.modalInfoCard}>
                       {_dPassenger && (
                         <View style={styles.modalInfoRow}>
                           <Ionicons name="person-outline" size={15} color={COLORS.primary} />
@@ -648,24 +565,17 @@ export default function NotificationsScreen() {
                         </View>
                       )}
                       {_dBookingId && (
-                        <View style={[styles.modalInfoRow, { marginTop: 4, borderTopWidth: 1, borderTopColor: COLORS.primaryTint, paddingTop: 8 }]}>
+                        <View style={[styles.modalInfoRow, styles.modalIdRow]}>
                           <Ionicons name="receipt-outline" size={13} color={COLORS.textTertiary} />
-                          <Text style={[styles.modalInfoLabel, { color: COLORS.textTertiary, fontSize: 10 }]}>ID reserva</Text>
-                          <Text style={[styles.modalInfoValue, { color: COLORS.textTertiary, fontSize: 10 }]}>{_dBookingId}</Text>
+                          <Text style={[styles.modalInfoLabel, styles.modalIdText]}>ID reserva</Text>
+                          <Text style={[styles.modalInfoValue, styles.modalIdText]}>{_dBookingId}</Text>
                         </View>
                       )}
-                    </LinearGradient>
+                    </View>
                   )}
 
                   {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
                     <>
-                      {_dIsReviewPending && (
-                        <View style={styles.starsPreviewRow}>
-                          {[1,2,3,4,5].map((s) => (
-                            <Ionicons key={s} name="star" size={22} color={COLORS.warning} />
-                          ))}
-                        </View>
-                      )}
                       <TouchableOpacity
                         style={styles.rateDriverBtn}
                         activeOpacity={0.85}
@@ -679,16 +589,10 @@ export default function NotificationsScreen() {
                           setDetailNotif(null)
                         }}
                       >
-                        <LinearGradient
-                          colors={_dIsReviewPending ? ['#D97706', COLORS.warning] : [COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                          style={styles.rateDriverBtnInner}
-                        >
-                          <Ionicons name="star" size={16} color="#fff" />
-                          <Text style={styles.rateDriverBtnText}>
-                            {_dIsReviewPending ? 'Calificar ahora' : 'Calificar conductor'}
-                          </Text>
-                        </LinearGradient>
+                        <Ionicons name="star" size={16} color={COLORS.white} />
+                        <Text style={styles.rateDriverBtnText}>
+                          {_dIsReviewPending ? 'Calificar ahora' : 'Calificar conductor'}
+                        </Text>
                       </TouchableOpacity>
                     </>
                   )}
@@ -698,7 +602,6 @@ export default function NotificationsScreen() {
               </>
             )}
 
-            {/* Reply bar — solo visible para notificaciones de chat */}
             {detailNotif && _dIsChat && (
               <View style={styles.replyBar}>
                 {replySent ? (
@@ -725,8 +628,8 @@ export default function NotificationsScreen() {
                       activeOpacity={0.8}
                     >
                       {replySending
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Ionicons name="send" size={16} color="#fff" />
+                        ? <ActivityIndicator size="small" color={COLORS.white} />
+                        : <Ionicons name="send" size={16} color={COLORS.white} />
                       }
                     </TouchableOpacity>
                   </>
@@ -760,17 +663,23 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   header: {
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.md,
+  },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surfaceAlt,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.primaryTint,
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+    marginTop: SPACING.md,
   },
   headerRight: {
     flexDirection: 'row',
@@ -780,79 +689,74 @@ const styles = StyleSheet.create({
   headerIconBtn: {
     width: 32,
     height: 32,
-    borderRadius: 9,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.primaryTint,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
   },
-  title: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.primaryDark,
-    fontWeight: '800',
+  filterScroll: {
+    flexGrow: 0,
+    marginTop: SPACING.lg,
   },
-  // Filter chips
   filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     gap: SPACING.sm,
   },
-  filterButtonWrap: {
-    borderRadius: 10,
-    overflow: 'hidden',
+  filterPill: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 9,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  filterButton: {
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
+  filterPillActive: {
+    backgroundColor: COLORS.primary,
   },
-  filterButtonActive: {},
   filterText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+    fontSize: 13,
     fontWeight: '600',
+    color: COLORS.textPrimary,
   },
   filterTextActive: {
-    color: '#fff',
     fontWeight: '700',
+    color: COLORS.white,
   },
-  // Selection bar
   selectionBar: {
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.sm,
-    borderRadius: 10,
+    marginHorizontal: SPACING.xl,
+    marginTop: SPACING.md,
+    borderRadius: RADIUS.md,
     backgroundColor: COLORS.primaryTint,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
   selectionText: {
     ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primaryDark,
+    color: COLORS.primary,
     fontWeight: '700',
   },
   listContent: {
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.sm,
     paddingBottom: 120,
-    gap: SPACING.sm,
   },
-  // Cards
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
   card: {
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.md,
     padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: COLORS.border,
-    ...SHADOWS.xs,
-    position: 'relative',
+    backgroundColor: COLORS.background,
   },
   cardUnread: {
     backgroundColor: COLORS.surfaceAlt,
@@ -862,124 +766,54 @@ const styles = StyleSheet.create({
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryTint,
   },
-  unreadDot: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.primary,
-    zIndex: 2,
-  },
-  selectIndicator: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    zIndex: 3,
-  },
-  cardRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingRight: 18,
-  },
-  iconWrap: {
-    width: 44,
-    height: 44,
+  tile: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
   },
-  avatarText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  content: {
+  body: {
     flex: 1,
-    gap: 3,
   },
-  contentTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  categoryPill: {
-    backgroundColor: '#F0F0F5',
-    borderRadius: 6,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  categoryPillBlue: {
-    backgroundColor: COLORS.primaryTint,
-  },
-  categoryText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.textTertiary,
-    letterSpacing: 0.5,
-  },
-  categoryTextBlue: {
-    color: COLORS.primary,
-  },
-  timeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textTertiary,
-  },
-  messageText: {
-    fontSize: 13,
-    lineHeight: 19,
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '800',
     color: COLORS.textPrimary,
-    fontWeight: '600',
+  },
+  cardMessage: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: COLORS.textPrimary,
     marginTop: 2,
   },
-  messageTextRead: {
-    fontWeight: '400',
+  ctaPill: {
+    alignSelf: 'flex-start',
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primary,
+  },
+  ctaText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  side: {
+    alignItems: 'flex-end',
+    gap: SPACING.sm,
+  },
+  timeText: {
+    fontSize: 11,
     color: COLORS.textSecondary,
   },
-  senderName: {
-    fontWeight: '700',
-    color: COLORS.textPrimary,
+  unreadDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLORS.primary,
   },
-  bookingInfo: {
-    marginTop: 6,
-    gap: 3,
-    backgroundColor: '#F0F4FF',
-    borderRadius: 8,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
-  },
-  routeMiniRow: {
-    flexDirection: 'row',
-    gap: 4,
-    alignItems: 'center',
-  },
-  routeMiniText: {
-    fontSize: 11,
-    color: COLORS.primary,
-    flex: 1,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 2,
-    marginTop: 4,
-  },
-  starsPreviewRow: {
-    flexDirection: 'row',
-    gap: 4,
-    justifyContent: 'center',
-    marginBottom: SPACING.md,
-    marginTop: SPACING.sm,
-  },
-  deleteBtn: {
-    position: 'absolute',
-    bottom: 8,
-    right: 8,
-    padding: 6,
-  },
-  // States
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -1000,60 +834,62 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
   },
-  footerEmptyHint: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 20,
-    gap: 8,
+  footer: {
+    paddingTop: SPACING.lg,
   },
-  footerEmptyText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textTertiary,
+  noteBox: {
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  // Modal
+  noteText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.textSecondary,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(10,18,60,0.45)',
+    backgroundColor: `${COLORS.textPrimary}73`,
     justifyContent: 'flex-end',
   },
   modalSheet: {
     backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.xl,
     paddingTop: SPACING.sm,
     maxHeight: '90%',
+    ...SHADOWS.md,
   },
   modalHandle: {
     width: 36,
     height: 4,
     borderRadius: 2,
-    backgroundColor: COLORS.primaryTint,
+    backgroundColor: COLORS.border,
     alignSelf: 'center',
     marginBottom: SPACING.md,
   },
   modalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     marginBottom: SPACING.md,
   },
   modalIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  modalAvatarText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 14,
   },
   modalHeaderText: {
     flex: 1,
-    gap: 4,
+    gap: 2,
+  },
+  modalTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
   },
   modalTime: {
     ...TYPOGRAPHY.caption,
@@ -1079,7 +915,7 @@ const styles = StyleSheet.create({
   },
   modalSenderName: {
     fontWeight: '700',
-    color: COLORS.primaryDark,
+    color: COLORS.primary,
   },
   modalInfoCard: {
     borderRadius: 14,
@@ -1087,12 +923,23 @@ const styles = StyleSheet.create({
     gap: 10,
     borderWidth: 1,
     borderColor: COLORS.primaryTint,
+    backgroundColor: COLORS.surfaceAlt,
     marginBottom: SPACING.md,
   },
   modalInfoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  modalIdRow: {
+    marginTop: 4,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.primaryTint,
+    paddingTop: 8,
+  },
+  modalIdText: {
+    color: COLORS.textTertiary,
+    fontSize: 10,
   },
   modalInfoLabel: {
     fontSize: 12,
@@ -1109,9 +956,7 @@ const styles = StyleSheet.create({
   rateDriverBtn: {
     marginTop: SPACING.lg,
     borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-  },
-  rateDriverBtnInner: {
+    backgroundColor: COLORS.primary,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1122,10 +967,8 @@ const styles = StyleSheet.create({
   rateDriverBtnText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#fff',
+    color: COLORS.white,
   },
-
-  // Reply bar (chat notifications)
   replyBar: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -1134,7 +977,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.primaryTint,
     paddingTop: SPACING.md,
     paddingBottom: SPACING.lg,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
   },
   replyInput: {
     flex: 1,
@@ -1158,7 +1001,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   replySendBtnDisabled: {
-    backgroundColor: '#C5CEF0',
+    backgroundColor: COLORS.primaryTint,
   },
   replySentRow: {
     flex: 1,

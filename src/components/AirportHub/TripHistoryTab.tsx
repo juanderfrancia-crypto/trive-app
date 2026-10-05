@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -84,7 +84,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
 
       setTrips(tripsList)
     } catch (err) {
-      console.error('❌ Error loading history:', err)
+      console.error('Error loading history:', err)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -165,7 +165,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.surface },
   listContainer: {
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
     flexGrow: 1,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: RADIUS.lg,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: COLORS.successLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   tripUser: {
     fontSize: TYPOGRAPHY.size.md,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
   },
   tripBadge: {
     fontSize: TYPOGRAPHY.size.sm,
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: COLORS.successLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   emptySubtitle: {

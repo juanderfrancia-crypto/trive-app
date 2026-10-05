@@ -89,7 +89,7 @@ const defaultTimeStr = () => {
 }
 
 export default function AirportRequestScreen() {
-  const navigation = useNavigation()
+  const navigation = useNavigation<any>()
   const { createRequest, requests, loading: loadingRequests, loadPassengerRequests, loadPassengerActiveTrips } = useAirportNegotiation()
   const user = useAppStore((s) => s.user)
 
@@ -116,10 +116,10 @@ export default function AirportRequestScreen() {
   const activeRequests = requests.filter(r => r.passenger_id === user?.id && r.status === 'pending')
   
   // Agregar filtros para viajes activos y completados
-  const activeTrips = requests.filter(r => r.passenger_id === user?.id && (r.status === 'accepted' || r.status === 'in_progress'))
+  const activeTrips = requests.filter(r => r.passenger_id === user?.id && r.status === 'accepted')
   const completedTrips = requests.filter(r => r.passenger_id === user?.id && r.status === 'completed')
 
-  // 💬 Estado para chat de negociación
+  //  Estado para chat de negociación
   const [showChatModal, setShowChatModal] = useState(false)
   const [chatRequest, setChatRequest] = useState<any>(null)
 
@@ -726,8 +726,8 @@ export default function AirportRequestScreen() {
                       <Ionicons name="person-circle-outline" size={16} color={COLORS.primary} />
                       <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
                     </View>
-                    <View style={[s.requestBadge, req.status === 'in_progress' ? s.requestBadgeInProgress : s.requestBadgeAccepted]}>
-                      <Text style={s.requestBadgeText}>{req.status === 'in_progress' ? 'En ruta' : 'Confirmado'}</Text>
+                    <View style={[s.requestBadge, s.requestBadgeAccepted]}>
+                      <Text style={s.requestBadgeText}>Confirmado</Text>
                     </View>
                   </View>
                   <View style={s.requestDivider} />
@@ -756,7 +756,7 @@ export default function AirportRequestScreen() {
                     )}
                   </View>
                   <View style={s.requestDivider} />
-                  {/* 💬 Botón de Chat para pasajero */}
+                  {/*  Botón de Chat para pasajero */}
                   <TouchableOpacity
                     style={s.chatButtonRow}
                     onPress={() => {
@@ -766,7 +766,7 @@ export default function AirportRequestScreen() {
                     activeOpacity={0.7}
                   >
                     <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
-                    <Text style={s.chatButtonText}>💬 Chatear con el conductor</Text>
+                    <Text style={s.chatButtonText}>Chatear con el conductor</Text>
                   </TouchableOpacity>
                 </TouchableOpacity>
               ))}
@@ -826,7 +826,7 @@ export default function AirportRequestScreen() {
         </ScrollView>
       )}
 
-      {/* 💬 Modal de Chat de Negociación */}
+      {/*  Modal de Chat de Negociación */}
       {chatRequest && (
         <NegotiationChatModal
           visible={showChatModal}
@@ -855,7 +855,6 @@ const s = StyleSheet.create({
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerHero: { flex: 1, alignItems: 'center', gap: 3 },
   headerTitle: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
-  headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.75)', fontWeight: '500' },
 
   scroll: { paddingBottom: 40 },
 
@@ -1092,42 +1091,8 @@ const s = StyleSheet.create({
   },
 
   // Destination chips
-  destinationScroll: {
-    marginHorizontal: -SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-  },
-  destChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 8,
-    borderRadius: RADIUS.full,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryTint,
-    marginRight: SPACING.sm,
-  },
-  destChipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  destChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-  destChipTextSelected: {
-    color: '#fff',
-  },
 
   // Tab toggle button
-  tabToggleBtn: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
 
   // Scroll content
   scrollContent: {
@@ -1247,9 +1212,6 @@ const s = StyleSheet.create({
   },
   requestBadgeAccepted: {
     backgroundColor: '#DBEAFE',
-  },
-  requestBadgeInProgress: {
-    backgroundColor: COLORS.warningLight,
   },
   requestBadgeCompleted: {
     flexDirection: 'row',
