@@ -266,10 +266,10 @@ export const useAirportNegotiation = () => {
             filter: `driver_id=eq.${driverId}` 
           },
           (payload) => {
-            // Only update if status is accepted or in_progress
+            // Solo se muestran solicitudes aceptadas
             if (payload.eventType === 'UPDATE') {
               const newData = payload.new as AirportRequest
-              if (newData.status === 'accepted' || newData.status === 'in_progress') {
+              if (newData.status === 'accepted') {
                 setRequests(prev =>
                   prev.map(r => r.id === newData.id ? { ...r, ...newData } : r)
                 )
@@ -279,7 +279,7 @@ export const useAirportNegotiation = () => {
               }
             } else if (payload.eventType === 'INSERT') {
               const newData = payload.new as AirportRequest
-              if (newData.status === 'accepted' || newData.status === 'in_progress') {
+              if (newData.status === 'accepted') {
                 setRequests(prev => [newData, ...prev])
               }
             } else if (payload.eventType === 'DELETE') {
@@ -352,10 +352,10 @@ export const useAirportNegotiation = () => {
             filter: `passenger_id=eq.${passengerId}` 
           },
           (payload) => {
-            // Only update if status is accepted or in_progress
+            // Solo se muestran solicitudes aceptadas
             if (payload.eventType === 'UPDATE') {
               const newData = payload.new as AirportRequest
-              if (newData.status === 'accepted' || newData.status === 'in_progress') {
+              if (newData.status === 'accepted') {
                 setRequests(prev =>
                   prev.map(r => r.id === newData.id ? { ...r, ...newData } : r)
                 )
@@ -365,7 +365,7 @@ export const useAirportNegotiation = () => {
               }
             } else if (payload.eventType === 'INSERT') {
               const newData = payload.new as AirportRequest
-              if (newData.status === 'accepted' || newData.status === 'in_progress') {
+              if (newData.status === 'accepted') {
                 setRequests(prev => [newData, ...prev])
               }
             } else if (payload.eventType === 'DELETE') {
@@ -647,16 +647,23 @@ export const useAirportNegotiation = () => {
         .eq('id', requestId)
         .single()
 
-      if (reqData && profile) {
+      const { data: { user: driverAuth } } = await supabase.auth.getUser()
+      const { data: driverProfile } = await supabase
+        .from('profiles')
+        .select('name')
+        .eq('id', driverAuth?.id ?? '')
+        .maybeSingle()
+
+      if (reqData && driverProfile) {
         insertNotificationForUser(reqData.passenger_id, {
           user_id: reqData.passenger_id,
           type: 'trip_update',
           title: '✈️ ¡Tienes conductor!',
-          message: `${profile.name} aceptó tu solicitud`,
+          message: `${driverProfile.name} aceptó tu solicitud`,
           data: {
             request_id: requestId,
             driver_id: reqData.driver_id,
-            driver_name: profile.name,
+            driver_name: driverProfile.name,
             price: reqData.offered_price,
           },
           is_read: false,

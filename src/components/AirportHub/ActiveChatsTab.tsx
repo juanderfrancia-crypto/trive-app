@@ -53,7 +53,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
              profiles!passenger_id (id, name, avatar_url)`
           )
           .eq('driver_id', user.id)
-          .in('status', ['accepted', 'in_progress'])
+          .eq('status', 'accepted')
           .order('created_at', { ascending: false })
 
         for (const trip of driverTrips ?? []) {
@@ -78,7 +78,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
              profiles!driver_id (id, name, avatar_url)`
           )
           .eq('passenger_id', user.id)
-          .in('status', ['accepted', 'in_progress'])
+          .eq('status', 'accepted')
           .order('created_at', { ascending: false })
 
         for (const trip of passengerTrips ?? []) {

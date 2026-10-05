@@ -1,4 +1,4 @@
-import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
+import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
 import React, { useCallback, useRef, useState } from 'react'
 import {
   View,
