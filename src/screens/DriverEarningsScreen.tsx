@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { formatCOP } from '../utils/currency'
 import { useDriverEarnings } from '../hooks/useDriverEarnings'
@@ -109,9 +110,7 @@ export default function DriverEarningsScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.restrictedContainer}>
           {/* Icon */}
-          <View style={styles.restrictedIcon}>
-            <Ionicons name="lock-closed" size={48} color={COLORS.error} />
-          </View>
+          <Illustration name="blocked" width={170} />
 
           {/* Title */}
           <Text style={styles.restrictedTitle}>Acceso restringido</Text>
@@ -176,6 +175,9 @@ export default function DriverEarningsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="savingMoney" width={190} />
+        </View>
         {/* Main Balance Card */}
         <View style={styles.balanceCard}>
           <View style={styles.balanceTop}>
@@ -369,15 +371,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     backgroundColor: COLORS.background,
-  },
-  restrictedIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.error + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
   },
   restrictedTitle: {
     ...TYPOGRAPHY.h2,

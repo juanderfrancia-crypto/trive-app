@@ -4,6 +4,7 @@ import { Text } from '../AppText'
 import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
+import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
@@ -202,9 +203,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconBg}>
-        <Ionicons name="chatbubbles-outline" size={48} color={COLORS.primary} />
-      </View>
+      <Illustration name="beginChat" width={170} />
       <Text style={styles.emptyTitle}>Sin conversaciones</Text>
       <Text style={styles.emptySubtitle}>
         {isDriver
@@ -321,15 +320,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-  },
-  emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,

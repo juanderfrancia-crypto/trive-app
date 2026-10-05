@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import * as WebBrowser from 'expo-web-browser'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
@@ -132,6 +133,10 @@ export default function WalletScreen() {
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="addingFunds" width={170} />
+        </View>
 
         {/* Balance card */}
         <View style={s.balanceCard}>

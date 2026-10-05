@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
@@ -433,6 +434,9 @@ export default function TripStatusScreen() {
               </TouchableOpacity>
             </LinearGradient>
 
+            <View style={{ alignItems: 'center' }}>
+              <Illustration name="sharingArticles" width={160} />
+            </View>
             <TouchableOpacity
               style={styles.shareBtn}
               onPress={handleShareTrip}

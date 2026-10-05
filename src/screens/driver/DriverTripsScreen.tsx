@@ -4,6 +4,7 @@ import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
 import { showError } from '../../utils/showError'
@@ -141,6 +142,7 @@ export default function DriverTripsScreen() {
           <View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View>
         ) : visible.length === 0 ? (
           <View style={styles.empty}>
+            <Illustration name={tab === 'scheduled' ? 'schedule' : 'noData'} width={160} />
             <Text style={styles.emptyTitle}>
               {tab === 'live' ? 'No tienes viajes en curso' : tab === 'scheduled' ? 'No tienes viajes programados' : 'Aún no tienes historial'}
             </Text>

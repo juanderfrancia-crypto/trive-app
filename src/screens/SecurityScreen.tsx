@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import {
   authenticateBiometric,
   getStoredBiometricEnabled,
@@ -124,6 +125,9 @@ export default function SecurityScreen() {
           </TouchableOpacity>
           <Text style={styles.title}>Seguridad</Text>
           <View style={{ width: 28 }} />
+        </View>
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="mobileEncryption" width={180} />
         </View>
 
         {/* 1. Cambiar Contraseña */}

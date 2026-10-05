@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings, PaymentMethod } from '../hooks/useBookings'
 import { insertNotificationForUser } from '../services/notificationInsert'
@@ -94,9 +95,7 @@ export default function BookingScreen() {
             ))}
           </View>
 
-          <View style={styles.successCircle}>
-            <Ionicons name="checkmark" size={40} color={COLORS.success} />
-          </View>
+          <Illustration name="allChecked" width={180} />
           <Text style={styles.confirmTitle}>Reserva confirmada</Text>
           <Text style={styles.confirmSubtitle}>
             {count === 1 ? 'Tu asiento está listo.' : `Tus ${count} asientos están listos.`} Los verás en Viajes.
@@ -612,15 +611,6 @@ const styles = StyleSheet.create({
   },
   secondaryCtaText: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
 
-  successCircle: {
-    marginTop: 34,
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: COLORS.successLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   confirmTitle: { marginTop: 18, fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
   confirmSubtitle: { marginTop: 6, fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
 

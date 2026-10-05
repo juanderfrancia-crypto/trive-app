@@ -6,6 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
@@ -139,6 +140,10 @@ export default function ReferralScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
         {/* ── Code card ──────────────────────────────────────────────────── */}
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="sendGift" width={170} />
+        </View>
+
         <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.codeCard}>
           <Text style={styles.codeLabel}>TU CÓDIGO DE REFERIDO</Text>
           {savingCode ? (

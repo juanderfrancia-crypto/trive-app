@@ -4,6 +4,7 @@ import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Illustration from '../../components/illustrations/Illustration'
 import { useRoutes, PublishRoutePayload, Route } from '../../hooks/useRoutes'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
@@ -588,8 +589,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
     const dayLabel = publishedDraft.departureDay === 0 ? 'Hoy' : 'Mañana'
     return (
       <>
-        <View style={styles.doneIcon}>
-          <Ionicons name="checkmark" size={36} color={COLORS.primary} />
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="postOnline" width={200} />
         </View>
         <Text style={styles.doneTitle}>Viaje publicado</Text>
         <Text style={styles.subtitle}>
@@ -721,15 +722,6 @@ const styles = StyleSheet.create({
 
   title: { ...TYPOGRAPHY.h3, color: COLORS.textPrimary, fontWeight: '800' },
   subtitle: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, marginTop: SPACING.xs },
-  doneIcon: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: COLORS.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: SPACING.xxl,
-  },
   doneTitle: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, fontWeight: '800', marginTop: SPACING.lg },
 
   requirementList: { gap: SPACING.sm, marginTop: SPACING.sm },

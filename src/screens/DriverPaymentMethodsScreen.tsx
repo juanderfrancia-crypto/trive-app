@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
@@ -153,7 +154,7 @@ export default function DriverPaymentMethodsScreen() {
             <ActivityIndicator color={COLORS.primary} style={{ marginTop: 16 }} />
           ) : methods.length === 0 ? (
             <View style={s.emptyCard}>
-              <Ionicons name="phone-portrait-outline" size={32} color={COLORS.textTertiary} />
+              <Illustration name="walletDiag" width={150} />
               <Text style={s.emptyTitle}>Sin métodos digitales</Text>
               <Text style={s.emptySub}>Agrega Nequi, Daviplata o Bancolombia para que los pasajeros puedan pagarte digitalmente.</Text>
               <TouchableOpacity style={s.addFirstBtn} onPress={openForm} activeOpacity={0.8}>

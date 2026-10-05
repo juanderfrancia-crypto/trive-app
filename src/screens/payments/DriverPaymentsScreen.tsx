@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, RADIUS, SPACING } from '../../theme/theme'
+import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { formatDia, formatHora, formatPrecio } from '../passenger/passengerFormat'
 import { PendingPayment, useDriverPayments } from './useDriverPayments'
@@ -104,6 +105,7 @@ export default function DriverPaymentsScreen() {
 
         {!loading && payments.length === 0 ? (
           <View style={styles.vacio}>
+            <Illustration name="savingMoney" width={160} />
             <Text style={styles.vacioTitulo}>No tienes pagos por confirmar</Text>
             <Text style={styles.subtitulo}>Aquí aparecerán las reservas de tus viajes con pago pendiente.</Text>
           </View>

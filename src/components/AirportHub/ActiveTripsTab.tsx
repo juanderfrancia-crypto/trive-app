@@ -3,6 +3,7 @@ import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
@@ -144,6 +145,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
+      <Illustration name="schedule" width={170} />
       <Text style={styles.emptyTitle}>Sin viajes aceptados</Text>
       <Text style={styles.emptySubtitle}>
         {isDriver

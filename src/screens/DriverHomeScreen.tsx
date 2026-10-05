@@ -5,6 +5,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../services/supabase'
@@ -53,6 +54,10 @@ export default function DriverHomeScreen() {
             <Ionicons name="car-outline" size={13} color={COLORS.primary} />
             <Text style={styles.modeText}>Conductor</Text>
           </View>
+        </View>
+
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="proudDriver" width={200} />
         </View>
 
         <View style={styles.walletCard}>

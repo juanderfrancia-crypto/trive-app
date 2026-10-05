@@ -1,9 +1,9 @@
 import { useCallback, useState } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, Modal, TextInput, RefreshControl } from 'react-native'
 import { Text } from '../AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
@@ -165,9 +165,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconBg}>
-        <Ionicons name="briefcase-outline" size={48} color={COLORS.primary} />
-      </View>
+      <Illustration name="theSearch" width={170} />
       <Text style={styles.emptyTitle}>Sin solicitudes disponibles</Text>
       <Text style={styles.emptySubtitle}>
         Cuando un pasajero publique un viaje aparecerá aquí para que puedas ofertar
@@ -371,15 +369,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
-  },
-  emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,

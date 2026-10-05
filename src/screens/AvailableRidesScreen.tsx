@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAvailableRides, AvailableRide } from '../hooks/useAvailableRides'
 import { SkeletonRideCard } from '../components/Skeleton'
 import { useAppStore } from '../store/useAppStore'
@@ -180,7 +181,7 @@ export default function AvailableRidesScreen() {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="car-outline" size={64} color={COLORS.textTertiary} />
+      <Illustration name="theSearch" width={200} />
       <Text style={styles.emptyTitle}>No hay viajes disponibles</Text>
       <Text style={styles.emptyText}>Prueba con diferentes ciudades o horarios</Text>
       <TouchableOpacity style={styles.secondaryBtn} onPress={onRefresh}>

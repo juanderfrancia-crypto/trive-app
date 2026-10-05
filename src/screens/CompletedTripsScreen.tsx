@@ -6,6 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { useAppStore } from '../store/useAppStore'
 import Button from '../components/Button'
@@ -168,7 +169,7 @@ export default function CompletedTripsScreen() {
           </View>
         ) : completedTrips.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="checkmark-done-outline" size={56} color={COLORS.border} />
+            <Illustration name="noData" width={160} />
             <Text style={styles.emptyText}>No hay viajes completados aún</Text>
           </View>
         ) : (

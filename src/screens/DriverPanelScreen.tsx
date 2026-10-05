@@ -7,6 +7,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { checkDriverApprovalStatus, getDriverRestrictionMessage, type DriverApprovalStatus } from '../services/driverApproval'
@@ -490,9 +491,7 @@ export default function DriverPanelScreen() {
       >
         {routes.length === 0 ? (
           <View style={styles.emptyState}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="car-outline" size={48} color={COLORS.textTertiary} />
-            </View>
+            <Illustration name="noData" width={170} />
             <Text style={styles.emptyTitle}>No tienes viajes activos</Text>
             <Text style={styles.emptyText}>
               Crea una ruta para empezar a recibir pasajeros
@@ -997,16 +996,6 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: SPACING.xxxl,
-  },
-  emptyIcon: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
   },
   emptyTitle: {
     ...TYPOGRAPHY.h4,

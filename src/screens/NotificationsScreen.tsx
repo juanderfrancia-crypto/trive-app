@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useNotificationCenter } from '../context/NotificationsContext'
 import { Notification } from '../hooks/useNotifications'
 import { useAppStore } from '../store/useAppStore'
@@ -375,7 +376,7 @@ export default function NotificationsScreen() {
 
   const EmptyState = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="notifications-off-outline" size={48} color={COLORS.textTertiary} />
+      <Illustration name="myNotifications" width={180} />
       <Text style={styles.emptySubtitle}>
         {activeFilter.id === 'all' ? 'No hay más notificaciones' : 'No hay alertas en esta categoría'}
       </Text>

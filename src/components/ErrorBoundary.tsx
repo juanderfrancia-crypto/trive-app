@@ -2,6 +2,7 @@ import { Component, type ReactNode } from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { Text } from './AppText'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from './illustrations/Illustration'
 
 type Props = { children: ReactNode }
 type State = { hasError: boolean }
@@ -27,6 +28,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     return (
       <View style={styles.container}>
+        <Illustration name="warning" width={180} />
         <Text style={styles.title}>Algo salió mal</Text>
         <Text style={styles.message}>
           Tuvimos un problema inesperado. Intenta de nuevo; si sigue pasando, cierra y vuelve a abrir la app.

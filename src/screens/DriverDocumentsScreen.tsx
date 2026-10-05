@@ -7,6 +7,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as DocumentPicker from 'expo-document-picker'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { uploadDriverDocument, getDriverDocuments, type DriverDocument } from '../services/driverDocuments'
 import { DOCUMENTS_WITHOUT_EXPIRY } from '../utils/documentHelpers'
@@ -451,6 +452,9 @@ export default function DriverDocumentsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="personalFile" width={170} />
+        </View>
         {/* Verification Progress */}
         <LinearGradient
           colors={[COLORS.primary + 'F5', COLORS.primary + 'A0']}

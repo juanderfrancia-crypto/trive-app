@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons'
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg'
 import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
@@ -191,6 +192,10 @@ export default function PassengerHomeScreen() {
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>{initials}</Text>
           </View>
+        </View>
+
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="routePlanning" width={220} />
         </View>
 
         <Text style={styles.headline}>¿A dónde vas hoy?</Text>

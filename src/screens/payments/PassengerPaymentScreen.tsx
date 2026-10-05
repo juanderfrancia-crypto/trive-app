@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { COLORS, RADIUS, SPACING } from '../../theme/theme'
+import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { formatDia, formatHora, formatPrecio } from '../passenger/passengerFormat'
 import { usePassengerPayment } from './usePassengerPayment'
@@ -78,6 +79,9 @@ export default function PassengerPaymentScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       {header}
       <ScrollView contentContainerStyle={styles.contenido}>
+        <View style={{ alignItems: 'center' }}>
+          <Illustration name="walletDiag" width={180} />
+        </View>
         <Text style={styles.etiqueta}>
           {pagoConfirmado ? 'Pago confirmado' : 'Reserva confirmada · pago pendiente'}
         </Text>

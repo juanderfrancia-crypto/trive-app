@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
@@ -460,7 +461,7 @@ export default function ScheduledTripsScreen() {
         ) : trips.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-              <Ionicons name="calendar-outline" size={64} color={COLORS.textTertiary} />
+              <Illustration name="schedule" width={180} />
             </View>
             <Text style={styles.emptyTitle}>Sin viajes programados</Text>
             <Text style={styles.emptyText}>
