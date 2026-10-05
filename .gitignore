@@ -46,3 +46,6 @@ GoogleService-Info.plist
 
 # Supabase CLI local state (enlace al proyecto, no subir)
 supabase/.temp/
+
+# Lienzo de diseño local (no es código de la app)
+design-canvas/
