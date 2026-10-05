@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
@@ -460,7 +460,7 @@ export default function PaymentMethodsScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>💳 Métodos de Pago</Text>
         <TouchableOpacity
@@ -474,7 +474,7 @@ export default function PaymentMethodsScreen() {
             setShowForm(!showForm)
           }}
         >
-          <Ionicons name="add-circle-outline" size={20} color={COLORS.textInverse} />
+          <Icon name="CirclePlus" size={20} color={COLORS.textInverse} />
           <Text style={styles.addBtnText}>
             {showForm ? 'Cancelar' : 'Agregar tarjeta'}
           </Text>
@@ -596,7 +596,7 @@ export default function PaymentMethodsScreen() {
               </View>
 
               <View style={styles.methodInfo}>
-                <Ionicons name="card-outline" size={16} color={COLORS.primary} />
+                <Icon name="CreditCard" size={16} color={COLORS.primary} />
                 <Text style={styles.methodType}>
                   {item.type === 'credit_card' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'}
                 </Text>
@@ -609,7 +609,7 @@ export default function PaymentMethodsScreen() {
                     style={[styles.actionBtn, styles.defaultBtn]}
                     onPress={() => setAsDefault(item.id)}
                   >
-                    <Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} />
+                    <Icon name="CircleCheck" size={16} color={COLORS.success} />
                     <Text style={[styles.actionBtnText, styles.defaultBtnText]}>
                       Predeterminada
                     </Text>
@@ -620,7 +620,7 @@ export default function PaymentMethodsScreen() {
                   style={[styles.actionBtn, styles.deleteBtn]}
                   onPress={() => handleDelete(item.id)}
                 >
-                  <Ionicons name="trash" size={16} color={COLORS.error} />
+                  <Icon name="Trash2" size={16} color={COLORS.error} />
                   <Text style={[styles.actionBtnText, styles.deleteBtnText]}>
                     Eliminar
                   </Text>

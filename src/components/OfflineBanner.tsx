@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import NetInfo from '@react-native-community/netinfo'
+import Icon from './Icon'
 
 export default function OfflineBanner() {
   const [visible, setVisible] = React.useState(false)
@@ -20,7 +20,7 @@ export default function OfflineBanner() {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <Ionicons name="cloud-offline-outline" size={20} color={COLORS.white} style={styles.icon} />
+        <Icon name="CloudOff" size={20} color={COLORS.white} style={styles.icon} />
         <Text style={styles.text}>Sin conexión a internet</Text>
       </View>
     </View>

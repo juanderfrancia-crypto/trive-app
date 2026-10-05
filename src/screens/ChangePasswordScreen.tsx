@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, TouchableOpacity, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { supabase } from '../services/supabase'
 import { validatePassword } from '../utils/validations'
@@ -84,7 +84,7 @@ export default function ChangePasswordScreen() {
         <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+              <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.title}>Cambiar contraseña</Text>
             <View style={{ width: 28 }} />
@@ -98,7 +98,7 @@ export default function ChangePasswordScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.label}>Contraseña actual</Text>
               <View style={[styles.inputContainer, errors.currentPassword && styles.inputError]}>
-                <Ionicons name="lock-closed-outline" size={20} color={errors.currentPassword ? COLORS.error : COLORS.textSecondary} />
+                <Icon name="Lock" size={20} color={errors.currentPassword ? COLORS.error : COLORS.textSecondary} />
                 <TextInput
                   style={styles.input}
                   secureTextEntry
@@ -117,7 +117,7 @@ export default function ChangePasswordScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.label}>Nueva contraseña</Text>
               <View style={[styles.inputContainer, errors.newPassword && styles.inputError]}>
-                <Ionicons name="lock-closed-outline" size={20} color={errors.newPassword ? COLORS.error : COLORS.textSecondary} />
+                <Icon name="Lock" size={20} color={errors.newPassword ? COLORS.error : COLORS.textSecondary} />
                 <TextInput
                   style={styles.input}
                   secureTextEntry
@@ -136,7 +136,7 @@ export default function ChangePasswordScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.label}>Confirmar contraseña</Text>
               <View style={[styles.inputContainer, errors.confirmPassword && styles.inputError]}>
-                <Ionicons name="lock-closed-outline" size={20} color={errors.confirmPassword ? COLORS.error : COLORS.textSecondary} />
+                <Icon name="Lock" size={20} color={errors.confirmPassword ? COLORS.error : COLORS.textSecondary} />
                 <TextInput
                   style={styles.input}
                   secureTextEntry

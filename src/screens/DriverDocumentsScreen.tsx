@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as DocumentPicker from 'expo-document-picker'
@@ -13,6 +12,7 @@ import { uploadDriverDocument, getDriverDocuments, type DriverDocument } from '.
 import { DOCUMENTS_WITHOUT_EXPIRY } from '../utils/documentHelpers'
 import { useCallback } from 'react'
 import { supabase } from '../services/supabase'
+import Icon from '../components/Icon'
 
 interface DocumentItem {
   id: string
@@ -70,7 +70,7 @@ const REQUIRED_DOCUMENTS: DocumentItem[] = [
 const getStatusInfo = (status: string) => {
   switch (status) {
     case 'verified':
-      return { label: 'Verificado ✓', color: COLORS.success, icon: 'checkmark-circle', bgOpacity: '20' }
+      return { label: 'Verificado ✓', color: COLORS.textPrimary, icon: 'checkmark-circle', bgOpacity: '20' }
     case 'verifying':
       return { label: 'En análisis...', color: COLORS.primary, icon: 'time', bgOpacity: '20' }
     case 'pending':
@@ -265,7 +265,7 @@ export default function DriverDocumentsScreen() {
     } else if (daysLeft <= 30) {
       return { label: `Vence en ${daysLeft} días`, color: COLORS.warning, daysLeft, isExpired: false }
     } else {
-      return { label: `Vence en ${daysLeft} días`, color: COLORS.success, daysLeft, isExpired: false }
+      return { label: `Vence en ${daysLeft} días`, color: COLORS.textSecondary, daysLeft, isExpired: false }
     }
   }
 
@@ -386,7 +386,7 @@ export default function DriverDocumentsScreen() {
         <View style={styles.restrictedContainer}>
           {/* Icon */}
           <View style={styles.restrictedIcon}>
-            <Ionicons name="lock-closed" size={48} color={COLORS.error} />
+            <Icon name="Lock" size={48} color={COLORS.error} />
           </View>
 
           {/* Title */}
@@ -400,8 +400,8 @@ export default function DriverDocumentsScreen() {
           {/* Current Role Badge */}
           {user && (
             <View style={styles.roleBadge}>
-              <Ionicons 
-                name={(user as any).role === 'driver' ? 'car' : 'person'} 
+              <Icon 
+                name={(user as any).role === 'driver' ? 'Car' : 'User'} 
                 size={18} 
                 color={COLORS.textInverse}
               />
@@ -418,7 +418,7 @@ export default function DriverDocumentsScreen() {
               onPress={() => (navigation as any).navigate('Main', { screen: 'Profile' })}
               activeOpacity={0.8}
             >
-              <Ionicons name="person-circle" size={20} color={COLORS.textInverse} />
+              <Icon name="UserCircle" size={20} color={COLORS.textInverse} />
               <Text style={styles.restrictedPrimaryBtnText}>Ir a Perfil y cambiar rol</Text>
             </TouchableOpacity>
 
@@ -443,7 +443,7 @@ export default function DriverDocumentsScreen() {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Documentos</Text>
@@ -540,7 +540,7 @@ export default function DriverDocumentsScreen() {
               <View key={doc.id}>
                 <View style={styles.documentCard}>
                   <View style={styles.documentIcon}>
-                    <Ionicons
+                    <Icon
                       name={doc.icon as any}
                       size={24}
                       color={COLORS.primary}
@@ -554,7 +554,7 @@ export default function DriverDocumentsScreen() {
 
                   <View style={styles.documentStatus}>
                     <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + statusInfo.bgOpacity }]}>
-                      <Ionicons
+                      <Icon
                         name={statusInfo.icon as any}
                         size={16}
                         color={statusInfo.color}
@@ -578,8 +578,8 @@ export default function DriverDocumentsScreen() {
                         {isUploading ? (
                           <ActivityIndicator size="small" color={status === 'verified' ? COLORS.warning : COLORS.primary} />
                         ) : (
-                          <Ionicons 
-                            name={status === 'verified' ? "refresh-circle-outline" : "cloud-upload-outline"} 
+                          <Icon 
+                            name={status === 'verified' ? "RefreshCw" : "CloudUpload"} 
                             size={16} 
                             color={status === 'verified' ? COLORS.warning : COLORS.primary} 
                           />
@@ -609,8 +609,8 @@ export default function DriverDocumentsScreen() {
                             borderWidth: 1
                           }
                         ]}>
-                          <Ionicons 
-                            name={expiryInfo.isExpired ? "alert-circle" : "calendar"} 
+                          <Icon 
+                            name={expiryInfo.isExpired ? "CircleAlert" : "Calendar"} 
                             size={16} 
                             color={expiryInfo.color} 
                           />
@@ -626,7 +626,7 @@ export default function DriverDocumentsScreen() {
                 {/* Rejection reason if document was rejected */}
                 {status === 'rejected' && rejectionReason && (
                   <View style={styles.rejectionBanner}>
-                    <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+                    <Icon name="CircleAlert" size={18} color={COLORS.error} />
                     <View style={styles.rejectionContent}>
                       <Text style={styles.rejectionTitle}>Documento Rechazado</Text>
                       <Text style={styles.rejectionReason}>{rejectionReason}</Text>
@@ -654,7 +654,7 @@ export default function DriverDocumentsScreen() {
         {/* Important Info */}
         <View style={styles.infoCard}>
           <View style={styles.infoIconContainer}>
-            <Ionicons name="information-circle" size={24} color={COLORS.warning} />
+            <Icon name="Info" size={24} color={COLORS.warning} />
           </View>
           <View style={styles.infoContent}>
             <Text style={styles.infoTitle}>Información Importante</Text>
@@ -678,7 +678,7 @@ export default function DriverDocumentsScreen() {
               Linking.openURL('mailto:soportetrive@gmail.com?subject=Consulta sobre Documentos&body=Hola, tengo una pregunta sobre mis documentos.')
             }}
           >
-            <Ionicons name="mail-outline" size={18} color={COLORS.primary} />
+            <Icon name="Mail" size={18} color={COLORS.primary} />
             <Text style={styles.helpButtonText}>Contactar Soporte</Text>
           </TouchableOpacity>
         </View>
@@ -688,7 +688,7 @@ export default function DriverDocumentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  identityHint: { fontSize: 12, color: COLORS.textTertiary, marginBottom: SPACING.sm },
+  identityHint: { fontSize: 13, color: COLORS.textTertiary, marginBottom: SPACING.sm },
   identityRow: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
   identityInput: {
     flex: 1,
@@ -814,7 +814,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.h4,
-    fontSize: 20,
+    fontSize: 22,
     color: COLORS.textPrimary,
     fontWeight: '700',
   },
@@ -829,6 +829,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   progressCard: {
+    ...SHADOWS.sm,
     padding: SPACING.lg,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.lg,
@@ -874,7 +875,7 @@ const styles = StyleSheet.create({
   },
   progressDescription: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.8)',
   },
   documentsSection: {
@@ -892,6 +893,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   documentCard: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: SPACING.md,
@@ -916,7 +918,7 @@ const styles = StyleSheet.create({
   },
   documentDescription: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
@@ -940,7 +942,7 @@ const styles = StyleSheet.create({
   },
   statusLabel: {
     ...TYPOGRAPHY.label,
-    fontSize: 10,
+    fontSize: 11,
   },
   uploadBtn: {
     width: 32,
@@ -980,7 +982,7 @@ const styles = StyleSheet.create({
   },
   rejectionReason: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textPrimary,
     fontStyle: 'italic',
   },
@@ -1003,7 +1005,7 @@ const styles = StyleSheet.create({
   },
   verifyingText: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.primary,
   },
   divider: {
@@ -1012,6 +1014,7 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.sm,
   },
   infoCard: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     backgroundColor: COLORS.warning + '15',
     borderLeftWidth: 4,
@@ -1039,7 +1042,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
   },
   helpCard: {
@@ -1056,7 +1059,7 @@ const styles = StyleSheet.create({
   },
   helpText: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     marginBottom: SPACING.lg,
   },
@@ -1089,12 +1092,12 @@ const styles = StyleSheet.create({
   },
   expiryText: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
   },
   expiryNoDate: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     fontStyle: 'italic',
   },

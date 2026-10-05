@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { View, StyleSheet, Pressable, TouchableOpacity } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -70,7 +70,7 @@ export default function AirportHubScreen() {
               <Text style={styles.historyBtnText}>{showHistory ? 'Volver' : 'Historial'}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.headerAction} onPress={handlePrimaryAction} activeOpacity={0.85}>
-              <Ionicons name={isDriver ? 'search' : 'add-circle'} size={22} color={COLORS.primary} />
+              <Icon name={isDriver ? 'Search' : 'CirclePlus'} size={22} color={COLORS.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,

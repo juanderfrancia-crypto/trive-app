@@ -1,7 +1,7 @@
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, RADIUS, SPACING } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
@@ -90,7 +90,7 @@ export default function DriverPaymentsScreen() {
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton} accessibilityLabel="Volver">
-          <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ArrowLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.sm, paddingBottom: SPACING.sm },
   backButton: { width: 40, height: 40, justifyContent: 'center' },
   contenido: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.xxl },
-  titulo: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary },
+  titulo: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary },
   subtitulo: { marginTop: SPACING.xs, fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
   feedback: { marginTop: SPACING.md, fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
   tarjeta: {
@@ -141,11 +141,11 @@ const styles = StyleSheet.create({
   chip: { paddingHorizontal: SPACING.md - 2, paddingVertical: SPACING.xs + 1, borderRadius: RADIUS.full },
   chipMarcado: { backgroundColor: COLORS.warningLight },
   chipPendiente: { backgroundColor: COLORS.surfaceAlt },
-  chipTexto: { fontSize: 12, fontWeight: '700' },
+  chipTexto: { fontSize: 13, fontWeight: '700' },
   chipTextoMarcado: { color: COLORS.warningDark },
   chipTextoPendiente: { color: COLORS.textSecondary },
-  tiempo: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
-  pasajero: { marginTop: SPACING.md, fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  tiempo: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  pasajero: { marginTop: SPACING.md, fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
   detalle: { marginTop: SPACING.xs, fontSize: 14, color: COLORS.textSecondary },
   codigo: { fontWeight: '800', color: COLORS.textPrimary },
   ruta: { marginTop: SPACING.xs, fontSize: 13, color: COLORS.textSecondary },
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     borderTopColor: COLORS.borderLight,
   },
   montoEtiqueta: { fontSize: 13, color: COLORS.textSecondary },
-  monto: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+  monto: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
   acciones: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   botonPrimario: {
     flex: 1,

@@ -3,12 +3,13 @@ import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import Icon from '../components/Icon'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../services/supabase'
+import { useDriverPayments } from './payments/useDriverPayments'
 
 const getGreeting = () => {
   const h = new Date().getHours()
@@ -23,6 +24,8 @@ export default function DriverHomeScreen() {
   const { profile } = useProfile(user?.id)
   const [pendingAirportCount, setPendingAirportCount] = useState(0)
   const [showPublishMenu, setShowPublishMenu] = useState(false)
+  const { payments: pendingPayments, reload: reloadPayments } = useDriverPayments(user?.id)
+  const pendingPaymentsCount = pendingPayments.length
 
   useFocusEffect(
     useCallback(() => {
@@ -31,7 +34,8 @@ export default function DriverHomeScreen() {
         .select('id', { count: 'exact', head: true })
         .eq('status', 'pending')
         .then(({ count }) => setPendingAirportCount(count ?? 0))
-    }, [])
+      reloadPayments()
+    }, [reloadPayments])
   )
 
   const firstName = user?.name?.split(' ')[0] ?? 'Conductor'
@@ -51,7 +55,7 @@ export default function DriverHomeScreen() {
             <Text style={styles.name}>{firstName}</Text>
           </View>
           <View style={styles.modePill}>
-            <Ionicons name="car-outline" size={13} color={COLORS.primary} />
+            <Icon name="Car" size={13} color={COLORS.primary} />
             <Text style={styles.modeText}>Conductor</Text>
           </View>
         </View>
@@ -86,13 +90,13 @@ export default function DriverHomeScreen() {
 
         <TouchableOpacity style={styles.primaryCta} onPress={() => setShowPublishMenu(true)} activeOpacity={0.88}>
           <View style={styles.primaryCtaIcon}>
-            <Ionicons name="add" size={22} color={COLORS.primary} />
+            <Icon name="Plus" size={22} color={COLORS.primary} />
           </View>
           <View style={styles.primaryCtaText}>
             <Text style={styles.primaryCtaTitle}>Publicar ruta</Text>
             <Text style={styles.primaryCtaSub}>Vende cupos para hoy o para después</Text>
           </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.white} />
+          <Icon name="ChevronRight" size={18} color={COLORS.white} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -101,7 +105,7 @@ export default function DriverHomeScreen() {
           activeOpacity={0.85}
         >
           <View style={styles.cardIcon}>
-            <Ionicons name="document-text-outline" size={20} color={COLORS.primary} />
+            <Icon name="Plane" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Viajes especiales</Text>
@@ -114,7 +118,7 @@ export default function DriverHomeScreen() {
               <Text style={styles.badgeText}>{pendingAirportCount > 99 ? '99+' : pendingAirportCount}</Text>
             </View>
           )}
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -123,13 +127,22 @@ export default function DriverHomeScreen() {
           activeOpacity={0.85}
         >
           <View style={styles.cardIcon}>
-            <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
+            <Icon name="Banknote" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Pagos por confirmar</Text>
-            <Text style={styles.cardSub}>Confirma los pagos que recibiste de tus pasajeros</Text>
+            <Text style={styles.cardSub}>
+              {pendingPaymentsCount > 0
+                ? `${pendingPaymentsCount} ${pendingPaymentsCount === 1 ? 'pago esperando' : 'pagos esperando'} tu confirmación`
+                : 'Sin pagos pendientes de confirmar'}
+            </Text>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+          {pendingPaymentsCount > 0 && (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{pendingPaymentsCount > 99 ? '99+' : pendingPaymentsCount}</Text>
+            </View>
+          )}
+          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -138,13 +151,13 @@ export default function DriverHomeScreen() {
           activeOpacity={0.85}
         >
           <View style={styles.cardIcon}>
-            <Ionicons name="speedometer-outline" size={20} color={COLORS.primary} />
+            <Icon name="LayoutDashboard" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Mi panel</Text>
             <Text style={styles.cardSub}>Reservas, pasajeros y estado de tus rutas</Text>
           </View>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
         </TouchableOpacity>
       </ScrollView>
 
@@ -157,24 +170,24 @@ export default function DriverHomeScreen() {
 
             <TouchableOpacity style={styles.sheetItem} onPress={() => goTo('DriverRegister')} activeOpacity={0.8}>
               <View style={styles.sheetIcon}>
-                <Ionicons name="add-circle-outline" size={20} color={COLORS.primary} />
+                <Icon name="CirclePlus" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.sheetText}>
                 <Text style={styles.sheetItemTitle}>Crear ruta</Text>
                 <Text style={styles.sheetItemSub}>Publica un viaje nuevo ahora</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.sheetItem} onPress={() => goTo('RecurringRoutes')} activeOpacity={0.8}>
               <View style={styles.sheetIcon}>
-                <Ionicons name="repeat" size={20} color={COLORS.primary} />
+                <Icon name="Repeat" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.sheetText}>
                 <Text style={styles.sheetItemTitle}>Plantillas de ruta</Text>
                 <Text style={styles.sheetItemSub}>Publica tus rutas habituales rápido</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -194,13 +207,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
     backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full,
   },
-  modeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  modeText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
-  walletCard: { marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary },
+  walletCard: { ...SHADOWS.md, shadowColor: COLORS.primary, shadowOpacity: 0.28, marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary },
   walletLabel: { fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85 },
-  walletValue: { fontSize: 34, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5 },
+  walletValue: { fontSize: 32, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5 },
   walletHint: { fontSize: 13, color: COLORS.white, opacity: 0.85, marginTop: SPACING.xs, lineHeight: 19 },
   walletBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
     marginTop: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.white,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -208,8 +224,8 @@ const styles = StyleSheet.create({
 
   statsRow: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.md },
   stat: { flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border },
-  statValue: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
-  statLabel: { fontSize: 12, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  statValue: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  statLabel: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs },
 
   primaryCta: {
     marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
@@ -224,6 +240,7 @@ const styles = StyleSheet.create({
   primaryCtaSub: { fontSize: 13, color: COLORS.white, opacity: 0.75, marginTop: 2 },
 
   card: {
+    ...SHADOWS.sm,
     marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
     backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
   },

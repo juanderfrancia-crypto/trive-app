@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useState } from 'react'
 import * as Device from 'expo-device'
@@ -115,7 +115,7 @@ Correo de contacto: ${report.email}
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Reportar Problema</Text>
           <View style={{ width: 28 }} />
@@ -124,7 +124,7 @@ Correo de contacto: ${report.email}
         {/* Welcome Section */}
         <View style={styles.section}>
           <View style={styles.welcomeBox}>
-            <Ionicons name="bug-outline" size={48} color={COLORS.error} />
+            <Icon name="Bug" size={48} color={COLORS.error} />
             <Text style={styles.welcomeTitle}>Ayúdanos a Mejorar</Text>
             <Text style={styles.welcomeText}>
               Tus reportes de bugs nos ayudan a mejorar Trive constantemente
@@ -164,7 +164,7 @@ Correo de contacto: ${report.email}
                   onPress={() => setReport({ ...report, category: category.id })}
                   activeOpacity={0.7}
                 >
-                  <Ionicons
+                  <Icon
                     name={category.icon as any}
                     size={20}
                     color={report.category === category.id ? COLORS.primary : COLORS.textTertiary}
@@ -258,14 +258,14 @@ Correo de contacto: ${report.email}
             activeOpacity={0.8}
             disabled={loading}
           >
-            <Ionicons name="send-outline" size={20} color={COLORS.background} />
+            <Icon name="Send" size={20} color={COLORS.background} />
             <Text style={styles.submitButtonText}>
               {loading ? 'Enviando...' : 'Enviar Reporte'}
             </Text>
           </TouchableOpacity>
 
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+            <Icon name="Info" size={20} color={COLORS.primary} />
             <Text style={styles.infoText}>
               Tu correo no será compartido públicamente. Solo usaremos para contactarte con actualizaciones.
             </Text>

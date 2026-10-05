@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { View, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from './Icon'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { TripMessageList } from './TripMessageList'
 import { QuickMessageInput } from './QuickMessageInput'
@@ -64,7 +64,7 @@ export const TripMessagesModal = React.memo(
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Ionicons name="chevron-down" size={24} color={COLORS.textPrimary} />
+              <Icon name="ChevronDown" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
             <View style={styles.headerContent}>
@@ -91,7 +91,7 @@ export const TripMessagesModal = React.memo(
               </View>
             ) : error ? (
               <View style={styles.centerContainer}>
-                <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
+                <Icon name="CircleAlert" size={48} color={COLORS.error} />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             ) : (
@@ -102,7 +102,7 @@ export const TripMessagesModal = React.memo(
 
             {sendError && (
               <View style={styles.errorBanner}>
-                <Ionicons name="alert-circle" size={16} color={COLORS.error} />
+                <Icon name="CircleAlert" size={16} color={COLORS.error} />
                 <Text style={styles.errorBannerText}>{sendError}</Text>
               </View>
             )}

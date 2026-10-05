@@ -2,13 +2,14 @@ import { useCallback, useState } from 'react'
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import * as WebBrowser from 'expo-web-browser'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
+import { isDriverRole } from '../utils/userRole'
 import { supabase } from '../services/supabase'
+import Icon from '../components/Icon'
 
 const ROUTE_COMMISSION = 2000
 
@@ -45,6 +46,7 @@ export default function WalletScreen() {
   const setUser = useAppStore((s) => s.setUser)
 
   const [balance, setBalance]         = useState<number>(user?.balance ?? 0)
+  const [driverStats, setDriverStats] = useState({ rating: 0, trips: 0 })
   const [transactions, setTransactions] = useState<WalletTx[]>([])
   const [selectedAmount, setSelectedAmount] = useState<number>(10000)
   const [loadingBalance, setLoadingBalance] = useState(false)
@@ -56,7 +58,7 @@ export default function WalletScreen() {
     setLoadingBalance(true)
     try {
       const [profileRes, txRes] = await Promise.all([
-        supabase.from('profiles').select('balance').eq('id', user.id).single(),
+        supabase.from('profiles').select('balance, rating, total_trips').eq('id', user.id).single(),
         supabase.from('wallet_transactions')
           .select('id, amount, type, status, created_at')
           .eq('user_id', user.id)
@@ -64,6 +66,7 @@ export default function WalletScreen() {
           .limit(20),
       ])
       if (profileRes.data) {
+        setDriverStats({ rating: profileRes.data.rating ?? 0, trips: profileRes.data.total_trips ?? 0 })
         const newBalance = profileRes.data.balance ?? 0
         setBalance(newBalance)
         setUser({ ...user, balance: newBalance })
@@ -122,11 +125,13 @@ export default function WalletScreen() {
 
   const tripsAvailable = Math.floor(balance / ROUTE_COMMISSION)
 
+  const initials = (user?.name ?? 'C').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+          <Icon name="ArrowLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={s.title}>Mi Billetera</Text>
         <View style={{ width: 40 }} />
@@ -144,10 +149,23 @@ export default function WalletScreen() {
             <ActivityIndicator color="#fff" size="large" />
           ) : (
             <>
+              {isDriverRole(user) && (
+                <View style={s.identityRow}>
+                  <View style={s.identityAvatar}>
+                    <Text style={s.identityInitials}>{initials}</Text>
+                  </View>
+                  <View style={s.identityText}>
+                    <Text style={s.identityName} numberOfLines={1}>{user?.name ?? 'Conductor'}</Text>
+                    <Text style={s.identitySub}>
+                      ★ {driverStats.rating.toFixed(1)} · {driverStats.trips} {driverStats.trips === 1 ? 'ruta' : 'rutas'}
+                    </Text>
+                  </View>
+                </View>
+              )}
               <Text style={s.balanceLabel}>SALDO DISPONIBLE</Text>
               <Text style={s.balanceAmount}>${balance.toLocaleString('es-CO')}</Text>
               <View style={s.tripsRow}>
-                <Ionicons name="car-outline" size={15} color="rgba(255,255,255,0.8)" />
+                <Icon name="Car" size={15} color="rgba(255,255,255,0.8)" />
                 <Text style={s.tripsText}>
                   {tripsAvailable > 0
                     ? `Puedes publicar ${tripsAvailable} viaje${tripsAvailable !== 1 ? 's' : ''}`
@@ -162,7 +180,7 @@ export default function WalletScreen() {
         <View style={s.infoCard}>
           <View style={s.infoRow}>
             <View style={s.infoIcon}>
-              <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+              <Icon name="Info" size={20} color={COLORS.primary} />
             </View>
             <View style={s.infoText}>
               <Text style={s.infoTitle}>Comisión por viaje publicado</Text>
@@ -214,7 +232,7 @@ export default function WalletScreen() {
                 </>
               ) : (
                 <>
-                  <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                  <Icon name="CirclePlus" size={20} color="#fff" />
                   <Text style={s.rechargeBtnText}>
                     Recargar ${selectedAmount.toLocaleString('es-CO')}
                   </Text>
@@ -231,7 +249,7 @@ export default function WalletScreen() {
           <Text style={s.sectionLabel}>HISTORIAL DE MOVIMIENTOS</Text>
           {transactions.length === 0 ? (
             <View style={s.emptyCard}>
-              <Ionicons name="receipt-outline" size={32} color={COLORS.textTertiary} />
+              <Icon name="Receipt" size={32} color={COLORS.textTertiary} />
               <Text style={s.emptyText}>Sin movimientos</Text>
               <Text style={s.emptySub}>Aquí verás el historial de recargas y cobros por viajes publicados.</Text>
             </View>
@@ -240,8 +258,8 @@ export default function WalletScreen() {
               {transactions.map((tx) => (
                 <View key={tx.id} style={s.txRow}>
                   <View style={[s.txIcon, { backgroundColor: tx.type === 'recharge' ? `${COLORS.success}15` : `${COLORS.error}12` }]}>
-                    <Ionicons
-                      name={tx.type === 'recharge' ? 'arrow-down-outline' : 'car-outline'}
+                    <Icon
+                      name={tx.type === 'recharge' ? 'ArrowDown' : 'Car'}
                       size={18}
                       color={tx.type === 'recharge' ? COLORS.success : COLORS.error}
                     />
@@ -301,24 +319,33 @@ const s = StyleSheet.create({
     borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  title: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  title: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary },
   scroll: { padding: SPACING.lg, gap: SPACING.lg, paddingBottom: 40 },
 
   // Balance
   balanceCard: {
+    ...SHADOWS.md,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.28,
     backgroundColor: COLORS.primary, borderRadius: RADIUS.xl,
-    padding: SPACING.xl, alignItems: 'center', gap: 8, minHeight: 130,
+    padding: SPACING.xl, alignItems: 'stretch', gap: 6, minHeight: 130,
     justifyContent: 'center',
   },
-  balanceLabel: { fontSize: 12, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 1 },
-  balanceAmount: { fontSize: 42, fontWeight: '800', color: '#fff', letterSpacing: -1 },
+  balanceLabel: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 0.8, textTransform: 'uppercase', marginTop: 4 },
+  balanceAmount: { fontSize: 40, fontWeight: '800', color: '#fff', letterSpacing: -0.8 },
+  identityRow: { flexDirection: 'row', alignItems: 'center', gap: 12, alignSelf: 'stretch', marginBottom: 6 },
+  identityAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  identityInitials: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  identityText: { flex: 1 },
+  identityName: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  identitySub: { color: 'rgba(255,255,255,0.75)', fontSize: 13, marginTop: 2 },
   tripsRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  tripsText: { fontSize: 13, color: 'rgba(255,255,255,0.85)', fontWeight: '500' },
+  tripsText: { fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
 
   // Info
   infoCard: {
+    ...SHADOWS.sm,
     backgroundColor: `${COLORS.primary}08`, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: `${COLORS.primary}20`, padding: SPACING.lg,
   },
   infoRow: { flexDirection: 'row', gap: SPACING.md },
   infoIcon: { width: 36, height: 36, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15`, justifyContent: 'center', alignItems: 'center' },
@@ -332,8 +359,8 @@ const s = StyleSheet.create({
 
   // Recharge
   rechargeCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
     padding: SPACING.lg, gap: SPACING.lg,
   },
   rechargeTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
@@ -353,7 +380,7 @@ const s = StyleSheet.create({
   },
   rechargeBtnDisabled: { opacity: 0.6 },
   rechargeBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  rechargeNote: { fontSize: 12, color: COLORS.textTertiary, textAlign: 'center' },
+  rechargeNote: { fontSize: 13, color: COLORS.textTertiary, textAlign: 'center' },
 
   // Transactions
   txList: {
@@ -368,16 +395,16 @@ const s = StyleSheet.create({
   txIcon: { width: 38, height: 38, borderRadius: 19, justifyContent: 'center', alignItems: 'center' },
   txInfo: { flex: 1 },
   txLabel: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  txDate: { fontSize: 12, color: COLORS.textTertiary, marginTop: 2 },
+  txDate: { fontSize: 13, color: COLORS.textTertiary, marginTop: 2 },
   txRight: { alignItems: 'flex-end', gap: 4 },
   txAmount: { fontSize: 15, fontWeight: '700' },
   txStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full },
-  txStatusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
+  txStatusText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
 
   // Empty
   emptyCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
     padding: SPACING.xl, alignItems: 'center', gap: SPACING.sm,
   },
   emptyText: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary },

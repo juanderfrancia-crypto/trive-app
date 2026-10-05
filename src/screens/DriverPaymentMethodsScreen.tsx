@@ -2,27 +2,35 @@ import { useState, useCallback } from 'react'
 import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
-type MethodType = 'nequi' | 'daviplata'
+type MethodType = 'nequi' | 'daviplata' | 'bre_b'
 
 interface DriverPaymentMethod {
   id: string
   driver_id: string
   type: MethodType
-  phone_number: string
+  phone_number: string | null
+  payment_key: string | null
   account_holder: string
   is_active: boolean
 }
 
-const METHOD_CONFIG: Record<MethodType, { label: string; color: string; icon: string; placeholder: string }> = {
-  nequi:     { label: 'Nequi',     color: COLORS.primary, icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
-  daviplata: { label: 'Daviplata', color: COLORS.error, icon: 'phone-portrait-outline', placeholder: '3XX XXX XXXX' },
+const METHOD_CONFIG: Record<MethodType, { label: string; color: string; fieldLabel: string; placeholder: string }> = {
+  nequi:     { label: 'Nequi',     color: COLORS.primary, fieldLabel: 'Número de celular', placeholder: '3XX XXX XXXX' },
+  daviplata: { label: 'Daviplata', color: COLORS.error,   fieldLabel: 'Número de celular', placeholder: '3XX XXX XXXX' },
+  bre_b:     { label: 'Bre-B',     color: COLORS.primary, fieldLabel: 'Llave Bre-B',       placeholder: 'Celular, cédula, correo o alias' },
+}
+
+const KEY_MIN_LENGTH = 4
+
+function methodValue(m: DriverPaymentMethod): string {
+  return (m.type === 'bre_b' ? m.payment_key : m.phone_number) ?? ''
 }
 
 export default function DriverPaymentMethodsScreen() {
@@ -35,7 +43,7 @@ export default function DriverPaymentMethodsScreen() {
   const [showForm, setShowForm]   = useState(false)
 
   const [selectedType, setSelectedType] = useState<MethodType>('nequi')
-  const [phoneNumber, setPhoneNumber]   = useState('')
+  const [value, setValue]               = useState('')
   const [holderName, setHolderName]     = useState('')
   const [formError, setFormError]       = useState('')
 
@@ -59,15 +67,21 @@ export default function DriverPaymentMethodsScreen() {
 
   const openForm = () => {
     setSelectedType('nequi')
-    setPhoneNumber('')
+    setValue('')
     setHolderName(user?.name || '')
     setFormError('')
     setShowForm(true)
   }
 
   const handleSave = async () => {
-    if (!phoneNumber.trim()) { setFormError('Ingresa el número'); return }
-    if (phoneNumber.replace(/\D/g, '').length < 7) { setFormError('Número inválido'); return }
+    const clean = value.trim()
+    if (!clean) { setFormError(selectedType === 'bre_b' ? 'Ingresa tu llave Bre-B' : 'Ingresa el número'); return }
+    if (selectedType === 'bre_b') {
+      if (clean.length < KEY_MIN_LENGTH) { setFormError('La llave es muy corta'); return }
+    } else if (clean.replace(/\D/g, '').length < 7) {
+      setFormError('Número inválido')
+      return
+    }
     if (!holderName.trim()) { setFormError('Ingresa el nombre del titular'); return }
     if (!user?.id) return
 
@@ -76,7 +90,8 @@ export default function DriverPaymentMethodsScreen() {
       const { error } = await supabase.from('driver_payment_methods').insert({
         driver_id: user.id,
         type: selectedType,
-        phone_number: phoneNumber.trim(),
+        phone_number: selectedType === 'bre_b' ? null : clean,
+        payment_key: selectedType === 'bre_b' ? clean : null,
         account_holder: holderName.trim(),
         is_active: true,
       })
@@ -93,7 +108,7 @@ export default function DriverPaymentMethodsScreen() {
   const handleDelete = (method: DriverPaymentMethod) => {
     Alert.alert(
       'Eliminar método',
-      `¿Eliminar ${METHOD_CONFIG[method.type].label} ${method.phone_number}?`,
+      `¿Eliminar ${METHOD_CONFIG[method.type].label} ${methodValue(method)}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -110,44 +125,38 @@ export default function DriverPaymentMethodsScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.textPrimary} />
+        <TouchableOpacity onPress={() => navigation.goBack()} style={s.iconBtn} activeOpacity={0.7}>
+          <Icon name="ArrowLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={s.title}>Métodos de pago</Text>
-        <TouchableOpacity onPress={openForm} style={s.addBtn} activeOpacity={0.7}>
-          <Ionicons name="add" size={24} color={COLORS.primary} />
+        <TouchableOpacity onPress={openForm} style={s.iconBtn} activeOpacity={0.7}>
+          <Icon name="CirclePlus" size={24} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
-
-        {/* Info */}
         <View style={s.infoCard}>
-          <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
+          <Icon name="Info" size={18} color={COLORS.primary} />
           <Text style={s.infoText}>
             Los pasajeros verán estos datos al reservar y te pagarán directamente.
             Trive no procesa ni retiene ningún pago del viaje.
           </Text>
         </View>
 
-        {/* Efectivo — siempre disponible */}
         <View style={s.section}>
           <Text style={s.sectionLabel}>SIEMPRE DISPONIBLE</Text>
           <View style={s.methodCard}>
             <View style={[s.methodIcon, { backgroundColor: COLORS.successLight }]}>
-              <Ionicons name="cash-outline" size={22} color={COLORS.success} />
+              <Icon name="Banknote" size={22} color={COLORS.success} />
             </View>
             <View style={s.methodInfo}>
               <Text style={s.methodLabel}>Efectivo</Text>
               <Text style={s.methodSub}>Los pasajeros pueden pagarte en efectivo al subir</Text>
             </View>
-            <View style={s.methodBadge}>
-              <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
-            </View>
+            <Icon name="CircleCheck" size={18} color={COLORS.textPrimary} />
           </View>
         </View>
 
-        {/* Métodos digitales */}
         <View style={s.section}>
           <Text style={s.sectionLabel}>MÉTODOS DIGITALES</Text>
           {loading ? (
@@ -156,9 +165,9 @@ export default function DriverPaymentMethodsScreen() {
             <View style={s.emptyCard}>
               <Illustration name="walletDiag" width={150} />
               <Text style={s.emptyTitle}>Sin métodos digitales</Text>
-              <Text style={s.emptySub}>Agrega Nequi, Daviplata o Bancolombia para que los pasajeros puedan pagarte digitalmente.</Text>
+              <Text style={s.emptySub}>Agrega Nequi, Daviplata o tu llave Bre-B para que los pasajeros puedan pagarte digitalmente.</Text>
               <TouchableOpacity style={s.addFirstBtn} onPress={openForm} activeOpacity={0.8}>
-                <Ionicons name="add-circle-outline" size={18} color={COLORS.primary} />
+                <Icon name="CirclePlus" size={18} color={COLORS.primary} />
                 <Text style={s.addFirstBtnText}>Agregar método</Text>
               </TouchableOpacity>
             </View>
@@ -168,37 +177,34 @@ export default function DriverPaymentMethodsScreen() {
               return (
                 <View key={m.id} style={s.methodCard}>
                   <View style={[s.methodIcon, { backgroundColor: cfg.color + '18' }]}>
-                    <Ionicons name={cfg.icon as any} size={22} color={cfg.color} />
+                    <Icon name="Smartphone" size={22} color={cfg.color} />
                   </View>
                   <View style={s.methodInfo}>
                     <Text style={s.methodLabel}>{cfg.label}</Text>
-                    <Text style={s.methodPhone}>{m.phone_number}</Text>
+                    <Text style={s.methodValue}>{methodValue(m)}</Text>
                     <Text style={s.methodHolder}>{m.account_holder}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => handleDelete(m)} style={s.deleteBtn} activeOpacity={0.7}>
-                    <Ionicons name="trash-outline" size={18} color={COLORS.error} />
+                  <TouchableOpacity onPress={() => handleDelete(m)} style={s.iconBtn} activeOpacity={0.7}>
+                    <Icon name="Trash2" size={18} color={COLORS.error} />
                   </TouchableOpacity>
                 </View>
               )
             })
           )}
         </View>
-
       </ScrollView>
 
-      {/* Modal agregar método */}
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setShowForm(false)} />
           <View style={s.sheet}>
             <View style={s.sheetHeader}>
               <Text style={s.sheetTitle}>Agregar método digital</Text>
-              <TouchableOpacity onPress={() => setShowForm(false)}>
-                <Ionicons name="close" size={22} color={COLORS.textSecondary} />
+              <TouchableOpacity onPress={() => setShowForm(false)} style={s.iconBtn}>
+                <Icon name="X" size={22} color={COLORS.textSecondary} />
               </TouchableOpacity>
             </View>
 
-            {/* Tipo */}
             <Text style={s.fieldLabel}>Plataforma</Text>
             <View style={s.typeRow}>
               {(Object.keys(METHOD_CONFIG) as MethodType[]).map((t) => {
@@ -208,7 +214,7 @@ export default function DriverPaymentMethodsScreen() {
                   <TouchableOpacity
                     key={t}
                     style={[s.typeBtn, active && { borderColor: cfg.color, backgroundColor: cfg.color + '12' }]}
-                    onPress={() => setSelectedType(t)}
+                    onPress={() => { setSelectedType(t); setValue(''); setFormError('') }}
                     activeOpacity={0.8}
                   >
                     <Text style={[s.typeBtnText, active && { color: cfg.color, fontWeight: '700' }]}>{cfg.label}</Text>
@@ -217,18 +223,20 @@ export default function DriverPaymentMethodsScreen() {
               })}
             </View>
 
-            {/* Número */}
-            <Text style={s.fieldLabel}>Número</Text>
+            <Text style={s.fieldLabel}>{METHOD_CONFIG[selectedType].fieldLabel}</Text>
             <TextInput
               style={s.input}
               placeholder={METHOD_CONFIG[selectedType].placeholder}
               placeholderTextColor={COLORS.textTertiary}
-              keyboardType="phone-pad"
-              value={phoneNumber}
-              onChangeText={(t) => { setPhoneNumber(t); setFormError('') }}
+              keyboardType={selectedType === 'bre_b' ? 'default' : 'phone-pad'}
+              autoCapitalize="none"
+              value={value}
+              onChangeText={(t) => { setValue(t); setFormError('') }}
             />
+            {selectedType === 'bre_b' && (
+              <Text style={s.fieldHint}>Es la llave que ya registraste en tu banco. Los pasajeros la verán tal cual.</Text>
+            )}
 
-            {/* Titular */}
             <Text style={s.fieldLabel}>Nombre del titular</Text>
             <TextInput
               style={s.input}
@@ -247,7 +255,7 @@ export default function DriverPaymentMethodsScreen() {
               disabled={saving}
               activeOpacity={0.85}
             >
-              {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>Guardar</Text>}
+              {saving ? <ActivityIndicator color={COLORS.white} /> : <Text style={s.saveBtnText}>Guardar</Text>}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -263,15 +271,14 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
     borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
   },
-  backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  addBtn:  { width: 40, height: 40, justifyContent: 'center', alignItems: 'flex-end' },
-  title: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  iconBtn: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
+  title: { fontSize: 22, fontWeight: '700', color: COLORS.textPrimary },
   scroll: { padding: SPACING.lg, gap: SPACING.lg, paddingBottom: 40 },
 
   infoCard: {
+    ...SHADOWS.sm,
     flexDirection: 'row', gap: SPACING.sm, alignItems: 'flex-start',
     backgroundColor: `${COLORS.primary}08`, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: `${COLORS.primary}20`, padding: SPACING.md,
   },
   infoText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
 
@@ -279,26 +286,24 @@ const s = StyleSheet.create({
   sectionLabel: { fontSize: 11, fontWeight: '700', color: COLORS.textTertiary, letterSpacing: 1 },
 
   methodCard: {
+    ...SHADOWS.sm,
     flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
   },
   methodIcon: { width: 44, height: 44, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center' },
   methodInfo: { flex: 1 },
   methodLabel: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  methodSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  methodPhone: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginTop: 2 },
-  methodHolder:{ fontSize: 12, color: COLORS.textSecondary },
-  methodBadge: { paddingLeft: 8 },
-  deleteBtn:   { padding: 8 },
+  methodSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  methodValue: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, marginTop: 2 },
+  methodHolder: { fontSize: 13, color: COLORS.textSecondary },
 
   emptyCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight,
     padding: SPACING.xl, alignItems: 'center', gap: SPACING.sm,
   },
   emptyTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  emptySub:   { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 19 },
+  emptySub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 19 },
   addFirstBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, paddingHorizontal: SPACING.lg, paddingVertical: 10, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}10` },
   addFirstBtnText: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
 
@@ -310,8 +315,9 @@ const s = StyleSheet.create({
     padding: SPACING.xl, paddingBottom: 40, gap: SPACING.md,
   },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary, marginBottom: -4 },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: -4 },
+  fieldHint: { fontSize: 13, color: COLORS.textTertiary, marginTop: -4 },
   typeRow: { flexDirection: 'row', gap: SPACING.sm },
   typeBtn: {
     flex: 1, paddingVertical: 10, borderRadius: RADIUS.md,
@@ -324,5 +330,5 @@ const s = StyleSheet.create({
   },
   formError: { fontSize: 13, color: COLORS.error, marginTop: -4 },
   saveBtn: { backgroundColor: COLORS.primary, borderRadius: RADIUS.md, height: 52, justifyContent: 'center', alignItems: 'center', marginTop: 4 },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  saveBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.white },
 })

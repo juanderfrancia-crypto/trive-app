@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, Switch, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useLayoutEffect, useState, useEffect } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -100,7 +100,7 @@ export default function TravelPreferencesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Preferencias de Viaje</Text>
       </View>
@@ -118,7 +118,7 @@ export default function TravelPreferencesScreen() {
             {/* Smoking */}
             <View style={styles.preferenceRow}>
               <View style={styles.preferenceInfoRow}>
-                <Ionicons name="flame" size={20} color={COLORS.warning} />
+                <Icon name="Flame" size={20} color={COLORS.warning} />
                 <View style={styles.preferenceInfo}>
                   <Text style={styles.preferenceName}>Permitir Fumar</Text>
                   <Text style={styles.preferenceDesc}>Cigarrillos permitidos en el viaje</Text>
@@ -226,14 +226,14 @@ export default function TravelPreferencesScreen() {
                 <ActivityIndicator color={COLORS.textInverse} />
               ) : (
                 <>
-                  <Ionicons name="checkmark" size={18} color={COLORS.textInverse} />
+                  <Icon name="Check" size={18} color={COLORS.textInverse} />
                   <Text style={styles.saveBtnText}>Guardar Cambios</Text>
                 </>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.resetBtn} onPress={handleResetPreferences}>
-              <Ionicons name="refresh" size={18} color={COLORS.error} />
+              <Icon name="RefreshCw" size={18} color={COLORS.error} />
               <Text style={styles.resetBtnText}>Reiniciar Defaults</Text>
             </TouchableOpacity>
           </View>

@@ -1,6 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { View, StyleSheet, Platform } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
+import Icon, { type IconName } from '../components/Icon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import DriverTripsScreen from '../screens/driver/DriverTripsScreen'
@@ -33,23 +33,23 @@ export default function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'home'
+          let iconName: IconName = 'House'
 
           if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline'
+            iconName = 'House'
           } else if (route.name === 'Search') {
-            iconName = focused ? 'car-sharp' : 'car-outline'
+            iconName = 'Car'
           } else if (route.name === 'Requests') {
-            iconName = focused ? 'clipboard' : 'clipboard-outline'
+            iconName = 'ClipboardList'
           } else if (route.name === 'Alerts') {
-            iconName = focused ? 'notifications' : 'notifications-outline'
+            iconName = 'Bell'
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline'
+            iconName = 'User'
           }
 
           return (
             <View style={focused ? styles.iconActive : styles.iconInactive}>
-              <Ionicons name={iconName} size={size} color={focused ? COLORS.primary : color} />
+              <Icon name={iconName} size={size} color={focused ? COLORS.primary : color} />
             </View>
           )
         },

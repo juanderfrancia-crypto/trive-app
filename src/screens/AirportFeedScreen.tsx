@@ -2,15 +2,16 @@ import { useCallback, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, Pressable } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAirportNegotiation, AirportRequest } from '../hooks/useAirportNegotiation'
 import { SkeletonAirportCard } from '../components/Skeleton'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from '../components/Icon'
+import Illustration, { IllustrationName } from '../components/illustrations/Illustration'
 
 export default function AirportFeedScreen() {
   const navigation = useNavigation()
@@ -183,7 +184,7 @@ export default function AirportFeedScreen() {
           <View style={s.cardTopInfo}>
             <Text style={s.passengerName}>{item.passenger_name ?? 'Pasajero'}</Text>
             <View style={s.dateRow}>
-              <Ionicons name="calendar-outline" size={12} color={COLORS.textTertiary} />
+              <Icon name="Calendar" size={12} color={COLORS.textTertiary} />
               <Text style={s.dateText}>{formatDateTime(item.departure_time)}</Text>
             </View>
           </View>
@@ -205,8 +206,8 @@ export default function AirportFeedScreen() {
           </View>
           {/* Trip type badge */}
           <View style={[s.tripBadge, item.trip_type === 'airport' && s.tripBadgeAirport, item.trip_type === 'city_destination' && s.tripBadgeCenter, item.trip_type === 'custom' && s.tripBadgeCustom]}>
-            <Ionicons 
-              name={item.trip_type === 'airport' ? 'airplane' : item.trip_type === 'city_destination' ? 'business' : 'location'} 
+            <Icon 
+              name={item.trip_type === 'airport' ? 'Plane' : item.trip_type === 'city_destination' ? 'Building2' : 'MapPin'} 
               size={12} 
               color={item.trip_type === 'airport' ? '#fff' : item.trip_type === 'city_destination' ? '#fff' : '#fff'}
             />
@@ -217,12 +218,12 @@ export default function AirportFeedScreen() {
         {/* Chips: personas + nota */}
         <View style={s.chipsRow}>
           <View style={s.chip}>
-            <Ionicons name="people-outline" size={13} color={COLORS.textSecondary} />
+            <Icon name="Users" size={13} color={COLORS.textSecondary} />
             <Text style={s.chipText}>{item.passengers} {item.passengers === 1 ? 'persona' : 'personas'}</Text>
           </View>
           {!!item.notes && (
             <View style={[s.chip, s.chipFlex]}>
-              <Ionicons name="chatbubble-ellipses-outline" size={13} color={COLORS.textSecondary} />
+              <Icon name="MessageCircle" size={13} color={COLORS.textSecondary} />
               <Text style={s.chipText} numberOfLines={1}>{item.notes}</Text>
             </View>
           )}
@@ -231,7 +232,7 @@ export default function AirportFeedScreen() {
         {/* Indicador de precio actualizado */}
         {item.initial_price !== item.offered_price && (
           <View style={s.priceUpdateBanner}>
-            <Ionicons name="information-circle" size={14} color={COLORS.warning} />
+            <Icon name="Info" size={14} color={COLORS.warning} />
             <Text style={s.priceUpdateText}>
               El pasajero subió la oferta: ${item.initial_price.toLocaleString('es-CO')} → ${item.offered_price.toLocaleString('es-CO')}
             </Text>
@@ -247,7 +248,7 @@ export default function AirportFeedScreen() {
               disabled={processing === 'proposal'}
               activeOpacity={0.75}
             >
-              <Ionicons name="arrow-up-outline" size={16} color={COLORS.primary} />
+              <Icon name="ArrowUp" size={16} color={COLORS.primary} />
               <Text style={s.btnProposalText}>Proponer precio</Text>
             </TouchableOpacity>
 
@@ -261,7 +262,7 @@ export default function AirportFeedScreen() {
                 <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <>
-                  <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                  <Icon name="CircleCheck" size={16} color="#fff" />
                   <Text style={s.btnAcceptText}>Aceptar</Text>
                 </>
               )}
@@ -281,7 +282,7 @@ export default function AirportFeedScreen() {
               }}
               activeOpacity={0.75}
             >
-              <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+              <Icon name="MessageCircle" size={16} color={COLORS.primary} />
               <Text style={s.btnChatText}>Chat</Text>
             </TouchableOpacity>
 
@@ -306,7 +307,7 @@ export default function AirportFeedScreen() {
                   <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <Ionicons name="checkmark-circle-outline" size={16} color="#fff" />
+                    <Icon name="CircleCheck" size={16} color="#fff" />
                     <Text style={s.btnAcceptText}>Completar viaje</Text>
                   </>
                 )}
@@ -328,7 +329,7 @@ export default function AirportFeedScreen() {
               }}
               activeOpacity={0.75}
             >
-              <Ionicons name="star-outline" size={16} color="#fff" />
+              <Icon name="Star" size={16} color="#fff" />
               <Text style={s.btnAcceptText}>Calificar</Text>
             </TouchableOpacity>
           </View>
@@ -337,11 +338,11 @@ export default function AirportFeedScreen() {
     )
   }
 
-  const renderEmpty = () => (
-    <View style={s.emptyCard}>
-      <Ionicons name="airplane-outline" size={48} color={COLORS.textTertiary} />
-      <Text style={s.emptyTitle}>Sin solicitudes por ahora</Text>
-      <Text style={s.emptySub}>Cuando un pasajero publique un viaje (al aeropuerto, centro o destino personalizado) aparecerá aquí.</Text>
+  const renderEmptyState = (illustration: IllustrationName, title: string, text: string) => (
+    <View style={s.emptyContainer}>
+      <Illustration name={illustration} width={170} />
+      <Text style={s.emptyTitle}>{title}</Text>
+      <Text style={s.emptyText}>{text}</Text>
     </View>
   )
 
@@ -355,10 +356,10 @@ export default function AirportFeedScreen() {
         style={s.header}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Icon name="ArrowLeft" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={s.headerHero}>
-          <Ionicons name="car-sport" size={22} color="rgba(255,255,255,0.9)" />
+          <Icon name="Car" size={22} color="rgba(255,255,255,0.9)" />
           <Text style={s.headerTitle}>Mis Viajes</Text>
         </View>
       </LinearGradient>
@@ -370,7 +371,7 @@ export default function AirportFeedScreen() {
           onPress={() => setActiveTab('available')}
           activeOpacity={0.7}
         >
-          <Ionicons name="list" size={16} color={activeTab === 'available' ? '#fff' : '#666'} />
+          <Icon name="List" size={16} color={activeTab === 'available' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'available' && s.tabTextActive]}>Disponibles</Text>
         </TouchableOpacity>
 
@@ -379,7 +380,7 @@ export default function AirportFeedScreen() {
           onPress={() => setActiveTab('active_trips')}
           activeOpacity={0.7}
         >
-          <Ionicons name="car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
+          <Icon name="Car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'active_trips' && s.tabTextActive]}>Activos</Text>
         </TouchableOpacity>
 
@@ -388,7 +389,7 @@ export default function AirportFeedScreen() {
           onPress={() => setActiveTab('completed_trips')}
           activeOpacity={0.7}
         >
-          <Ionicons name="checkmark-done" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
+          <Icon name="CheckCheck" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'completed_trips' && s.tabTextActive]}>Completados</Text>
         </TouchableOpacity>
       </View>
@@ -398,7 +399,7 @@ export default function AirportFeedScreen() {
         <>
           {/* Info strip para tab de disponibles */}
           <View style={s.commissionStrip}>
-            <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
+            <Icon name="Wallet" size={15} color={COLORS.primary} />
             <Text style={s.commissionText}>
               Al aceptar se descuentan <Text style={s.commissionBold}>$5.000</Text> de tu billetera
             </Text>
@@ -415,7 +416,11 @@ export default function AirportFeedScreen() {
               keyExtractor={(item) => item.id}
               renderItem={renderItem}
               contentContainerStyle={[s.list, availableRequests.length === 0 && s.listEmpty]}
-              ListEmptyComponent={renderEmpty}
+              ListEmptyComponent={() => renderEmptyState(
+                'theSearch',
+                'Sin solicitudes por ahora',
+                'Cuando un pasajero publique un viaje (al aeropuerto, centro o destino personalizado) aparecerá aquí.'
+              )}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
               }
@@ -431,12 +436,10 @@ export default function AirportFeedScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={[s.list, activeTrips.length === 0 && s.listEmpty]}
-          ListEmptyComponent={() => (
-            <View style={s.emptyContainer}>
-              <Ionicons name="car-outline" size={48} color={COLORS.textTertiary} style={{ marginBottom: 16, opacity: 0.4 }} />
-              <Text style={s.emptyTitle}>Sin viajes activos</Text>
-              <Text style={s.emptyText}>Tus viajes confirmados aparecerán aquí</Text>
-            </View>
+          ListEmptyComponent={() => renderEmptyState(
+            'schedule',
+            'Sin viajes activos',
+            'Tus viajes confirmados aparecerán aquí'
           )}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
@@ -451,12 +454,10 @@ export default function AirportFeedScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={[s.list, completedTrips.length === 0 && s.listEmpty]}
-          ListEmptyComponent={() => (
-            <View style={s.emptyContainer}>
-              <Ionicons name="checkmark-done-outline" size={48} color={COLORS.textTertiary} style={{ marginBottom: 16, opacity: 0.4 }} />
-              <Text style={s.emptyTitle}>Sin viajes completados</Text>
-              <Text style={s.emptyText}>Los viajes completados aparecerán aquí</Text>
-            </View>
+          ListEmptyComponent={() => renderEmptyState(
+            'noData',
+            'Sin viajes completados',
+            'Los viajes completados aparecerán aquí'
           )}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
@@ -481,7 +482,7 @@ export default function AirportFeedScreen() {
               <View style={s.modalHeader}>
                 <Text style={s.modalTitle}>Calificar viaje</Text>
                 <TouchableOpacity onPress={() => setShowRatingModal(false)}>
-                  <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                  <Icon name="X" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
               <View style={s.modalBody}>
@@ -503,8 +504,8 @@ export default function AirportFeedScreen() {
                             onPress={() => setSelectedRating(star)}
                             activeOpacity={0.7}
                           >
-                            <Ionicons
-                              name={star <= selectedRating ? 'star' : 'star-outline'}
+                            <Icon
+                              name={star <= selectedRating ? 'Star' : 'Star'}
                               size={32}
                               color={star <= selectedRating ? COLORS.warning : COLORS.border}
                             />
@@ -537,7 +538,7 @@ export default function AirportFeedScreen() {
                         <ActivityIndicator size="small" color="#fff" />
                       ) : (
                         <>
-                          <Ionicons name="checkmark-done" size={16} color="#fff" />
+                          <Icon name="CheckCheck" size={16} color="#fff" />
                           <Text style={s.submitBtnText}>Enviar calificación</Text>
                         </>
                       )}
@@ -566,7 +567,7 @@ export default function AirportFeedScreen() {
               <View style={s.modalHeader}>
                 <Text style={s.modalTitle}>Proponer precio</Text>
                 <TouchableOpacity onPress={() => setShowProposalModal(false)}>
-                  <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                  <Icon name="X" size={24} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -612,7 +613,7 @@ export default function AirportFeedScreen() {
                       <ActivityIndicator color="#fff" />
                     ) : (
                       <>
-                        <Ionicons name="send" size={16} color="#fff" />
+                        <Icon name="Send" size={16} color="#fff" />
                         <Text style={s.submitBtnText}>Enviar propuesta</Text>
                       </>
                     )}
@@ -652,7 +653,7 @@ const s = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerHero: { flex: 1, alignItems: 'center', gap: 3 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+  headerTitle: { ...TYPOGRAPHY.h3, color: '#fff' },
 
   // Commission strip
   commissionStrip: {
@@ -680,11 +681,7 @@ const s = StyleSheet.create({
     borderColor: COLORS.border,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
+    ...SHADOWS.sm,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
   avatar: {
@@ -780,15 +777,6 @@ const s = StyleSheet.create({
   },
   btnChatText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
   btnDisabled: { opacity: 0.5 },
-
-  // Empty state
-  emptyCard: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary, marginTop: SPACING.md },
-  emptySub: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.sm, textAlign: 'center' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
@@ -907,13 +895,21 @@ const s = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xxxl,
   },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.textTertiary,
+  emptyTitle: {
+    ...TYPOGRAPHY.h3,
+    color: COLORS.textPrimary,
+    marginTop: SPACING.md,
     textAlign: 'center',
-    maxWidth: 240,
+  },
+  emptyText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+    maxWidth: 260,
   },
 })
 

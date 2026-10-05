@@ -1,31 +1,20 @@
 import React from 'react'
 import { View, StyleSheet, ViewStyle, StyleProp } from 'react-native'
-import { COLORS } from '../../theme/theme'
-import { SCENES, SceneName } from './Scenes'
-
-type Tone = 'brand' | 'light'
+import { COLORS, RADIUS, SPACING } from '../../theme/theme'
+import Illustration, { type IllustrationName } from './Illustration'
 
 type Props = {
-  scene: SceneName
-  tone?: Tone
+  illustration: IllustrationName
+  illustrationWidth?: number
   style?: StyleProp<ViewStyle>
-  sceneWidth?: number
-  sceneHeight?: number
   children?: React.ReactNode
 }
 
-const PALETTE: Record<Tone, { bg: string; fg: string }> = {
-  brand: { bg: COLORS.primary, fg: COLORS.white },
-  light: { bg: COLORS.primaryTint, fg: COLORS.primary },
-}
-
-export default function IllustratedCard({ scene, tone = 'brand', style, sceneWidth, sceneHeight, children }: Props) {
-  const { bg, fg } = PALETTE[tone]
-  const Scene = SCENES[scene]
+export default function IllustratedCard({ illustration, illustrationWidth = 96, style, children }: Props) {
   return (
-    <View style={[styles.card, { backgroundColor: bg }, style]}>
-      <View pointerEvents="none" style={styles.scene}>
-        <Scene fg={fg} bg={bg} width={sceneWidth} height={sceneHeight} />
+    <View style={[styles.card, style]}>
+      <View pointerEvents="none" style={styles.panel}>
+        <Illustration name={illustration} width={illustrationWidth} />
       </View>
       {children}
     </View>
@@ -33,6 +22,13 @@ export default function IllustratedCard({ scene, tone = 'brand', style, sceneWid
 }
 
 const styles = StyleSheet.create({
-  card: { overflow: 'hidden' },
-  scene: { position: 'absolute', right: 0, bottom: 0 },
+  card: { overflow: 'hidden', backgroundColor: COLORS.primary },
+  panel: {
+    position: 'absolute',
+    top: SPACING.md,
+    right: SPACING.md,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.sm,
+  },
 })

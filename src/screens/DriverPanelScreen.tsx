@@ -4,7 +4,6 @@ import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -15,6 +14,7 @@ import { notifyRouteCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
+import Icon from '../components/Icon'
 
 interface Passenger {
   booking_id: string
@@ -455,7 +455,7 @@ export default function DriverPanelScreen() {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={24} color="#fff" />
+          <Icon name="ChevronLeft" size={24} color="#fff" />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Panel del Conductor</Text>
@@ -470,14 +470,14 @@ export default function DriverPanelScreen() {
           onPress={() => navigation.navigate('RecurringRoutes' as never)}
           activeOpacity={0.8}
         >
-          <Ionicons name="repeat" size={20} color="rgba(255,255,255,0.85)" />
+          <Icon name="Repeat" size={20} color="rgba(255,255,255,0.85)" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => setShowAddMenu(true)}
           activeOpacity={0.8}
         >
-          <Ionicons name="add" size={24} color="#fff" />
+          <Icon name="Plus" size={24} color="#fff" />
         </TouchableOpacity>
       </LinearGradient>
 
@@ -508,7 +508,7 @@ export default function DriverPanelScreen() {
                   onPress={handleCreateRoute}
                   disabled={!approvalStatus?.canCreateRoutes}
                 >
-                  <Ionicons name="add-circle-outline" size={20} color={!approvalStatus?.canCreateRoutes ? COLORS.textTertiary : COLORS.textInverse} />
+                  <Icon name="CirclePlus" size={20} color={!approvalStatus?.canCreateRoutes ? COLORS.textTertiary : COLORS.textInverse} />
                   <Text style={[styles.createRouteBtnText, !approvalStatus?.canCreateRoutes && styles.createRouteBtnTextDisabled]}>
                     Crear nueva ruta
                   </Text>
@@ -561,7 +561,7 @@ export default function DriverPanelScreen() {
                     </Text>
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
-                    <Ionicons name={statusInfo.icon as any} size={13} color={statusInfo.color} />
+                    <Icon name={statusInfo.icon as any} size={13} color={statusInfo.color} />
                     <Text style={[styles.statusText, { color: statusInfo.color }]}>
                       {statusInfo.label}
                     </Text>
@@ -572,19 +572,19 @@ export default function DriverPanelScreen() {
                 <View style={styles.vehicleRow}>
                   {route.vehicle_make ? (
                     <View style={styles.vehiclePill}>
-                      <Ionicons name="car-sport" size={12} color={COLORS.primary} />
+                      <Icon name="Car" size={12} color={COLORS.primary} />
                       <Text style={styles.vehiclePillText}>{route.vehicle_make}</Text>
                     </View>
                   ) : null}
                   {route.vehicle_color ? (
                     <View style={styles.vehiclePill}>
-                      <Ionicons name="color-palette-outline" size={12} color={COLORS.primary} />
+                      <Icon name="Palette" size={12} color={COLORS.primary} />
                       <Text style={styles.vehiclePillText}>{route.vehicle_color}</Text>
                     </View>
                   ) : null}
                   {route.vehicle_plate ? (
                     <View style={[styles.vehiclePill, styles.vehiclePlatePill]}>
-                      <Ionicons name="card-outline" size={12} color={COLORS.primaryDark} />
+                      <Icon name="CreditCard" size={12} color={COLORS.primaryDark} />
                       <Text style={styles.vehiclePlateText}>{route.vehicle_plate}</Text>
                     </View>
                   ) : null}
@@ -606,8 +606,8 @@ export default function DriverPanelScreen() {
                         key={index}
                         style={[styles.seatDot, index < seatsFilled ? styles.seatFilled : styles.seatEmpty]}
                       >
-                        <Ionicons
-                          name={index < seatsFilled ? 'person' : 'person-outline'}
+                        <Icon
+                          name={index < seatsFilled ? 'User' : 'User'}
                           size={13}
                           color={index < seatsFilled ? '#fff' : COLORS.textTertiary}
                         />
@@ -621,7 +621,7 @@ export default function DriverPanelScreen() {
                   </View>
                   {isFull && (
                     <View style={styles.fullBadge}>
-                      <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                      <Icon name="CircleCheck" size={16} color={COLORS.success} />
                       <Text style={styles.fullText}>Cupo lleno</Text>
                     </View>
                   )}
@@ -633,7 +633,7 @@ export default function DriverPanelScreen() {
                     <View style={styles.sectionDivider} />
                     <View style={styles.passengersSection}>
                       <View style={styles.sectionTitleRow}>
-                        <Ionicons name="people" size={14} color={COLORS.primary} />
+                        <Icon name="Users" size={14} color={COLORS.primary} />
                         <Text style={styles.sectionTitle}>Pasajeros</Text>
                         <View style={styles.passengerCountPill}>
                           <Text style={styles.passengerCountText}>{route.passengers.length}</Text>
@@ -643,8 +643,8 @@ export default function DriverPanelScreen() {
                         <View key={idx} style={styles.dropoffGroupItem}>
                           <View style={styles.dropoffHeader}>
                             <View style={styles.dropoffIconContainer}>
-                              <Ionicons
-                                name={dropoffGroup.isCustom ? 'flag' : 'location'}
+                              <Icon
+                                name={dropoffGroup.isCustom ? 'Flag' : 'MapPin'}
                                 size={14}
                                 color={COLORS.primary}
                               />
@@ -677,15 +677,15 @@ export default function DriverPanelScreen() {
                                   <Text style={styles.passengerName}>{passenger.name}</Text>
                                   <View style={styles.passengerMeta}>
                                     <View style={styles.seatPill}>
-                                      <Ionicons name="person-outline" size={10} color={COLORS.textTertiary} />
+                                      <Icon name="User" size={10} color={COLORS.textTertiary} />
                                       <Text style={styles.seatPillText}>Asiento {passenger.seat_number}</Text>
                                     </View>
                                     <View style={[
                                       styles.paymentPill,
                                       passenger.payment_method === 'digital' ? styles.paymentPillDigital : styles.paymentPillCash,
                                     ]}>
-                                      <Ionicons
-                                        name={passenger.payment_method === 'digital' ? 'phone-portrait-outline' : 'cash-outline'}
+                                      <Icon
+                                        name={passenger.payment_method === 'digital' ? 'Smartphone' : 'Banknote'}
                                         size={10}
                                         color={passenger.payment_method === 'digital' ? COLORS.primary : COLORS.success}
                                       />
@@ -710,7 +710,7 @@ export default function DriverPanelScreen() {
                                     })
                                   }}
                                 >
-                                  <Ionicons name="chatbubble-ellipses" size={17} color={COLORS.primary} />
+                                  <Icon name="MessageCircle" size={17} color={COLORS.primary} />
                                   {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
                                     <View style={styles.chatBadge}>
                                       <Text style={styles.chatBadgeText}>
@@ -735,7 +735,7 @@ export default function DriverPanelScreen() {
                 <View style={styles.earningsSection}>
                   <View style={styles.earningsLeft}>
                     <View style={styles.earningsIconWrap}>
-                      <Ionicons name="wallet" size={16} color={COLORS.success} />
+                      <Icon name="Wallet" size={16} color={COLORS.success} />
                     </View>
                     <View>
                       <Text style={styles.earningsLabel}>Ingresos estimados</Text>
@@ -753,7 +753,7 @@ export default function DriverPanelScreen() {
                 {seatsFilled === 0 && route.status === 'scheduled' && (
                   <View style={styles.noPassengersWarning}>
                     <View style={styles.warningIconWrap}>
-                      <Ionicons name="megaphone-outline" size={16} color={COLORS.warningDark} />
+                      <Icon name="Megaphone" size={16} color={COLORS.warningDark} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.warningTitle}>Sin pasajeros aún</Text>
@@ -781,7 +781,7 @@ export default function DriverPanelScreen() {
                           <ActivityIndicator size="small" color="#fff" />
                         ) : (
                           <>
-                            <Ionicons name="play-circle" size={20} color="#fff" />
+                            <Icon name="CirclePlay" size={20} color="#fff" />
                             <Text style={styles.primaryActionText}>Iniciar Viaje</Text>
                           </>
                         )}
@@ -795,7 +795,7 @@ export default function DriverPanelScreen() {
                         onPress={() => shareRoute(route)}
                         activeOpacity={0.8}
                       >
-                        <Ionicons name="logo-whatsapp" size={15} color="#25D366" />
+                        <Icon name="MessageCircle" size={15} color="#25D366" />
                         <Text style={[styles.secondaryActionText, { color: '#25D366' }]}>Compartir ruta</Text>
                       </TouchableOpacity>
 
@@ -814,7 +814,7 @@ export default function DriverPanelScreen() {
                         disabled={isUpdating}
                         activeOpacity={0.8}
                       >
-                        <Ionicons name="close-circle-outline" size={15} color={COLORS.error} />
+                        <Icon name="CircleX" size={15} color={COLORS.error} />
                         <Text style={[styles.secondaryActionText, { color: COLORS.error }]}>Cancelar viaje</Text>
                       </TouchableOpacity>
                     </View>
@@ -838,7 +838,7 @@ export default function DriverPanelScreen() {
                           <ActivityIndicator size="small" color="#fff" />
                         ) : (
                           <>
-                            <Ionicons name="checkmark-done-circle" size={20} color="#fff" />
+                            <Icon name="CircleCheckBig" size={20} color="#fff" />
                             <Text style={styles.primaryActionText}>Completar Viaje</Text>
                           </>
                         )}
@@ -873,13 +873,13 @@ export default function DriverPanelScreen() {
               }}
             >
               <LinearGradient colors={[COLORS.primaryDark, COLORS.primaryLight]} style={styles.menuItemIcon}>
-                <Ionicons name="add-circle" size={20} color="#fff" />
+                <Icon name="CirclePlus" size={20} color="#fff" />
               </LinearGradient>
               <View style={styles.menuItemText}>
                 <Text style={styles.menuItemTitle}>Crear ruta</Text>
                 <Text style={styles.menuItemSub}>Publica un viaje nuevo ahora</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
 
             <View style={styles.menuDivider} />
@@ -893,13 +893,13 @@ export default function DriverPanelScreen() {
               }}
             >
               <LinearGradient colors={[COLORS.primary, COLORS.primary]} style={styles.menuItemIcon}>
-                <Ionicons name="repeat" size={20} color="#fff" />
+                <Icon name="Repeat" size={20} color="#fff" />
               </LinearGradient>
               <View style={styles.menuItemText}>
                 <Text style={styles.menuItemTitle}>Plantillas de ruta</Text>
                 <Text style={styles.menuItemSub}>Publica tus rutas habituales rápido</Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -962,13 +962,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '700',
     color: '#fff',
     letterSpacing: -0.3,
   },
   subtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: 'rgba(255,255,255,0.75)',
     marginTop: 2,
     fontWeight: '500',
@@ -1039,12 +1039,11 @@ const styles = StyleSheet.create({
 
   // Route Card
   routeCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.primaryTint,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.07,
@@ -1083,7 +1082,7 @@ const styles = StyleSheet.create({
     color: '#fff', letterSpacing: 1.2,
   },
   inProgressTime: {
-    fontSize: 12, fontWeight: '600', color: 'rgba(255,255,255,0.85)',
+    fontSize: 13, fontWeight: '600', color: 'rgba(255,255,255,0.85)',
   },
   routeHeader: {
     flexDirection: 'row',
@@ -1122,7 +1121,7 @@ const styles = StyleSheet.create({
     fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
   },
   routeDateTime: {
-    fontSize: 12, color: COLORS.textTertiary, fontWeight: '500', marginTop: 2,
+    fontSize: 13, color: COLORS.textTertiary, fontWeight: '500', marginTop: 2,
   },
   statusBadge: {
     flexDirection: 'row',
@@ -1150,13 +1149,13 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.full, paddingHorizontal: 10, paddingVertical: 5,
   },
   vehiclePillText: {
-    fontSize: 12, fontWeight: '500', color: COLORS.textPrimary,
+    fontSize: 13, fontWeight: '500', color: COLORS.textPrimary,
   },
   vehiclePlatePill: {
     backgroundColor: COLORS.primaryTint, borderColor: COLORS.primaryTint,
   },
   vehiclePlateText: {
-    fontSize: 12, fontWeight: '700', color: COLORS.primaryDark, letterSpacing: 0.5,
+    fontSize: 13, fontWeight: '700', color: COLORS.primaryDark, letterSpacing: 0.5,
   },
 
   sectionDivider: {
@@ -1207,7 +1206,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   seatsMoreText: {
-    fontSize: 10, fontWeight: '700', color: COLORS.primary,
+    fontSize: 11, fontWeight: '700', color: COLORS.primary,
   },
   fullBadge: {
     flexDirection: 'row',
@@ -1310,7 +1309,7 @@ const styles = StyleSheet.create({
   },
   chatBadgeText: {
     color: COLORS.white,
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
     lineHeight: 12,
   },
@@ -1331,13 +1330,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.successLight, justifyContent: 'center', alignItems: 'center',
   },
   earningsLabel: {
-    fontSize: 12, fontWeight: '600', color: COLORS.success,
+    fontSize: 13, fontWeight: '600', color: COLORS.success,
   },
   earningsDetail: {
     fontSize: 11, color: COLORS.success, fontWeight: '500', marginTop: 2,
   },
   earningsValue: {
-    fontSize: 20, fontWeight: '800', color: COLORS.success, letterSpacing: -0.5,
+    fontSize: 18, fontWeight: '800', color: COLORS.success, letterSpacing: -0.5,
   },
 
   // Actions Section
@@ -1346,6 +1345,9 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   primaryActionBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, borderRadius: RADIUS.md, paddingVertical: 14,
   },
@@ -1388,7 +1390,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginBottom: 16,
   },
   menuTitle: {
-    fontSize: 13, fontWeight: '600', color: COLORS.textTertiary,
+    fontSize: 11, fontWeight: '600', color: COLORS.textTertiary,
     letterSpacing: 0.3, marginBottom: SPACING.md, textTransform: 'uppercase',
   },
   menuItem: {
@@ -1404,7 +1406,7 @@ const styles = StyleSheet.create({
     fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
   },
   menuItemSub: {
-    fontSize: 12, color: COLORS.textSecondary, marginTop: 2,
+    fontSize: 13, color: COLORS.textSecondary, marginTop: 2,
   },
   menuDivider: {
     height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: 58,
@@ -1430,7 +1432,7 @@ const styles = StyleSheet.create({
     fontSize: 13, fontWeight: '700', color: COLORS.warningDark, marginBottom: 2,
   },
   warningText: {
-    fontSize: 12, color: COLORS.warningDark, lineHeight: 16,
+    fontSize: 13, color: COLORS.warningDark, lineHeight: 16,
   },
 
   // Dropoff Groups
@@ -1466,7 +1468,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8, paddingVertical: 3,
   },
   customBadgeText: {
-    fontSize: 10, fontWeight: '700', color: COLORS.primary,
+    fontSize: 11, fontWeight: '700', color: COLORS.primary,
   },
   passengersInGroup: {
     paddingHorizontal: SPACING.md,

@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from './Icon'
 
 interface RatingModalProps {
   visible: boolean
@@ -72,7 +72,7 @@ export default function RatingModal({
                 disabled={loading}
                 hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
               >
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                <Icon name="X" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -95,8 +95,8 @@ export default function RatingModal({
                     disabled={loading}
                     activeOpacity={0.8}
                   >
-                    <Ionicons
-                      name={star <= rating ? 'star' : 'star-outline'}
+                    <Icon
+                      name={star <= rating ? 'Star' : 'Star'}
                       size={44}
                       color={star <= rating ? COLORS.accent : '#ddd'}
                       style={styles.star}
@@ -142,8 +142,8 @@ export default function RatingModal({
                   onPress={() => setRecommend(false)}
                   disabled={loading}
                 >
-                  <Ionicons
-                    name="close-circle"
+                  <Icon
+                    name="CircleX"
                     size={20}
                     color={!recommend ? 'white' : '#999'}
                   />
@@ -165,8 +165,8 @@ export default function RatingModal({
                   onPress={() => setRecommend(true)}
                   disabled={loading}
                 >
-                  <Ionicons
-                    name="checkmark-circle"
+                  <Icon
+                    name="CircleCheck"
                     size={20}
                     color={recommend ? 'white' : '#999'}
                   />

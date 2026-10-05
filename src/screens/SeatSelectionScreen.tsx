@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -366,7 +366,7 @@ export default function SeatSelectionScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} accessibilityLabel="Volver">
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.stepBlock}>
             <View style={styles.stepRow}>
@@ -399,7 +399,7 @@ export default function SeatSelectionScreen() {
               <View style={styles.driverBody}>
                 <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
                 <View style={styles.driverStats}>
-                  <Ionicons name="star" size={13} color={COLORS.accent} />
+                  <Icon name="Star" size={13} color={COLORS.accent} />
                   <Text style={styles.driverStatValue}>
                     {Number(selectedRoute.driver_rating ?? 0).toFixed(1)}
                   </Text>

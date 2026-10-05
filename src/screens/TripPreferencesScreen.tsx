@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
@@ -129,7 +129,7 @@ export default function TripPreferencesScreen() {
   }) => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Ionicons name={icon as any} size={24} color={COLORS.primary} />
+        <Icon name={icon as any} size={24} color={COLORS.primary} />
         <View style={{ flex: 1, marginLeft: SPACING.md }}>
           <Text style={styles.sectionTitle}>{title}</Text>
           <Text style={styles.sectionDescription}>{description}</Text>
@@ -154,7 +154,7 @@ export default function TripPreferencesScreen() {
             <Text style={styles.optionLabel}>{option.label}</Text>
             {currentValue === option.value && (
               <View style={[styles.checkmark, { backgroundColor: option.color }]}>
-                <Ionicons name="checkmark" size={16} color="white" />
+                <Icon name="Check" size={16} color="white" />
               </View>
             )}
           </TouchableOpacity>
@@ -167,7 +167,7 @@ export default function TripPreferencesScreen() {
     <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>🚗 Mi Experiencia</Text>
         <View style={{ width: 28 }} />
@@ -239,7 +239,7 @@ export default function TripPreferencesScreen() {
         )}
 
         <View style={styles.footer}>
-          <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+          <Icon name="Info" size={20} color={COLORS.primary} />
           <Text style={styles.footerText}>
             Los conductores verán tus preferencias y harán todo lo posible por cumplirlas
           </Text>

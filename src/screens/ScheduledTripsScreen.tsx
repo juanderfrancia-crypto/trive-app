@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Modal, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -197,7 +197,7 @@ export default function ScheduledTripsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.title}>Viajes Programados</Text>
@@ -219,7 +219,7 @@ export default function ScheduledTripsScreen() {
                   {/* Modal Header con Gradient */}
                   <View style={styles.modalTopBar}>
                     <TouchableOpacity style={styles.modalCloseBtn} onPress={closeModal}>
-                      <Ionicons name="close" size={28} color={COLORS.textPrimary} />
+                      <Icon name="X" size={28} color={COLORS.textPrimary} />
                     </TouchableOpacity>
                     <View style={{ flex: 1 }} />
                   </View>
@@ -233,7 +233,7 @@ export default function ScheduledTripsScreen() {
                   >
                     <View style={styles.routeHeaderTop}>
                       <View style={styles.statusBadgeModal}>
-                        <Ionicons name="calendar-clear" size={12} color="#fff" />
+                        <Icon name="Calendar" size={12} color="#fff" />
                         <Text style={styles.statusBadgeTextModal}>
                           En {calculateDaysUntil(selectedTrip.date)} días
                         </Text>
@@ -243,7 +243,7 @@ export default function ScheduledTripsScreen() {
                     <View style={styles.routeHeaderContent}>
                       <View style={styles.routeDestination}>
                         <View style={styles.routePointLarge}>
-                          <Ionicons name="location" size={28} color="#fff" />
+                          <Icon name="MapPin" size={28} color="#fff" />
                         </View>
                         <View style={styles.routeTextContainer}>
                           <Text style={styles.routeLabelBold}>SALIDA</Text>
@@ -252,12 +252,12 @@ export default function ScheduledTripsScreen() {
                       </View>
 
                       <View style={styles.routeArrowLarge}>
-                        <Ionicons name="arrow-forward" size={24} color="#fff" />
+                        <Icon name="ArrowRight" size={24} color="#fff" />
                       </View>
 
                       <View style={styles.routeDestination}>
                         <View style={styles.routePointLarge}>
-                          <Ionicons name="location" size={28} color="#fff" />
+                          <Icon name="MapPin" size={28} color="#fff" />
                         </View>
                         <View style={styles.routeTextContainer}>
                           <Text style={styles.routeLabelBold}>DESTINO</Text>
@@ -278,7 +278,7 @@ export default function ScheduledTripsScreen() {
                     <View style={styles.infoGridRow}>
                       <View style={styles.infoGridCard}>
                         <View style={styles.gridIconBox}>
-                          <Ionicons name="time-outline" size={22} color={COLORS.primary} />
+                          <Icon name="Clock" size={22} color={COLORS.primary} />
                         </View>
                         <Text style={styles.gridLabel}>Hora</Text>
                         <Text style={styles.gridValue}>{selectedTrip.time}</Text>
@@ -286,7 +286,7 @@ export default function ScheduledTripsScreen() {
 
                       <View style={styles.infoGridCard}>
                         <View style={styles.gridIconBox}>
-                          <Ionicons name="person-outline" size={22} color={COLORS.primary} />
+                          <Icon name="User" size={22} color={COLORS.primary} />
                         </View>
                         <Text style={styles.gridLabel}>Asientos</Text>
                         <Text style={styles.gridValue}>{selectedTrip.seats}</Text>
@@ -296,7 +296,7 @@ export default function ScheduledTripsScreen() {
                     <View style={styles.infoGridRow}>
                       <View style={styles.infoGridCard}>
                         <View style={styles.gridIconBox}>
-                          <Ionicons name="cash-outline" size={22} color={COLORS.success} />
+                          <Icon name="Banknote" size={22} color={COLORS.success} />
                         </View>
                         <Text style={styles.gridLabel}>Total</Text>
                         <Text style={[styles.gridValue, { color: COLORS.success }]}>
@@ -306,7 +306,7 @@ export default function ScheduledTripsScreen() {
 
                       <View style={styles.infoGridCard}>
                         <View style={styles.gridIconBox}>
-                          <Ionicons name="car-outline" size={22} color={COLORS.primary} />
+                          <Icon name="Car" size={22} color={COLORS.primary} />
                         </View>
                         <Text style={styles.gridLabel}>Vehículo</Text>
                         <Text style={styles.gridValue}>{selectedTrip.totalSeats} cupos</Text>
@@ -317,14 +317,14 @@ export default function ScheduledTripsScreen() {
                   {/* Dropoff Point Card */}
                   <View style={styles.dropoffCardTrip}>
                     <View style={styles.dropoffHeaderTrip}>
-                      <Ionicons name="location-outline" size={24} color={COLORS.primary} />
+                      <Icon name="MapPin" size={24} color={COLORS.primary} />
                       <Text style={styles.dropoffTitleTrip}>Parada de desembarque</Text>
                     </View>
                     <View style={styles.dropoffContentTrip}>
                       <Text style={styles.dropoffLocationTrip}>{selectedTrip.dropoffPoint}</Text>
                       {selectedTrip.dropoffPointCustom && (
                         <View style={styles.customDropoffBadge}>
-                          <Ionicons name="flag-outline" size={14} color={COLORS.accent} />
+                          <Icon name="Flag" size={14} color={COLORS.accent} />
                           <Text style={styles.customDropoffText}>Parada intermedia</Text>
                         </View>
                       )}
@@ -344,13 +344,13 @@ export default function ScheduledTripsScreen() {
                           <Text style={styles.driverNameLarge}>{selectedTrip.driverName}</Text>
                           <View style={styles.driverRatingRow}>
                             <View style={styles.verifiedBadge}>
-                              <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                              <Icon name="CircleCheck" size={14} color={COLORS.success} />
                               <Text style={styles.verifiedText}>Conductor verificado</Text>
                             </View>
                           </View>
                         </View>
                         <View style={styles.ratingCircle}>
-                          <Ionicons name="star" size={16} color={COLORS.accent} />
+                          <Icon name="Star" size={16} color={COLORS.accent} />
                           <Text style={styles.ratingNumber}>{selectedTrip.driverRating}</Text>
                         </View>
                       </View>
@@ -360,14 +360,14 @@ export default function ScheduledTripsScreen() {
                       <TouchableOpacity style={styles.contactBtnLarge} onPress={() => {
                         showInfo('Función de llamada aún no disponible')
                       }}>
-                        <Ionicons name="call" size={20} color={COLORS.primary} />
+                        <Icon name="Phone" size={20} color={COLORS.primary} />
                         <Text style={styles.contactBtnText}>Llamar</Text>
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={styles.contactBtnLarge}
                         onPress={() => handleChat(selectedTrip)}
                       >
-                        <Ionicons name="chatbubble-outline" size={20} color={COLORS.primary} />
+                        <Icon name="MessageCircle" size={20} color={COLORS.primary} />
                         <Text style={styles.contactBtnText}>Mensaje</Text>
                       </TouchableOpacity>
                     </View>
@@ -377,7 +377,7 @@ export default function ScheduledTripsScreen() {
                   <View style={styles.vehicleCardImproved}>
                     <View style={styles.vehicleHeaderImproved}>
                       <View style={styles.vehicleIconBox}>
-                        <Ionicons name="car" size={28} color={COLORS.primary} />
+                        <Icon name="Car" size={28} color={COLORS.primary} />
                       </View>
                       <View style={styles.vehicleInfoImproved}>
                         <Text style={styles.vehicleModelImproved}>{selectedTrip.vehicleModel}</Text>
@@ -428,7 +428,7 @@ export default function ScheduledTripsScreen() {
                       onPress={() => handleViewStatus(selectedTrip)}
                       disabled={cancellationLoading}
                     >
-                      <Ionicons name="eye-outline" size={22} color={COLORS.textInverse} />
+                      <Icon name="Eye" size={22} color={COLORS.textInverse} />
                       <Text style={styles.primaryActionText}>Seguimiento en vivo</Text>
                     </TouchableOpacity>
 
@@ -441,7 +441,7 @@ export default function ScheduledTripsScreen() {
                         <ActivityIndicator color={COLORS.error} size="small" />
                       ) : (
                         <>
-                          <Ionicons name="trash-outline" size={22} color={COLORS.error} />
+                          <Icon name="Trash2" size={22} color={COLORS.error} />
                           <Text style={styles.secondaryActionText}>Cancelar reserva</Text>
                         </>
                       )}
@@ -471,7 +471,7 @@ export default function ScheduledTripsScreen() {
               style={styles.searchBtn}
               onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
             >
-              <Ionicons name="search" size={20} color={COLORS.textInverse} />
+              <Icon name="Search" size={20} color={COLORS.textInverse} />
               <Text style={styles.searchBtnText}>Buscar rutas</Text>
             </TouchableOpacity>
           </View>
@@ -487,7 +487,7 @@ export default function ScheduledTripsScreen() {
                 >
                   {/* Status Badge */}
                   <View style={styles.tripCardBadge}>
-                    <Ionicons name="calendar-clear" size={12} color="#fff" />
+                    <Icon name="Calendar" size={12} color="#fff" />
                     <Text style={styles.tripCardBadgeText}>
                       En {calculateDaysUntil(trip.date)} días
                     </Text>
@@ -497,7 +497,7 @@ export default function ScheduledTripsScreen() {
                   <View style={styles.tripCardRouteSection}>
                     <View style={styles.tripCardOrigin}>
                       <View style={styles.tripCardLocationIcon}>
-                        <Ionicons name="location" size={20} color="#fff" />
+                        <Icon name="MapPin" size={20} color="#fff" />
                       </View>
                       <View>
                         <Text style={styles.tripCardLocationLabel}>SALIDA</Text>
@@ -506,12 +506,12 @@ export default function ScheduledTripsScreen() {
                     </View>
 
                     <View style={styles.tripCardArrow}>
-                      <Ionicons name="arrow-forward" size={18} color="#fff" />
+                      <Icon name="ArrowRight" size={18} color="#fff" />
                     </View>
 
                     <View style={styles.tripCardDestination}>
                       <View style={styles.tripCardLocationIcon}>
-                        <Ionicons name="location" size={20} color="#fff" />
+                        <Icon name="MapPin" size={20} color="#fff" />
                       </View>
                       <View>
                         <Text style={styles.tripCardLocationLabel}>DESTINO</Text>
@@ -523,17 +523,17 @@ export default function ScheduledTripsScreen() {
                   {/* Footer with Time and Price */}
                   <View style={styles.tripCardFooter}>
                     <View style={styles.tripCardFooterItem}>
-                      <Ionicons name="time-outline" size={16} color="#fff" />
+                      <Icon name="Clock" size={16} color="#fff" />
                       <Text style={styles.tripCardFooterText}>{trip.time}</Text>
                     </View>
                     <View style={styles.tripCardFooterDivider} />
                     <View style={styles.tripCardFooterItem}>
-                      <Ionicons name="person-outline" size={16} color="#fff" />
+                      <Icon name="User" size={16} color="#fff" />
                       <Text style={styles.tripCardFooterText}>{trip.seats} asiento(s)</Text>
                     </View>
                     <View style={styles.tripCardFooterDivider} />
                     <View style={styles.tripCardFooterItem}>
-                      <Ionicons name="cash-outline" size={16} color="#fff" />
+                      <Icon name="Banknote" size={16} color="#fff" />
                       <Text style={styles.tripCardFooterText}>
                         ${trip.price.toLocaleString('es-CO')}
                       </Text>
@@ -547,21 +547,21 @@ export default function ScheduledTripsScreen() {
                     style={styles.tripCardCancelBtn}
                     onPress={() => handleCancel(trip.id, trip)}
                   >
-                    <Ionicons name="close-circle-outline" size={18} color={COLORS.error} />
+                    <Icon name="CircleX" size={18} color={COLORS.error} />
                     <Text style={styles.tripCardCancelText}>Cancelar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.tripCardChatBtn}
                     onPress={() => handleChat(trip)}
                   >
-                    <Ionicons name="chatbubble-outline" size={18} color={COLORS.primary} />
+                    <Icon name="MessageCircle" size={18} color={COLORS.primary} />
                     <Text style={styles.tripCardChatText}>Chat</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.tripCardViewBtn}
                     onPress={() => handleViewDetails(trip)}
                   >
-                    <Ionicons name="eye-outline" size={18} color={COLORS.primary} />
+                    <Icon name="Eye" size={18} color={COLORS.primary} />
                     <Text style={styles.tripCardViewText}>Ver detalles</Text>
                   </TouchableOpacity>
                 </View>

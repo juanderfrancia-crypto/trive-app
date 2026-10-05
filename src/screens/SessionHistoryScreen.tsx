@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { supabase } from '../services/supabase'
 import { getUserSessions, endUserSession, UserSessionRecord } from '../services/userSessions'
@@ -80,7 +80,7 @@ export default function SessionHistoryScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Dispositivos Conectados</Text>
           <View style={{ width: 28 }} />
@@ -123,15 +123,15 @@ export default function SessionHistoryScreen() {
                 </View>
                 <View style={styles.sessionDetails}>
                   <View style={styles.detailItem}>
-                    <Ionicons name="phone-portrait-outline" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Smartphone" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.detailText}>{session.device_type || 'App'}</Text>
                   </View>
                   <View style={styles.detailItem}>
-                    <Ionicons name="laptop-outline" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Laptop" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.detailText}>{session.os_version || 'Versión no disponible'}</Text>
                   </View>
                   <View style={styles.detailItem}>
-                    <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Clock" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.detailText}>{session.last_active_at ? new Date(session.last_active_at).toLocaleString('es-CO') : 'Última actividad desconocida'}</Text>
                   </View>
                 </View>
@@ -141,7 +141,7 @@ export default function SessionHistoryScreen() {
         </View>
 
         <View style={styles.infoBox}>
-          <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+          <Icon name="Info" size={20} color={COLORS.primary} />
           <Text style={styles.infoText}>
             Si no reconoces algún dispositivo, cierra la sesión y cambia tu contraseña
           </Text>

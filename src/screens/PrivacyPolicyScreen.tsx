@@ -1,9 +1,9 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import Icon from '../components/Icon'
 
 export default function PrivacyPolicyScreen() {
   const insets = useSafeAreaInsets()
@@ -16,7 +16,7 @@ export default function PrivacyPolicyScreen() {
         {/* Header */}
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={s.headerTitle}>Política de Privacidad</Text>
           <View style={{ width: 28 }} />
@@ -104,7 +104,7 @@ export default function PrivacyPolicyScreen() {
 
         {/* SIC */}
         <View style={s.sicBox}>
-          <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+          <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
           <Text style={s.sicText}>
             Si consideras que tu derecho a la protección de datos ha sido vulnerado, puedes presentar una queja ante la{' '}
             <Text style={s.sicLink} onPress={() => Linking.openURL('https://www.sic.gov.co')}>
@@ -115,7 +115,7 @@ export default function PrivacyPolicyScreen() {
 
         {/* Contacto */}
         <View style={s.contactBox}>
-          <Ionicons name="mail-outline" size={18} color={COLORS.primary} />
+          <Icon name="Mail" size={18} color={COLORS.primary} />
           <View style={{ flex: 1 }}>
             <Text style={s.contactLabel}>Canal de atención de datos personales</Text>
             <Text style={s.contactValue}>privacy@trive.co</Text>

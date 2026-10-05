@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -121,7 +121,7 @@ export default function SecurityScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Seguridad</Text>
           <View style={{ width: 28 }} />
@@ -140,13 +140,13 @@ export default function SecurityScreen() {
               onPress={handleChangePassword}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
+                <Icon name="Lock" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Cambiar Contraseña</Text>
                 <Text style={styles.menuSubtext}>Actualiza tu contraseña regularmente</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
 
@@ -154,7 +154,7 @@ export default function SecurityScreen() {
           <View style={styles.menuCard}>
             <View style={styles.menuItem}>
               <View style={styles.menuIcon}>
-                <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+                <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Autenticación de Dos Factores</Text>
@@ -173,7 +173,7 @@ export default function SecurityScreen() {
           <View style={styles.menuCard}>
             <View style={styles.menuItem}>
               <View style={styles.menuIcon}>
-                <Ionicons name="finger-print-outline" size={20} color={COLORS.primary} />
+                <Icon name="Fingerprint" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Autenticación Biométrica</Text>
@@ -200,13 +200,13 @@ export default function SecurityScreen() {
               onPress={handleSessionHistory}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name="phone-portrait-outline" size={20} color={COLORS.primary} />
+                <Icon name="Smartphone" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Dispositivos Conectados</Text>
                 <Text style={styles.menuSubtext}>Ver sesiones activas</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -221,13 +221,13 @@ export default function SecurityScreen() {
               onPress={handleRecoveryAccount}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
+                <Icon name="Mail" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Correo de Recuperación</Text>
                 <Text style={styles.menuSubtext}>para recuperar tu cuenta</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -242,13 +242,13 @@ export default function SecurityScreen() {
               onPress={handleRecentActivity}
             >
               <View style={styles.menuIcon}>
-                <Ionicons name="time-outline" size={20} color={COLORS.primary} />
+                <Icon name="Clock" size={20} color={COLORS.primary} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={styles.menuText}>Actividad Reciente</Text>
                 <Text style={styles.menuSubtext}>Últimos inicios de sesión</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -263,13 +263,13 @@ export default function SecurityScreen() {
               onPress={handleBlockAccount}
             >
               <View style={[styles.menuIcon, styles.dangerIcon]}>
-                <Ionicons name="lock-open-outline" size={20} color={COLORS.error} />
+                <Icon name="LockOpen" size={20} color={COLORS.error} />
               </View>
               <View style={styles.menuContent}>
                 <Text style={[styles.menuText, styles.dangerText]}>Bloquear Cuenta</Text>
                 <Text style={[styles.menuSubtext, styles.dangerSubtext]}>Deshabilitar acceso temporal</Text>
               </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.error} />
+              <Icon name="ChevronRight" size={20} color={COLORS.error} />
             </TouchableOpacity>
           </View>
         </View>

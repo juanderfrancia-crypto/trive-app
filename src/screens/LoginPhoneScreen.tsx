@@ -3,7 +3,6 @@ import React, { useCallback, useRef, useState } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
@@ -15,6 +14,7 @@ import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
 import Button from '../components/Button'
 import { showSuccess, showError, showInfo } from '../utils/showError'
+import Icon from '../components/Icon'
 
 type Method = 'phone' | 'email'
 type Step = 'input' | 'otp' | 'name'
@@ -266,7 +266,7 @@ export default function LoginPhoneScreen() {
             <View style={s.section}>
               <View style={s.otpHeader}>
                 <View style={s.otpIconCircle}>
-                  <Ionicons name="person-outline" size={28} color={COLORS.primary} />
+                  <Icon name="User" size={28} color={COLORS.primary} />
                 </View>
                 <Text style={s.heading}>¿Cómo te llamas?</Text>
                 <Text style={s.subheading}>Ingresa tu nombre para completar tu registro en Trive</Text>
@@ -275,7 +275,7 @@ export default function LoginPhoneScreen() {
               <View style={s.inputGroup}>
                 <Text style={s.label}>Nombre completo</Text>
                 <View style={[s.input, errors.name && s.inputError]}>
-                  <Ionicons name="person-outline" size={20} color={errors.name ? COLORS.error : COLORS.textSecondary} />
+                  <Icon name="User" size={20} color={errors.name ? COLORS.error : COLORS.textSecondary} />
                   <TextInput
                     style={s.inputText}
                     placeholder="Ej: Carlos Rodríguez"
@@ -314,7 +314,7 @@ export default function LoginPhoneScreen() {
             <View style={s.section}>
               <View style={s.otpHeader}>
                 <View style={s.otpIconCircle}>
-                  <Ionicons name="chatbubble-ellipses-outline" size={28} color={COLORS.primary} />
+                  <Icon name="MessageCircle" size={28} color={COLORS.primary} />
                 </View>
                 <Text style={s.heading}>Revisa tu SMS</Text>
                 <Text style={s.subheading}>
@@ -325,7 +325,7 @@ export default function LoginPhoneScreen() {
                   style={s.changeBtn}
                   onPress={() => { setStep('input'); setOtp(''); setOtpDigits(['','','','','','']); setErrors({}) }}
                 >
-                  <Ionicons name="arrow-back" size={14} color={COLORS.primary} />
+                  <Icon name="ArrowLeft" size={14} color={COLORS.primary} />
                   <Text style={s.changeBtnText}>Cambiar número</Text>
                 </TouchableOpacity>
               </View>
@@ -363,7 +363,7 @@ export default function LoginPhoneScreen() {
 
               {otpGuard.isLocked && (
                 <View style={s.lockBanner}>
-                  <Ionicons name="lock-closed" size={14} color={COLORS.warningDark} />
+                  <Icon name="Lock" size={14} color={COLORS.warningDark} />
                   <Text style={s.lockText}>Demasiados intentos. Espera {otpGuard.formatCountdown()}</Text>
                 </View>
               )}
@@ -386,7 +386,7 @@ export default function LoginPhoneScreen() {
                   <View style={s.countryBadge}>
                     <Text style={s.countryFlag}>🇨🇴</Text>
                     <Text style={s.countryCode}>+57</Text>
-                    <Ionicons name="chevron-down" size={13} color={COLORS.textSecondary} />
+                    <Icon name="ChevronDown" size={13} color={COLORS.textSecondary} />
                   </View>
                   <View style={s.phoneDivider} />
                   <TextInput
@@ -427,7 +427,7 @@ export default function LoginPhoneScreen() {
             /* ── Email step ── */
             <View style={s.section}>
               <TouchableOpacity style={s.backRow} onPress={() => switchMethod('phone')}>
-                <Ionicons name="arrow-back" size={20} color={COLORS.textPrimary} />
+                <Icon name="ArrowLeft" size={20} color={COLORS.textPrimary} />
                 <Text style={s.backText}>Volver</Text>
               </TouchableOpacity>
 
@@ -437,7 +437,7 @@ export default function LoginPhoneScreen() {
               <View style={s.inputGroup}>
                 <Text style={s.label}>Correo electrónico</Text>
                 <View style={[s.input, errors.email && s.inputError]}>
-                  <Ionicons name="mail-outline" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
+                  <Icon name="Mail" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
                   <TextInput
                     style={s.inputText}
                     placeholder="tucorreo@ejemplo.com"
@@ -455,7 +455,7 @@ export default function LoginPhoneScreen() {
               <View style={s.inputGroup}>
                 <Text style={s.label}>Contraseña</Text>
                 <View style={[s.input, errors.password && s.inputError]}>
-                  <Ionicons name="lock-closed-outline" size={20} color={errors.password ? COLORS.error : COLORS.textSecondary} />
+                  <Icon name="Lock" size={20} color={errors.password ? COLORS.error : COLORS.textSecondary} />
                   <TextInput
                     style={s.inputText}
                     placeholder="••••••••"
@@ -466,7 +466,7 @@ export default function LoginPhoneScreen() {
                     editable={!isSubmitting}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={isSubmitting}>
-                    <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textSecondary} />
+                    <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={20} color={COLORS.textSecondary} />
                   </TouchableOpacity>
                 </View>
                 {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
@@ -482,7 +482,7 @@ export default function LoginPhoneScreen() {
 
               {emailGuard.isLocked && (
                 <View style={s.lockBanner}>
-                  <Ionicons name="lock-closed" size={14} color={COLORS.warningDark} />
+                  <Icon name="Lock" size={14} color={COLORS.warningDark} />
                   <Text style={s.lockText}>Demasiados intentos. Espera {emailGuard.formatCountdown()}</Text>
                 </View>
               )}

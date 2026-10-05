@@ -1,8 +1,8 @@
 import React from 'react'
 import { View, Modal, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
+import Icon from './Icon'
 
 interface TripDetailsModalProps {
   visible: boolean
@@ -39,7 +39,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={28} color={COLORS.text} />
+            <Icon name="X" size={28} color={COLORS.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Detalles del Viaje</Text>
           <View style={{ width: 28 }} />
@@ -48,7 +48,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
         {/* Status Card */}
         <View style={styles.statusCard}>
           <View style={[styles.statusIcon, { backgroundColor: statusInfo.color + '20' }]}>
-            <Ionicons name={statusInfo.icon as any} size={32} color={statusInfo.color} />
+            <Icon name={statusInfo.icon as any} size={32} color={statusInfo.color} />
           </View>
           <View>
             <Text style={styles.statusLabel}>{statusInfo.label}</Text>
@@ -71,7 +71,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
               />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <Ionicons name="person" size={24} color={COLORS.white} />
+                <Icon name="User" size={24} color={COLORS.white} />
               </View>
             )}
             <View style={styles.infoContent}>
@@ -125,7 +125,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
               </Text>
             </View>
             <View style={styles.priceBadge}>
-              <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+              <Icon name="CircleCheck" size={20} color={COLORS.success} />
             </View>
           </View>
         </View>
@@ -136,7 +136,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
           <View style={styles.infoGrid}>
             <View style={styles.infoItem}>
               <View style={styles.infoItemIcon}>
-                <Ionicons name="calendar" size={20} color={COLORS.primary} />
+                <Icon name="Calendar" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.infoItemLabel}>Hoy</Text>
               <Text style={styles.infoItemValue}>
@@ -146,7 +146,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
 
             <View style={styles.infoItem}>
               <View style={styles.infoItemIcon}>
-                <Ionicons name="time" size={20} color={COLORS.primary} />
+                <Icon name="Clock" size={20} color={COLORS.primary} />
               </View>
               <Text style={styles.infoItemLabel}>Hora</Text>
               <Text style={styles.infoItemValue}>

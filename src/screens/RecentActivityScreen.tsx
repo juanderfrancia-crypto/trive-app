@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { supabase } from '../services/supabase'
@@ -100,7 +100,7 @@ export default function RecentActivityScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Actividad Reciente</Text>
           <View style={{ width: 28 }} />
@@ -126,7 +126,7 @@ export default function RecentActivityScreen() {
                         { backgroundColor: getActivityColor(activity.status) + '15' },
                       ]}
                     >
-                      <Ionicons
+                      <Icon
                         name={getActivityIcon(activity.action) as any}
                         size={20}
                         color={getActivityColor(activity.status)}
@@ -137,7 +137,7 @@ export default function RecentActivityScreen() {
                       <Text style={styles.actionText}>{activity.action}</Text>
                       <Text style={styles.deviceText}>{activity.device}</Text>
                       <View style={styles.locationRow}>
-                        <Ionicons name="location-outline" size={14} color={COLORS.textTertiary} />
+                        <Icon name="MapPin" size={14} color={COLORS.textTertiary} />
                         <Text style={styles.locationText}>{activity.location}</Text>
                       </View>
                     </View>
@@ -168,7 +168,7 @@ export default function RecentActivityScreen() {
             </View>
 
             <View style={styles.securityNote}>
-              <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+              <Icon name="Info" size={20} color={COLORS.primary} />
               <Text style={styles.noteText}>
                 Si ve actividad inusual, cambie su contraseña inmediatamente
               </Text>
@@ -176,7 +176,7 @@ export default function RecentActivityScreen() {
           </>
         ) : (
           <View style={styles.emptyContainer}>
-            <Ionicons name="checkmark-circle-outline" size={64} color={COLORS.primary} style={{ marginBottom: SPACING.md }} />
+            <Icon name="CircleCheck" size={64} color={COLORS.primary} style={{ marginBottom: SPACING.md }} />
             <Text style={styles.emptyText}>No hay actividad registrada</Text>
           </View>
         )}

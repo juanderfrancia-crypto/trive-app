@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useState } from 'react'
@@ -40,7 +40,7 @@ export default function RecoveryAccountScreen() {
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Recuperación de Cuenta</Text>
           <View style={{ width: 28 }} />
@@ -79,7 +79,7 @@ export default function RecoveryAccountScreen() {
           ) : (
             <View style={styles.emailCard}>
               <View style={styles.emailHeader}>
-                <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
+                <Icon name="Mail" size={24} color={COLORS.primary} />
                 <Text style={styles.emailText}>{email}</Text>
               </View>
               <TouchableOpacity onPress={() => setIsEditing(true)}>
@@ -96,17 +96,17 @@ export default function RecoveryAccountScreen() {
           </Text>
 
           <View style={styles.emptyState}>
-            <Ionicons name="call-outline" size={40} color={COLORS.textTertiary} />
+            <Icon name="Phone" size={40} color={COLORS.textTertiary} />
             <Text style={styles.emptyText}>No hay números agregados</Text>
             <TouchableOpacity style={styles.addBtn}>
-              <Ionicons name="add-outline" size={20} color={COLORS.primary} />
+              <Icon name="Plus" size={20} color={COLORS.primary} />
               <Text style={styles.addBtnText}>Añadir número</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         <View style={styles.infoBox}>
-          <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+          <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
           <Text style={styles.infoText}>
             Mantén esta información actualizada para poder recuperar tu cuenta fácilmente
           </Text>

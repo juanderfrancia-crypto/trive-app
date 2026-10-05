@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -90,7 +90,7 @@ function RideCard({ ride, passengers, isSearch, selected, onSelect }: RideCardPr
           <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
           <View style={styles.driverRow}>
             <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
-            <Ionicons name="star" size={12} color={COLORS.warning} />
+            <Icon name="Star" size={12} color={COLORS.warning} />
             <Text style={styles.ratingText}>{Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
           </View>
           {!!ride.vehicle_plate && (
@@ -192,7 +192,7 @@ export default function AvailableRidesScreen() {
 
   const renderError = () => (
     <View style={styles.emptyContainer}>
-      <Ionicons name="alert-circle" size={48} color={COLORS.error} />
+      <Icon name="CircleAlert" size={48} color={COLORS.error} />
       <Text style={[styles.emptyTitle, { color: COLORS.error }]}>Error cargando viajes</Text>
       <Text style={styles.emptyText}>{error}</Text>
       <TouchableOpacity style={styles.secondaryBtn} onPress={onRefresh}>
@@ -207,7 +207,7 @@ export default function AvailableRidesScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityLabel="Volver">
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           {isSearch ? (

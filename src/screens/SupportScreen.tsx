@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, Linking, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
@@ -39,7 +39,7 @@ export default function SupportScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Soporte y Ayuda</Text>
           <View style={{ width: 28 }} />
@@ -48,7 +48,7 @@ export default function SupportScreen() {
         {/* Welcome Message */}
         <View style={styles.section}>
           <View style={styles.welcomeBox}>
-            <Ionicons name="headset-outline" size={48} color={COLORS.primary} />
+            <Icon name="Headset" size={48} color={COLORS.primary} />
             <Text style={styles.welcomeTitle}>¿Necesitas Ayuda?</Text>
             <Text style={styles.welcomeText}>
               Nuestro equipo de soporte está listo para ayudarte. Elige cómo prefieres comunicarte con nosotros.
@@ -66,14 +66,14 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.contactIcon}>
-              <Ionicons name="mail-outline" size={24} color={COLORS.primary} />
+              <Icon name="Mail" size={24} color={COLORS.primary} />
             </View>
             <View style={styles.contactContent}>
               <Text style={styles.contactLabel}>Correo Electrónico</Text>
               <Text style={styles.contactValue}>soportetrive@gmail.com</Text>
               <Text style={styles.contactTime}>Respuesta en 24 horas</Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color={COLORS.primary} />
+            <Icon name="ArrowRight" size={20} color={COLORS.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -82,14 +82,14 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.contactIcon}>
-              <Ionicons name="logo-whatsapp" size={24} color="#25D366" />
+              <Icon name="MessageCircle" size={24} color="#25D366" />
             </View>
             <View style={styles.contactContent}>
               <Text style={styles.contactLabel}>WhatsApp</Text>
               <Text style={styles.contactValue}>+57 (300) 577-2967</Text>
               <Text style={styles.contactTime}>Lunes - Viernes 8am-6pm</Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color="#25D366" />
+            <Icon name="ArrowRight" size={20} color="#25D366" />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -98,14 +98,14 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.contactIcon}>
-              <Ionicons name="call-outline" size={24} color={COLORS.accent} />
+              <Icon name="Phone" size={24} color={COLORS.accent} />
             </View>
             <View style={styles.contactContent}>
               <Text style={styles.contactLabel}>Llamada Telefónica</Text>
               <Text style={styles.contactValue}>+57 (317) 302-8628</Text>
               <Text style={styles.contactTime}>Lunes - Viernes 8am-6pm</Text>
             </View>
-            <Ionicons name="arrow-forward" size={20} color={COLORS.accent} />
+            <Icon name="ArrowRight" size={20} color={COLORS.accent} />
           </TouchableOpacity>
         </View>
 
@@ -119,13 +119,13 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.resourceIcon}>
-              <Ionicons name="help-outline" size={24} color={COLORS.primary} />
+              <Icon name="CircleHelp" size={24} color={COLORS.primary} />
             </View>
             <View style={styles.resourceContent}>
               <Text style={styles.resourceLabel}>Preguntas Frecuentes</Text>
               <Text style={styles.resourceText}>Encuentra respuestas rápidas</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -134,13 +134,13 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.resourceIcon}>
-              <Ionicons name="book-outline" size={24} color={COLORS.primary} />
+              <Icon name="BookOpen" size={24} color={COLORS.primary} />
             </View>
             <View style={styles.resourceContent}>
               <Text style={styles.resourceLabel}>Centro de Aprendizaje</Text>
               <Text style={styles.resourceText}>Tutoriales y guías paso a paso</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -149,20 +149,20 @@ export default function SupportScreen() {
             activeOpacity={0.8}
           >
             <View style={styles.resourceIcon}>
-              <Ionicons name="bug-outline" size={24} color={COLORS.error} />
+              <Icon name="Bug" size={24} color={COLORS.error} />
             </View>
             <View style={styles.resourceContent}>
               <Text style={styles.resourceLabel}>Reportar Problema</Text>
               <Text style={styles.resourceText}>Denuncia bugs y errores</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </TouchableOpacity>
         </View>
 
         {/* Info Box */}
         <View style={styles.section}>
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+            <Icon name="Info" size={20} color={COLORS.primary} />
             <Text style={styles.infoText}>
               Para consultas sobre tu cuenta, verificación de documentos o incidentes ocurridos durante un trayecto, contacta directamente con nuestro equipo. Recuerda que los pagos entre conductor y pasajero son directos y no los gestionamos nosotros.
             </Text>

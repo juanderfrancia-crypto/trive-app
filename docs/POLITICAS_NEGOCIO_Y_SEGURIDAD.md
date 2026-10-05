@@ -16,14 +16,18 @@ Decisiones confirmadas por el dueño. Son reglas que el código debe cumplir.
 - **No hay límite de viajes por conductor.** Cada viaje se cobra; el volumen no se restringe.
 - **Recarga manual** por ahora: el conductor transfiere y un admin acredita el saldo. Wompi se integra solo cuando se decida cobrar en línea.
 
-## 2. Reembolsos de la comisión de $5.000
+## 2. Reembolsos
 
-| Caso | Resultado |
-|---|---|
-| El pasajero cancela antes de que inicie el viaje | Reembolso completo al saldo del conductor |
-| El conductor cancela | Sin reembolso |
-| El viaje se ejecuta | Sin reembolso |
-| Emergencia real del conductor (ej. accidente) | Un admin puede aprobar el reembolso, con motivo registrado en el libro contable |
+El detalle completo está en `docs/security/LEGAL_POLITICA_REEMBOLSOS.md`. Resumen:
+
+| Comisión | Caso | Resultado |
+|---|---|---|
+| $5.000 (aceptación) | El pasajero cancela antes de que inicie el viaje | Reembolso completo al saldo del conductor |
+| $5.000 (aceptación) | El conductor cancela | Sin reembolso |
+| $5.000 (aceptación) | El viaje se ejecuta | Sin reembolso |
+| $5.000 (aceptación) | Emergencia real del conductor (ej. accidente) | Un admin puede aprobar el reembolso, con motivo registrado |
+| $2.000 (publicación) | El conductor cancela la ruta antes de la salida | Reembolso completo al saldo, automático |
+| Ambas | Error de la app (cobro duplicado, reserva no confirmada) | Reembolso completo, automático |
 
 Todo movimiento queda en el libro contable (`wallet_transactions`).
 

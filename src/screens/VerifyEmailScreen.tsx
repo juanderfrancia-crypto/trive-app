@@ -3,13 +3,13 @@ import { useState, useEffect } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
+import Icon from '../components/Icon'
 
 type RootParamList = {
   VerifyEmail: {
@@ -187,7 +187,7 @@ export default function VerifyEmailScreen() {
               }}
               disabled={isSubmitting || authLoading}
             >
-              <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+              <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
             </TouchableOpacity>
             <Text style={styles.title}>Verificar Correo</Text>
             <View style={{ width: 28 }} />
@@ -196,7 +196,7 @@ export default function VerifyEmailScreen() {
           {/* Verification Card */}
           <View style={styles.card}>
             <View style={styles.iconContainer}>
-              <Ionicons name="mail-outline" size={48} color={COLORS.primary} />
+              <Icon name="Mail" size={48} color={COLORS.primary} />
             </View>
 
             <Text style={styles.welcomeText}>Verifica tu correo</Text>
@@ -206,7 +206,7 @@ export default function VerifyEmailScreen() {
             </Text>
 
             <View style={styles.emailContainer}>
-              <Ionicons name="mail" size={18} color={COLORS.primary} />
+              <Icon name="Mail" size={18} color={COLORS.primary} />
               <Text style={styles.emailBig}>{email}</Text>
             </View>
 
@@ -218,7 +218,7 @@ export default function VerifyEmailScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Código de Verificación</Text>
               <View style={[styles.inputContainer, errors.code && styles.inputError]}>
-                <Ionicons name="lock-closed-outline" size={20} color={errors.code ? COLORS.error : COLORS.textSecondary} />
+                <Icon name="Lock" size={20} color={errors.code ? COLORS.error : COLORS.textSecondary} />
                 <TextInput
                   style={styles.input}
                   placeholder="● ● ● ● ● ●"
@@ -239,8 +239,8 @@ export default function VerifyEmailScreen() {
 
             {/* Timer */}
             <View style={styles.timerContainer}>
-              <Ionicons
-                name="time-outline"
+              <Icon
+                name="Clock"
                 size={16}
                 color={timeLeft > 60 ? COLORS.success : COLORS.warning}
               />
@@ -280,7 +280,7 @@ export default function VerifyEmailScreen() {
 
           {/* Info Card */}
           <View style={styles.infoCard}>
-            <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+            <Icon name="Info" size={20} color={COLORS.primary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoTitle}>Nota importante</Text>
               <Text style={styles.infoMessage}>

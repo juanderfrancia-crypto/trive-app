@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar, Share } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -53,7 +53,7 @@ function MenuRow({ title, sub, onPress }: { title: string; sub: string; onPress:
         <Text style={pv.menuTitle}>{title}</Text>
         <Text style={pv.menuSub}>{sub}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+      <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
     </TouchableOpacity>
   )
 }
@@ -375,7 +375,7 @@ export default function ProfileScreen() {
         {/* Fuera del mockup: se conserva por ser la única entrada para ser conductor y para la ayuda. */}
         <View style={s.section}>
           <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-            <IllustratedCard scene="wheel" tone="brand" style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
+            <IllustratedCard illustration="proudDriver" illustrationWidth={96} style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
               <View style={pv.ctaOportunidad}>
                 <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
               </View>
@@ -391,12 +391,12 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
             <View style={pv.helpRow}>
-              <View style={pv.helpIcon}><Ionicons name="headset" size={20} color={COLORS.warningDark} /></View>
+              <View style={pv.helpIcon}><Icon name="Headset" size={20} color={COLORS.warningDark} /></View>
               <View style={pv.helpText}>
                 <Text style={pv.payName}>Centro de Ayuda</Text>
                 <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
             </View>
           </TouchableOpacity>
         </View>
@@ -404,12 +404,12 @@ export default function ProfileScreen() {
         <View style={s.section}>
           <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
             <View style={pv.helpRow}>
-              <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color={COLORS.primary} /></View>
+              <View style={pv.settingsIcon}><Icon name="Settings" size={20} color={COLORS.primary} /></View>
               <View style={pv.helpText}>
                 <Text style={pv.payName}>Configuración</Text>
                 <Text style={pv.paySub}>Ajustes y preferencias</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+              <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
             </View>
           </TouchableOpacity>
         </View>
@@ -482,7 +482,7 @@ export default function ProfileScreen() {
           <View style={s.section}>
             <TouchableOpacity style={s.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
               <View style={s.logoutIconWrap}>
-                <Ionicons name="log-out-outline" size={18} color="#fff" />
+                <Icon name="LogOut" size={18} color="#fff" />
               </View>
               <Text style={s.logoutBtnText}>Cerrar Sesión</Text>
             </TouchableOpacity>

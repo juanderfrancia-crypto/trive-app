@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, FlatList, RefreshControl, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -13,6 +12,7 @@ import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
+import Icon from '../components/Icon'
 
 interface ActiveTrip {
   id: string
@@ -309,7 +309,7 @@ export default function ActiveTripsScreen() {
       {/* Ruta */}
       <View style={styles.routeSection}>
         <View style={styles.routePoint}>
-          <Ionicons name="location-outline" size={16} color={COLORS.success} />
+          <Icon name="MapPin" size={16} color={COLORS.success} />
           <View style={{ flex: 1 }}>
             <Text style={styles.routeLabel}>Origen</Text>
             <Text style={styles.routeValue} numberOfLines={1}>
@@ -321,7 +321,7 @@ export default function ActiveTripsScreen() {
         <View style={styles.routeLine} />
 
         <View style={styles.routePoint}>
-          <Ionicons name="location-outline" size={16} color={COLORS.error} />
+          <Icon name="MapPin" size={16} color={COLORS.error} />
           <View style={{ flex: 1 }}>
             <Text style={styles.routeLabel}>Destino</Text>
             <Text style={styles.routeValue} numberOfLines={1}>
@@ -332,7 +332,7 @@ export default function ActiveTripsScreen() {
 
         {trip.dropoffPoint && trip.dropoffPointCustom && (
           <View style={[styles.routePoint, { marginTop: SPACING.sm }]}>
-            <Ionicons name="location-sharp" size={16} color={COLORS.primary} />
+            <Icon name="MapPin" size={16} color={COLORS.primary} />
             <View style={{ flex: 1 }}>
               <Text style={styles.routeLabel}>Punto de bajada personalizado</Text>
               <Text style={styles.routeValue} numberOfLines={1}>
@@ -346,13 +346,13 @@ export default function ActiveTripsScreen() {
       {/* Información del conductor */}
       <View style={styles.driverSection}>
         <View style={styles.driverInfo}>
-          <Ionicons name="person-circle" size={48} color={COLORS.primary} />
+          <Icon name="UserCircle" size={48} color={COLORS.primary} />
           <View style={{ flex: 1, marginLeft: SPACING.md }}>
             <Text style={styles.driverName}>{trip.driverName}</Text>
             <View style={styles.driverMeta}>
               {trip.driverRating !== null && (
                 <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color={COLORS.warning} />
+                  <Icon name="Star" size={12} color={COLORS.warning} />
                   <Text style={styles.ratingText}>{trip.driverRating.toFixed(1)}</Text>
                 </View>
               )}
@@ -370,7 +370,7 @@ export default function ActiveTripsScreen() {
               }
             }}
           >
-            <Ionicons name="call" size={16} color={COLORS.primary} />
+            <Icon name="Phone" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -378,11 +378,11 @@ export default function ActiveTripsScreen() {
       {/* Detalles del viaje */}
       <View style={styles.detailsSection}>
         <View style={styles.detailItem}>
-          <Ionicons name="car-outline" size={16} color={COLORS.textSecondary} />
+          <Icon name="Car" size={16} color={COLORS.textSecondary} />
           <Text style={styles.detailText}>Asiento: {trip.seatNumber}</Text>
         </View>
         <View style={styles.detailItem}>
-          <Ionicons name="cash-outline" size={16} color={COLORS.textSecondary} />
+          <Icon name="Banknote" size={16} color={COLORS.textSecondary} />
           <Text style={styles.detailText}>${trip.price.toLocaleString('es-CO')}</Text>
         </View>
       </View>
@@ -390,7 +390,7 @@ export default function ActiveTripsScreen() {
       {/* Botones de acción */}
       <View style={styles.actionsSection}>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => handleContactDriver(trip)}>
-          <Ionicons name="chatbubble-outline" size={18} color={COLORS.primary} />
+          <Icon name="MessageCircle" size={18} color={COLORS.primary} />
           <Text style={styles.secondaryButtonText}>Contactar</Text>
           {(unreadCounts[trip.id] ?? 0) > 0 && (
             <View style={styles.chatBadge}>
@@ -402,12 +402,12 @@ export default function ActiveTripsScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.primaryButton} onPress={() => handleTrackTrip(trip)}>
-          <Ionicons name="navigate-outline" size={18} color="#fff" />
+          <Icon name="Navigation" size={18} color="#fff" />
           <Text style={styles.primaryButtonText}>Rastrear</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.dangerButton} onPress={() => handleCancelTrip(trip)}>
-          <Ionicons name="close-outline" size={18} color={COLORS.error} />
+          <Icon name="X" size={18} color={COLORS.error} />
           <Text style={styles.dangerButtonText}>Cancelar</Text>
         </TouchableOpacity>
       </View>
@@ -420,7 +420,7 @@ export default function ActiveTripsScreen() {
       {/* Encabezado */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Viajes Activos</Text>
@@ -465,7 +465,7 @@ export default function ActiveTripsScreen() {
         >
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-              <Ionicons name="car-outline" size={64} color={COLORS.textTertiary} />
+              <Icon name="Car" size={64} color={COLORS.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>Sin viajes activos</Text>
             <Text style={styles.emptyText}>No tienes viajes en progreso o próximos</Text>
@@ -473,7 +473,7 @@ export default function ActiveTripsScreen() {
               style={styles.searchButton}
               onPress={() => navigation.navigate('Main', { screen: 'Search' })}
             >
-              <Ionicons name="search" size={20} color="#fff" />
+              <Icon name="Search" size={20} color="#fff" />
               <Text style={styles.searchButtonText}>Buscar viajes</Text>
             </TouchableOpacity>
           </View>

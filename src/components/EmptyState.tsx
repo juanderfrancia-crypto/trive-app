@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, StyleSheet, ViewStyle } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
 import Button from './Button'
+import Icon from './Icon'
 
 interface EmptyStateProps {
   icon?: string
@@ -27,7 +27,7 @@ export default function EmptyState({
   return (
     <View style={[styles.container, style]}>
       <View style={styles.iconWrapper}>
-        <Ionicons name={icon as any} size={64} color={iconColor} />
+        <Icon name={icon as any} size={64} color={iconColor} />
       </View>
 
       <Text style={styles.title}>{title}</Text>

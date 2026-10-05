@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -90,7 +90,7 @@ export default function DriverEarningsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={[styles.container, styles.centered]}>
-          <Ionicons name="warning" size={48} color={COLORS.error} />
+          <Icon name="TriangleAlert" size={48} color={COLORS.error} />
           <Text style={styles.errorText}>Error al cargar ganancias</Text>
           <Text style={styles.errorSubtext}>{error}</Text>
           <TouchableOpacity
@@ -123,8 +123,8 @@ export default function DriverEarningsScreen() {
           {/* Current Role Badge */}
           {user && (
             <View style={styles.roleBadge}>
-              <Ionicons 
-                name={user.role === 'driver' ? 'car' : 'person'} 
+              <Icon 
+                name={user.role === 'driver' ? 'Car' : 'User'} 
                 size={18} 
                 color={COLORS.textInverse}
               />
@@ -141,7 +141,7 @@ export default function DriverEarningsScreen() {
               onPress={() => navigation.navigate('Main' as never, { screen: 'Profile' } as never)}
               activeOpacity={0.8}
             >
-              <Ionicons name="person-circle" size={20} color={COLORS.textInverse} />
+              <Icon name="UserCircle" size={20} color={COLORS.textInverse} />
               <Text style={styles.restrictedPrimaryBtnText}>Ir a Perfil y cambiar rol</Text>
             </TouchableOpacity>
 
@@ -166,7 +166,7 @@ export default function DriverEarningsScreen() {
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Ganancias</Text>
@@ -182,7 +182,7 @@ export default function DriverEarningsScreen() {
         <View style={styles.balanceCard}>
           <View style={styles.balanceTop}>
             <View style={styles.balanceCardIcon}>
-              <Ionicons name="wallet-outline" size={36} color={COLORS.primary} />
+              <Icon name="Wallet" size={36} color={COLORS.primary} />
             </View>
             <Text style={styles.balanceLabel}>ESTIMADO DE INGRESOS</Text>
             <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
@@ -208,7 +208,7 @@ export default function DriverEarningsScreen() {
         {/* Este mes + Próximos */}
         <View style={styles.subCardsRow}>
           <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
-            <Ionicons name="calendar-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
+            <Icon name="Calendar" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
             <Text style={styles.subCardLabel}>Este mes</Text>
             <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
               {formatCOP(earnings?.thisMonthEarnings || 0)}
@@ -216,7 +216,7 @@ export default function DriverEarningsScreen() {
           </View>
           {(earnings?.upcomingAmount || 0) > 0 && (
             <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
-              <Ionicons name="time-outline" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
+              <Icon name="Clock" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
               <Text style={styles.subCardLabel}>Próximos</Text>
               <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
                 {formatCOP(earnings?.upcomingAmount || 0)}
@@ -227,7 +227,7 @@ export default function DriverEarningsScreen() {
 
         {/* Nota aclaratoria */}
         <View style={styles.disclaimerBox}>
-          <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+          <Icon name="Info" size={16} color={COLORS.primary} />
           <Text style={styles.disclaimerText}>
             Los pagos son directos entre conductor y pasajero. Este resumen es un estimado basado en tus reservas.
           </Text>
@@ -293,7 +293,7 @@ export default function DriverEarningsScreen() {
 
           {transactions.length === 0 ? (
             <View style={styles.emptyTx}>
-              <Ionicons name="receipt-outline" size={40} color={COLORS.textTertiary} />
+              <Icon name="Receipt" size={40} color={COLORS.textTertiary} />
               <Text style={styles.emptyTxText}>Sin transacciones aún</Text>
             </View>
           ) : (
@@ -305,7 +305,7 @@ export default function DriverEarningsScreen() {
                   <View key={transaction.id}>
                     <View style={styles.transactionItem}>
                       <View style={[styles.transactionIcon, { backgroundColor: color + '20' }]}>
-                        <Ionicons name={getTransactionIcon(transaction.type) as any} size={20} color={color} />
+                        <Icon name={getTransactionIcon(transaction.type) as any} size={20} color={color} />
                       </View>
                       <View style={styles.transactionInfo}>
                         <Text style={styles.transactionDesc}>{transaction.description}</Text>
@@ -329,7 +329,7 @@ export default function DriverEarningsScreen() {
                     onPress={() => setVisibleCount(PAGE_SIZE)}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="chevron-up" size={16} color={COLORS.textSecondary} />
+                    <Icon name="ChevronUp" size={16} color={COLORS.textSecondary} />
                     <Text style={[styles.loadMoreText, { color: COLORS.textSecondary }]}>Mostrar menos</Text>
                   </TouchableOpacity>
                 )}
@@ -340,7 +340,7 @@ export default function DriverEarningsScreen() {
                     activeOpacity={0.7}
                   >
                     <Text style={styles.loadMoreText}>Ver más ({transactions.length - visibleCount})</Text>
-                    <Ionicons name="chevron-down" size={16} color={COLORS.primary} />
+                    <Icon name="ChevronDown" size={16} color={COLORS.primary} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
   },
   title: {
     ...TYPOGRAPHY.bold,
-    fontSize: 20,
+    fontSize: 22,
     color: COLORS.textPrimary,
   },
   subtitle: {
@@ -499,7 +499,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
     color: COLORS.textPrimary,
     letterSpacing: -1,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   },
   periodBtnText: {
     ...TYPOGRAPHY.semibold,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
   },
   periodBtnTextActive: {
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   },
   transactionDate: {
     ...TYPOGRAPHY.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
@@ -676,7 +676,7 @@ const styles = StyleSheet.create({
   },
   disclaimerText: {
     ...TYPOGRAPHY.regular,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     flex: 1,
     lineHeight: 18,
@@ -749,7 +749,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.sm,
   },
   currentBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '700',
     color: COLORS.primary,
     letterSpacing: 0.5,
@@ -777,7 +777,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   monthStatSub: {
-    fontSize: 10,
+    fontSize: 11,
     color: COLORS.textTertiary,
     marginTop: 2,
   },

@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet, Image } from 'react-native'
 import { Text } from '../AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
@@ -10,6 +9,7 @@ import { SkeletonList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
+import Icon from '../Icon'
 
 interface ChatPreview {
   requestId: string
@@ -171,7 +171,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
           <Image source={{ uri: chat.otherUserAvatar }} style={styles.avatar} />
         ) : (
           <View style={styles.avatarPlaceholder}>
-            <Ionicons name="person" size={20} color={COLORS.surface} />
+            <Icon name="User" size={20} color={COLORS.surface} />
           </View>
         )}
         {chat.unreadCount > 0 && (
@@ -197,7 +197,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
         )}
         <Text style={styles.chatPrice}>${chat.price.toLocaleString('es-CO')}</Text>
       </View>
-      <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+      <Icon name="ChevronRight" size={18} color={COLORS.textSecondary} />
     </TouchableOpacity>
   )
 
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: COLORS.surface,
   },
-  unreadBadgeText: { color: COLORS.white, fontSize: 10, fontWeight: '700' },
+  unreadBadgeText: { color: COLORS.white, fontSize: 11, fontWeight: '700' },
   chatContent: { flex: 1 },
   chatName: {
     fontSize: TYPOGRAPHY.size.md,

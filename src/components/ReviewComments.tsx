@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, StyleSheet, ScrollView, FlatList } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { ReviewComment } from '../services/driverReputation'
+import Icon from './Icon'
 
 interface ReviewCommentsProps {
   comments: ReviewComment[]
@@ -38,9 +38,9 @@ export default function ReviewComments({
   const RatingStars = ({ rating }: { rating: number }) => (
     <View style={styles.starsRow}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <Ionicons
+        <Icon
           key={star}
-          name={star <= rating ? 'star' : 'star-outline'}
+          name={star <= rating ? 'Star' : 'Star'}
           size={12}
           color={star <= rating ? COLORS.warning : COLORS.textTertiary}
           style={{ marginRight: 2 }}
@@ -80,7 +80,7 @@ export default function ReviewComments({
         {/* Recommend Badge */}
         {item.recommend && (
           <View style={styles.recommendBadge}>
-            <Ionicons name="heart" size={12} color={COLORS.error} />
+            <Icon name="Heart" size={12} color={COLORS.error} />
             <Text style={styles.recommendText}>Recomendado</Text>
           </View>
         )}

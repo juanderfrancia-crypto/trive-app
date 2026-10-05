@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
-import type { ComponentProps } from 'react'
 import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon, { type IconName as IconNameType } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -18,7 +17,7 @@ import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
 
 type NotifType = Notification['type']
-type IconName = ComponentProps<typeof Ionicons>['name']
+type IconName = IconNameType
 type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas' | 'mensajes'
 type FilterDef = { id: FilterId; label: string; types: NotifType[] | null }
 type DayGroup = 'Hoy' | 'Ayer' | 'Anteriores'
@@ -70,26 +69,26 @@ const tileOf = (type: NotifType): { icon: IconName; bg: string; fg: string } => 
     case 'trip_published':
     case 'offer_received':
     case 'offer_accepted':
-      return { icon: 'star', bg: COLORS.warningLight, fg: COLORS.warningDark }
+      return { icon: 'Star', bg: COLORS.warningLight, fg: COLORS.warningDark }
     case 'trip_confirm':
-      return { icon: 'checkmark', bg: COLORS.primary, fg: COLORS.white }
+      return { icon: 'Check', bg: COLORS.primary, fg: COLORS.white }
     case 'trip_completed':
-      return { icon: 'checkmark-circle-outline', bg: COLORS.surfaceAlt, fg: COLORS.primary }
+      return { icon: 'CircleCheck', bg: COLORS.surfaceAlt, fg: COLORS.primary }
     case 'review_pending':
     case 'review_received':
     case 'trip_rated':
-      return { icon: 'star', bg: COLORS.successLight, fg: COLORS.success }
+      return { icon: 'Star', bg: COLORS.successLight, fg: COLORS.success }
     case 'message':
-      return { icon: 'person', bg: COLORS.primaryTint, fg: COLORS.primary }
+      return { icon: 'User', bg: COLORS.primaryTint, fg: COLORS.primary }
     case 'booking':
-      return { icon: 'ticket-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+      return { icon: 'Ticket', bg: COLORS.primaryTint, fg: COLORS.primary }
     case 'trip_update':
     case 'driver_arrived':
     case 'trip_started':
     case 'trip_confirmed':
-      return { icon: 'navigate-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+      return { icon: 'Navigation', bg: COLORS.primaryTint, fg: COLORS.primary }
     default:
-      return { icon: 'notifications-outline', bg: COLORS.primaryTint, fg: COLORS.primary }
+      return { icon: 'Bell', bg: COLORS.primaryTint, fg: COLORS.primary }
   }
 }
 
@@ -269,15 +268,15 @@ export default function NotificationsScreen() {
         activeOpacity={0.9}
       >
         {selectionMode && (
-          <Ionicons
-            name={isSelected ? 'checkmark-circle' : 'ellipse-outline'}
+          <Icon
+            name={isSelected ? 'CircleCheck' : 'Circle'}
             size={20}
             color={isSelected ? COLORS.primary : COLORS.textTertiary}
           />
         )}
 
         <View style={[styles.tile, { backgroundColor: tile.bg }]}>
-          <Ionicons name={tile.icon} size={20} color={tile.fg} />
+          <Icon name={tile.icon} size={20} color={tile.fg} />
         </View>
 
         <View style={styles.body}>
@@ -305,7 +304,7 @@ export default function NotificationsScreen() {
                 ])
               }}
             >
-              <Ionicons name="trash-outline" size={15} color={COLORS.textTertiary} />
+              <Icon name="Trash2" size={15} color={COLORS.textTertiary} />
             </TouchableOpacity>
           )}
         </View>
@@ -319,14 +318,14 @@ export default function NotificationsScreen() {
         <View style={styles.headerRight}>
           {!!unreadCount && (
             <TouchableOpacity style={styles.headerIconBtn} onPress={markAllAsRead}>
-              <Ionicons name="checkmark-done-outline" size={16} color={COLORS.primary} />
+              <Icon name="CheckCheck" size={16} color={COLORS.primary} />
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-            <Ionicons name="trash-outline" size={16} color={COLORS.primary} />
+            <Icon name="Trash2" size={16} color={COLORS.primary} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => setSelectionMode(true)}>
-            <Ionicons name="checkbox-outline" size={16} color={COLORS.primary} />
+            <Icon name="SquareCheck" size={16} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
       )
@@ -335,17 +334,17 @@ export default function NotificationsScreen() {
     return (
       <View style={styles.headerRight}>
         <TouchableOpacity style={styles.headerIconBtn} onPress={deleteSelected} disabled={!selectedIds.length}>
-          <Ionicons
-            name="trash-outline"
+          <Icon
+            name="Trash2"
             size={16}
             color={selectedIds.length ? COLORS.error : COLORS.textTertiary}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-          <Ionicons name="trash-bin-outline" size={16} color={COLORS.error} />
+          <Icon name="Trash2" size={16} color={COLORS.error} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={exitSelection}>
-          <Ionicons name="close-outline" size={18} color={COLORS.primary} />
+          <Icon name="X" size={18} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
     )
@@ -430,8 +429,8 @@ export default function NotificationsScreen() {
             accessibilityRole="button"
             accessibilityLabel={headerCanGoBack ? 'Volver' : 'Ir al inicio'}
           >
-            <Ionicons
-              name={headerCanGoBack ? 'chevron-back' : 'home-outline'}
+            <Icon
+              name={headerCanGoBack ? 'ChevronLeft' : 'House'}
               size={18}
               color={COLORS.primary}
             />
@@ -494,14 +493,14 @@ export default function NotificationsScreen() {
               <>
                 <View style={styles.modalHeader}>
                   <View style={[styles.modalIcon, { backgroundColor: _dStyle.bg }]}>
-                    <Ionicons name={_dStyle.icon} size={22} color={_dStyle.fg} />
+                    <Icon name={_dStyle.icon} size={22} color={_dStyle.fg} />
                   </View>
                   <View style={styles.modalHeaderText}>
                     <Text style={styles.modalTitle} numberOfLines={2}>{detailNotif.title || 'Alerta'}</Text>
                     <Text style={styles.modalTime}>{timeLabelOf(detailNotif.created_at)}</Text>
                   </View>
                   <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setDetailNotif(null)}>
-                    <Ionicons name="close" size={18} color={COLORS.textSecondary} />
+                    <Icon name="X" size={18} color={COLORS.textSecondary} />
                   </TouchableOpacity>
                 </View>
 
@@ -516,56 +515,56 @@ export default function NotificationsScreen() {
                     <View style={styles.modalInfoCard}>
                       {_dPassenger && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="person-outline" size={15} color={COLORS.primary} />
+                          <Icon name="User" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Pasajero</Text>
                           <Text style={styles.modalInfoValue}>{_dPassenger}</Text>
                         </View>
                       )}
                       {_dDriver && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="car-outline" size={15} color={COLORS.primary} />
+                          <Icon name="Car" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Conductor</Text>
                           <Text style={styles.modalInfoValue}>{_dDriver}</Text>
                         </View>
                       )}
                       {_dOrigin && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="radio-button-on-outline" size={15} color={COLORS.primary} />
+                          <Icon name="CircleDot" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Origen</Text>
                           <Text style={styles.modalInfoValue}>{_dOrigin}</Text>
                         </View>
                       )}
                       {_dDest && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="location-outline" size={15} color={COLORS.primary} />
+                          <Icon name="MapPin" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Destino</Text>
                           <Text style={styles.modalInfoValue}>{_dDest}</Text>
                         </View>
                       )}
                       {_dSeats && _dSeats.length > 0 && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="grid-outline" size={15} color={COLORS.primary} />
+                          <Icon name="LayoutGrid" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Asiento{_dSeats.length > 1 ? 's' : ''}</Text>
                           <Text style={styles.modalInfoValue}>{_dSeats.join(', ')}</Text>
                         </View>
                       )}
                       {_dPrice !== undefined && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="cash-outline" size={15} color={COLORS.primary} />
+                          <Icon name="Banknote" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Valor</Text>
                           <Text style={styles.modalInfoValue}>${_dPrice.toLocaleString('es-CO')}</Text>
                         </View>
                       )}
                       {_dFmtDate && (
                         <View style={styles.modalInfoRow}>
-                          <Ionicons name="calendar-outline" size={15} color={COLORS.primary} />
+                          <Icon name="Calendar" size={15} color={COLORS.primary} />
                           <Text style={styles.modalInfoLabel}>Fecha</Text>
                           <Text style={styles.modalInfoValue}>{_dFmtDate}</Text>
                         </View>
                       )}
                       {_dBookingId && (
                         <View style={[styles.modalInfoRow, styles.modalIdRow]}>
-                          <Ionicons name="receipt-outline" size={13} color={COLORS.textTertiary} />
+                          <Icon name="Receipt" size={13} color={COLORS.textTertiary} />
                           <Text style={[styles.modalInfoLabel, styles.modalIdText]}>ID reserva</Text>
                           <Text style={[styles.modalInfoValue, styles.modalIdText]}>{_dBookingId}</Text>
                         </View>
@@ -588,7 +587,7 @@ export default function NotificationsScreen() {
                           setDetailNotif(null)
                         }}
                       >
-                        <Ionicons name="star" size={16} color={COLORS.white} />
+                        <Icon name="Star" size={16} color={COLORS.white} />
                         <Text style={styles.rateDriverBtnText}>
                           {_dIsReviewPending ? 'Calificar ahora' : 'Calificar conductor'}
                         </Text>
@@ -605,7 +604,7 @@ export default function NotificationsScreen() {
               <View style={styles.replyBar}>
                 {replySent ? (
                   <View style={styles.replySentRow}>
-                    <Ionicons name="checkmark-circle" size={18} color={COLORS.success} />
+                    <Icon name="CircleCheck" size={18} color={COLORS.success} />
                     <Text style={styles.replySentText}>Mensaje enviado</Text>
                   </View>
                 ) : (
@@ -628,7 +627,7 @@ export default function NotificationsScreen() {
                     >
                       {replySending
                         ? <ActivityIndicator size="small" color={COLORS.white} />
-                        : <Ionicons name="send" size={16} color={COLORS.white} />
+                        : <Icon name="Send" size={16} color={COLORS.white} />
                       }
                     </TouchableOpacity>
                   </>
@@ -674,7 +673,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
@@ -738,7 +737,7 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
     color: COLORS.textSecondary,
     textTransform: 'uppercase',
@@ -795,7 +794,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
   },
   ctaText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: COLORS.white,
   },
@@ -842,7 +841,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceAlt,
   },
   noteText: {
-    fontSize: 12,
+    fontSize: 13,
     lineHeight: 18,
     color: COLORS.textSecondary,
   },
@@ -938,10 +937,10 @@ const styles = StyleSheet.create({
   },
   modalIdText: {
     color: COLORS.textTertiary,
-    fontSize: 10,
+    fontSize: 11,
   },
   modalInfoLabel: {
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.textSecondary,
     fontWeight: '600',
     width: 68,

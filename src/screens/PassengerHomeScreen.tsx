@@ -3,7 +3,7 @@ import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linki
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg'
 import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -229,7 +229,7 @@ export default function PassengerHomeScreen() {
                 accessibilityLabel="Limpiar"
                 hitSlop={8}
               >
-                <Ionicons name="close-circle" size={18} color={COLORS.textTertiary} />
+                <Icon name="CircleX" size={18} color={COLORS.textTertiary} />
               </TouchableOpacity>
             )}
           </View>
@@ -239,7 +239,7 @@ export default function PassengerHomeScreen() {
             onPress={handleSearch}
             style={[styles.searchBtn, !canSearch && styles.searchBtnDisabled]}
           >
-            <Ionicons name="search" size={18} color={canSearch ? COLORS.white : COLORS.textTertiary} />
+            <Icon name="Search" size={18} color={canSearch ? COLORS.white : COLORS.textTertiary} />
             <Text style={[styles.searchBtnText, !canSearch && styles.searchBtnTextDisabled]}>Buscar cupos</Text>
           </TouchableOpacity>
         </View>
@@ -253,7 +253,7 @@ export default function PassengerHomeScreen() {
                 onPress={() => { setOrigin(r.origin); setDestination(r.destination) }}
                 activeOpacity={0.75}
               >
-                <Ionicons name="time-outline" size={13} color={COLORS.textSecondary} />
+                <Icon name="Clock" size={13} color={COLORS.textSecondary} />
                 <Text style={styles.chipText} numberOfLines={1}>{r.origin} → {r.destination}</Text>
               </TouchableOpacity>
             ))}
@@ -287,7 +287,7 @@ export default function PassengerHomeScreen() {
             <View style={styles.tripHeader}>
               <Text style={styles.tripLabel}>Tu próximo viaje</Text>
               <View style={styles.countdown}>
-                <Ionicons name="time-outline" size={12} color={COLORS.success} />
+                <Icon name="Clock" size={12} color={COLORS.success} />
                 <Text style={styles.countdownText}>Sale en {formatCountdown(upcomingTrip.minutesUntil)}</Text>
               </View>
             </View>
@@ -299,9 +299,9 @@ export default function PassengerHomeScreen() {
               </View>
             </View>
             <TouchableOpacity style={styles.sosRow} onPress={handleSOS} activeOpacity={0.75}>
-              <Ionicons name="alert-circle-outline" size={16} color={COLORS.error} />
+              <Icon name="CircleAlert" size={16} color={COLORS.error} />
               <Text style={styles.sosText}>Enviar mi ubicación por SOS</Text>
-              <Ionicons name="chevron-forward" size={14} color={COLORS.error} />
+              <Icon name="ChevronRight" size={14} color={COLORS.error} />
             </TouchableOpacity>
           </TouchableOpacity>
         )}

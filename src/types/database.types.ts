@@ -807,7 +807,8 @@ export type Database = {
           driver_id: string
           id: string
           is_active: boolean | null
-          phone_number: string
+          payment_key: string | null
+          phone_number: string | null
           type: string
         }
         Insert: {
@@ -816,7 +817,8 @@ export type Database = {
           driver_id: string
           id?: string
           is_active?: boolean | null
-          phone_number: string
+          payment_key?: string | null
+          phone_number?: string | null
           type: string
         }
         Update: {
@@ -825,7 +827,8 @@ export type Database = {
           driver_id?: string
           id?: string
           is_active?: boolean | null
-          phone_number?: string
+          payment_key?: string | null
+          phone_number?: string | null
           type?: string
         }
         Relationships: [

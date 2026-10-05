@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useState, useEffect } from 'react'
 import { getItem, setItem } from '../utils/storage'
@@ -101,7 +101,7 @@ export default function LanguageScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Idioma</Text>
           <View style={{ width: 28 }} />
@@ -110,7 +110,7 @@ export default function LanguageScreen() {
         {/* Welcome Section */}
         <View style={styles.section}>
           <View style={styles.welcomeBox}>
-            <Ionicons name="globe-outline" size={48} color={COLORS.primary} />
+            <Icon name="Globe" size={48} color={COLORS.primary} />
             <Text style={styles.welcomeTitle}>Selecciona tu Idioma</Text>
             <Text style={styles.welcomeText}>
               Cambia el idioma de la aplicación para una mejor experiencia
@@ -160,7 +160,7 @@ export default function LanguageScreen() {
               
               {selectedLanguage === language.id ? (
                 <View style={[styles.checkMark, styles.checkMarkActive]}>
-                  <Ionicons name="checkmark" size={20} color={COLORS.background} />
+                  <Icon name="Check" size={20} color={COLORS.background} />
                 </View>
               ) : (
                 <View style={styles.checkMark} />
@@ -172,7 +172,7 @@ export default function LanguageScreen() {
         {/* Info Section */}
         <View style={styles.section}>
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+            <Icon name="Info" size={20} color={COLORS.primary} />
             <Text style={styles.infoText}>
               Tu idioma preferido se guardará y se utilizará la próxima vez que abras la aplicación.
             </Text>

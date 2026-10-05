@@ -2,7 +2,6 @@ import { useState, useCallback, useRef, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert, Share } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -17,6 +16,7 @@ import Badge from '../components/Badge'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import CancellationPolicyCard from '../components/CancellationPolicyCard'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
+import Icon from '../components/Icon'
 
 export default function TripStatusScreen() {
   const navigation = useNavigation<any>()
@@ -191,7 +191,7 @@ export default function TripStatusScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.title}>Estado del Viaje</Text>
@@ -201,7 +201,7 @@ export default function TripStatusScreen() {
             style={styles.homeBtn}
             onPress={() => navigation.navigate('Main' as never, { screen: 'Home' } as never)}
           >
-            <Ionicons name="home" size={20} color={COLORS.primary} />
+            <Icon name="House" size={20} color={COLORS.primary} />
           </TouchableOpacity>
         </View>
 
@@ -220,7 +220,7 @@ export default function TripStatusScreen() {
             >
               <View style={styles.statusHeader}>
                 <View style={[styles.statusBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
-                  <Ionicons name="time" size={14} color="#fff" />
+                  <Icon name="Clock" size={14} color="#fff" />
                   <Text style={[styles.statusBadgeText, { color: '#fff' }]}>En espera</Text>
                 </View>
                 <Text style={[styles.tripTime, { color: 'rgba(255,255,255,0.8)' }]}>{getDepartureLabel()}</Text>
@@ -233,7 +233,7 @@ export default function TripStatusScreen() {
                 </View>
                 <View style={styles.routeArrow}>
                   <View style={[styles.routeLine, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
-                  <Ionicons name="car" size={16} color="#fff" />
+                  <Icon name="Car" size={16} color="#fff" />
                   <View style={[styles.routeLine, { backgroundColor: 'rgba(255,255,255,0.3)' }]} />
                 </View>
                 <View style={[styles.routePoint, styles.routePointColumn]}>
@@ -269,7 +269,7 @@ export default function TripStatusScreen() {
                       ]}
                     >
                       {seat.status === 'occupied' ? (
-                        <Ionicons name="person" size={14} color="#fff" />
+                        <Icon name="User" size={14} color="#fff" />
                       ) : (
                         <Text
                           style={[
@@ -320,7 +320,7 @@ export default function TripStatusScreen() {
 
                 <View style={styles.vehicleRightSection}>
                   <View style={styles.vehicleBadge}>
-                    <Ionicons name="car" size={20} color={COLORS.primary} />
+                    <Icon name="Car" size={20} color={COLORS.primary} />
                   </View>
                   <View style={styles.actionButtonsColumn}>
                     <TouchableOpacity
@@ -337,7 +337,7 @@ export default function TripStatusScreen() {
                         })
                       }}
                     >
-                      <Ionicons name="chatbubble" size={16} color={COLORS.primary} />
+                      <Icon name="MessageCircle" size={16} color={COLORS.primary} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -350,7 +350,7 @@ export default function TripStatusScreen() {
                 <View style={styles.driverInfo}>
                   <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
                   <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={12} color={COLORS.accent} />
+                    <Icon name="Star" size={12} color={COLORS.accent} />
                     <Text style={styles.ratingText}>{selectedRoute.driver_rating || '0'}</Text>
                     <Text style={styles.ratingLabel}> · conductor verificado</Text>
                   </View>
@@ -374,7 +374,7 @@ export default function TripStatusScreen() {
                     })
                   }}
                 >
-                  <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" />
+                  <Icon name="MessageCircle" size={18} color="#fff" />
                   <Text style={styles.quickChatBtnText}>Contactar conductor</Text>
                   {chatUnreadCount > 0 && (
                     <View style={styles.chatBadge}>
@@ -396,19 +396,19 @@ export default function TripStatusScreen() {
             >
               <View style={styles.infoRow}>
                 <View style={styles.infoItem}>
-                  <Ionicons name="time-outline" size={20} color={COLORS.textSecondary} />
+                  <Icon name="Clock" size={20} color={COLORS.textSecondary} />
                   <Text style={styles.infoLabel}>Hora</Text>
                   <Text style={styles.infoValue}>{departureTime}</Text>
                 </View>
                 <View style={styles.infoDivider} />
                 <View style={styles.infoItem}>
-                  <Ionicons name="cash-outline" size={20} color={COLORS.textSecondary} />
+                  <Icon name="Banknote" size={20} color={COLORS.textSecondary} />
                   <Text style={styles.infoLabel}>Tarifa</Text>
                   <Text style={styles.infoValue}>${selectedRoute.price_per_seat?.toLocaleString('es-CO')}</Text>
                 </View>
                 <View style={styles.infoDivider} />
                 <View style={styles.infoItem}>
-                  <Ionicons name="calendar-outline" size={20} color={COLORS.textSecondary} />
+                  <Icon name="Calendar" size={20} color={COLORS.textSecondary} />
                   <Text style={styles.infoLabel}>Fecha</Text>
                   <Text style={styles.infoValue}>{departureDate}</Text>
                 </View>
@@ -429,7 +429,7 @@ export default function TripStatusScreen() {
                 onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="search" size={20} color="#fff" />
+                <Icon name="Search" size={20} color="#fff" />
                 <Text style={styles.newTripBtnText}>Buscar nuevas rutas</Text>
               </TouchableOpacity>
             </LinearGradient>
@@ -444,7 +444,7 @@ export default function TripStatusScreen() {
               accessibilityRole="button"
               accessibilityLabel="Compartir mi viaje"
             >
-              <Ionicons name="share-social-outline" size={20} color={COLORS.primary} />
+              <Icon name="Share2" size={20} color={COLORS.primary} />
               <Text style={styles.shareBtnText}>Compartir mi viaje</Text>
             </TouchableOpacity>
 
@@ -453,7 +453,7 @@ export default function TripStatusScreen() {
               onPress={handleCancelBooking}
               disabled={cancelLoading}
             >
-              <Ionicons name="close-circle-outline" size={20} color={COLORS.error} />
+              <Icon name="CircleX" size={20} color={COLORS.error} />
               <Text style={styles.cancelBtnText}>
                 {cancelLoading ? 'Cancelando...' : 'Cancelar Reserva'}
               </Text>
@@ -469,7 +469,7 @@ export default function TripStatusScreen() {
               <View style={styles.modalOverlay}>
                 <View style={styles.modalContent}>
                   <View style={styles.modalHeader}>
-                    <Ionicons name="warning" size={32} color={COLORS.error} />
+                    <Icon name="TriangleAlert" size={32} color={COLORS.error} />
                   </View>
                   <Text style={styles.modalTitle}>Cancelar Reserva</Text>
                   <Text style={styles.modalMessage}>

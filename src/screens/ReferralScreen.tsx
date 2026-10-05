@@ -4,11 +4,11 @@ import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
+import Icon from '../components/Icon'
 
 const REFERRER_REWARD = 2000
 const REFERRED_REWARD = 1000
@@ -129,7 +129,7 @@ export default function ReferralScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Referidos</Text>
@@ -153,11 +153,11 @@ export default function ReferralScreen() {
           )}
           <View style={styles.codeActions}>
             <TouchableOpacity style={styles.codeBtn} onPress={handleCopy} activeOpacity={0.8}>
-              <Ionicons name={copied ? 'checkmark' : 'copy-outline'} size={16} color="#fff" />
+              <Icon name={copied ? 'Check' : 'Copy'} size={16} color="#fff" />
               <Text style={styles.codeBtnText}>{copied ? 'Copiado' : 'Copiar'}</Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.codeBtn, styles.codeBtnShare]} onPress={handleShare} activeOpacity={0.8}>
-              <Ionicons name="logo-whatsapp" size={16} color="#25D366" />
+              <Icon name="MessageCircle" size={16} color="#25D366" />
               <Text style={[styles.codeBtnText, { color: '#25D366' }]}>Compartir</Text>
             </TouchableOpacity>
           </View>
@@ -183,7 +183,7 @@ export default function ReferralScreen() {
           </View>
           <View style={[styles.step, { marginBottom: 0 }]}>
             <View style={[styles.stepNum, { backgroundColor: COLORS.successLight }]}>
-              <Ionicons name="gift-outline" size={14} color={COLORS.success} />
+              <Icon name="Gift" size={14} color={COLORS.success} />
             </View>
             <Text style={styles.stepText}>
               El conductor nuevo recibe{' '}
@@ -229,12 +229,12 @@ export default function ReferralScreen() {
                 </View>
                 {r.first_route_published ? (
                   <View style={styles.activePill}>
-                    <Ionicons name="checkmark-circle" size={13} color={COLORS.success} />
+                    <Icon name="CircleCheck" size={13} color={COLORS.success} />
                     <Text style={styles.activePillText}>+$2.000</Text>
                   </View>
                 ) : (
                   <View style={styles.pendingPill}>
-                    <Ionicons name="time-outline" size={13} color={COLORS.warning} />
+                    <Icon name="Clock" size={13} color={COLORS.warning} />
                     <Text style={styles.pendingPillText}>Pendiente</Text>
                   </View>
                 )}
@@ -246,7 +246,7 @@ export default function ReferralScreen() {
         {referred.length === 0 && (
           <View style={styles.emptyWrap}>
             <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.emptyIcon}>
-              <Ionicons name="people-outline" size={28} color={COLORS.primary} />
+              <Icon name="Users" size={28} color={COLORS.primary} />
             </LinearGradient>
             <Text style={styles.emptyTitle}>Aún no tienes referidos</Text>
             <Text style={styles.emptySub}>Comparte tu código y empieza a ganar</Text>
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     width: 40, height: 40, borderRadius: 12,
     backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
   },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  headerTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   headerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
 
   // Code card
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3, shadowRadius: 20, elevation: 10,
   },
   codeLabel: { fontSize: 11, fontWeight: '700', color: 'rgba(255,255,255,0.7)', letterSpacing: 1.5, marginBottom: 8 },
-  codeValue: { fontSize: 34, fontWeight: '900', color: '#fff', letterSpacing: 4, marginBottom: 20 },
+  codeValue: { fontSize: 32, fontWeight: '900', color: '#fff', letterSpacing: 4, marginBottom: 20 },
   codeActions: { flexDirection: 'row', gap: 12 },
   codeBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     width: 26, height: 26, borderRadius: 8, backgroundColor: COLORS.primaryTint,
     justifyContent: 'center', alignItems: 'center', flexShrink: 0, marginTop: 1,
   },
-  stepNumText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  stepNumText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
   stepText:    { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
   highlight:   { fontWeight: '700', color: COLORS.primary },
 

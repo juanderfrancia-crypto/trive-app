@@ -1,8 +1,8 @@
 import React from 'react'
 import { View, StyleSheet, ViewStyle, TextStyle } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import Icon from './Icon'
 
 type BadgeVariant = 'success' | 'warning' | 'error' | 'info' | 'primary' | 'neutral'
 type BadgeSize = 'sm' | 'md' | 'lg'
@@ -38,7 +38,7 @@ export default function Badge({
       ]}
     >
       {icon && (
-        <Ionicons
+        <Icon
           name={icon as any}
           size={sizeStyles.iconSize}
           color={textColor}

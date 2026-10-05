@@ -5,8 +5,8 @@ import {
   Animated,
   Easing,
 } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import Icon from './Icon'
 
 type LoadingIndicatorSize = 'sm' | 'md' | 'lg'
 type LoadingIndicatorColor = 'primary' | 'white' | 'success' | 'error'
@@ -68,8 +68,8 @@ export default function LoadingIndicator({
         style,
       ]}
     >
-      <Ionicons
-        name="sync"
+      <Icon
+        name="RefreshCw"
         size={sizeMap[size]}
         color={colorMap[color]}
         style={{ width: sizeMap[size], height: sizeMap[size] }}

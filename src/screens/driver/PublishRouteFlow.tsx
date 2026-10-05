@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Icon from '../../components/Icon'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
 import { useRoutes, PublishRoutePayload, Route } from '../../hooks/useRoutes'
 import { useAppStore } from '../../store/useAppStore'
@@ -567,8 +567,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
           onPress={() => update('saveAsTemplate', !draft.saveAsTemplate)}
           activeOpacity={0.85}
         >
-          <Ionicons
-            name={draft.saveAsTemplate ? 'checkbox' : 'square-outline'}
+          <Icon
+            name={draft.saveAsTemplate ? 'SquareCheckBig' : 'Square'}
             size={22}
             color={draft.saveAsTemplate ? COLORS.primary : COLORS.textSecondary}
           />
@@ -654,7 +654,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
           onPress={goBack}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
       )}
 
@@ -726,8 +726,7 @@ const styles = StyleSheet.create({
 
   requirementList: { gap: SPACING.sm, marginTop: SPACING.sm },
   card: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    ...SHADOWS.sm,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     backgroundColor: COLORS.white,
@@ -798,6 +797,9 @@ const styles = StyleSheet.create({
   pillText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary },
 
   primaryBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
     height: 54,
     borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,

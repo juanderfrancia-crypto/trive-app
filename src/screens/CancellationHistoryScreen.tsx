@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useLayoutEffect, useState } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -51,7 +51,7 @@ export default function CancellationHistoryScreen() {
       <View style={styles.cardHeader}>
         <View style={styles.routeInfo}>
           <Text style={styles.origin}>{item.origin}</Text>
-          <Ionicons name="arrow-forward" size={16} color={COLORS.textTertiary} />
+          <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} />
           <Text style={styles.destination}>{item.destination}</Text>
         </View>
         <View
@@ -70,7 +70,7 @@ export default function CancellationHistoryScreen() {
 
       <View style={styles.cardFooter}>
         <View style={styles.dateContainer}>
-          <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
+          <Icon name="Calendar" size={14} color={COLORS.textSecondary} />
           <Text style={styles.date}>
             {new Date(item.cancelled_at).toLocaleDateString('es-CO')}
           </Text>
@@ -85,7 +85,7 @@ export default function CancellationHistoryScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Historial de Cancelaciones</Text>
       </View>
@@ -93,7 +93,7 @@ export default function CancellationHistoryScreen() {
       {/* Empty State */}
       {history.length === 0 && !loading && (
         <View style={styles.emptyContainer}>
-          <Ionicons name="checkmark-circle-outline" size={64} color={COLORS.success} />
+          <Icon name="CircleCheck" size={64} color={COLORS.success} />
           <Text style={styles.emptyTitle}>Sin cancelaciones</Text>
           <Text style={styles.emptyText}>¡Excelente! No has cancelado viajes</Text>
         </View>

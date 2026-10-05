@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
@@ -9,6 +8,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { SkeletonList } from '../SkeletonLoader'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
+import Icon from '../Icon'
 
 interface CompletedTrip {
   id: string
@@ -97,7 +97,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
     <View style={styles.tripCard}>
       <View style={styles.tripLeft}>
         <View style={styles.statusBadge}>
-          <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+          <Icon name="CircleCheck" size={20} color={COLORS.success} />
         </View>
       </View>
 

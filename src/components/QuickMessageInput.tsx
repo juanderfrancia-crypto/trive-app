@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import Icon from './Icon'
 
 interface QuickMessageInputProps {
   onSendMessage: (message: string) => Promise<void>
@@ -64,7 +64,7 @@ export const QuickMessageInput = React.memo(
           {sending ? (
             <ActivityIndicator size="small" color={COLORS.white} />
           ) : (
-            <Ionicons name="send" size={18} color={canSend ? COLORS.white : COLORS.textTertiary} />
+            <Icon name="Send" size={18} color={canSend ? COLORS.white : COLORS.textTertiary} />
           )}
         </TouchableOpacity>
       </View>

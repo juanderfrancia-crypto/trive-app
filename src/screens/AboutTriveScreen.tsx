@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
@@ -18,7 +18,7 @@ export default function AboutTriveScreen() {
             onPress={() => navigation.goBack()}
             activeOpacity={0.8}
           >
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Acerca de Trive</Text>
           <View style={{ width: 44 }} />
@@ -51,27 +51,27 @@ export default function AboutTriveScreen() {
             <Text style={styles.cardTitle}>¿Por qué elegir Trive?</Text>
             <View style={styles.featureList}>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Precios transparentes: el pasajero paga directamente al conductor</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Conductores verificados con documentos revisados por el equipo Trive</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Sistema de calificación y reseñas tras cada viaje</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Chat integrado entre conductor y pasajero para cada trayecto</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Billetera virtual para gestionar el saldo de publicaciones</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 <Text style={styles.featureText}>Programa de referidos: invita conductores y gana créditos</Text>
               </View>
             </View>
@@ -84,7 +84,7 @@ export default function AboutTriveScreen() {
           <View style={styles.contactCard}>
             <TouchableOpacity style={styles.contactItem}>
               <View style={styles.contactIcon}>
-                <Ionicons name="mail" size={24} color={COLORS.primary} />
+                <Icon name="Mail" size={24} color={COLORS.primary} />
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactLabel}>Correo Electrónico</Text>
@@ -94,7 +94,7 @@ export default function AboutTriveScreen() {
 
             <TouchableOpacity style={styles.contactItem}>
               <View style={styles.contactIcon}>
-                <Ionicons name="globe" size={24} color={COLORS.primary} />
+                <Icon name="Globe" size={24} color={COLORS.primary} />
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactLabel}>Sitio Web</Text>
@@ -104,7 +104,7 @@ export default function AboutTriveScreen() {
 
             <TouchableOpacity style={styles.contactItem}>
               <View style={styles.contactIcon}>
-                <Ionicons name="call" size={24} color={COLORS.primary} />
+                <Icon name="Phone" size={24} color={COLORS.primary} />
               </View>
               <View style={styles.contactContent}>
                 <Text style={styles.contactLabel}>Teléfono</Text>

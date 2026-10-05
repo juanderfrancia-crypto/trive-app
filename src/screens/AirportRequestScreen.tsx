@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -10,6 +9,7 @@ import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from '../components/Icon'
 
 // ─── Lista de aeropuertos colombianos ────────────────────────────────────────
 interface Airport { name: string; city: string; iata: string }
@@ -238,10 +238,10 @@ export default function AirportRequestScreen() {
         style={s.header}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Icon name="ArrowLeft" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={s.headerHero}>
-          <Ionicons name="car-sport" size={22} color="rgba(255,255,255,0.9)" />
+          <Icon name="Car" size={22} color="rgba(255,255,255,0.9)" />
           <Text style={s.headerTitle}>Mis Viajes</Text>
         </View>
       </LinearGradient>
@@ -253,7 +253,7 @@ export default function AirportRequestScreen() {
           onPress={() => setActiveTab('create')}
           activeOpacity={0.7}
         >
-          <Ionicons name="add" size={16} color={activeTab === 'create' ? '#fff' : '#666'} />
+          <Icon name="Plus" size={16} color={activeTab === 'create' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'create' && s.tabTextActive]}>Crear</Text>
         </TouchableOpacity>
 
@@ -262,7 +262,7 @@ export default function AirportRequestScreen() {
           onPress={() => setActiveTab('my_requests')}
           activeOpacity={0.7}
         >
-          <Ionicons name="list" size={16} color={activeTab === 'my_requests' ? '#fff' : '#666'} />
+          <Icon name="List" size={16} color={activeTab === 'my_requests' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'my_requests' && s.tabTextActive]}>Solicitudes</Text>
         </TouchableOpacity>
 
@@ -271,7 +271,7 @@ export default function AirportRequestScreen() {
           onPress={() => setActiveTab('active_trips')}
           activeOpacity={0.7}
         >
-          <Ionicons name="car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
+          <Icon name="Car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'active_trips' && s.tabTextActive]}>Activos</Text>
         </TouchableOpacity>
 
@@ -280,7 +280,7 @@ export default function AirportRequestScreen() {
           onPress={() => setActiveTab('completed_trips')}
           activeOpacity={0.7}
         >
-          <Ionicons name="checkmark-done" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
+          <Icon name="CheckCheck" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
           <Text style={[s.tabText, activeTab === 'completed_trips' && s.tabTextActive]}>Completados</Text>
         </TouchableOpacity>
       </View>
@@ -301,7 +301,7 @@ export default function AirportRequestScreen() {
           }}
           activeOpacity={0.75}
         >
-          <Ionicons name="airplane" size={18} color={tripType === 'airport' ? '#fff' : COLORS.primary} />
+          <Icon name="Plane" size={18} color={tripType === 'airport' ? '#fff' : COLORS.primary} />
           <Text style={[s.tripTypeBtnText, tripType === 'airport' && s.tripTypeBtnTextActive]}>Aeropuerto</Text>
         </TouchableOpacity>
 
@@ -315,7 +315,7 @@ export default function AirportRequestScreen() {
           }}
           activeOpacity={0.75}
         >
-          <Ionicons name="location" size={18} color={tripType === 'custom' ? '#fff' : COLORS.primary} />
+          <Icon name="MapPin" size={18} color={tripType === 'custom' ? '#fff' : COLORS.primary} />
           <Text style={[s.tripTypeBtnText, tripType === 'custom' && s.tripTypeBtnTextActive]}>Otro</Text>
         </TouchableOpacity>
       </View>
@@ -330,7 +330,7 @@ export default function AirportRequestScreen() {
         {activeRequests.length > 0 && (
           <View style={s.activeRequestsSection}>
             <View style={s.sectionHeader}>
-              <Ionicons name="list" size={18} color={COLORS.primary} />
+              <Icon name="List" size={18} color={COLORS.primary} />
               <Text style={s.sectionTitle}>Mis solicitudes activas</Text>
             </View>
             <View style={s.activeRequestsList}>
@@ -358,12 +358,12 @@ export default function AirportRequestScreen() {
                   </View>
                   <View style={s.activeRequestBottom}>
                     <View style={[s.activeRequestBadge, req.offered_price > req.initial_price && s.activeRequestBadgeUpdated]}>
-                      <Ionicons name="alert-circle" size={13} color={req.offered_price > req.initial_price ? COLORS.warning : COLORS.primary} />
+                      <Icon name="CircleAlert" size={13} color={req.offered_price > req.initial_price ? COLORS.warning : COLORS.primary} />
                       <Text style={[s.activeRequestBadgeText, req.offered_price > req.initial_price && s.activeRequestBadgeTextUpdated]}>
                         {req.offered_price > req.initial_price ? 'Precio aumentado' : 'Esperando ofertas'}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+                    <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
                   </View>
                 </TouchableOpacity>
               ))}
@@ -378,7 +378,7 @@ export default function AirportRequestScreen() {
           <View style={s.fieldGroup}>
             <Text style={s.fieldLabel}>ORIGEN</Text>
             <View style={s.inputRow}>
-              <Ionicons name="location-outline" size={18} color={COLORS.primary} style={s.inputIcon} />
+              <Icon name="MapPin" size={18} color={COLORS.primary} style={s.inputIcon} />
               <TextInput
                 style={s.input}
                 placeholder="Ej: Palmira, Buga, Cali..."
@@ -398,8 +398,8 @@ export default function AirportRequestScreen() {
               <View style={s.fieldGroup}>
                 <Text style={s.fieldLabel}>AEROPUERTO DESTINO</Text>
                 <View style={[s.inputRow, selectedAirport && s.inputRowSelected]}>
-                  <Ionicons
-                    name="airplane-outline"
+                  <Icon
+                    name="Plane"
                     size={18}
                     color={selectedAirport ? COLORS.primary : COLORS.textTertiary}
                     style={s.inputIcon}
@@ -418,7 +418,7 @@ export default function AirportRequestScreen() {
                   />
                   {airportQuery.length > 0 && (
                     <TouchableOpacity onPress={clearAirport} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Ionicons name="close-circle" size={17} color={COLORS.textTertiary} />
+                      <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -434,7 +434,7 @@ export default function AirportRequestScreen() {
                         activeOpacity={0.7}
                       >
                         <View style={s.dropdownIcon}>
-                          <Ionicons name="airplane" size={13} color={COLORS.primary} />
+                          <Icon name="Plane" size={13} color={COLORS.primary} />
                         </View>
                         <View style={s.dropdownTexts}>
                           <Text style={s.dropdownName}>{airport.name}</Text>
@@ -448,7 +448,7 @@ export default function AirportRequestScreen() {
                 {/* Sin resultados */}
                 {showDropdown && airportQuery.length >= 2 && filteredAirports.length === 0 && !selectedAirport && (
                   <View style={s.dropdownEmpty}>
-                    <Ionicons name="search-outline" size={15} color={COLORS.textTertiary} />
+                    <Icon name="Search" size={15} color={COLORS.textTertiary} />
                     <Text style={s.dropdownEmptyText}>Sin resultados para "{airportQuery}"</Text>
                   </View>
                 )}
@@ -463,7 +463,7 @@ export default function AirportRequestScreen() {
               <View style={s.fieldGroup}>
                 <Text style={s.fieldLabel}>¿ADÓNDE VAS?</Text>
                 <View style={[s.inputRow, customDestination && s.inputRowSelected]}>
-                  <Ionicons name="location-outline" size={18} color={customDestination ? COLORS.primary : COLORS.textTertiary} style={s.inputIcon} />
+                  <Icon name="MapPin" size={18} color={customDestination ? COLORS.primary : COLORS.textTertiary} style={s.inputIcon} />
                   <TextInput
                     style={s.input}
                     placeholder="Describe tu destino (ej: Terminal Palmaseca, Casa en Pereira)"
@@ -474,7 +474,7 @@ export default function AirportRequestScreen() {
                   />
                   {customDestination.length > 0 && (
                     <TouchableOpacity onPress={clearCustomDest} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Ionicons name="close-circle" size={17} color={COLORS.textTertiary} />
+                      <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -488,7 +488,7 @@ export default function AirportRequestScreen() {
             <Text style={s.fieldLabel}>FECHA Y HORA DE SALIDA</Text>
             <View style={s.dateRow}>
               <View style={[s.inputRow, s.dateInput]}>
-                <Ionicons name="calendar-outline" size={16} color={COLORS.primary} style={s.inputIcon} />
+                <Icon name="Calendar" size={16} color={COLORS.primary} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="AAAA-MM-DD"
@@ -501,7 +501,7 @@ export default function AirportRequestScreen() {
                 />
               </View>
               <View style={[s.inputRow, s.timeInput]}>
-                <Ionicons name="time-outline" size={16} color={COLORS.primary} style={s.inputIcon} />
+                <Icon name="Clock" size={16} color={COLORS.primary} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="HH:MM"
@@ -527,7 +527,7 @@ export default function AirportRequestScreen() {
                 onPress={() => adjustPassengers(-1)}
                 disabled={passengers <= 1}
               >
-                <Ionicons name="remove" size={18} color={passengers <= 1 ? COLORS.textTertiary : COLORS.primary} />
+                <Icon name="Minus" size={18} color={passengers <= 1 ? COLORS.textTertiary : COLORS.primary} />
               </TouchableOpacity>
               <View style={s.counterValueBox}>
                 <Text style={s.counterValueText}>{passengers}</Text>
@@ -537,7 +537,7 @@ export default function AirportRequestScreen() {
                 onPress={() => adjustPassengers(1)}
                 disabled={passengers >= 8}
               >
-                <Ionicons name="add" size={18} color={passengers >= 8 ? COLORS.textTertiary : COLORS.primary} />
+                <Icon name="Plus" size={18} color={passengers >= 8 ? COLORS.textTertiary : COLORS.primary} />
               </TouchableOpacity>
               <Text style={s.counterLabel}>
                 {passengers === 1 ? '1 persona' : `${passengers} personas`}
@@ -608,7 +608,7 @@ export default function AirportRequestScreen() {
               <ActivityIndicator color="#fff" size="small" />
             ) : (
               <>
-                <Ionicons name="paper-plane-outline" size={18} color="#fff" />
+                <Icon name="Send" size={18} color="#fff" />
                 <Text style={s.publishBtnText}>Publicar solicitud</Text>
               </>
             )}
@@ -631,7 +631,7 @@ export default function AirportRequestScreen() {
             </View>
           ) : activeRequests.length === 0 ? (
             <View style={s.emptyState}>
-              <Ionicons name="folder-outline" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
+              <Icon name="Folder" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
               <Text style={s.emptyTitle}>Sin solicitudes activas</Text>
               <Text style={s.emptyText}>Crea una solicitud para que los conductores puedan verte</Text>
             </View>
@@ -647,7 +647,7 @@ export default function AirportRequestScreen() {
                   <View style={s.requestCardHeader}>
                     <View>
                       <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Ionicons name="arrow-forward" size={14} color={COLORS.textTertiary} />
+                      <Icon name="ArrowRight" size={14} color={COLORS.textTertiary} />
                       <Text style={s.requestTo}>{req.destination}</Text>
                     </View>
                     <View style={s.requestPrice}>
@@ -658,13 +658,13 @@ export default function AirportRequestScreen() {
                   <View style={s.requestDivider} />
                   <View style={s.requestCardFooter}>
                     <View style={s.requestDetail}>
-                      <Ionicons name="time-outline" size={13} color={COLORS.textTertiary} />
+                      <Icon name="Clock" size={13} color={COLORS.textTertiary} />
                       <Text style={s.requestDetailText}>
                         {new Date(req.departure_time).toLocaleDateString('es-CO')}
                       </Text>
                     </View>
                     <View style={s.requestDetail}>
-                      <Ionicons name="people-outline" size={13} color={COLORS.textTertiary} />
+                      <Icon name="Users" size={13} color={COLORS.textTertiary} />
                       <Text style={s.requestDetailText}>{req.passengers} pasajero(s)</Text>
                     </View>
                     <View style={[s.requestBadge, s.requestBadgeActive]}>
@@ -687,7 +687,7 @@ export default function AirportRequestScreen() {
             </View>
           ) : activeTrips.length === 0 ? (
             <View style={s.emptyState}>
-              <Ionicons name="car-outline" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
+              <Icon name="Car" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
               <Text style={s.emptyTitle}>Sin viajes activos</Text>
               <Text style={s.emptyText}>Tus viajes confirmados aparecerán aquí</Text>
             </View>
@@ -703,7 +703,7 @@ export default function AirportRequestScreen() {
                   <View style={s.requestCardHeader}>
                     <View>
                       <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Ionicons name="arrow-forward" size={14} color={COLORS.primary} />
+                      <Icon name="ArrowRight" size={14} color={COLORS.primary} />
                       <Text style={s.requestTo}>{req.destination}</Text>
                     </View>
                     <View style={s.requestPrice}>
@@ -714,7 +714,7 @@ export default function AirportRequestScreen() {
                   <View style={s.requestDivider} />
                   <View style={s.requestCardFooter}>
                     <View style={s.requestDetail}>
-                      <Ionicons name="person-circle-outline" size={16} color={COLORS.primary} />
+                      <Icon name="UserCircle" size={16} color={COLORS.primary} />
                       <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
                     </View>
                     <View style={[s.requestBadge, s.requestBadgeAccepted]}>
@@ -724,23 +724,23 @@ export default function AirportRequestScreen() {
                   <View style={s.requestDivider} />
                   <View style={s.activeTripDetails}>
                     <View style={s.detailRow}>
-                      <Ionicons name="calendar-outline" size={14} color={COLORS.textTertiary} />
+                      <Icon name="Calendar" size={14} color={COLORS.textTertiary} />
                       <Text style={s.detailLabel}>Fecha:</Text>
                       <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleDateString('es-CO')}</Text>
                     </View>
                     <View style={s.detailRow}>
-                      <Ionicons name="time-outline" size={14} color={COLORS.textTertiary} />
+                      <Icon name="Clock" size={14} color={COLORS.textTertiary} />
                       <Text style={s.detailLabel}>Hora:</Text>
                       <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</Text>
                     </View>
                     <View style={s.detailRow}>
-                      <Ionicons name="people-outline" size={14} color={COLORS.textTertiary} />
+                      <Icon name="Users" size={14} color={COLORS.textTertiary} />
                       <Text style={s.detailLabel}>Pasajeros:</Text>
                       <Text style={s.detailValue}>{req.passengers} {req.passengers === 1 ? 'persona' : 'personas'}</Text>
                     </View>
                     {req.notes && (
                       <View style={s.detailRow}>
-                        <Ionicons name="chatbubble-outline" size={14} color={COLORS.textTertiary} />
+                        <Icon name="MessageCircle" size={14} color={COLORS.textTertiary} />
                         <Text style={s.detailLabel}>Notas:</Text>
                         <Text style={s.detailValue} numberOfLines={1}>{req.notes}</Text>
                       </View>
@@ -756,7 +756,7 @@ export default function AirportRequestScreen() {
                     }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+                    <Icon name="MessageCircle" size={16} color={COLORS.primary} />
                     <Text style={s.chatButtonText}>Chatear con el conductor</Text>
                   </TouchableOpacity>
                 </TouchableOpacity>
@@ -775,7 +775,7 @@ export default function AirportRequestScreen() {
             </View>
           ) : completedTrips.length === 0 ? (
             <View style={s.emptyState}>
-              <Ionicons name="checkmark-done-outline" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
+              <Icon name="CheckCheck" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
               <Text style={s.emptyTitle}>Sin viajes completados</Text>
               <Text style={s.emptyText}>Una vez completes viajes, podrás calificar aquí</Text>
             </View>
@@ -791,7 +791,7 @@ export default function AirportRequestScreen() {
                   <View style={s.requestCardHeader}>
                     <View>
                       <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Ionicons name="arrow-forward" size={14} color={COLORS.textTertiary} />
+                      <Icon name="ArrowRight" size={14} color={COLORS.textTertiary} />
                       <Text style={s.requestTo}>{req.destination}</Text>
                     </View>
                     <View style={s.requestPrice}>
@@ -802,11 +802,11 @@ export default function AirportRequestScreen() {
                   <View style={s.requestDivider} />
                   <View style={s.requestCardFooter}>
                     <View style={s.requestDetail}>
-                      <Ionicons name="person-circle-outline" size={16} color={COLORS.textTertiary} />
+                      <Icon name="UserCircle" size={16} color={COLORS.textTertiary} />
                       <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
                     </View>
                     <View style={[s.requestBadge, s.requestBadgeCompleted]}>
-                      <Ionicons name="checkmark-circle" size={13} color={COLORS.success} />
+                      <Icon name="CircleCheck" size={13} color={COLORS.success} />
                       <Text style={s.requestBadgeCompletedText}>Completado</Text>
                     </View>
                   </View>

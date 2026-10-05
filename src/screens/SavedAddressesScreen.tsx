@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
@@ -397,7 +397,7 @@ export default function SavedAddressesScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>📍 Mis Direcciones</Text>
         <TouchableOpacity
@@ -411,7 +411,7 @@ export default function SavedAddressesScreen() {
             setShowForm(!showForm)
           }}
         >
-          <Ionicons name="add-circle-outline" size={20} color={COLORS.textInverse} />
+          <Icon name="CirclePlus" size={20} color={COLORS.textInverse} />
           <Text style={styles.addBtnText}>
             {showForm ? 'Cancelar' : 'Añadir dirección'}
           </Text>
@@ -446,8 +446,8 @@ export default function SavedAddressesScreen() {
               style={[styles.checkbox, isHome && { borderColor: COLORS.primary }]}
               onPress={() => setIsHome(!isHome)}
             >
-              <Ionicons
-                name={isHome ? 'checkbox' : 'checkbox-outline'}
+              <Icon
+                name={isHome ? 'SquareCheckBig' : 'SquareCheck'}
                 size={18}
                 color={isHome ? COLORS.primary : COLORS.textTertiary}
               />
@@ -458,8 +458,8 @@ export default function SavedAddressesScreen() {
               style={[styles.checkbox, isWork && { borderColor: COLORS.primary }]}
               onPress={() => setIsWork(!isWork)}
             >
-              <Ionicons
-                name={isWork ? 'checkbox' : 'checkbox-outline'}
+              <Icon
+                name={isWork ? 'SquareCheckBig' : 'SquareCheck'}
                 size={18}
                 color={isWork ? COLORS.primary : COLORS.textTertiary}
               />
@@ -523,7 +523,7 @@ export default function SavedAddressesScreen() {
                   style={[styles.actionBtn, styles.editBtn]}
                   onPress={() => handleEdit(item)}
                 >
-                  <Ionicons name="pencil" size={16} color={COLORS.primary} />
+                  <Icon name="Pencil" size={16} color={COLORS.primary} />
                   <Text style={styles.editBtnText}>Editar</Text>
                 </TouchableOpacity>
 
@@ -531,7 +531,7 @@ export default function SavedAddressesScreen() {
                   style={[styles.actionBtn, styles.deleteBtn]}
                   onPress={() => handleDelete(item.id)}
                 >
-                  <Ionicons name="trash" size={16} color={COLORS.error} />
+                  <Icon name="Trash2" size={16} color={COLORS.error} />
                   <Text style={styles.deleteBtnText}>Eliminar</Text>
                 </TouchableOpacity>
               </View>

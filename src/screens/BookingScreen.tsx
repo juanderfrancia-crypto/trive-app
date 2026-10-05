@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -161,7 +161,7 @@ export default function BookingScreen() {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.emptyContainer}>
-          <Ionicons name="alert-circle-outline" size={64} color={COLORS.textSecondary} />
+          <Icon name="CircleAlert" size={64} color={COLORS.textSecondary} />
           <Text style={styles.emptyText}>No hay datos de reserva</Text>
           <TouchableOpacity
             style={styles.cta}
@@ -342,7 +342,7 @@ export default function BookingScreen() {
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} disabled={loading} accessibilityLabel="Volver">
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.stepBlock}>
             <View style={styles.stepRow}>

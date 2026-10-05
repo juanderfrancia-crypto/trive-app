@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TouchableOpacity, StyleSheet, View, Modal, ScrollView } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from './Icon'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAppStore } from '../store/useAppStore'
 import { getPendingDocumentsCount } from '../services/driverDocuments'
@@ -52,7 +52,7 @@ export default function AdminMenuButton({ onAdminDocumentsPress }: AdminMenuButt
         onPress={() => setIsMenuOpen(true)}
         activeOpacity={0.7}
       >
-        <Ionicons name="menu" size={24} color={COLORS.primary} />
+        <Icon name="Menu" size={24} color={COLORS.primary} />
         {pendingCount > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
@@ -73,7 +73,7 @@ export default function AdminMenuButton({ onAdminDocumentsPress }: AdminMenuButt
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>ADMINISTRACIÓN</Text>
               <TouchableOpacity onPress={() => setIsMenuOpen(false)} hitSlop={10}>
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                <Icon name="X" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -84,7 +84,7 @@ export default function AdminMenuButton({ onAdminDocumentsPress }: AdminMenuButt
                 activeOpacity={0.7}
               >
                 <View style={styles.menuIconWrap}>
-                  <Ionicons name="document-text" size={24} color={COLORS.primary} />
+                  <Icon name="FileText" size={24} color={COLORS.primary} />
                   {pendingCount > 0 && (
                     <View style={styles.itemBadge}>
                       <Text style={styles.itemBadgeText}>
@@ -101,7 +101,7 @@ export default function AdminMenuButton({ onAdminDocumentsPress }: AdminMenuButt
                       : 'Revisar documentos de conductores'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.textSecondary} />
+                <Icon name="ChevronRight" size={20} color={COLORS.textSecondary} />
               </TouchableOpacity>
             </ScrollView>
 

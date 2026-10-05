@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
@@ -176,7 +176,7 @@ export default function HelpScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Centro de Ayuda</Text>
           <View style={{ width: 28 }} />
@@ -216,8 +216,8 @@ export default function HelpScreen() {
                   </View>
                   <Text style={styles.questionText}>{item.question}</Text>
                 </View>
-                <Ionicons
-                  name={expandedId === item.id ? 'chevron-up' : 'chevron-down'}
+                <Icon
+                  name={expandedId === item.id ? 'ChevronUp' : 'ChevronDown'}
                   size={24}
                   color={COLORS.primary}
                 />
@@ -234,7 +234,7 @@ export default function HelpScreen() {
 
         {/* Still Need Help */}
         <View style={styles.helpBox}>
-          <Ionicons name="help-circle-outline" size={40} color={COLORS.primary} />
+          <Icon name="CircleHelp" size={40} color={COLORS.primary} />
           <Text style={styles.helpTitle}>¿Aún necesitas ayuda?</Text>
           <Text style={styles.helpText}>Contáctanos en cualquier momento. Nuestro equipo está aquí para ti.</Text>
           <TouchableOpacity
@@ -243,7 +243,7 @@ export default function HelpScreen() {
             activeOpacity={0.8}
           >
             <Text style={styles.contactBtnText}>Ir a Soporte</Text>
-            <Ionicons name="arrow-forward" size={18} color="white" />
+            <Icon name="ArrowRight" size={18} color="white" />
           </TouchableOpacity>
         </View>
       </ScrollView>

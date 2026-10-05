@@ -1,6 +1,6 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from './Icon'
 import { Text } from './AppText'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 
@@ -12,7 +12,7 @@ export default function CancellationPolicyCard() {
   return (
     <View style={styles.card}>
       <View style={styles.iconWrap}>
-        <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
+        <Icon name="Info" size={18} color={COLORS.primary} />
       </View>
       <View style={styles.body}>
         <Text style={styles.text}>

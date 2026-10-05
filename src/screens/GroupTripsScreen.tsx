@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
@@ -41,7 +41,7 @@ export default function GroupTripsScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.title}>Viajes Grupales</Text>
@@ -51,13 +51,13 @@ export default function GroupTripsScreen() {
             style={styles.addBtn}
             onPress={() => setShowCreateModal(true)}
           >
-            <Ionicons name="add" size={24} color={COLORS.textInverse} />
+            <Icon name="Plus" size={24} color={COLORS.textInverse} />
           </TouchableOpacity>
         </View>
 
         {/* Info Banner */}
         <View style={styles.infoBanner}>
-          <Ionicons name="information-circle" size={20} color={COLORS.primary} />
+          <Icon name="Info" size={20} color={COLORS.primary} />
           <Text style={styles.infoText}>
             Crea un viaje grupal y comparte el link con quienes quieras que se unan
           </Text>
@@ -66,7 +66,7 @@ export default function GroupTripsScreen() {
         {groupTrips.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-              <Ionicons name="people-outline" size={64} color={COLORS.textTertiary} />
+              <Icon name="Users" size={64} color={COLORS.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>Sin viajes grupales</Text>
             <Text style={styles.emptyText}>
@@ -76,7 +76,7 @@ export default function GroupTripsScreen() {
               style={styles.createBtn}
               onPress={() => setShowCreateModal(true)}
             >
-              <Ionicons name="add-circle" size={20} color={COLORS.textInverse} />
+              <Icon name="CirclePlus" size={20} color={COLORS.textInverse} />
               <Text style={styles.createBtnText}>Crear viaje grupal</Text>
             </TouchableOpacity>
           </View>
@@ -87,7 +87,7 @@ export default function GroupTripsScreen() {
                 <View style={styles.tripHeader}>
                   <Text style={styles.tripName}>{trip.name}</Text>
                   <TouchableOpacity style={styles.shareBtn}>
-                    <Ionicons name="share-social-outline" size={20} color={COLORS.primary} />
+                    <Icon name="Share2" size={20} color={COLORS.primary} />
                   </TouchableOpacity>
                 </View>
 
@@ -97,7 +97,7 @@ export default function GroupTripsScreen() {
                     <Text style={styles.routeText}>{trip.origin}</Text>
                   </View>
                   <View style={styles.routeArrow}>
-                    <Ionicons name="arrow-forward" size={16} color={COLORS.textTertiary} />
+                    <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} />
                   </View>
                   <View style={styles.routePoint}>
                     <View style={[styles.routeDot, styles.routeDotEnd]} />
@@ -107,11 +107,11 @@ export default function GroupTripsScreen() {
 
                 <View style={styles.tripDetails}>
                   <View style={styles.detailItem}>
-                    <Ionicons name="calendar-outline" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Calendar" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.detailText}>{formatDate(trip.date)}</Text>
                   </View>
                   <View style={styles.detailItem}>
-                    <Ionicons name="time-outline" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Clock" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.detailText}>{trip.time}</Text>
                   </View>
                 </View>
@@ -119,7 +119,7 @@ export default function GroupTripsScreen() {
                 {/* Members */}
                 <View style={styles.membersSection}>
                   <View style={styles.membersHeader}>
-                    <Ionicons name="people" size={16} color={COLORS.textSecondary} />
+                    <Icon name="Users" size={16} color={COLORS.textSecondary} />
                     <Text style={styles.membersText}>
                       {trip.members}/{trip.maxMembers} participantes
                     </Text>
@@ -134,7 +134,7 @@ export default function GroupTripsScreen() {
                     ))}
                     {trip.members < trip.maxMembers && (
                       <TouchableOpacity style={styles.addMemberBtn}>
-                        <Ionicons name="add" size={16} color={COLORS.primary} />
+                        <Icon name="Plus" size={16} color={COLORS.primary} />
                       </TouchableOpacity>
                     )}
                   </View>

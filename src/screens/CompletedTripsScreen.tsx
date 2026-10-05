@@ -3,7 +3,6 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Aler
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -11,6 +10,7 @@ import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { useAppStore } from '../store/useAppStore'
 import Button from '../components/Button'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from '../components/Icon'
 
 export default function CompletedTripsScreen() {
   const navigation = useNavigation<any>()
@@ -53,8 +53,8 @@ export default function CompletedTripsScreen() {
           onPress={() => setRating(star)}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name={star <= value ? 'star' : 'star-outline'}
+          <Icon
+            name={star <= value ? 'Star' : 'Star'}
             size={36}
             color={star <= value ? COLORS.warning : COLORS.border}
           />
@@ -73,7 +73,7 @@ export default function CompletedTripsScreen() {
         <View style={styles.cardHeader}>
           <View style={styles.routeInfo}>
             <View>
-              <Ionicons name="location-outline" size={16} color={COLORS.primary} />
+              <Icon name="MapPin" size={16} color={COLORS.primary} />
             </View>
             <View style={{ flex: 1, marginLeft: SPACING.sm }}>
               <Text style={styles.origin}>{trip.origin}</Text>
@@ -81,7 +81,7 @@ export default function CompletedTripsScreen() {
             </View>
           </View>
           <View style={styles.statusBadge}>
-            <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+            <Icon name="CircleCheck" size={16} color={COLORS.success} />
             <Text style={styles.statusText}>Completado</Text>
           </View>
         </View>
@@ -90,14 +90,14 @@ export default function CompletedTripsScreen() {
 
         <View style={styles.cardDetails}>
           <View style={styles.detailItem}>
-            <Ionicons name="calendar-outline" size={14} color="#666" />
+            <Icon name="Calendar" size={14} color="#666" />
             <Text style={styles.detailText}>
               {new Date(trip.departure_time).toLocaleString('es-CO')}
             </Text>
           </View>
 
           <View style={styles.detailItem}>
-            <Ionicons name="cash-outline" size={14} color={COLORS.primary} />
+            <Icon name="Banknote" size={14} color={COLORS.primary} />
             <Text style={[styles.detailText, { color: COLORS.primary, fontWeight: '600' }]}>
               ${trip.offered_price.toLocaleString('es-CO')}
             </Text>
@@ -105,14 +105,14 @@ export default function CompletedTripsScreen() {
 
           {trip.driver_id === user?.id ? (
             <View style={styles.detailItem}>
-              <Ionicons name="people-outline" size={14} color="#666" />
+              <Icon name="Users" size={14} color="#666" />
               <Text style={styles.detailText}>{trip.passengers} pasajeros</Text>
             </View>
           ) : null}
 
           {trip.driver_name && (
             <View style={styles.detailItem}>
-              <Ionicons name="person-outline" size={14} color="#666" />
+              <Icon name="User" size={14} color="#666" />
               <Text style={styles.detailText}>{otherParty}</Text>
             </View>
           )}
@@ -137,7 +137,7 @@ export default function CompletedTripsScreen() {
           <>
             <View style={styles.cardDivider} />
             <View style={styles.ratedBadge}>
-              <Ionicons name="checkmark" size={14} color={COLORS.success} />
+              <Icon name="Check" size={14} color={COLORS.success} />
               <Text style={styles.ratedText}>Ya calificado</Text>
             </View>
           </>
@@ -155,7 +155,7 @@ export default function CompletedTripsScreen() {
         style={styles.header}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Icon name="ArrowLeft" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Viajes completados</Text>
@@ -195,7 +195,7 @@ export default function CompletedTripsScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="close" size={24} color="#000" />
+                <Icon name="X" size={24} color="#000" />
               </TouchableOpacity>
               <Text style={styles.modalTitle}>Calificar viaje</Text>
               <View style={{ width: 24 }} />

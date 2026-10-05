@@ -3,7 +3,6 @@ import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert,
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -12,6 +11,7 @@ import { supabase } from '../services/supabase'
 import { createReview } from '../services/reviews'
 import RatingModal from '../components/RatingModal'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from '../components/Icon'
 
 const HIDDEN_KEY = 'hidden_trip_history'
 
@@ -292,7 +292,7 @@ export default function TripHistoryScreen() {
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
           style={s.routeIcon}
         >
-          <Ionicons name="navigate" size={18} color="#fff" />
+          <Icon name="Navigation" size={18} color="#fff" />
         </LinearGradient>
 
         {/* Contenido */}
@@ -317,15 +317,15 @@ export default function TripHistoryScreen() {
 
           {/* Meta info */}
           <View style={s.metaRow}>
-            <Ionicons name={isDriver ? 'people-outline' : 'person-outline'} size={12} color={COLORS.textTertiary} />
+            <Icon name={isDriver ? 'Users' : 'User'} size={12} color={COLORS.textTertiary} />
             <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
             {item.departureTime ? (
               <>
                 <View style={s.metaDot} />
-                <Ionicons name="calendar-outline" size={12} color={COLORS.textTertiary} />
+                <Icon name="Calendar" size={12} color={COLORS.textTertiary} />
                 <Text style={s.metaText}>{formatDate(item.departureTime)}</Text>
                 <View style={s.metaDot} />
-                <Ionicons name="time-outline" size={12} color={COLORS.textTertiary} />
+                <Icon name="Clock" size={12} color={COLORS.textTertiary} />
                 <Text style={s.metaText}>{formatTime(item.departureTime)}</Text>
               </>
             ) : null}
@@ -347,13 +347,13 @@ export default function TripHistoryScreen() {
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={s.rateBtn}
                 >
-                  <Ionicons name="star" size={12} color={COLORS.warning} />
+                  <Icon name="Star" size={12} color={COLORS.warning} />
                   <Text style={s.rateBtnText}>Calificar conductor</Text>
                 </LinearGradient>
               </TouchableOpacity>
             ) : !isDriver && item.hasRated ? (
               <View style={s.ratedBadge}>
-                <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
+                <Icon name="CircleCheck" size={12} color={COLORS.success} />
                 <Text style={s.ratedText}>Calificado</Text>
               </View>
             ) : null}
@@ -366,7 +366,7 @@ export default function TripHistoryScreen() {
           onPress={() => hideTrip(item.id)}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Ionicons name="trash-outline" size={14} color={COLORS.textTertiary} />
+          <Icon name="Trash2" size={14} color={COLORS.textTertiary} />
         </TouchableOpacity>
       </View>
     )
@@ -379,12 +379,12 @@ export default function TripHistoryScreen() {
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity style={s.headerIconBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={s.title}>{isDriver ? 'Historial de Rutas' : 'Historial de Viajes'}</Text>
         {filtered.length > 0 ? (
           <TouchableOpacity style={s.deleteAllBtn} onPress={hideAll}>
-            <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+            <Icon name="Trash2" size={16} color={COLORS.error} />
           </TouchableOpacity>
         ) : (
           <View style={s.headerIconBtn} />
@@ -430,7 +430,7 @@ export default function TripHistoryScreen() {
             colors={[COLORS.primaryTint, COLORS.primaryTint]}
             style={s.emptyIconWrap}
           >
-            <Ionicons name="receipt-outline" size={32} color={COLORS.primaryLight} />
+            <Icon name="Receipt" size={32} color={COLORS.primaryLight} />
           </LinearGradient>
           <Text style={s.emptyTitle}>Sin viajes</Text>
           <Text style={s.emptyText}>

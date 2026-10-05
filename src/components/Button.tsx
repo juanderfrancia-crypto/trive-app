@@ -1,9 +1,9 @@
 import React, { useRef } from 'react'
 import { TouchableOpacity, StyleSheet, View, ActivityIndicator, Animated, ViewStyle, TextStyle } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import Icon from './Icon'
 
 // Optional import - expo-haptics may not be installed
 let Haptics: any = null
@@ -92,7 +92,7 @@ export default function Button({
   const contentJSX = (
     <View style={styles.contentWrapper}>
       {icon && iconPosition === 'left' && (
-        <Ionicons
+        <Icon
           name={icon as any}
           size={sizeStyles.iconSize}
           color={textColor}
@@ -122,7 +122,7 @@ export default function Button({
       )}
 
       {icon && iconPosition === 'right' && !loading && (
-        <Ionicons
+        <Icon
           name={icon as any}
           size={sizeStyles.iconSize}
           color={textColor}

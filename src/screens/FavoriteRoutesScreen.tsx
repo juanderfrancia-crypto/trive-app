@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -28,7 +28,7 @@ export default function FavoriteRoutesScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={styles.headerContent}>
             <Text style={styles.title}>Mis Rutas Favoritas</Text>
@@ -45,7 +45,7 @@ export default function FavoriteRoutesScreen() {
         {!loading && favorites.length === 0 && (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIconWrapper}>
-              <Ionicons name="heart-outline" size={64} color={COLORS.textTertiary} />
+              <Icon name="Heart" size={64} color={COLORS.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>Sin rutas favoritas</Text>
             <Text style={styles.emptyText}>
@@ -55,7 +55,7 @@ export default function FavoriteRoutesScreen() {
               style={styles.searchBtn}
               onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
             >
-              <Ionicons name="search" size={20} color={COLORS.textInverse} />
+              <Icon name="Search" size={20} color={COLORS.textInverse} />
               <Text style={styles.searchBtnText}>Ir a buscar rutas</Text>
             </TouchableOpacity>
           </View>
@@ -70,7 +70,7 @@ export default function FavoriteRoutesScreen() {
                     <View style={styles.routeDot} />
                     <Text style={styles.routeText} numberOfLines={1}>{fav.origin}</Text>
                   </View>
-                  <Ionicons name="arrow-forward" size={16} color={COLORS.textTertiary} style={{ paddingHorizontal: SPACING.sm }} />
+                  <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} style={{ paddingHorizontal: SPACING.sm }} />
                   <View style={styles.routePoint}>
                     <View style={[styles.routeDot, styles.routeDotEnd]} />
                     <Text style={styles.routeText} numberOfLines={1}>{fav.destination}</Text>
@@ -87,7 +87,7 @@ export default function FavoriteRoutesScreen() {
                     onPress={() => handleSearch(fav.origin, fav.destination)}
                     activeOpacity={0.85}
                   >
-                    <Ionicons name="search" size={16} color={COLORS.textInverse} />
+                    <Icon name="Search" size={16} color={COLORS.textInverse} />
                     <Text style={styles.bookBtnText}>Buscar esta ruta</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -96,7 +96,7 @@ export default function FavoriteRoutesScreen() {
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+                    <Icon name="Trash2" size={20} color={COLORS.error} />
                   </TouchableOpacity>
                 </View>
               </View>

@@ -2,13 +2,13 @@ import { COLORS } from '../theme/theme'
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from './Icon'
 
 const TYPE_CONFIG = {
-  success: { icon: 'checkmark-circle' as const, color: COLORS.success },
-  error:   { icon: 'close-circle'     as const, color: COLORS.error },
-  warning: { icon: 'warning'          as const, color: COLORS.warning },
-  info:    { icon: 'information-circle' as const, color: COLORS.primary },
+  success: { icon: 'CircleCheck' as const, color: COLORS.success },
+  error:   { icon: 'CircleX'     as const, color: COLORS.error },
+  warning: { icon: 'TriangleAlert'          as const, color: COLORS.warning },
+  info:    { icon: 'Info' as const, color: COLORS.primary },
 }
 
 function TriveToast({ text1, text2, type = 'info' }: {
@@ -17,7 +17,7 @@ function TriveToast({ text1, text2, type = 'info' }: {
   const cfg = TYPE_CONFIG[type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.info
   return (
     <View style={styles.container}>
-      <Ionicons name={cfg.icon} size={18} color={cfg.color} />
+      <Icon name={cfg.icon} size={18} color={cfg.color} />
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={1}>{text1}</Text>
         {!!text2 && <Text style={styles.message} numberOfLines={2}>{text2}</Text>}

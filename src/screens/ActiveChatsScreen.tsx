@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
@@ -125,7 +125,7 @@ export default function ActiveChatsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Mis Chats</Text>
@@ -141,7 +141,7 @@ export default function ActiveChatsScreen() {
         ) : visibleChats.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="chatbubbles-outline" size={56} color={COLORS.textTertiary} />
+              <Icon name="MessagesSquare" size={56} color={COLORS.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>Sin chats activos</Text>
             <Text style={styles.emptyText}>
@@ -194,7 +194,7 @@ export default function ActiveChatsScreen() {
                     onPress={() => hideChat(chat.bookingId)}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Ionicons name="trash-outline" size={16} color={COLORS.error} />
+                    <Icon name="Trash2" size={16} color={COLORS.error} />
                   </TouchableOpacity>
                 </TouchableOpacity>
               )

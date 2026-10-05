@@ -3,13 +3,13 @@ import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Moda
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import Button from '../components/Button'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { showSuccess, showError } from '../utils/showError'
+import Icon from '../components/Icon'
 
 export default function AirportRequestDetailsScreen() {
   const navigation = useNavigation<any>()
@@ -157,7 +157,7 @@ export default function AirportRequestDetailsScreen() {
         style={styles.header}
       >
         <TouchableOpacity onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
+          <Icon name="ArrowLeft" size={22} color="#fff" />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Detalles de tu solicitud</Text>
@@ -219,7 +219,7 @@ export default function AirportRequestDetailsScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="create-outline" size={18} color={COLORS.primary} />
+                <Icon name="SquarePen" size={18} color={COLORS.primary} />
                 <Text style={styles.priceEditBtnText}>Subir oferta</Text>
               </TouchableOpacity>
             )}
@@ -247,7 +247,7 @@ export default function AirportRequestDetailsScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.driverName}>{acceptedOffer.driver_name}</Text>
                   <View style={styles.ratingRow}>
-                    <Ionicons name="star" size={13} color={COLORS.warning} />
+                    <Icon name="Star" size={13} color={COLORS.warning} />
                     <Text style={styles.ratingText}>
                       {acceptedOffer.driver_rating?.toFixed(1) || '0.0'}
                     </Text>
@@ -287,7 +287,7 @@ export default function AirportRequestDetailsScreen() {
                     <View style={{ flex: 1 }}>
                       <Text style={styles.driverName}>{offer.driver_name}</Text>
                       <View style={styles.ratingRow}>
-                        <Ionicons name="star" size={13} color={COLORS.warning} />
+                        <Icon name="Star" size={13} color={COLORS.warning} />
                         <Text style={styles.ratingText}>
                           {offer.driver_rating?.toFixed(1) || '0.0'}
                         </Text>
@@ -309,7 +309,7 @@ export default function AirportRequestDetailsScreen() {
                   activeOpacity={0.75}
                 >
                   <Text style={styles.acceptBtnText}>Aceptar esta oferta</Text>
-                  <Ionicons name="checkmark-circle" size={18} color="#fff" />
+                  <Icon name="CircleCheck" size={18} color="#fff" />
                 </TouchableOpacity>
                 <View style={styles.offerActions}>
                   <TouchableOpacity
@@ -317,7 +317,7 @@ export default function AirportRequestDetailsScreen() {
                     onPress={() => setChatWith({ driverId: offer.driver_id, driverName: offer.driver_name || 'Conductor' })}
                     activeOpacity={0.75}
                   >
-                    <Ionicons name="chatbubble-outline" size={16} color={COLORS.primary} />
+                    <Icon name="MessageCircle" size={16} color={COLORS.primary} />
                     <Text style={styles.chatOfferBtnText}>Chatear</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -334,7 +334,7 @@ export default function AirportRequestDetailsScreen() {
         ) : (
           <View style={styles.section}>
             <View style={styles.emptyState}>
-              <Ionicons name="hourglass-outline" size={48} color={COLORS.textTertiary} />
+              <Icon name="Hourglass" size={48} color={COLORS.textTertiary} />
               <Text style={styles.emptyTitle}>Sin propuestas aún</Text>
               <Text style={styles.emptySubtitle}>
                 Los conductores verán tu solicitud y podrán hacer propuestas
@@ -351,7 +351,7 @@ export default function AirportRequestDetailsScreen() {
               onPress={handleCancel}
               activeOpacity={0.7}
             >
-              <Ionicons name="close-circle-outline" size={18} color={COLORS.error} />
+              <Icon name="CircleX" size={18} color={COLORS.error} />
               <Text style={styles.cancelBtnText}>Cancelar solicitud</Text>
             </TouchableOpacity>
           </View>
@@ -381,7 +381,7 @@ export default function AirportRequestDetailsScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Subir oferta</Text>
               <TouchableOpacity onPress={() => setShowPriceModal(false)}>
-                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
+                <Icon name="X" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -413,7 +413,7 @@ export default function AirportRequestDetailsScreen() {
                   <ActivityIndicator color="#fff" />
                 ) : (
                   <>
-                    <Ionicons name="checkmark" size={18} color="#fff" />
+                    <Icon name="Check" size={18} color="#fff" />
                     <Text style={styles.updateBtnText}>Actualizar precio</Text>
                   </>
                 )}

@@ -2,13 +2,13 @@ import { useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform, Share } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import * as FileSystem from 'expo-file-system/legacy'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { exportUserData } from '../services/exportData'
 import { supabase } from '../services/supabase'
 import { useAppStore } from '../store/useAppStore'
+import Icon from '../components/Icon'
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets()
@@ -122,7 +122,7 @@ export default function PrivacyScreen() {
         {/* Header */}
         <View style={s.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={s.title}>Privacidad</Text>
           <View style={{ width: 28 }} />
@@ -140,7 +140,7 @@ export default function PrivacyScreen() {
           >
             <View style={s.cardRow}>
               <View style={s.icon}>
-                <Ionicons name="download-outline" size={20} color={COLORS.primary} />
+                <Icon name="Download" size={20} color={COLORS.primary} />
               </View>
               <View style={s.cardContent}>
                 <Text style={s.cardLabel}>Descargar mis datos</Text>
@@ -148,7 +148,7 @@ export default function PrivacyScreen() {
               </View>
               {isExporting
                 ? <ActivityIndicator size="small" color={COLORS.primary} />
-                : <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+                : <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
               }
             </View>
           </TouchableOpacity>
@@ -161,7 +161,7 @@ export default function PrivacyScreen() {
           >
             <View style={s.cardRow}>
               <View style={[s.icon, s.dangerIcon]}>
-                <Ionicons name="trash-outline" size={20} color={COLORS.error} />
+                <Icon name="Trash2" size={20} color={COLORS.error} />
               </View>
               <View style={s.cardContent}>
                 <Text style={[s.cardLabel, { color: COLORS.error }]}>Eliminar cuenta</Text>
@@ -171,7 +171,7 @@ export default function PrivacyScreen() {
               </View>
               {isDeleting
                 ? <ActivityIndicator size="small" color={COLORS.error} />
-                : <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+                : <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
               }
             </View>
           </TouchableOpacity>
@@ -179,7 +179,7 @@ export default function PrivacyScreen() {
 
         {/* Info */}
         <View style={s.infoBox}>
-          <Ionicons name="information-circle-outline" size={16} color={COLORS.textTertiary} />
+          <Icon name="Info" size={16} color={COLORS.textTertiary} />
           <Text style={s.infoText}>
             Para solicitudes adicionales sobre tus datos contáctanos en soporte.
           </Text>

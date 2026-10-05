@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../Icon'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
@@ -95,14 +95,14 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconBg}>
-        <Ionicons name="document-outline" size={48} color={COLORS.primary} />
+        <Icon name="FileText" size={48} color={COLORS.primary} />
       </View>
       <Text style={styles.emptyTitle}>Sin solicitudes activas</Text>
       <Text style={styles.emptySubtitle}>
         Publica un viaje al aeropuerto o a cualquier destino para que los conductores te encuentren
       </Text>
       <TouchableOpacity style={styles.createBtn} onPress={openCreate} activeOpacity={0.85}>
-        <Ionicons name="add-circle" size={20} color={COLORS.white} />
+        <Icon name="CirclePlus" size={20} color={COLORS.white} />
         <Text style={styles.createBtnText}>Nueva solicitud</Text>
       </TouchableOpacity>
     </View>
@@ -120,7 +120,7 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
     <View style={styles.container}>
       {pendingRequests.length > 0 && (
         <TouchableOpacity style={styles.topCreateBtn} onPress={openCreate} activeOpacity={0.85}>
-          <Ionicons name="add" size={18} color={COLORS.primary} />
+          <Icon name="Plus" size={18} color={COLORS.primary} />
           <Text style={styles.topCreateBtnText}>Nueva solicitud</Text>
         </TouchableOpacity>
       )}

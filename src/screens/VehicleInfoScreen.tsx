@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { COLORS } from '../theme/theme';
+import Icon from '../components/Icon'
 
 interface VehicleInfo {
   vehicle_make: string;
@@ -68,7 +68,7 @@ export function VehicleInfoScreen() {
   if (!vehicle) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Ionicons name="car-outline" size={64} color={COLORS.textSecondary} />
+        <Icon name="Car" size={64} color={COLORS.textSecondary} />
         <Text style={styles.noDataText}>No hay información de vehículo</Text>
         <Text style={styles.noDataSubText}>Publica una ruta para registrar tu vehículo</Text>
       </View>
@@ -79,7 +79,7 @@ export function VehicleInfoScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={28} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Mi Vehículo</Text>
         <View style={{ width: 28 }} />
@@ -87,7 +87,7 @@ export function VehicleInfoScreen() {
 
       <View style={styles.card}>
         <View style={styles.vehicleIconContainer}>
-          <Ionicons name="car-outline" size={48} color={COLORS.primary} />
+          <Icon name="Car" size={48} color={COLORS.primary} />
         </View>
 
         <View style={styles.infoSection}>
@@ -123,7 +123,7 @@ export function VehicleInfoScreen() {
           (navigation as any).navigate('EditVehicle', { vehicle });
         }}
       >
-        <Ionicons name="pencil-outline" size={18} color="white" />
+        <Icon name="Pencil" size={18} color="white" />
         <Text style={styles.editButtonText}>Editar Información</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
   },
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     marginVertical: 12,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textSecondary,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -187,7 +187,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   plateBadge: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: 'white',
     backgroundColor: COLORS.primary,

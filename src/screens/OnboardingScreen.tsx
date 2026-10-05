@@ -2,9 +2,9 @@ import React, { useRef, useState } from 'react'
 import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image, ImageSourcePropType } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS } from '../theme/theme'
+import Icon from '../components/Icon'
 
 const { width, height } = Dimensions.get('window')
 const HERO_H = Math.round(height * 0.64)
@@ -154,7 +154,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
             <Text style={styles.btnText}>
               {isLast ? 'Comenzar ahora' : 'Continuar'}
             </Text>
-            {!isLast && <Ionicons name="arrow-forward" size={18} color="#fff" />}
+            {!isLast && <Icon name="ArrowRight" size={18} color="#fff" />}
           </LinearGradient>
         </TouchableOpacity>
 

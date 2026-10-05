@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from 'react-native'
 import { Text } from '../components/AppText';
-import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { COLORS } from '../theme/theme';
+import Icon from '../components/Icon'
 
 interface TopRoute {
   route_id: string;
@@ -152,19 +152,19 @@ export function StatsScreen() {
 
     for (let i = 0; i < fullStars; i++) {
       stars.push(
-        <Ionicons key={`full-${i}`} name="star" size={18} color={COLORS.warning} />
+        <Icon key={`full-${i}`} name="Star" size={18} color={COLORS.warning} />
       );
     }
 
     if (hasHalfStar) {
       stars.push(
-        <Ionicons key="half" name="star-half" size={18} color={COLORS.warning} />
+        <Icon key="half" name="StarHalf" size={18} color={COLORS.warning} />
       );
     }
 
     for (let i = fullStars + (hasHalfStar ? 1 : 0); i < 5; i++) {
       stars.push(
-        <Ionicons key={`empty-${i}`} name="star-outline" size={18} color={COLORS.border} />
+        <Icon key={`empty-${i}`} name="Star" size={18} color={COLORS.border} />
       );
     }
 
@@ -183,7 +183,7 @@ export function StatsScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={28} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.title}>Estadísticas</Text>
         <View style={{ width: 28 }} />
@@ -214,7 +214,7 @@ export function StatsScreen() {
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: COLORS.primaryTint }]}>
-            <Ionicons name="car-outline" size={28} color={COLORS.primary} />
+            <Icon name="Car" size={28} color={COLORS.primary} />
           </View>
           <Text style={styles.statCardValue}>{stats?.total_trips || 0}</Text>
           <Text style={styles.statCardLabel}>Viajes Totales</Text>
@@ -222,7 +222,7 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: COLORS.successLight }]}>
-            <Ionicons name="checkmark-circle-outline" size={28} color={COLORS.success} />
+            <Icon name="CircleCheck" size={28} color={COLORS.success} />
           </View>
           <Text style={styles.statCardValue}>{stats?.completed_trips || 0}</Text>
           <Text style={styles.statCardLabel}>Completados</Text>
@@ -230,7 +230,7 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: COLORS.errorLight }]}>
-            <Ionicons name="close-circle-outline" size={28} color={COLORS.error} />
+            <Icon name="CircleX" size={28} color={COLORS.error} />
           </View>
           <Text style={styles.statCardValue}>{stats?.cancelled_trips || 0}</Text>
           <Text style={styles.statCardLabel}>Cancelados</Text>
@@ -238,7 +238,7 @@ export function StatsScreen() {
 
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: COLORS.warningLight }]}>
-            <Ionicons name="people-outline" size={28} color={COLORS.warning} />
+            <Icon name="Users" size={28} color={COLORS.warning} />
           </View>
           <Text style={styles.statCardValue}>{stats?.total_passengers || 0}</Text>
           <Text style={styles.statCardLabel}>Pasajeros</Text>
@@ -287,7 +287,7 @@ export function StatsScreen() {
       {/* Earnings Summary */}
       <View style={styles.card}>
         <View style={styles.earningsHeader}>
-          <Ionicons name="wallet-outline" size={28} color={COLORS.primary} />
+          <Icon name="Wallet" size={28} color={COLORS.primary} />
           <View style={styles.earningsInfo}>
             <Text style={styles.earningsLabel}>Total de Ganancias</Text>
             <Text style={styles.earningsValue}>{formatCurrency(stats?.total_earnings || 0)}</Text>

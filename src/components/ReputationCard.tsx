@@ -1,9 +1,9 @@
 import React from 'react'
 import { View, StyleSheet, ScrollView } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { DriverReputation } from '../services/driverReputation'
+import Icon, { type IconName } from './Icon'
 
 interface ReputationCardProps {
   reputation: DriverReputation | null
@@ -30,9 +30,9 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
   const RatingStars = ({ rating, size = 16 }: { rating: number; size?: number }) => (
     <View style={styles.starsRow}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <Ionicons
+        <Icon
           key={star}
-          name={star <= Math.floor(rating) ? 'star' : 'star-outline'}
+          name={star <= Math.floor(rating) ? 'Star' : 'Star'}
           size={size}
           color={star <= Math.floor(rating) ? COLORS.warning : COLORS.textTertiary}
           style={{ marginRight: 2 }}
@@ -58,7 +58,7 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
           <Text style={styles.ratingLabel}>Rating Ponderado</Text>
           <View style={styles.weightedBadge}>
             <Text style={styles.weightedValue}>{reputation.weightedRating.toFixed(1)}</Text>
-            <Ionicons name="star" size={18} color="#FFF" style={{ marginLeft: 4 }} />
+            <Icon name="Star" size={18} color="#FFF" style={{ marginLeft: 4 }} />
           </View>
           <Text style={styles.weightedNote}>Incluye: viajes, consistencia, recomendaciones</Text>
         </View>
@@ -68,7 +68,7 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <View style={styles.statIcon}>
-            <Ionicons name="checkmark-done" size={18} color={COLORS.success} />
+            <Icon name="CheckCheck" size={18} color={COLORS.success} />
           </View>
           <View>
             <Text style={styles.statValue}>{reputation.completedTrips}</Text>
@@ -80,7 +80,7 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
 
         <View style={styles.statItem}>
           <View style={styles.statIcon}>
-            <Ionicons name="heart" size={18} color={COLORS.error} />
+            <Icon name="Heart" size={18} color={COLORS.error} />
           </View>
           <View>
             <Text style={styles.statValue}>{reputation.recommendPercent}%</Text>
@@ -96,7 +96,7 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
           <View style={styles.achievementsList}>
             {reputation.achievements.map((achievement) => (
               <View key={achievement.id} style={styles.achievementBadge}>
-                <Ionicons
+                <Icon
                   name={achievement.iconName as any}
                   size={20}
                   color={COLORS.warning}
@@ -116,7 +116,7 @@ export default function ReputationCard({ reputation, loading = false }: Reputati
 
       {/* Trust Indicator */}
       <View style={[styles.trustIndicator, getTrustStyle(reputation.weightedRating)]}>
-        <Ionicons
+        <Icon
           name={getTrustIcon(reputation.weightedRating)}
           size={16}
           color="#FFF"
@@ -139,12 +139,12 @@ function getTrustStyle(rating: number) {
   return styles.trustLow
 }
 
-function getTrustIcon(rating: number) {
-  if (rating >= 4.7) return 'shield-checkmark'
-  if (rating >= 4.5) return 'checkmark-circle'
-  if (rating >= 4.0) return 'thumbs-up'
-  if (rating >= 3.5) return 'help-circle'
-  return 'warning'
+function getTrustIcon(rating: number): IconName {
+  if (rating >= 4.7) return 'ShieldCheck'
+  if (rating >= 4.5) return 'CircleCheck'
+  if (rating >= 4.0) return 'ThumbsUp'
+  if (rating >= 3.5) return 'CircleHelp'
+  return 'TriangleAlert'
 }
 
 function getTrustLabel(rating: number) {

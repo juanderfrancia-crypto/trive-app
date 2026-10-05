@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert, 
 import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
@@ -230,7 +230,7 @@ export default function DriverTripsScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   header: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
   subtitle: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, marginTop: 2 },
   segmented: { flexDirection: 'row', backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, padding: SPACING.xs, marginTop: SPACING.lg },
   segment: { flex: 1, height: 38, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' },
@@ -244,12 +244,12 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   emptyText: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
 
-  card: { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border },
+  card: { ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg },
   cardLive: { borderColor: COLORS.primary, borderWidth: 1.5 },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   when: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
   pill: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
-  pillText: { fontSize: 12, fontWeight: '700' },
+  pillText: { fontSize: 13, fontWeight: '700' },
   route: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginTop: SPACING.sm },
   metaRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.xs },
   meta: { fontSize: 13, color: COLORS.textSecondary },
@@ -260,9 +260,12 @@ const styles = StyleSheet.create({
   avatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.primaryTint, alignItems: 'center', justifyContent: 'center' },
   avatarText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
   passengerName: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  passengerMeta: { fontSize: 12, color: COLORS.textSecondary },
+  passengerMeta: { fontSize: 13, color: COLORS.textSecondary },
 
   primaryBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
     marginTop: SPACING.md, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
     alignItems: 'center', justifyContent: 'center',
   },

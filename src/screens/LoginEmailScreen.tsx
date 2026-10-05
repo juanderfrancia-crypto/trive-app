@@ -2,7 +2,6 @@ import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import { useState } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar, Image } from 'react-native'
 import { Text } from '../components/AppText'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
@@ -12,6 +11,7 @@ import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
+import Icon from '../components/Icon'
 
 export default function LoginEmailScreen() {
   const navigation = useNavigation()
@@ -125,7 +125,7 @@ export default function LoginEmailScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Correo electrónico</Text>
               <View style={[styles.inputContainer, errors.email && styles.inputError]}>
-                <Ionicons name="mail-outline" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
+                <Icon name="Mail" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
                 <TextInput
                   style={styles.input}
                   placeholder="tucorreo@ejemplo.com"
@@ -146,8 +146,8 @@ export default function LoginEmailScreen() {
             <View style={styles.inputWrapper}>
               <Text style={styles.inputLabel}>Contraseña</Text>
               <View style={[styles.inputContainer, errors.password && styles.inputError]}>
-                <Ionicons
-                  name="lock-closed-outline"
+                <Icon
+                  name="Lock"
                   size={20}
                   color={errors.password ? COLORS.error : COLORS.textSecondary}
                 />
@@ -164,8 +164,8 @@ export default function LoginEmailScreen() {
                   editable={!isSubmitting}
                 />
                 <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={isSubmitting}>
-                  <Ionicons
-                    name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  <Icon
+                    name={showPassword ? 'EyeOff' : 'Eye'}
                     size={20}
                     color={COLORS.textSecondary}
                   />
@@ -184,7 +184,7 @@ export default function LoginEmailScreen() {
 
             {isLocked && (
               <View style={styles.lockBanner}>
-                <Ionicons name="lock-closed" size={15} color={COLORS.warningDark} />
+                <Icon name="Lock" size={15} color={COLORS.warningDark} />
                 <Text style={styles.lockBannerText}>
                   Demasiados intentos. Espera {formatCountdown()}
                 </Text>

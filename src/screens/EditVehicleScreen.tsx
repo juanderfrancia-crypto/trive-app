@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, TextInput, KeyboardAvoidingView, Platform } from 'react-native'
 import { Text } from '../components/AppText';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { COLORS } from '../theme/theme';
+import Icon from '../components/Icon'
 
 interface VehicleFormData {
   vehicle_make: string;
@@ -95,7 +95,7 @@ export function EditVehicleScreen({ route }: any) {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.primary} />
           </TouchableOpacity>
           <Text style={styles.title}>Editar Vehículo</Text>
           <View style={{ width: 28 }} />
@@ -178,7 +178,7 @@ export function EditVehicleScreen({ route }: any) {
 
           {/* Info Text */}
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+            <Icon name="Info" size={20} color={COLORS.primary} />
             <Text style={styles.infoText}>
               Esta información se aplicará a todos tus viajes futuros
             </Text>
@@ -203,7 +203,7 @@ export function EditVehicleScreen({ route }: any) {
                 <ActivityIndicator color="white" />
               ) : (
                 <>
-                  <Ionicons name="checkmark" size={18} color="white" />
+                  <Icon name="Check" size={18} color="white" />
                   <Text style={styles.saveButtonText}>Guardar Cambios</Text>
                 </>
               )}
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
     color: COLORS.textPrimary,
   },
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     color: COLORS.error,
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 6,
     fontWeight: '500',
   },
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     flex: 1,
-    fontSize: 12,
+    fontSize: 13,
     color: COLORS.primary,
     fontWeight: '500',
   },

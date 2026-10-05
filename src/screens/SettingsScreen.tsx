@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
@@ -16,6 +15,7 @@ import { supabase } from '../services/supabase'
 import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
+import Icon from '../components/Icon'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
@@ -128,7 +128,7 @@ export default function SettingsScreen() {
           onPress={() => navigation.goBack()}
           activeOpacity={0.8}
         >
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>Configuración</Text>
         <View style={{ width: 44 }} />
@@ -141,7 +141,7 @@ export default function SettingsScreen() {
         <View style={styles.settingCard}>
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="notifications-outline" size={20} color={COLORS.primary} />
+              <Icon name="Bell" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Notificaciones Push</Text>
@@ -159,7 +159,7 @@ export default function SettingsScreen() {
         <View style={styles.settingCard}>
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="mail-outline" size={20} color={COLORS.primary} />
+              <Icon name="Mail" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Correo Electrónico</Text>
@@ -187,13 +187,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="lock-closed-outline" size={20} color={COLORS.primary} />
+              <Icon name="Lock" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Cambiar Contraseña</Text>
               <Text style={styles.settingDescription}>Actualiza tu contraseña de forma segura</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -204,13 +204,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="eye-outline" size={20} color={COLORS.primary} />
+              <Icon name="Eye" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Configuración de Privacidad</Text>
               <Text style={styles.settingDescription}>Controla quién ve tu perfil</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -221,13 +221,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="phone-landscape-outline" size={20} color={COLORS.primary} />
+              <Icon name="Smartphone" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Sesiones Activas</Text>
               <Text style={styles.settingDescription}>Dispositivos conectados a tu cuenta</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -242,7 +242,7 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={[styles.settingIcon, { backgroundColor: COLORS.errorLight }]}>
-              <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+              <Icon name="CircleAlert" size={20} color={COLORS.error} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Contacto de Emergencia</Text>
@@ -250,7 +250,7 @@ export default function SettingsScreen() {
                 {emergencyContact ? emergencyContact.phone : 'No configurado — se usa para el botón SOS'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -268,7 +268,7 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="location-outline" size={20} color={COLORS.primary} />
+              <Icon name="MapPin" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Mi municipio</Text>
@@ -276,7 +276,7 @@ export default function SettingsScreen() {
                 {preferredMunicipality ?? 'No configurado — filtra los viajes de tu zona'}
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -287,13 +287,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="settings-outline" size={20} color={COLORS.primary} />
+              <Icon name="Settings" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Preferencias de Viaje</Text>
               <Text style={styles.settingDescription}>Música, aire acondicionado, smoking</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -304,13 +304,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="star-outline" size={20} color={COLORS.primary} />
+              <Icon name="Star" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Rutas Favoritas</Text>
               <Text style={styles.settingDescription}>Tus rutas guardadas</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -321,13 +321,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="receipt-outline" size={20} color={COLORS.primary} />
+              <Icon name="Receipt" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Historial de Cancelaciones</Text>
               <Text style={styles.settingDescription}>Tus cancelaciones y reembolsos</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -343,13 +343,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="information-circle-outline" size={20} color={COLORS.primary} />
+              <Icon name="Info" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Acerca de Trive</Text>
               <Text style={styles.settingDescription}>Versión 1.0.0</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -360,13 +360,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="document-text-outline" size={20} color={COLORS.primary} />
+              <Icon name="FileText" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Términos de Servicio</Text>
               <Text style={styles.settingDescription}>Políticas y condiciones de uso</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -377,13 +377,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+              <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Política de Privacidad</Text>
               <Text style={styles.settingDescription}>Cómo usamos tus datos</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
 
@@ -394,13 +394,13 @@ export default function SettingsScreen() {
         >
           <View style={styles.settingHeader}>
             <View style={styles.settingIcon}>
-              <Ionicons name="help-circle-outline" size={20} color={COLORS.primary} />
+              <Icon name="CircleHelp" size={20} color={COLORS.primary} />
             </View>
             <View style={styles.settingContent}>
               <Text style={styles.settingLabel}>Soporte y Ayuda</Text>
               <Text style={styles.settingDescription}>Comunícate con nosotros</Text>
             </View>
-            <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
           </View>
         </TouchableOpacity>
       </View>
@@ -418,7 +418,7 @@ export default function SettingsScreen() {
         <View style={sosStyles.overlay}>
           <View style={sosStyles.sheet}>
             <View style={sosStyles.header}>
-              <Ionicons name="alert-circle" size={22} color={COLORS.error} />
+              <Icon name="CircleAlert" size={22} color={COLORS.error} />
               <Text style={sosStyles.title}>Contacto de Emergencia</Text>
             </View>
             <Text style={sosStyles.sub}>Este contacto recibirá tu ubicación al presionar el botón SOS durante un viaje.</Text>

@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useState } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -240,7 +240,7 @@ export default function LearningCenterScreen() {
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={28} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Centro de Aprendizaje</Text>
           <View style={{ width: 28 }} />
@@ -249,7 +249,7 @@ export default function LearningCenterScreen() {
         {/* Welcome Section */}
         <View style={styles.section}>
           <View style={styles.welcomeBox}>
-            <Ionicons name="book-outline" size={48} color={COLORS.primary} />
+            <Icon name="BookOpen" size={48} color={COLORS.primary} />
             <Text style={styles.welcomeTitle}>Aprende a Usar Trive</Text>
             <Text style={styles.welcomeText}>
               Tutoriales paso a paso para sacar el máximo provecho de nuestros servicios
@@ -291,7 +291,7 @@ export default function LearningCenterScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.tutorialIconBox}>
-                  <Ionicons
+                  <Icon
                     name={tutorial.icon as any}
                     size={24}
                     color={COLORS.primary}
@@ -309,8 +309,8 @@ export default function LearningCenterScreen() {
                   <Text style={styles.tutorialDescription}>{tutorial.description}</Text>
                 </View>
 
-                <Ionicons
-                  name={tutorial.expanded ? 'chevron-up' : 'chevron-down'}
+                <Icon
+                  name={tutorial.expanded ? 'ChevronUp' : 'ChevronDown'}
                   size={20}
                   color={COLORS.textTertiary}
                 />
@@ -330,7 +330,7 @@ export default function LearningCenterScreen() {
                   </View>
 
                   <View style={styles.completedBox}>
-                    <Ionicons name="checkmark-circle-outline" size={20} color={COLORS.success} />
+                    <Icon name="CircleCheck" size={20} color={COLORS.success} />
                     <Text style={styles.completedText}>¿Dudas? Contacta a soporte</Text>
                   </View>
                 </View>
@@ -344,27 +344,27 @@ export default function LearningCenterScreen() {
           <Text style={styles.sectionTitle}>💡 Consejos Útiles</Text>
           
           <View style={styles.tipCard}>
-            <Ionicons name="shield-checkmark-outline" size={20} color={COLORS.primary} />
+            <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
             <Text style={styles.tipText}>Siempre verifica el perfil del conductor/pasajero antes de aceptar un viaje</Text>
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="star-outline" size={20} color={COLORS.primary} />
+            <Icon name="Star" size={20} color={COLORS.primary} />
             <Text style={styles.tipText}>Califica honestamente los viajes para ayudar a la comunidad de Trive</Text>
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
+            <Icon name="Banknote" size={20} color={COLORS.primary} />
             <Text style={styles.tipText}>Como conductor, recuerda que publicar cada viaje descuenta $2.000 de tu billetera Trive. Mantén saldo suficiente para publicar rutas sin interrupciones</Text>
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="alert-circle-outline" size={20} color={COLORS.error} />
+            <Icon name="CircleAlert" size={20} color={COLORS.error} />
             <Text style={styles.tipText}>Configura tu contacto de emergencia en Configuración {'>'} Seguridad. El botón SOS en tu viaje activo enviará tu ubicación GPS en tiempo real junto con los datos del conductor por WhatsApp</Text>
           </View>
 
           <View style={styles.tipCard}>
-            <Ionicons name="airplane-outline" size={20} color={COLORS.primary} />
+            <Icon name="Plane" size={20} color={COLORS.primary} />
             <Text style={styles.tipText}>Para viajes al aeropuerto, publica tu solicitud con al menos 2-3 horas de anticipación para que un conductor pueda aceptarla. Como conductor, verifica tu saldo antes de aceptar: se descuentan $5.000 automáticamente</Text>
           </View>
         </View>
@@ -380,7 +380,7 @@ export default function LearningCenterScreen() {
               activeOpacity={0.8}
             >
               <Text style={styles.ctaButtonText}>Ir a Preguntas Frecuentes</Text>
-              <Ionicons name="arrow-forward" size={16} color={COLORS.background} />
+              <Icon name="ArrowRight" size={16} color={COLORS.background} />
             </TouchableOpacity>
           </View>
         </View>

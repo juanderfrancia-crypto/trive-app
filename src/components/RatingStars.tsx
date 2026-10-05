@@ -2,7 +2,7 @@ import { COLORS } from '../theme/theme'
 import React from 'react'
 import { View, StyleSheet } from 'react-native'
 import { Text } from './AppText'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from './Icon'
 
 interface RatingStarsProps {
   rating: number
@@ -35,21 +35,21 @@ export const RatingStars: React.FC<RatingStarsProps> = ({
       {Array(fullStars)
         .fill(0)
         .map((_, i) => (
-          <Ionicons key={`full-${i}`} name="star" size={size} color={color} />
+          <Icon key={`full-${i}`} name="Star" size={size} color={color} />
         ))}
 
       {/* Half star */}
       {hasHalfStar && (
-        <Ionicons key="half" name="star-half" size={size} color={color} />
+        <Icon key="half" name="StarHalf" size={size} color={color} />
       )}
 
       {/* Empty stars */}
       {Array(emptyStars)
         .fill(0)
         .map((_, i) => (
-          <Ionicons
+          <Icon
             key={`empty-${i}`}
-            name="star-outline"
+            name="Star"
             size={size}
             color={color}
           />

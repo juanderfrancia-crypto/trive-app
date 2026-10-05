@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, FlatList } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -150,9 +150,9 @@ export default function ReviewsScreen() {
   const RatingStars = ({ rating, size = 14 }: { rating: number; size?: number }) => (
     <View style={styles.starsContainer}>
       {[1, 2, 3, 4, 5].map((star) => (
-        <Ionicons
+        <Icon
           key={star}
-          name={star <= rating ? 'star' : 'star-outline'}
+          name={star <= rating ? 'Star' : 'Star'}
           size={size}
           color={star <= rating ? COLORS.warning : COLORS.textTertiary}
         />
@@ -207,12 +207,12 @@ export default function ReviewsScreen() {
         {/* Badges de contexto */}
         <View style={styles.badgesRow}>
           <View style={styles.contextBadge}>
-            <Ionicons name="checkmark-circle" size={12} color={COLORS.success} />
+            <Icon name="CircleCheck" size={12} color={COLORS.success} />
             <Text style={styles.contextText}>Verificado</Text>
           </View>
           {review.recommend && (
             <View style={styles.recommendBadge}>
-              <Ionicons name="thumbs-up" size={12} color={COLORS.primary} />
+              <Icon name="ThumbsUp" size={12} color={COLORS.primary} />
               <Text style={styles.recommendText}>Recomendado</Text>
             </View>
           )}
@@ -227,7 +227,7 @@ export default function ReviewsScreen() {
         <Text style={styles.statLabel}>Rating Promedio</Text>
         <View style={styles.statValue}>
           <Text style={styles.statNumber}>{avgRating.toFixed(1)}</Text>
-          <Ionicons name="star" size={20} color={COLORS.warning} />
+          <Icon name="Star" size={20} color={COLORS.warning} />
         </View>
       </View>
 
@@ -261,7 +261,7 @@ export default function ReviewsScreen() {
       {/* Encabezado */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.title}>Reseñas y Ratings</Text>
@@ -306,7 +306,7 @@ export default function ReviewsScreen() {
               {/* Mensaje si no hay reseñas */}
               {filteredReviews.length === 0 && (
                 <View style={styles.emptyContainer}>
-                  <Ionicons name="star-outline" size={48} color={COLORS.textTertiary} />
+                  <Icon name="Star" size={48} color={COLORS.textTertiary} />
                   <Text style={styles.emptyTitle}>
                     {filterType === 'given'
                       ? 'No has dejado reseñas'

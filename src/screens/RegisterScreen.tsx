@@ -2,12 +2,12 @@ import { useState, useRef } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
+import Icon from '../components/Icon'
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets()
@@ -134,7 +134,7 @@ export default function RegisterScreen() {
 
         <View style={styles.form}>
           <View style={[styles.inputContainer, errors.name && styles.inputError]}>
-            <Ionicons name="person-outline" size={20} color={errors.name ? COLORS.error : COLORS.textSecondary} />
+            <Icon name="User" size={20} color={errors.name ? COLORS.error : COLORS.textSecondary} />
             <TextInput
               style={styles.input}
               placeholder="Nombre completo"
@@ -147,7 +147,7 @@ export default function RegisterScreen() {
           {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
 
           <View style={[styles.inputContainer, errors.email && styles.inputError]}>
-            <Ionicons name="mail-outline" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
+            <Icon name="Mail" size={20} color={errors.email ? COLORS.error : COLORS.textSecondary} />
             <TextInput
               style={styles.input}
               placeholder="Correo electrónico"
@@ -161,7 +161,7 @@ export default function RegisterScreen() {
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
 
           <View style={[styles.inputContainer, errors.phone && styles.inputError]}>
-            <Ionicons name="call-outline" size={20} color={errors.phone ? COLORS.error : COLORS.textSecondary} />
+            <Icon name="Phone" size={20} color={errors.phone ? COLORS.error : COLORS.textSecondary} />
             <TextInput
               style={styles.input}
               placeholder="Ej: +57 300 123 4567"
@@ -174,7 +174,7 @@ export default function RegisterScreen() {
           {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
           <View style={[styles.inputContainer, errors.password && styles.inputError]}>
-            <Ionicons name="lock-closed-outline" size={20} color={errors.password ? COLORS.error : COLORS.textSecondary} />
+            <Icon name="Lock" size={20} color={errors.password ? COLORS.error : COLORS.textSecondary} />
             <TextInput
               style={styles.input}
               placeholder="Contraseña"
@@ -184,8 +184,8 @@ export default function RegisterScreen() {
               editable={!isSubmitting}
             />
             <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={isSubmitting}>
-              <Ionicons
-                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+              <Icon
+                name={showPassword ? 'EyeOff' : 'Eye'}
                 size={20}
                 color={COLORS.textSecondary}
               />
@@ -194,7 +194,7 @@ export default function RegisterScreen() {
           {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
 
           <View style={[styles.inputContainer, errors.confirmPassword && styles.inputError]}>
-            <Ionicons name="lock-closed-outline" size={20} color={errors.confirmPassword ? COLORS.error : COLORS.textSecondary} />
+            <Icon name="Lock" size={20} color={errors.confirmPassword ? COLORS.error : COLORS.textSecondary} />
             <TextInput
               style={styles.input}
               placeholder="Confirmar contraseña"

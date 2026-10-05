@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
 import { Text } from './AppText';
-import { Ionicons } from '@expo/vector-icons';
 import { useNegotiationChat } from '../hooks/useNegotiationChat';
 import { useAppStore } from '../store/useAppStore';
 import { COLORS, SPACING } from '../theme/theme';
+import Icon from './Icon'
 
 interface NegotiationChatModalProps {
   visible: boolean;
@@ -100,7 +100,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
         {/* Header */}
         <View style={s.header}>
           <TouchableOpacity onPress={onClose}>
-            <Ionicons name="close" size={28} color={COLORS.textPrimary} />
+            <Icon name="X" size={28} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View>
             <Text style={s.headerTitle}>💬 Negociación</Text>
@@ -124,8 +124,8 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
             >
               {messages.length === 0 ? (
                 <View style={s.emptyMessages}>
-                  <Ionicons
-                    name="chatbubble-outline"
+                  <Icon
+                    name="MessageCircle"
                     size={40}
                     color={COLORS.textTertiary}
                   />
@@ -192,15 +192,15 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
                 ]}
               >
                 {sending ? (
-                  <Ionicons name="checkmark" size={20} color={COLORS.white} />
+                  <Icon name="Check" size={20} color={COLORS.white} />
                 ) : (
-                  <Ionicons name="send" size={20} color={COLORS.white} />
+                  <Icon name="Send" size={20} color={COLORS.white} />
                 )}
               </TouchableOpacity>
             </View>
             ) : (
               <View style={s.closedBanner}>
-                <Ionicons name="lock-closed-outline" size={16} color={COLORS.textSecondary} />
+                <Icon name="Lock" size={16} color={COLORS.textSecondary} />
                 <Text style={s.closedText}>{closedMessage}</Text>
               </View>
             )}

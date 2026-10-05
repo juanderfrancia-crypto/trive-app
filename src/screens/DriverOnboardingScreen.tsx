@@ -3,31 +3,31 @@ import IllustratedCard from '../components/illustrations/IllustratedCard'
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
 const STEPS = [
   {
     number: '1',
-    icon: 'document-text-outline' as const,
+    icon: 'FileText' as const,
     title: 'Sube tus documentos',
     desc: 'Licencia de conducir y SOAT vigentes',
     color: COLORS.primary,
   },
   {
     number: '2',
-    icon: 'shield-checkmark-outline' as const,
+    icon: 'ShieldCheck' as const,
     title: 'Verificación',
     desc: 'Revisamos tus datos en 24-48 h',
     color: COLORS.primary,
   },
   {
     number: '3',
-    icon: 'cash-outline' as const,
+    icon: 'Banknote' as const,
     title: '¡Publica y gana!',
     desc: 'Crea rutas y recibe pasajeros',
     color: COLORS.success,
@@ -35,11 +35,11 @@ const STEPS = [
 ]
 
 const REQUIREMENTS = [
-  { icon: 'person-outline' as const,         text: 'Mayor de 18 años' },
-  { icon: 'card-outline' as const,            text: 'Licencia categoría B vigente' },
-  { icon: 'document-outline' as const,        text: 'Cédula de ciudadanía' },
-  { icon: 'shield-outline' as const,          text: 'SOAT vigente' },
-  { icon: 'car-outline' as const,             text: 'Vehículo en buen estado' },
+  { icon: 'User' as const,         text: 'Mayor de 18 años' },
+  { icon: 'CreditCard' as const,            text: 'Licencia categoría B vigente' },
+  { icon: 'FileText' as const,        text: 'Cédula de ciudadanía' },
+  { icon: 'Shield' as const,          text: 'SOAT vigente' },
+  { icon: 'Car' as const,             text: 'Vehículo en buen estado' },
 ]
 
 export default function DriverOnboardingScreen() {
@@ -79,13 +79,13 @@ export default function DriverOnboardingScreen() {
       <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
         {/* ── Hero ── */}
-        <IllustratedCard scene="wheel" tone="brand" style={[s.hero, { borderRadius: RADIUS.xl }]} sceneWidth={150}>
+        <IllustratedCard illustration="proudDriver" illustrationWidth={110} style={[s.hero, { borderRadius: RADIUS.xl }]}>
           <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
-            <Ionicons name="arrow-back" size={20} color="#fff" />
+            <Icon name="ArrowLeft" size={20} color="#fff" />
           </TouchableOpacity>
           <View style={s.heroContent}>
             <View style={s.heroBadge}>
-              <Ionicons name="car-sport-outline" size={13} color="#fff" />
+              <Icon name="Car" size={13} color="#fff" />
               <Text style={s.heroBadgeText}>MODO CONDUCTOR</Text>
             </View>
             <Text style={s.heroTitle}>Conviértete en{'\n'}conductor Trive</Text>
@@ -100,12 +100,12 @@ export default function DriverOnboardingScreen() {
             {STEPS.map((step, i) => (
               <View key={step.number} style={s.stepCol}>
                 <View style={[s.stepIconWrap, { backgroundColor: step.color + '15' }]}>
-                  <Ionicons name={step.icon} size={22} color={step.color} />
+                  <Icon name={step.icon} size={22} color={step.color} />
                 </View>
                 <Text style={s.stepNumber}>{step.number}</Text>
                 <Text style={s.stepTitle}>{step.title}</Text>
                 <Text style={s.stepDesc}>{step.desc}</Text>
-                {i < STEPS.length - 1 && <View style={s.stepArrow}><Ionicons name="chevron-forward" size={16} color={COLORS.borderLight} /></View>}
+                {i < STEPS.length - 1 && <View style={s.stepArrow}><Icon name="ChevronRight" size={16} color={COLORS.borderLight} /></View>}
               </View>
             ))}
           </View>
@@ -114,7 +114,7 @@ export default function DriverOnboardingScreen() {
         {/* ── Comisión ── */}
         <View style={s.commissionCard}>
           <View style={s.commissionLeft}>
-            <Ionicons name="wallet-outline" size={22} color={COLORS.primary} />
+            <Icon name="Wallet" size={22} color={COLORS.primary} />
           </View>
           <View style={s.commissionInfo}>
             <Text style={s.commissionTitle}>Comisión por publicación</Text>
@@ -131,9 +131,9 @@ export default function DriverOnboardingScreen() {
                 {i > 0 && <View style={s.reqDivider} />}
                 <View style={s.reqRow}>
                   <View style={s.reqCheck}>
-                    <Ionicons name="checkmark" size={14} color="#fff" />
+                    <Icon name="Check" size={14} color="#fff" />
                   </View>
-                  <Ionicons name={r.icon} size={18} color={COLORS.textSecondary} style={s.reqIcon} />
+                  <Icon name={r.icon} size={18} color={COLORS.textSecondary} style={s.reqIcon} />
                   <Text style={s.reqText}>{r.text}</Text>
                 </View>
               </View>
@@ -144,7 +144,7 @@ export default function DriverOnboardingScreen() {
         {/* Código de referido */}
         <View style={s.referralBlock}>
           <View style={s.referralHeader}>
-            <Ionicons name="gift-outline" size={18} color={COLORS.primary} />
+            <Icon name="Gift" size={18} color={COLORS.primary} />
             <Text style={s.referralTitle}>¿Tienes un código de referido?</Text>
           </View>
           <Text style={s.referralSub}>Si un conductor te invitó, ingresa su código y tu primera publicación costará solo $1.000</Text>
@@ -184,7 +184,7 @@ export default function DriverOnboardingScreen() {
               <ActivityIndicator color="#fff" />
             ) : (
               <>
-                <Ionicons name="arrow-forward-circle-outline" size={20} color="#fff" />
+                <Icon name="ArrowRightCircle" size={20} color="#fff" />
                 <Text style={s.primaryBtnText}>Comenzar ahora</Text>
               </>
             )}
@@ -202,6 +202,9 @@ const s = StyleSheet.create({
 
   // Hero
   hero: {
+    ...SHADOWS.md,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.28,
     marginHorizontal: SPACING.md,
     marginTop: SPACING.md,
     height: 260,
@@ -223,13 +226,13 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.sm, paddingVertical: 4,
     borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)',
   },
-  heroBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 1 },
-  heroTitle: { fontSize: 26, fontWeight: '900', color: '#fff', letterSpacing: -0.5, lineHeight: 32 },
+  heroBadgeText: { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 1 },
+  heroTitle: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: -0.5, lineHeight: 32 },
   heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 18 },
 
   // Blocks
   block: { paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
-  blockTitle: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.lg, letterSpacing: -0.2 },
+  blockTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.lg, letterSpacing: -0.2 },
 
   // Steps
   stepsRow: { flexDirection: 'row', gap: 0 },
@@ -239,8 +242,8 @@ const s = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
     marginBottom: SPACING.sm,
   },
-  stepNumber: { fontSize: 10, fontWeight: '800', color: COLORS.textTertiary, letterSpacing: 0.5, marginBottom: 3 },
-  stepTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 3 },
+  stepNumber: { fontSize: 11, fontWeight: '800', color: COLORS.textTertiary, letterSpacing: 0.5, marginBottom: 3 },
+  stepTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, textAlign: 'center', marginBottom: 3 },
   stepDesc: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 15 },
   stepArrow: { position: 'absolute', right: -4, top: 14 },
 
@@ -264,8 +267,8 @@ const s = StyleSheet.create({
 
   // Requirements
   reqCard: {
+    ...SHADOWS.sm,
     backgroundColor: COLORS.surface, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.borderLight, overflow: 'hidden',
   },
   reqRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: 14, gap: SPACING.md },
   reqCheck: {

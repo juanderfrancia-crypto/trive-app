@@ -1,7 +1,7 @@
 import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Dimensions } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
+import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useLayoutEffect } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -60,7 +60,7 @@ export default function RatingAnalyticsDashboard() {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.primary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Estadísticas de Ratings</Text>
       </View>
@@ -145,7 +145,7 @@ export default function RatingAnalyticsDashboard() {
               {stats.lowest_rated_drivers.slice(0, 5).map((driver, index) => (
                 <View key={index} style={[styles.driverItem, styles.driverItemWarning]}>
                   <View style={[styles.driverRank, styles.driverRankWarning]}>
-                    <Ionicons name="alert-circle" size={18} color={COLORS.error} />
+                    <Icon name="CircleAlert" size={18} color={COLORS.error} />
                   </View>
                   <View style={styles.driverInfo}>
                     <Text style={styles.driverName}>{driver.driver_name}</Text>
@@ -182,7 +182,7 @@ export default function RatingAnalyticsDashboard() {
         </ScrollView>
       ) : (
         <View style={styles.emptyContainer}>
-          <Ionicons name="stats-chart-outline" size={64} color={COLORS.textTertiary} />
+          <Icon name="ChartColumn" size={64} color={COLORS.textTertiary} />
           <Text style={styles.emptyText}>Sin datos disponibles</Text>
         </View>
       )}

@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, Image, Modal, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as WebBrowser from 'expo-web-browser'
@@ -18,6 +17,7 @@ import {
 import { validateMinLength } from '../utils/validations'
 import { useErrorHandler } from '../hooks/useErrorHandler'
 import { ErrorType } from '../services/errorHandler'
+import Icon from '../components/Icon'
 
 interface DocumentWithDriver extends DriverDocument {
   driver_name?: string
@@ -249,26 +249,26 @@ export default function AdminDocumentsScreen() {
             </View>
           )}
           <View style={[s.statusBadge, { backgroundColor: COLORS.warning + '20' }]}>
-            <Ionicons name="time-outline" size={14} color={COLORS.warning} />
+            <Icon name="Clock" size={14} color={COLORS.warning} />
             <Text style={[s.statusText, { color: COLORS.warning }]}>Pendiente</Text>
           </View>
-          <Ionicons name="eye-outline" size={20} color={COLORS.primary} />
+          <Icon name="Eye" size={20} color={COLORS.primary} />
         </View>
       </View>
 
       <View style={s.metaRow}>
         <View style={s.metaItem}>
-          <Ionicons name="document-outline" size={14} color={COLORS.textSecondary} />
+          <Icon name="FileText" size={14} color={COLORS.textSecondary} />
           <Text style={s.metaText} numberOfLines={1}>{doc.file_name}</Text>
         </View>
         <View style={s.metaItem}>
-          <Ionicons name="albums-outline" size={14} color={COLORS.textSecondary} />
+          <Icon name="Images" size={14} color={COLORS.textSecondary} />
           <Text style={s.metaText}>{formatFileSize(doc.file_size)}</Text>
         </View>
       </View>
       <View style={s.metaRow}>
         <View style={s.metaItem}>
-          <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
+          <Icon name="Calendar" size={14} color={COLORS.textSecondary} />
           <Text style={s.metaText}>{formatDate(doc.uploaded_at)}</Text>
         </View>
       </View>
@@ -285,7 +285,7 @@ export default function AdminDocumentsScreen() {
         >
           {processingId === doc.id
             ? <ActivityIndicator size="small" color={COLORS.error} />
-            : <><Ionicons name="close-circle-outline" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
+            : <><Icon name="CircleX" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -295,7 +295,7 @@ export default function AdminDocumentsScreen() {
         >
           {processingId === doc.id
             ? <ActivityIndicator size="small" color={COLORS.success} />
-            : <><Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
+            : <><Icon name="CircleCheck" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -311,7 +311,7 @@ export default function AdminDocumentsScreen() {
             <Text style={s.driverName}>{doc.driver_name}</Text>
           </View>
           <View style={[s.statusBadge, { backgroundColor: info.color + '20' }]}>
-            <Ionicons name={info.icon as any} size={14} color={info.color} />
+            <Icon name={info.icon as any} size={14} color={info.color} />
             <Text style={[s.statusText, { color: info.color }]}>{info.label}</Text>
           </View>
         </View>
@@ -335,7 +335,7 @@ export default function AdminDocumentsScreen() {
 
         {doc.status === 'rejected' && doc.rejection_reason && (
           <View style={s.rejectionBanner}>
-            <Ionicons name="alert-circle-outline" size={14} color={COLORS.error} />
+            <Icon name="CircleAlert" size={14} color={COLORS.error} />
             <Text style={s.rejectionText} numberOfLines={2}>{doc.rejection_reason}</Text>
           </View>
         )}
@@ -362,7 +362,7 @@ export default function AdminDocumentsScreen() {
       {/* Header */}
       <LinearGradient colors={[COLORS.primary, COLORS.primaryDark]} style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn}>
-          <Ionicons name="chevron-back" size={28} color="#fff" />
+          <Icon name="ChevronLeft" size={28} color="#fff" />
           <Text style={s.backBtnText}>Atrás</Text>
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
@@ -382,8 +382,8 @@ export default function AdminDocumentsScreen() {
           onPress={() => handleTabChange('pending')}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="time-outline"
+          <Icon
+            name="Clock"
             size={16}
             color={activeTab === 'pending' ? COLORS.primary : COLORS.textSecondary}
           />
@@ -402,8 +402,8 @@ export default function AdminDocumentsScreen() {
           onPress={() => handleTabChange('history')}
           activeOpacity={0.7}
         >
-          <Ionicons
-            name="checkmark-done-outline"
+          <Icon
+            name="CheckCheck"
             size={16}
             color={activeTab === 'history' ? COLORS.primary : COLORS.textSecondary}
           />
@@ -417,7 +417,7 @@ export default function AdminDocumentsScreen() {
       {activeTab === 'pending' && (
         pendingDocs.length === 0 ? (
           <View style={s.center}>
-            <Ionicons name="checkmark-circle-outline" size={64} color={COLORS.success} />
+            <Icon name="CircleCheck" size={64} color={COLORS.success} />
             <Text style={s.emptyTitle}>¡Todo al día!</Text>
             <Text style={s.emptyText}>No hay documentos pendientes de verificación</Text>
           </View>
@@ -443,7 +443,7 @@ export default function AdminDocumentsScreen() {
           </View>
         ) : historyDocs.length === 0 ? (
           <View style={s.center}>
-            <Ionicons name="receipt-outline" size={56} color={COLORS.textTertiary} />
+            <Icon name="Receipt" size={56} color={COLORS.textTertiary} />
             <Text style={s.emptyTitle}>Sin historial</Text>
             <Text style={s.emptyText}>Los documentos procesados aparecerán aquí</Text>
           </View>
@@ -469,7 +469,7 @@ export default function AdminDocumentsScreen() {
               style={s.modalBackBtn}
               activeOpacity={0.7}
             >
-              <Ionicons name="chevron-back" size={28} color={COLORS.primary} />
+              <Icon name="ChevronLeft" size={28} color={COLORS.primary} />
               <Text style={s.modalBackText}>Atrás</Text>
             </TouchableOpacity>
             <Text style={s.modalTitle} numberOfLines={1}>
@@ -486,7 +486,7 @@ export default function AdminDocumentsScreen() {
           ) : (documentUrl && selectedDoc) ? (
             isPdf(selectedDoc) ? (
               <View style={s.pdfPreview}>
-                <Ionicons name="document-text" size={72} color={COLORS.primary} />
+                <Icon name="FileText" size={72} color={COLORS.primary} />
                 <Text style={s.pdfPreviewTitle}>Documento PDF</Text>
                 <Text style={s.pdfPreviewSub}>{selectedDoc.file_name}</Text>
                 <TouchableOpacity
@@ -494,7 +494,7 @@ export default function AdminDocumentsScreen() {
                   onPress={() => WebBrowser.openBrowserAsync(documentUrl)}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="open-outline" size={18} color="#fff" />
+                  <Icon name="ExternalLink" size={18} color="#fff" />
                   <Text style={s.pdfOpenBtnText}>Abrir PDF</Text>
                 </TouchableOpacity>
               </View>
@@ -505,7 +505,7 @@ export default function AdminDocumentsScreen() {
             )
           ) : (
             <View style={s.center}>
-              <Ionicons name="document-outline" size={64} color={COLORS.textSecondary} />
+              <Icon name="FileText" size={64} color={COLORS.textSecondary} />
               <Text style={s.loadingText}>No se pudo cargar la vista previa</Text>
             </View>
           )}
@@ -529,7 +529,7 @@ export default function AdminDocumentsScreen() {
                 >
                   {processingId === selectedDoc?.id
                     ? <ActivityIndicator size="small" color={COLORS.error} />
-                    : <><Ionicons name="close-circle-outline" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
+                    : <><Icon name="CircleX" size={16} color={COLORS.error} /><Text style={[s.btnText, { color: COLORS.error }]}>Rechazar</Text></>}
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[s.btn, s.approveBtn, { flex: 1 }]}
@@ -538,7 +538,7 @@ export default function AdminDocumentsScreen() {
                 >
                   {processingId === selectedDoc?.id
                     ? <ActivityIndicator size="small" color={COLORS.success} />
-                    : <><Ionicons name="checkmark-circle-outline" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
+                    : <><Icon name="CircleCheck" size={16} color={COLORS.success} /><Text style={[s.btnText, { color: COLORS.success }]}>Aprobar</Text></>}
                 </TouchableOpacity>
               </View>
             </View>

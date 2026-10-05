@@ -2,9 +2,9 @@ import { useState, useMemo } from 'react'
 import { View, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, StatusBar } from 'react-native'
 import { Text } from './AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { Ionicons } from '@expo/vector-icons'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { COLOMBIA_MUNICIPALITIES, Municipality } from '../data/colombiaMunicipalities'
+import Icon from './Icon'
 
 interface Props {
   visible: boolean
@@ -48,7 +48,7 @@ export function MunicipalityPickerModal({ visible, current, onSelect, onClose }:
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-            <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
           </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Elige tu municipio</Text>
@@ -58,7 +58,7 @@ export function MunicipalityPickerModal({ visible, current, onSelect, onClose }:
 
         {/* Search */}
         <View style={styles.searchWrap}>
-          <Ionicons name="search" size={18} color={COLORS.textSecondary} style={styles.searchIcon} />
+          <Icon name="Search" size={18} color={COLORS.textSecondary} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar municipio o departamento..."
@@ -91,14 +91,14 @@ export function MunicipalityPickerModal({ visible, current, onSelect, onClose }:
                   <Text style={styles.itemDept}>{item.department}</Text>
                 </View>
                 {isSelected && (
-                  <Ionicons name="checkmark-circle" size={20} color={COLORS.primary} />
+                  <Icon name="CircleCheck" size={20} color={COLORS.primary} />
                 )}
               </TouchableOpacity>
             )
           }}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="search-outline" size={36} color={COLORS.textTertiary} />
+              <Icon name="Search" size={36} color={COLORS.textTertiary} />
               <Text style={styles.emptyText}>Sin resultados para "{query}"</Text>
             </View>
           }

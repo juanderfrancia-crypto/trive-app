@@ -3,8 +3,8 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Activ
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { Ionicons } from '@expo/vector-icons'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import Icon from '../components/Icon'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -18,11 +18,11 @@ import {
   toLocalISO,
 } from './driver/PublishRouteFlow'
 
-const TYPE_ICON: Record<VehicleTypeId, 'car-sport' | 'car' | 'bus'> = {
-  auto: 'car-sport',
-  taxi: 'car',
-  busetica: 'bus',
-  buseta: 'bus',
+const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Car' | 'Bus'> = {
+  auto: 'Car',
+  taxi: 'Car',
+  busetica: 'Bus',
+  buseta: 'Bus',
 }
 
 const DELAY_OPTIONS = [0, 5, 10, 15, 20]
@@ -232,7 +232,7 @@ export default function RecurringRoutesScreen() {
     <View style={[styles.safe, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
-          <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={styles.flex}>
           <Text style={styles.headerTitle}>Rutas frecuentes</Text>
@@ -243,12 +243,12 @@ export default function RecurringRoutesScreen() {
           onPress={() => { resetForm(); setShowCreate(true) }}
           activeOpacity={0.85}
         >
-          <Ionicons name="add" size={22} color={COLORS.white} />
+          <Icon name="Plus" size={22} color={COLORS.white} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.balanceStrip}>
-        <Ionicons name="wallet-outline" size={16} color={COLORS.primary} />
+        <Icon name="Wallet" size={16} color={COLORS.primary} />
         <Text style={styles.balanceText}>
           Saldo: <Text style={styles.balanceStrong}>{fmtMoney(user?.balance ?? 0)}</Text>
         </Text>
@@ -261,7 +261,7 @@ export default function RecurringRoutesScreen() {
         {templates.length === 0 ? (
           <View style={styles.emptyWrap}>
             <View style={styles.emptyIcon}>
-              <Ionicons name="repeat" size={28} color={COLORS.primary} />
+              <Icon name="Repeat" size={28} color={COLORS.primary} />
             </View>
             <Text style={styles.emptyTitle}>Sin rutas frecuentes</Text>
             <Text style={styles.emptySub}>Guarda tus rutas habituales y publícalas en un toque.</Text>
@@ -278,7 +278,7 @@ export default function RecurringRoutesScreen() {
             <View key={tpl.id} style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
-                  <Ionicons
+                  <Icon
                     name={TYPE_ICON[tpl.vehicle_type as VehicleTypeId] ?? 'car-outline'}
                     size={20}
                     color={COLORS.primary}
@@ -289,10 +289,10 @@ export default function RecurringRoutesScreen() {
                   <Text style={styles.cardRoute} numberOfLines={1}>{tpl.origin} → {tpl.destination}</Text>
                 </View>
                 <TouchableOpacity style={styles.iconBtn} onPress={() => openEdit(tpl)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="pencil" size={16} color={COLORS.primary} />
+                  <Icon name="Pencil" size={16} color={COLORS.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="trash" size={16} color={COLORS.error} />
+                  <Icon name="Trash2" size={16} color={COLORS.error} />
                 </TouchableOpacity>
               </View>
 
@@ -322,7 +322,7 @@ export default function RecurringRoutesScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editTarget ? 'Editar plantilla' : 'Nueva plantilla'}</Text>
               <TouchableOpacity onPress={() => { setShowCreate(false); resetForm() }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+                <Icon name="X" size={22} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
 
@@ -365,7 +365,7 @@ export default function RecurringRoutesScreen() {
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Publicar viaje</Text>
                 <TouchableOpacity onPress={() => { setPublishTarget(null); setCustomDuration(''); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="close" size={22} color={COLORS.textPrimary} />
+                  <Icon name="X" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -426,7 +426,7 @@ export default function RecurringRoutesScreen() {
                 <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
 
                 <View style={styles.costNote}>
-                  <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+                  <Icon name="Info" size={16} color={COLORS.primary} />
                   <Text style={styles.costNoteText}>
                     Se descontarán {fmtMoney(ROUTE_FEE)} de tu saldo. Saldo disponible: {fmtMoney(user?.balance ?? 0)}.
                   </Text>
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '700' },
   emptySub: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
 
-  card: { borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg, gap: SPACING.md, backgroundColor: COLORS.white },
+  card: { ...SHADOWS.sm, borderRadius: RADIUS.lg, padding: SPACING.lg, gap: SPACING.md, backgroundColor: COLORS.white },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   cardIcon: {
     width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
