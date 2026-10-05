@@ -3,28 +3,25 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert,
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
+import Svg, { Circle, Ellipse, Path } from 'react-native-svg'
 import * as Location from 'expo-location'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
+import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { usePassengerHomeStats } from '../hooks/usePassengerHomeStats'
 import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
 import { supabase } from '../services/supabase'
+import { showSuccess, showError } from '../utils/showError'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
+import { usePassengerBookings, confirmPassengerTrip } from './passenger/usePassengerBookings'
+import { useTodayDepartures } from './passenger/useTodayDepartures'
+import { formatDia, formatHoraPartes, formatPrecio } from './passenger/passengerFormat'
 
 const getGreeting = () => {
   const h = new Date().getHours()
   if (h < 12) return 'Buenos días'
   if (h < 18) return 'Buenas tardes'
   return 'Buenas noches'
-}
-
-const MEMBERSHIP_LABEL: Record<string, string> = {
-  free: 'Gratis',
-  basic: 'Básico',
-  premium: 'Premium',
-  vip: 'VIP',
 }
 
 export default function PassengerHomeScreen() {
@@ -38,12 +35,16 @@ export default function PassengerHomeScreen() {
   const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
 
-  const { stats, loading: statsLoading } = usePassengerHomeStats(user?.id)
   const { trip: upcomingTrip, loading: tripLoading } = useUpcomingTrip(user?.id)
   const { routes: recentRoutes } = useRecentRoutes(user?.id)
+  const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
+  const { rides: salidasHoy } = useTodayDepartures(preferredMunicipality)
+
+  const reservaPorConfirmar = bookings.find((b) => b.bookingStatus === 'awaiting_confirmation') ?? null
 
   useFocusEffect(
     useCallback(() => {
+      refetchBookings()
       if (!user?.id) return
       supabase
         .from('profiles')
@@ -55,7 +56,7 @@ export default function PassengerHomeScreen() {
           setPreferredMunicipality(mun)
           if (mun) setOrigin((prev) => prev || mun)
         })
-    }, [user?.id])
+    }, [user?.id, refetchBookings])
   )
 
   const handleAvailableRidesPress = () => {
@@ -77,8 +78,18 @@ export default function PassengerHomeScreen() {
   }
 
   const handleSearch = () => {
-    setSearchParams(origin.trim(), destination.trim())
-    navigation.dispatch(CommonActions.navigate({ name: 'Search' }))
+    navigation.navigate('AvailableRides' as never, { origin: origin.trim(), destination: destination.trim(), passengers: 1 } as never)
+  }
+
+  const handleConfirmTrip = async () => {
+    if (!reservaPorConfirmar) return
+    try {
+      await confirmPassengerTrip(reservaPorConfirmar.bookingId)
+      showSuccess('¡Gracias por confirmar!')
+      refetchBookings()
+    } catch (err: any) {
+      showError(err?.message || 'No se pudo registrar tu respuesta')
+    }
   }
 
   const handleSOS = () => {
@@ -162,9 +173,10 @@ export default function PassengerHomeScreen() {
     navigation.navigate('TripStatus' as never)
   }
 
-  const membershipType = user?.membership_type ?? 'free'
   const canSearch = !!origin.trim() && !!destination.trim()
   const firstName = user?.name?.split(' ')[0] ?? 'Usuario'
+  const initials = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+  const confirmarHoy = reservaPorConfirmar ? formatDia(reservaPorConfirmar.departureTime) === 'Hoy' : false
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -174,9 +186,8 @@ export default function PassengerHomeScreen() {
             <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.name}>{firstName}</Text>
           </View>
-          <View style={styles.membershipPill}>
-            <Ionicons name="shield-checkmark-outline" size={13} color={COLORS.primary} />
-            <Text style={styles.membershipText}>{MEMBERSHIP_LABEL[membershipType] ?? 'Gratis'}</Text>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{initials}</Text>
           </View>
         </View>
 
@@ -242,6 +253,28 @@ export default function PassengerHomeScreen() {
           </ScrollView>
         )}
 
+        {reservaPorConfirmar && (
+          <View style={styles.confirmCard}>
+            <Svg width={56} height={44} viewBox="0 0 56 40" style={styles.confirmIcon}>
+              <Ellipse cx="28" cy="36" rx="22" ry="2.5" fill={COLORS.primary} opacity={0.15} />
+              <Path d="M6 26 Q6 20 12 19 L18 13 Q21 9 28 9 L36 9 Q41 9 44 13 L49 19 Q53 20 53 26 L53 30 Q53 33 50 33 L9 33 Q6 33 6 30 Z" fill={COLORS.primary} />
+              <Path d="M20 19 Q23 14 28 14 L36 14 Q40 14 42 19 Z" fill={COLORS.primaryTint} />
+              <Circle cx="16" cy="33" r="5" fill={COLORS.textPrimary} />
+              <Circle cx="16" cy="33" r="2" fill={COLORS.primaryTint} />
+              <Circle cx="43" cy="33" r="5" fill={COLORS.textPrimary} />
+              <Circle cx="43" cy="33" r="2" fill={COLORS.primaryTint} />
+              <Ellipse cx="50" cy="24" rx="2" ry="1.5" fill={COLORS.white} />
+            </Svg>
+            <View style={styles.confirmText}>
+              <Text style={styles.confirmTitle}>{confirmarHoy ? 'Confirma tu viaje de hoy' : 'Confirma tu viaje'}</Text>
+              <Text style={styles.confirmSub}>Tienes 24 h para confirmar. Si no, se confirma solo.</Text>
+            </View>
+            <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirmTrip} activeOpacity={0.85}>
+              <Text style={styles.confirmBtnText}>Confirmar</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {!tripLoading && upcomingTrip && (
           <TouchableOpacity style={styles.tripCard} onPress={goToTripStatus} activeOpacity={0.92}>
             <View style={styles.tripHeader}>
@@ -266,40 +299,40 @@ export default function PassengerHomeScreen() {
           </TouchableOpacity>
         )}
 
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statValue}>{statsLoading ? '–' : stats?.tripsThisMonth ?? 0}</Text>
-            <Text style={styles.statLabel}>Viajes este mes</Text>
-          </View>
+        <View style={styles.sectionHead}>
+          <Text style={styles.sectionTitle}>Salidas de hoy</Text>
+          <TouchableOpacity onPress={handleAvailableRidesPress} hitSlop={8}>
+            <Text style={styles.sectionLink}>Ver todas</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.ridesList}>
+          {salidasHoy.length === 0 ? (
+            <View style={styles.ridesEmpty}>
+              <Text style={styles.ridesEmptyText}>Aún no hay salidas publicadas para hoy</Text>
+            </View>
+          ) : salidasHoy.map((ride) => {
+            const hora = formatHoraPartes(ride.departure_time)
+            return (
+              <TouchableOpacity key={ride.id} style={styles.rideRow} onPress={handleAvailableRidesPress} activeOpacity={0.8}>
+                <View style={styles.rideTime}>
+                  <Text style={styles.rideHour}>{hora.hora}</Text>
+                  <Text style={styles.ridePeriod}>{hora.periodo}</Text>
+                </View>
+                <View style={styles.rideMiddle}>
+                  <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · ★ {Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+                  <Text style={styles.rideSeats}>{ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'}</Text>
+                </View>
+                <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
-        <TouchableOpacity style={styles.ctaCard} onPress={handleAvailableRidesPress} activeOpacity={0.9}>
-          <View style={styles.ctaIcon}>
-            <Ionicons name="flash" size={20} color={COLORS.primary} />
-          </View>
-          <View style={styles.ctaText}>
-            <Text style={styles.ctaTitle}>Cupos de hoy</Text>
-            <Text style={styles.ctaSub}>{preferredMunicipality || 'Elige tu municipio'}</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color={COLORS.textSecondary} />
+        <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
+          <Text style={styles.airportText}>
+            ¿Vas al aeropuerto? <Text style={styles.airportLinkText}>Solicita un viaje privado</Text>
+          </Text>
         </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.secondaryCard}
-          onPress={() => navigation.navigate('AirportRequest' as never)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.secondaryText}>
-            <Text style={styles.secondaryTitle}>Solicitar viaje privado</Text>
-            <Text style={styles.secondarySub}>Propón el precio al conductor</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
-        </TouchableOpacity>
-
-        <View style={styles.tip}>
-          <Text style={styles.tipTitle}>Consejo</Text>
-          <Text style={styles.tipText}>Revisa primero los cupos de hoy. Si no encuentras uno, solicita un viaje privado.</Text>
-        </View>
       </ScrollView>
 
       <MunicipalityPickerModal
@@ -314,16 +347,16 @@ export default function PassengerHomeScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.lg, paddingBottom: SPACING.xxxl },
+  content: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md, paddingBottom: SPACING.xxxl },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  greeting: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary },
-  name: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3 },
-  membershipPill: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
-    backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full,
+  greeting: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
+  name: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5, marginTop: 2 },
+  avatar: {
+    width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center',
   },
-  membershipText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+  avatarText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
 
   headline: { fontSize: 30, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.6, marginTop: SPACING.xl, lineHeight: 36 },
 
@@ -351,8 +384,19 @@ const styles = StyleSheet.create({
   },
   chipText: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, maxWidth: 220 },
 
+  confirmCard: {
+    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
+  },
+  confirmIcon: { flexShrink: 0 },
+  confirmText: { flex: 1 },
+  confirmTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  confirmSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2, lineHeight: 18 },
+  confirmBtn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm + 1, borderRadius: RADIUS.md, backgroundColor: COLORS.primary },
+  confirmBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.white },
+
   tripCard: {
-    marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint,
+    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint,
   },
   tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tripLabel: { fontSize: 12, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.5 },
@@ -372,28 +416,25 @@ const styles = StyleSheet.create({
   },
   sosText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.error },
 
-  statsRow: { marginTop: SPACING.lg, flexDirection: 'row' },
-  stat: { flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border },
-  statValue: { fontSize: 24, fontWeight: '800', color: COLORS.textPrimary },
-  statLabel: { fontSize: 12, color: COLORS.textSecondary, marginTop: SPACING.xs },
-
-  ctaCard: {
-    marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
+  sectionHead: { marginTop: SPACING.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  sectionLink: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  ridesList: { marginTop: SPACING.sm + 2, gap: SPACING.sm + 2 },
+  rideRow: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
   },
-  ctaIcon: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, alignItems: 'center', justifyContent: 'center' },
-  ctaText: { flex: 1 },
-  ctaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
-  ctaSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  rideTime: { minWidth: 56, alignItems: 'center' },
+  rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
+  ridePeriod: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
+  rideMiddle: { flex: 1 },
+  rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  ridePrice: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
+  ridesEmpty: { paddingVertical: SPACING.lg, alignItems: 'center' },
+  ridesEmptyText: { fontSize: 13, color: COLORS.textSecondary },
 
-  secondaryCard: {
-    marginTop: SPACING.sm, flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
-  },
-  secondaryText: { flex: 1 },
-  secondaryTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
-  secondarySub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-
-  tip: { marginTop: SPACING.lg, padding: SPACING.lg, borderRadius: RADIUS.lg, backgroundColor: COLORS.surfaceAlt },
-  tipTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, marginBottom: SPACING.xs },
-  tipText: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  airportLink: { marginTop: SPACING.lg },
+  airportText: { fontSize: 13, color: COLORS.textSecondary },
+  airportLinkText: { color: COLORS.primary, fontWeight: '700' },
 })

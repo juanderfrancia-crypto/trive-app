@@ -1,9 +1,11 @@
 import IllustratedCard from '../components/illustrations/IllustratedCard'
+import Svg, { Circle, Path } from 'react-native-svg'
+import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert,
-  ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar,
+  ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar, Share,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -20,15 +22,43 @@ import { showSuccess, showError, showInfo } from '../utils/showError'
 import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import AdminMenuButton from '../components/AdminMenuButton'
 import Button from '../components/Button'
 import Card from '../components/Card'
 import Badge from '../components/Badge'
-import { TripMessagesModal } from '../components/TripMessagesModal'
-import { useActiveBookingsWithChat, ActiveBookingChat } from '../hooks/useActiveBookingsWithChat'
-import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
 
+
+// Campos que la app lee del perfil pero que useProfile aún no tipa.
+type ProfileExtras = {
+  referral_code?: string | null
+  emergency_contact?: { name: string; phone: string } | null
+}
+
+// Silueta de dos personas para la tarjeta de invitación (mockup PerfilPasajero7).
+function InviteIllustration() {
+  return (
+    <Svg width={72} height={60} viewBox="0 0 72 60" style={{ marginBottom: SPACING.md }}>
+      <Circle cx="22" cy="20" r="9" fill={COLORS.primary} />
+      <Path d="M8 52 Q8 36 22 36 Q36 36 36 52Z" fill={COLORS.primary} />
+      <Circle cx="50" cy="20" r="9" fill={COLORS.textPrimary} />
+      <Path d="M36 52 Q36 36 50 36 Q64 36 64 52Z" fill={COLORS.textPrimary} />
+      <Path d="M30 20 Q36 6 42 20" fill="none" stroke={COLORS.primary} strokeWidth={2} strokeDasharray={[3, 3]} strokeLinecap="round" />
+    </Svg>
+  )
+}
+
+// Fila de menú con título, subtítulo y chevron.
+function MenuRow({ title, sub, onPress }: { title: string; sub: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity style={pv.menuRow} onPress={onPress} activeOpacity={0.75}>
+      <View style={pv.menuText}>
+        <Text style={pv.menuTitle}>{title}</Text>
+        <Text style={pv.menuSub}>{sub}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={20} color={COLORS.textTertiary} />
+    </TouchableOpacity>
+  )
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
@@ -51,61 +81,10 @@ export default function ProfileScreen() {
   const [driverDocs, setDriverDocs]       = useState<Record<string, any>>({})
   const [regeneratedVehiclePhotoUrl, setRegeneratedVehiclePhotoUrl] = useState<string | null>(null)
 
-  // Chat
-  const { bookings: activeBookings, refetch: refetchActiveBookings } = useActiveBookingsWithChat(
-    !isDriver ? user?.id : undefined
-  )
-  const [chatsListVisible, setChatsListVisible]   = useState(false)
-  const [chatModalVisible, setChatModalVisible]   = useState(false)
-  const [selectedChat, setSelectedChat]           = useState<ActiveBookingChat | null>(null)
-  const [hiddenChatIds, setHiddenChatIds]         = useState<Set<string>>(new Set())
-  const [unreadCounts, setUnreadCounts]           = useState<Record<string, number>>({})
-  const chatChannelsRef = useRef<Record<string, () => void>>({})
-  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0)
-
-  const HIDDEN_CHATS_KEY = 'hidden_active_chats'
-
-  useEffect(() => {
-    AsyncStorage.getItem(HIDDEN_CHATS_KEY).then((raw) => {
-      if (raw) setHiddenChatIds(new Set(JSON.parse(raw)))
-    })
-  }, [])
-
-  // Limpiar IDs ocultos huérfanos cuando cargan las reservas
-  useEffect(() => {
-    if (!activeBookings.length || !hiddenChatIds.size) return
-    const activeIds = new Set(activeBookings.map((b) => b.bookingId))
-    const cleaned = new Set([...hiddenChatIds].filter((id) => activeIds.has(id)))
-    if (cleaned.size !== hiddenChatIds.size) {
-      setHiddenChatIds(cleaned)
-      AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...cleaned]))
-    }
-  }, [activeBookings])
-
-  const saveHiddenChats = async (ids: Set<string>) => {
-    await AsyncStorage.setItem(HIDDEN_CHATS_KEY, JSON.stringify([...ids]))
-  }
-
-  const hideChat = (bookingId: string) => {
-    Alert.alert('Eliminar chat', '¿Quieres eliminar este chat?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar', style: 'destructive',
-        onPress: () => {
-          const next = new Set(hiddenChatIds)
-          next.add(bookingId)
-          setHiddenChatIds(next)
-          saveHiddenChats(next)
-        },
-      },
-    ])
-  }
-
-  const visibleChats = activeBookings.filter((b) => !hiddenChatIds.has(b.bookingId))
-
   // Hooks called unconditionally, ID gated
   const { earnings, loadEarnings } = useDriverEarnings(isDriver ? user?.id : undefined)
   const { stats: passengerStats, refetch: refetchStats } = usePassengerStats(!isDriver ? user?.id : undefined)
+  const { bookings: passengerBookings, refetch: refetchPassengerBookings } = usePassengerBookings(!isDriver ? user?.id : undefined)
 
   // ── Role sync ──────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -115,30 +94,6 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (!profile && user?.role) setIsDriver(user.role === 'driver')
   }, [user?.role, profile])
-
-  useEffect(() => {
-    if (!user || !activeBookings.length) return
-
-    activeBookings.forEach((b) => {
-      getTripUnreadCountFrom(b.routeId, user.id, b.driverId)
-        .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
-        .catch(() => {})
-
-      if (!chatChannelsRef.current[b.routeId]) {
-        const unsub = subscribeTripMessages(b.routeId, user!.id, b.driverId, () => {
-          getTripUnreadCountFrom(b.routeId, user!.id, b.driverId)
-            .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
-            .catch(() => {})
-        })
-        chatChannelsRef.current[b.routeId] = unsub
-      }
-    })
-
-    return () => {
-      Object.values(chatChannelsRef.current).forEach((fn) => fn())
-      chatChannelsRef.current = {}
-    }
-  }, [activeBookings, user?.id])
 
   // ── Driver vehicle + route history ─────────────────────────────────────────
   const loadDriverData = useCallback(async () => {
@@ -212,9 +167,9 @@ export default function ProfileScreen() {
       loadDriverData()
     } else {
       refetchStats()
-      refetchActiveBookings()
+      refetchPassengerBookings()
     }
-  }, [user?.id, loadEarnings, loadDriverData, refetchStats, refetchActiveBookings]))
+  }, [user?.id, loadEarnings, loadDriverData, refetchStats, refetchPassengerBookings]))
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -336,227 +291,136 @@ export default function ProfileScreen() {
   const avatarUri  = user?.avatar_url || profile?.avatar_url
   const initials   = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const rating     = (profile?.rating ?? 0).toFixed(1)
-  const yearsOnApp = profile?.created_at
-    ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
-    : 0
-  const membershipLabels: Record<string, string> = {
-    premium: 'USUARIO PREMIUM', basic: 'USUARIO BÁSICO', vip: 'USUARIO VIP', free: 'PASAJERO'
-  }
-  const membershipLabel = membershipLabels[user?.membership_type ?? 'free'] ?? 'PASAJERO'
+  const PassengerView = () => {
+    const extras = profile as ProfileExtras | null
+    const referralCode = extras?.referral_code ?? null
+    const emergencyContact = extras?.emergency_contact ?? null
+    const tripsCount = passengerStats?.totalTrips ?? 0
+    const porConfirmar = passengerBookings.filter((b) => b.bookingStatus === 'awaiting_confirmation').length
 
-  // ── Avatar ─────────────────────────────────────────────────────────────────
-  const AvatarCircle = ({ size = 80, showBadge = true }: { size?: number; showBadge?: boolean }) => (
-    <TouchableOpacity
-      style={[s.avatarWrap, { width: size, height: size, borderRadius: RADIUS.lg }]}
-      onPress={handleProfilePhotoUpload}
-      disabled={uploadingPhoto}
-      activeOpacity={0.85}
-    >
-      {uploadingPhoto
-        ? <View style={[s.avatarBg, { width: size, height: size, borderRadius: RADIUS.lg }]}><ActivityIndicator color="#fff" /></View>
-        : avatarUri
-          ? <Image source={{ uri: avatarUri }} style={{ width: size, height: size, borderRadius: RADIUS.lg }} />
-          : <LinearGradient colors={[COLORS.primaryDark, '#0a2a6e']} style={[s.avatarBg, { width: size, height: size, borderRadius: RADIUS.lg }]}>
-              <Text style={[s.avatarInitial, { fontSize: size * 0.35 }]}>{initials}</Text>
-            </LinearGradient>
-      }
-      {showBadge && (
-        <View style={s.avatarBadge}>
-          <Ionicons name="camera" size={13} color="#fff" />
-        </View>
-      )}
-    </TouchableOpacity>
-  )
+    const handleShareReferral = () => {
+      if (!referralCode) return
+      Share.share({
+        message: `Únete a Trive como conductor con mi código ${referralCode}. Recibes $1.000 de regalo cuando completas tu primer viaje.`,
+      }).catch(() => {})
+    }
 
-  // ── PASSENGER VIEW ────────────────────────────────────────────────────────
-  const PassengerView = () => (
-    <>
-      {/* Profile row */}
-      <View style={pv.profileRow}>
-        <AvatarCircle size={100} />
-        <View style={pv.profileInfo}>
-          <TouchableOpacity style={pv.nameRow} onPress={openEditName} activeOpacity={0.7}>
+    return (
+      <>
+        <Text style={pv.title}>Mi perfil</Text>
+
+        <View style={pv.profileRow}>
+          <TouchableOpacity style={pv.avatar} onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.85}>
+            {uploadingPhoto
+              ? <ActivityIndicator color={COLORS.primary} />
+              : avatarUri
+                ? <Image source={{ uri: avatarUri }} style={pv.avatarImg} />
+                : <Text style={pv.avatarInitials}>{initials}</Text>}
+          </TouchableOpacity>
+          <View style={pv.profileInfo}>
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
-            <Ionicons name="pencil-outline" size={14} color={COLORS.textTertiary} />
-          </TouchableOpacity>
-          {user?.email && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{user.email}</Text>
-          )}
-          {user?.phone && (
-            <Text style={pv.contactInfo} numberOfLines={1}>{user.phone}</Text>
-          )}
-          <View style={pv.premiumBadge}>
-            <Ionicons name="star" size={12} color="#78350F" />
-            <Text style={pv.premiumText}>{membershipLabel}</Text>
+            <Text style={pv.meta}>
+              Pasajero · ★ {(profile?.rating ?? 0).toFixed(1)} · {tripsCount} {tripsCount === 1 ? 'viaje' : 'viajes'}
+            </Text>
           </View>
         </View>
-      </View>
 
-      {/* Datos del pasajero */}
-      <View style={s.section}>
-        <View style={pv.dataCard}>
-          {/* Rating */}
-          <View style={pv.dataRow}>
-            <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="star" size={18} color={COLORS.warning} /></View>
-              <View>
-                <Text style={pv.dataLabel}>Calificación</Text>
-                <Text style={pv.dataValue}>{(profile?.rating ?? 0).toFixed(1)} / 5.0</Text>
-              </View>
-            </View>
-            <View style={pv.dataRight}>
-              <Text style={pv.dataYear}>{yearsOnApp} {yearsOnApp === 1 ? 'año' : 'años'}</Text>
-            </View>
+        <TouchableOpacity style={pv.card} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
+          <View style={pv.cardText}>
+            <Text style={pv.cardTitle}>Contacto de emergencia</Text>
+            <Text style={pv.cardSub}>Recibe tu ubicación en un viaje</Text>
           </View>
-
-          {/* Total gastado + Promedio */}
-          <View style={pv.dataRowDivider} />
-          <View style={pv.dataRow}>
-            <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="wallet" size={18} color="#0040A1" /></View>
-              <View>
-                <Text style={pv.dataLabel}>Total gastado</Text>
-                <Text style={pv.dataValue}>${(passengerStats?.totalSpent ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}</Text>
-              </View>
-            </View>
-            <View style={pv.dataRight}>
-              <Text style={pv.dataYearSmall}>Promedio: ${(passengerStats?.averagePerTrip ?? 0).toLocaleString('es-CO', { maximumFractionDigits: 0 })}</Text>
-            </View>
-          </View>
-
-          {/* Miembro desde */}
-          <View style={pv.dataRowDivider} />
-          <View style={pv.dataRow}>
-            <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="calendar" size={18} color="#78350F" /></View>
-              <View>
-                <Text style={pv.dataLabel}>Miembro desde</Text>
-                <Text style={pv.dataValue}>{profile?.created_at ? new Date(profile.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Método de login */}
-          <View style={pv.dataRowDivider} />
-          <View style={pv.dataRow}>
-            <View style={pv.dataLeft}>
-              <View style={pv.dataIcon}><Ionicons name="mail" size={18} color={COLORS.warning} /></View>
-              <View>
-                <Text style={pv.dataLabel}>Email</Text>
-                <Text style={pv.dataValue} numberOfLines={1}>{user?.email || '—'}</Text>
-              </View>
-            </View>
-          </View>
-
-          {user?.phone ? (
-            <>
-              <View style={pv.dataRowDivider} />
-              <View style={pv.dataRow}>
-                <View style={pv.dataLeft}>
-                  <View style={pv.dataIcon}><Ionicons name="call" size={18} color="#0040A1" /></View>
-                  <View>
-                    <Text style={pv.dataLabel}>Teléfono</Text>
-                    <Text style={pv.dataValue}>{user.phone}</Text>
-                  </View>
-                </View>
-              </View>
-            </>
-          ) : null}
-        </View>
-      </View>
-
-      {/* CTA card */}
-      <View style={s.section}>
-        <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-          <IllustratedCard scene="wheel" tone="brand" style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
-            <View style={pv.ctaOportunidad}>
-              <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
-            </View>
-            <Text style={pv.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
-            <Text style={pv.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
-            <View style={pv.ctaBtn}>
-              <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
-            </View>
-          </IllustratedCard>
+          {emergencyContact
+            ? <View style={pv.pillOk}><Text style={pv.pillOkText}>Configurado</Text></View>
+            : <View style={pv.pillWarn}><Text style={pv.pillWarnText}>Sin configurar</Text></View>}
         </TouchableOpacity>
-      </View>
 
-      {/* Quick stat: Mis Viajes + Mis Chats + Solicitudes Aeropuerto */}
-      <View style={s.section}>
-        <View style={pv.statsRow}>
-          <TouchableOpacity style={pv.statCard} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.75}>
-            <IllustratedCard scene="trips" tone="brand" style={[pv.statCardBg, { borderRadius: RADIUS.lg }]}>
-              <View style={pv.statIcon}><Ionicons name="time-outline" size={26} color="#fff" /></View>
-              <Text style={pv.statTitleW}>Mis Viajes</Text>
-              <Text style={pv.statSubW}>{passengerStats?.totalTrips ?? 0} completados</Text>
-              <View style={pv.statProgressBar}>
-                <View style={[pv.statProgressFill, { width: `${Math.min(100, ((passengerStats?.totalTrips ?? 0) / 20) * 100)}%` }]} />
-              </View>
-            </IllustratedCard>
-          </TouchableOpacity>
+        <View style={pv.invite}>
+          <InviteIllustration />
+          <Text style={pv.inviteTitle}>Invita a un conductor</Text>
+          <Text style={pv.inviteSub}>Ganas $2.000 en tu billetera cuando tu conductor invitado completa su primer viaje.</Text>
+          <View style={pv.inviteRow}>
+            <View style={pv.codeBox}>
+              <Text style={pv.codeText}>{referralCode ?? '—'}</Text>
+            </View>
+            <TouchableOpacity
+              style={[pv.shareBtn, !referralCode && pv.shareBtnDisabled]}
+              onPress={handleShareReferral}
+              disabled={!referralCode}
+              activeOpacity={0.85}
+            >
+              <Text style={pv.shareText}>Compartir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
-          <TouchableOpacity
-            style={pv.statCard}
-            onPress={() => setChatsListVisible(true)}
-            activeOpacity={0.75}
-          >
-            <IllustratedCard scene="chat" tone="brand" style={[pv.statCardBg, { borderRadius: RADIUS.lg }]}>
-              <View style={[pv.statIcon, { position: 'relative' }]}>
-                <Ionicons name="chatbubble-ellipses-outline" size={26} color="#fff" />
-                {totalUnread > 0 && (
-                  <View style={pv.chatBadge}>
-                    <Text style={pv.chatBadgeText}>{totalUnread > 9 ? '9+' : totalUnread}</Text>
-                  </View>
-                )}
+        <Text style={pv.sectionLabel}>Mis viajes</Text>
+        <View style={pv.group}>
+          <MenuRow
+            title="Próximos y pendientes"
+            sub={porConfirmar > 0 ? `${porConfirmar} por confirmar` : 'Sin viajes por confirmar'}
+            onPress={() => navigation.navigate('Search')}
+          />
+          <View style={pv.rowDivider} />
+          <MenuRow title="Historial" sub="Viajes completados y calificaciones" onPress={() => navigation.navigate('TripHistory')} />
+          <View style={pv.rowDivider} />
+          <MenuRow title="Solicitudes de aeropuerto" sub="Ofertas y chats con conductores" onPress={() => navigation.navigate('Requests')} />
+        </View>
+
+        <Text style={pv.sectionLabel}>Cuenta</Text>
+        <View style={pv.group}>
+          <MenuRow title="Datos personales" sub="Nombre, correo y teléfono" onPress={openEditName} />
+          <View style={pv.rowDivider} />
+          <MenuRow title="Privacidad y eliminar cuenta" sub="Tus datos y tu cuenta" onPress={() => navigation.navigate('Privacy')} />
+        </View>
+
+        {/* Fuera del mockup: se conserva por ser la única entrada para ser conductor y para la ayuda. */}
+        <View style={s.section}>
+          <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
+            <IllustratedCard scene="wheel" tone="brand" style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
+              <View style={pv.ctaOportunidad}>
+                <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
               </View>
-              <Text style={pv.statTitleW}>Mis Chats</Text>
-              <Text style={pv.statSubW}>
-                {activeBookings.length > 0
-                  ? `${activeBookings.length} activo${activeBookings.length !== 1 ? 's' : ''}`
-                  : 'Sin chats activos'}
-              </Text>
-              <View style={pv.statProgressBar}>
-                <View style={[pv.statProgressFill, { width: `${Math.min(100, ((activeBookings.length ?? 0) / 5) * 100)}%` }]} />
+              <Text style={pv.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
+              <Text style={pv.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
+              <View style={pv.ctaBtn}>
+                <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
               </View>
             </IllustratedCard>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Centro de Ayuda */}
-      <View style={s.section}>
-        <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
-          <View style={pv.helpRow}>
-            <View style={pv.helpIcon}><Ionicons name="headset" size={20} color="#78350F" /></View>
-            <View style={pv.helpText}>
-              <Text style={pv.payName}>Centro de Ayuda</Text>
-              <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
+        <View style={s.section}>
+          <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
+            <View style={pv.helpRow}>
+              <View style={pv.helpIcon}><Ionicons name="headset" size={20} color={COLORS.warningDark} /></View>
+              <View style={pv.helpText}>
+                <Text style={pv.payName}>Centro de Ayuda</Text>
+                <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
             </View>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
 
-
-      {/* Configuración (reemplaza opciones del menú hamburguesa) */}
-      <View style={s.section}>
-        <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
-          <View style={pv.helpRow}>
-            <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color={COLORS.primary} /></View>
-            <View style={pv.helpText}>
-              <Text style={pv.payName}>Configuración</Text>
-              <Text style={pv.paySub}>Ajustes y preferencias</Text>
+        <View style={s.section}>
+          <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
+            <View style={pv.helpRow}>
+              <View style={pv.settingsIcon}><Ionicons name="settings" size={20} color={COLORS.primary} /></View>
+              <View style={pv.helpText}>
+                <Text style={pv.payName}>Configuración</Text>
+                <Text style={pv.paySub}>Ajustes y preferencias</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
             </View>
-            <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
 
-      {/* Footer */}
-      <Text style={pv.footer}>TRIVE V1.0.0 • 2026</Text>
-      <View style={{ height: SPACING.xxxl }} />
-    </>
-  )
+        <Text style={pv.footer}>TRIVE V1.0.0 • 2026</Text>
+        <View style={{ height: SPACING.xxxl }} />
+      </>
+    )
+  }
 
   // ── DRIVER VIEW ───────────────────────────────────────────────────────────
   const handleVehiclePhotoError = async () => {
@@ -663,102 +527,6 @@ export default function ProfileScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Modal lista de chats */}
-      <Modal visible={chatsListVisible} animationType="slide" transparent onRequestClose={() => setChatsListVisible(false)}>
-        <View style={cm.overlay}>
-          <View style={cm.sheet}>
-            {/* Handle */}
-            <View style={cm.handle} />
-
-            {/* Header */}
-            <View style={cm.sheetHeader}>
-              <View>
-                <Text style={cm.sheetTitle}>Mis Chats</Text>
-                <Text style={cm.sheetSub}>Los chats desaparecen cuando el viaje finaliza</Text>
-              </View>
-              <TouchableOpacity onPress={() => setChatsListVisible(false)} style={cm.closeBtn}>
-                <Ionicons name="close" size={20} color={COLORS.primary} />
-              </TouchableOpacity>
-            </View>
-
-            {visibleChats.length === 0 ? (
-              <View style={cm.empty}>
-                <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={cm.emptyIconWrap}>
-                  <Ionicons name="chatbubbles-outline" size={32} color={COLORS.primaryLight} />
-                </LinearGradient>
-                <Text style={cm.emptyTitle}>Sin chats activos</Text>
-                <Text style={cm.emptyText}>Aparecen aquí mientras tengas una reserva activa</Text>
-              </View>
-            ) : (
-              <ScrollView contentContainerStyle={cm.scrollContent} showsVerticalScrollIndicator={false}>
-                {visibleChats.map((chat) => {
-                  const unread = unreadCounts[chat.routeId] ?? 0
-                  return (
-                    <TouchableOpacity
-                      key={chat.bookingId}
-                      style={cm.chatRow}
-                      onPress={() => { setSelectedChat(chat); setChatsListVisible(false); setChatModalVisible(true) }}
-                      activeOpacity={0.85}
-                    >
-                      <LinearGradient
-                        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                        style={cm.avatar}
-                      >
-                        <Text style={cm.avatarText}>{chat.driverName.charAt(0).toUpperCase()}</Text>
-                        {chat.routeStatus === 'in_progress' && <View style={cm.activeDot} />}
-                      </LinearGradient>
-
-                      <View style={cm.chatInfo}>
-                        <View style={cm.chatInfoTop}>
-                          <Text style={cm.driverName} numberOfLines={1}>{chat.driverName}</Text>
-                          {chat.routeStatus === 'in_progress' && (
-                            <View style={cm.inProgressPill}>
-                              <Text style={cm.inProgressText}>En curso</Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={cm.routeRow}>
-                          <Ionicons name="navigate-outline" size={11} color={COLORS.primary} />
-                          <Text style={cm.routeText} numberOfLines={1}>{chat.origin} → {chat.destination}</Text>
-                        </View>
-                      </View>
-
-                      {unread > 0 && (
-                        <View style={cm.badge}>
-                          <Text style={cm.badgeText}>{unread > 9 ? '9+' : unread}</Text>
-                        </View>
-                      )}
-
-                      <TouchableOpacity style={cm.deleteBtn} onPress={() => hideChat(chat.bookingId)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                        <Ionicons name="trash-outline" size={14} color={COLORS.textTertiary} />
-                      </TouchableOpacity>
-                    </TouchableOpacity>
-                  )
-                })}
-              </ScrollView>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Modal de mensajes */}
-      {selectedChat && user && (
-        <TripMessagesModal
-          visible={chatModalVisible}
-          tripId={selectedChat.routeId}
-          userId={user.id}
-          otherUserId={selectedChat.driverId}
-          otherUserName={selectedChat.driverName}
-          onClose={() => {
-            setChatModalVisible(false)
-            getTripUnreadCountFrom(selectedChat.routeId, user.id, selectedChat.driverId)
-              .then((count) => setUnreadCounts((prev) => ({ ...prev, [selectedChat.routeId]: count })))
-              .catch(() => {})
-          }}
-        />
-      )}
-
       {/* Acceso admin — solo aparece si user.is_admin === true */}
       <AdminMenuButton onAdminDocumentsPress={() => navigation.navigate('AdminDocuments')} />
     </SafeAreaView>
@@ -785,17 +553,6 @@ const s = StyleSheet.create({
   },
   divider: { height: 1, backgroundColor: COLORS.primaryTint, marginLeft: 56 },
 
-  avatarWrap: { position: 'relative', borderWidth: 3, borderColor: COLORS.warning, overflow: 'hidden', shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 8 },
-  avatarBg:   { justifyContent: 'center', alignItems: 'center' },
-  avatarInitial: { fontWeight: '800', color: '#fff' },
-  avatarBadge: {
-    position: 'absolute', bottom: -4, right: -4,
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 2.5, borderColor: '#fff',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.4, shadowRadius: 6, elevation: 4,
-  },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -828,120 +585,81 @@ const s = StyleSheet.create({
 
 // ── Passenger view styles ─────────────────────────────────────────────────────
 const pv = StyleSheet.create({
-  profileRow: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.lg,
-    paddingHorizontal: SPACING.lg, paddingTop: SPACING.xl, paddingBottom: SPACING.lg,
-    backgroundColor: COLORS.background,
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5, marginTop: SPACING.md },
+  profileRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, marginTop: SPACING.lg },
+  avatar: {
+    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
+  avatarImg: { width: 64, height: 64 },
+  avatarInitials: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
   profileInfo: { flex: 1 },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
-  contactInfo: { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  premiumBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start',
-    backgroundColor: COLORS.warning, paddingHorizontal: 12, paddingVertical: 5,
-    borderRadius: RADIUS.full,
-    shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4, elevation: 2,
-  },
-  premiumText: { fontSize: 11, fontWeight: '800', color: '#78350F', letterSpacing: 0.3 },
+  name: { fontSize: 19, fontWeight: '800', color: COLORS.textPrimary },
+  meta: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
 
+  card: {
+    marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md,
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg,
+  },
+  cardText: { flex: 1 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  cardSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  pillOk: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.successLight },
+  pillOkText: { fontSize: 12, fontWeight: '700', color: COLORS.success },
+  pillWarn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.warningLight },
+  pillWarnText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
+
+  invite: { marginTop: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint },
+  inviteTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  inviteSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs, lineHeight: 19 },
+  inviteRow: { flexDirection: 'row', gap: SPACING.sm + 2, marginTop: SPACING.md },
+  codeBox: {
+    flex: 1, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.white,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  codeText: { fontSize: 15, fontWeight: '800', letterSpacing: 1.2, color: COLORS.textPrimary },
+  shareBtn: {
+    paddingHorizontal: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  shareBtnDisabled: { backgroundColor: COLORS.grayLight },
+  shareText: { fontSize: 14, fontWeight: '700', color: COLORS.white },
+
+  sectionLabel: {
+    marginTop: SPACING.xl, fontSize: 13, fontWeight: '700', color: COLORS.textSecondary,
+    textTransform: 'uppercase', letterSpacing: 0.8,
+  },
+  group: { marginTop: SPACING.sm + 2, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
+  menuText: { flex: 1 },
+  menuTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  menuSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  rowDivider: { height: 1, backgroundColor: COLORS.borderLight, marginHorizontal: SPACING.lg },
+
+  // Tarjeta de conductor y ayuda/ajustes (fuera del mockup, se conservan)
   ctaCard: { borderRadius: RADIUS.xl, overflow: 'hidden', padding: SPACING.xl, paddingBottom: SPACING.xxl },
   ctaOportunidad: {
     alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: SPACING.md, paddingVertical: 4,
     borderRadius: RADIUS.full, marginBottom: SPACING.md,
   },
-  ctaOportunidadText: { fontSize: 11, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-  ctaTitle: { fontSize: 24, fontWeight: '800', color: '#fff', lineHeight: 30, letterSpacing: -0.5, marginBottom: SPACING.sm },
-  ctaSub:   { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 18, marginBottom: SPACING.xl },
-  ctaBtn:   { alignSelf: 'stretch', backgroundColor: '#fff', borderRadius: RADIUS.md, paddingVertical: 14, alignItems: 'center' },
+  ctaOportunidadText: { fontSize: 11, fontWeight: '700', color: COLORS.white, letterSpacing: 0.5 },
+  ctaTitle: { fontSize: 24, fontWeight: '800', color: COLORS.white, lineHeight: 30, letterSpacing: -0.5, marginBottom: SPACING.sm },
+  ctaSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 18, marginBottom: SPACING.xl },
+  ctaBtn: { alignSelf: 'stretch', backgroundColor: COLORS.white, borderRadius: RADIUS.md, paddingVertical: 14, alignItems: 'center' },
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primaryDark },
-  ctaCar: { position: 'absolute', bottom: -15, right: -20 },
-
-  statsRow: { flexDirection: 'row', gap: SPACING.md },
-  statCard: {
-    flex: 1, borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.22, shadowRadius: 16, elevation: 8,
-  },
-  statIcon: {
-    width: 48, height: 48, borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(18,48,184,0.12)',
-    justifyContent: 'center', alignItems: 'center',
-    marginBottom: 6,
-  },
-  statCardBg: { flex: 1, padding: SPACING.lg, gap: 8, minHeight: 130 },
-  statTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  statSub:   { fontSize: 12, color: COLORS.textSecondary },
-  statTitleW: { fontSize: 15, fontWeight: '700', color: '#fff' },
-  statSubW:   { fontSize: 12, color: 'rgba(255,255,255,0.9)' },
-  statProgressBar: {
-    height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.3)',
-    marginTop: SPACING.xs, overflow: 'hidden',
-  },
-  statProgressFill: {
-    height: '100%', backgroundColor: '#fff', borderRadius: 2,
-  },
-
-  payRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.lg, gap: SPACING.md },
-  payIcon: { width: 44, height: 44, borderRadius: RADIUS.md, justifyContent: 'center', alignItems: 'center' },
-  payInfo: { flex: 1 },
-  payName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  paySub:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-
   helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
-  helpIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.warning, justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3 },
-  settingsIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center', shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2 },
+  helpIcon: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.warning, justifyContent: 'center', alignItems: 'center',
+    shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
+  },
+  settingsIcon: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center',
+    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2,
+  },
   helpText: { flex: 1 },
-  chatBadge: {
-    position: 'absolute',
-    top: -4,
-    right: -4,
-    backgroundColor: COLORS.error,
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    borderWidth: 1.5,
-    borderColor: '#fff',
-  },
-  chatBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff' },
-
-  secondaryActionBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, overflow: 'hidden',
-    borderWidth: 1, borderColor: COLORS.primaryTint,
-    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg,
-    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
-  },
-  secondaryActionText: { fontSize: 14, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.2, flex: 1 },
-
-  // Data Card
-  dataCard: {
-    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg,
-    borderWidth: 1, borderColor: COLORS.primaryTint,
-    paddingVertical: SPACING.md, overflow: 'hidden',
-    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 2,
-  },
-  dataRow: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-  },
-  dataRowDivider: {
-    height: 1, backgroundColor: COLORS.primaryTint, marginVertical: SPACING.xs,
-  },
-  dataLeft: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, flex: 1 },
-  dataIcon: {
-    width: 38, height: 38, borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(0,64,161,0.08)',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  dataLabel: { fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' },
-  dataValue: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary, marginTop: 2 },
-  dataRight: { alignItems: 'flex-end' },
-  dataYear: { fontSize: 12, fontWeight: '600', color: COLORS.warning },
-  dataYearSmall: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
+  payName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  paySub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
 
   footer: {
     textAlign: 'center', fontSize: 11, fontWeight: '600',
@@ -974,95 +692,5 @@ const nm = StyleSheet.create({
   saveBtnInner: { flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.55 },
   saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-})
-
-// ── Chats modal styles ────────────────────────────────────────────────────────
-const cm = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
-  sheet: {
-    backgroundColor: COLORS.surfaceAlt,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '82%',
-    paddingBottom: SPACING.xxxl,
-    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
-  },
-  handle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.primaryTint,
-    alignSelf: 'center',
-    marginTop: 12, marginBottom: 4,
-  },
-  sheetHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.md,
-    paddingBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.primaryTint,
-  },
-  sheetTitle: { fontSize: 18, fontWeight: '800', color: '#0E1A4A' },
-  sheetSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  closeBtn: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  scrollContent: { padding: SPACING.lg, gap: SPACING.md, paddingBottom: SPACING.xl },
-  empty: { alignItems: 'center', paddingVertical: 48, gap: SPACING.md, paddingHorizontal: SPACING.xl },
-  emptyIconWrap: { width: 68, height: 68, borderRadius: 22, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.sm },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: '#0E1A4A' },
-  emptyText: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
-  chatRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
-    gap: SPACING.md,
-  },
-  avatar: {
-    width: 46, height: 46, borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center',
-    position: 'relative', flexShrink: 0,
-    overflow: 'hidden',
-  },
-  avatarText: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  activeDot: {
-    position: 'absolute', bottom: 2, right: 2,
-    width: 10, height: 10, borderRadius: 5,
-    backgroundColor: COLORS.success,
-    borderWidth: 2, borderColor: '#fff',
-  },
-  chatInfo: { flex: 1, gap: 4 },
-  chatInfoTop: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  driverName: { fontSize: 14, fontWeight: '700', color: '#0E1A4A', flex: 1 },
-  inProgressPill: {
-    backgroundColor: '#ECFDF5', borderRadius: RADIUS.full,
-    paddingHorizontal: 7, paddingVertical: 2,
-  },
-  inProgressText: { fontSize: 10, fontWeight: '700', color: COLORS.success },
-  routeRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  routeText: { fontSize: 12, color: COLORS.textSecondary, flex: 1 },
-  badge: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 10, minWidth: 20, height: 20,
-    justifyContent: 'center', alignItems: 'center', paddingHorizontal: 5, flexShrink: 0,
-  },
-  badgeText: { fontSize: 11, fontWeight: '800', color: '#fff' },
-  deleteBtn: {
-    width: 30, height: 30, borderRadius: 8,
-    backgroundColor: COLORS.surfaceAlt,
-    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
 })
 
