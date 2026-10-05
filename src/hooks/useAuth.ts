@@ -3,13 +3,19 @@ import { useState, useEffect, useRef } from "react";
 import { Alert, AppState, AppStateStatus } from "react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
-import { useAppStore } from "../store/useAppStore";
+import { useAppStore, AppUser } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
 import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
 import { setUserId } from "../services/analytics";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
+
+export const toAppRole = (role: string | null): AppUser['role'] =>
+  role === 'driver' || role === 'support' ? role : 'passenger'
+
+export const toAppMembership = (type: string | null): NonNullable<AppUser['membership_type']> =>
+  type === 'basic' || type === 'premium' || type === 'vip' ? type : 'free'
 
 // Flag de módulo: evita mostrar el alert de sesión expirada cuando el logout es manual
 let _manualLogout = false
@@ -59,12 +65,12 @@ export const useAuth = () => {
         setAppUser({
           id: profile.id,
           name: profile.name,
-          email: profile.email,
-          phone: await getMyPhone(),
-          role: profile.role,
-          rating: profile.rating,
-          avatar_url: profile.avatar_url,
-          membership_type: profile.membership_type || 'free',
+          email: profile.email ?? '',
+          phone: (await getMyPhone()) ?? undefined,
+          role: toAppRole(profile.role),
+          rating: profile.rating ?? 0,
+          avatar_url: profile.avatar_url ?? undefined,
+          membership_type: toAppMembership(profile.membership_type),
           membership_expiry: profile.membership_expiry,
           balance: profile.balance ?? 0,
           is_admin: profile.is_admin ?? false,
@@ -94,11 +100,11 @@ export const useAuth = () => {
         setAppUser({
           id: insertedProfile.id,
           name: insertedProfile.name,
-          email: insertedProfile.email,
+          email: insertedProfile.email ?? '',
           phone: userPhone ?? null,
-          role: insertedProfile.role,
-          rating: insertedProfile.rating,
-          avatar_url: insertedProfile.avatar_url,
+          role: toAppRole(insertedProfile.role),
+          rating: insertedProfile.rating ?? 0,
+          avatar_url: insertedProfile.avatar_url ?? undefined,
         });
       }
 
@@ -228,7 +234,7 @@ export const useAuth = () => {
             id: p.id,
             name: p.name,
             email: p.email,
-            phone: await getMyPhone(),
+            phone: (await getMyPhone()) ?? undefined,
             role: p.role,
             rating: p.rating,
             avatar_url: p.avatar_url,

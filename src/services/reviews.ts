@@ -24,7 +24,7 @@ export const createReview = async (
     const { error } = await supabase.rpc('rate_booking', {
       p_booking_id: bookingId,
       p_rating: rating,
-      p_comment: comment ?? null,
+      p_comment: comment ?? undefined,
       p_recommend: recommend ?? false,
     })
     if (error) throw error

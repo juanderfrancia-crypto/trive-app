@@ -272,7 +272,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
     }
 
     const { data: prof } = await supabase.from('profiles').select('balance').eq('id', user.id).single()
-    if (prof?.balance !== undefined) setBalance(prof.balance)
+    if (prof?.balance !== undefined) setBalance(prof.balance ?? 0)
 
     showSuccess('¡Viaje publicado! Los pasajeros ya pueden verlo.')
     setPublishedDraft(draft)

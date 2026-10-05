@@ -100,7 +100,7 @@ export const useDriverEarnings = (driverId?: string) => {
           routes.filter((r) => r.status === 'completed').map((r) => r.id)
         );
         const activeRouteIds = new Set(
-          routes.filter((r) => !['completed', 'cancelled'].includes(r.status)).map((r) => r.id)
+          routes.filter((r) => !['completed', 'cancelled'].includes(r.status ?? '')).map((r) => r.id)
         );
         const routeMap = new Map(routes.map((r) => [r.id, r]));
 
@@ -125,7 +125,7 @@ export const useDriverEarnings = (driverId?: string) => {
         const totalEarnings = earnedBookings.reduce((s, b) => s + (b.price || 0), 0);
 
         const thisMonthEarnings = earnedBookings
-          .filter((b) => new Date(b.created_at) >= thisMonth)
+          .filter((b) => new Date(b.created_at ?? 0) >= thisMonth)
           .reduce((s, b) => s + (b.price || 0), 0);
 
         const upcomingAmount = upcomingBookings.reduce((s, b) => s + (b.price || 0), 0);
@@ -147,7 +147,7 @@ export const useDriverEarnings = (driverId?: string) => {
           day.setDate(day.getDate() - i);
           const dayStr = localDateStr(day);
           const dayTotal = earnedBookings
-            .filter((b) => localDateStr(new Date(b.created_at)) === dayStr)
+            .filter((b) => localDateStr(new Date(b.created_at ?? 0)) === dayStr)
             .reduce((s, b) => s + (b.price || 0), 0);
           rawDays.push(dayTotal);
         }
@@ -178,13 +178,13 @@ export const useDriverEarnings = (driverId?: string) => {
         };
 
         earnedBookings.forEach((b) => {
-          const entry = getOrCreate(new Date(b.created_at));
+          const entry = getOrCreate(new Date(b.created_at ?? 0));
           entry.earned += b.price || 0;
           entry.tripsCompleted += 1;
         });
 
         cancelledBookings.forEach((b) => {
-          const entry = getOrCreate(new Date(b.cancelled_at || b.created_at));
+          const entry = getOrCreate(new Date(b.cancelled_at || b.created_at || 0));
           entry.cancelledAmount += b.price || 0;
           entry.cancelledCount += 1;
         });
@@ -201,7 +201,7 @@ export const useDriverEarnings = (driverId?: string) => {
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
           transactionsList.push({
             id: b.id,
-            date: new Date(b.created_at).toISOString().split('T')[0],
+            date: new Date(b.created_at ?? 0).toISOString().split('T')[0],
             type: 'trip',
             amount: b.price || 0,
             description: `Pasajero a bordo · ${label}`,
@@ -215,7 +215,7 @@ export const useDriverEarnings = (driverId?: string) => {
         cancelledBookings.forEach((b) => {
           const route = routeMap.get(b.route_id);
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
-          const cancelDate = b.cancelled_at || b.created_at;
+          const cancelDate = b.cancelled_at || b.created_at || 0;
           transactionsList.push({
             id: `cancel-${b.id}`,
             date: new Date(cancelDate).toISOString().split('T')[0],
@@ -234,7 +234,7 @@ export const useDriverEarnings = (driverId?: string) => {
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
           transactionsList.push({
             id: `upcoming-${b.id}`,
-            date: new Date(b.created_at).toISOString().split('T')[0],
+            date: new Date(b.created_at ?? 0).toISOString().split('T')[0],
             type: 'upcoming',
             amount: b.price || 0,
             description: `Próximo viaje · ${label}`,

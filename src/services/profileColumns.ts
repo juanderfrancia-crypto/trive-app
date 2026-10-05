@@ -1,4 +1,7 @@
 import { supabase } from './supabase'
+import type { Database } from '../types/database.types'
+
+type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 
 // Columnas del perfil que la app puede leer. El teléfono no está aquí:
 // cada quien lo obtiene con getMyPhone() (la base solo lo libera a quien corresponde).
@@ -22,9 +25,9 @@ export const getCounterpartPhone = async (userId: string): Promise<string | null
 // (Un upsert pide leer la fila, y la app ya no puede leer el teléfono desde perfiles.)
 export const saveMyProfile = async (
   userId: string,
-  fields: Record<string, unknown>
+  fields: ProfileUpdate
 ): Promise<{ error: unknown | null }> => {
-  const { id: _ignored, ...values } = fields as { id?: string } & Record<string, unknown>
+  const { id: _ignored, ...values } = fields
   const { data: existing, error: lookupError } = await supabase
     .from('profiles')
     .select('id')
@@ -35,6 +38,7 @@ export const saveMyProfile = async (
     const { error } = await supabase.from('profiles').update(values).eq('id', userId)
     return { error }
   }
-  const { error } = await supabase.from('profiles').insert({ id: userId, ...values })
+  if (typeof values.name !== 'string') return { error: new Error('El nombre es obligatorio para crear el perfil') }
+  const { error } = await supabase.from('profiles').insert({ id: userId, ...values, name: values.name })
   return { error }
 }

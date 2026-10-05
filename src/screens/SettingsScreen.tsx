@@ -12,6 +12,7 @@ import {
 } from '../services/notificationPreferences'
 import { getPushNotificationToken, registerPushToken } from '../services/pushNotifications'
 import { supabase } from '../services/supabase'
+import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
 
@@ -35,7 +36,8 @@ export default function SettingsScreen() {
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
-        if (data?.emergency_contact) setEmergencyContact(data.emergency_contact)
+        const contact = toEmergencyContact(data?.emergency_contact)
+        if (contact) setEmergencyContact(contact)
         if (data?.preferred_municipality) setPreferredMunicipality(data.preferred_municipality)
       })
   }, [user?.id])

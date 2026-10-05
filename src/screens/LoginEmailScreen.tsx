@@ -18,7 +18,7 @@ import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
@@ -73,12 +73,12 @@ export default function LoginEmailScreen() {
           setUser({
             id: profile.id,
             name: profile.name,
-            email: profile.email,
-            phone: await getMyPhone(),
-            role: profile.role,
-            rating: profile.rating,
+            email: profile.email ?? '',
+            phone: (await getMyPhone()) ?? undefined,
+            role: toAppRole(profile.role),
+            rating: profile.rating ?? 0,
             balance: profile.balance || 0,
-            membership_type: profile.membership_type || 'free',
+            membership_type: toAppMembership(profile.membership_type),
             membership_expiry: profile.membership_expiry,
           })
         }

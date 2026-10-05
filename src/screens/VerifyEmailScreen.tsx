@@ -19,7 +19,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 
 type RootParamList = {
@@ -93,12 +93,12 @@ export default function VerifyEmailScreen() {
           setUser({
             id: profile.id,
             name: profile.name,
-            email: profile.email,
-            phone: await getMyPhone(),
-            role: profile.role,
+            email: profile.email ?? '',
+            phone: (await getMyPhone()) ?? undefined,
+            role: toAppRole(profile.role),
             rating: profile.rating || 0,
             balance: profile.balance || 0,
-            membership_type: profile.membership_type || 'free',
+            membership_type: toAppMembership(profile.membership_type),
             membership_expiry: profile.membership_expiry || null,
           })
         }

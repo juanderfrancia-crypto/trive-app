@@ -670,7 +670,7 @@ export const useAirportNegotiation = () => {
         message: `${driverProfile.name} aceptó tu solicitud`,
         data: {
           request_id: requestId,
-          driver_id: reqData.driver_id,
+          driver_id: reqData.driver_id ?? undefined,
           driver_name: driverProfile.name,
           price: reqData.offered_price,
         },
@@ -980,7 +980,7 @@ export const useAirportNegotiation = () => {
           message: 'Ya puedes calificar al conductor',
           data: {
             request_id: requestId,
-            driver_id: tripData.driver_id,
+            driver_id: tripData.driver_id ?? undefined,
           },
           is_read: false,
         }).catch(() => {})

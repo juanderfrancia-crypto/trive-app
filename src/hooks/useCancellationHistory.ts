@@ -53,6 +53,7 @@ export const useCancellationHistory = (userId?: string) => {
     try {
       setLoading(true);
       const targetUserId = passengerId || userId;
+      if (!targetUserId) return;
 
       const { data, error } = await supabase
         .from('bookings')
@@ -85,7 +86,7 @@ export const useCancellationHistory = (userId?: string) => {
           booking_id: booking.id,
           route_id: route?.id || '',
           passenger_id: targetUserId || '',
-          cancelled_at: booking.cancelled_at,
+          cancelled_at: booking.cancelled_at ?? '',
           cancellation_reason: booking.cancellation_reason || 'Sin especificar',
           refund_amount: booking.refund_amount || 0,
           refund_percentage: booking.refund_percentage || 0,

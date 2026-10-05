@@ -44,7 +44,7 @@ export const useBookings = () => {
           p_route_id: routeId,
           p_seat_numbers: seatNumbers,
           p_payment_method: paymentMethod,
-          p_dropoff_point: dropoffPoint ?? null,
+          p_dropoff_point: dropoffPoint ?? undefined,
           p_dropoff_custom: dropoffPointCustom ?? false,
         })),
         12000

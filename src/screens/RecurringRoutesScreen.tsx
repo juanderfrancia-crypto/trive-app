@@ -47,7 +47,7 @@ interface RouteTemplate {
   price_per_seat: number
   total_seats: number
   vehicle_type: string
-  description: string
+  description: string | null
   created_at: string
 }
 
@@ -210,7 +210,7 @@ export default function RecurringRoutesScreen() {
 
       const { data: prof } = await supabase
         .from('profiles').select('balance').eq('id', user.id).single()
-      if (prof?.balance !== undefined) setBalance(prof.balance)
+      if (prof?.balance !== undefined) setBalance(prof.balance ?? 0)
 
       insertNotificationForUser(user.id, {
         user_id: user.id,

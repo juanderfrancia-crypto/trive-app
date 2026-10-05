@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { showError, showSuccess } from '../utils/showError';
+import type { Tables } from '../types/database.types';
 
 export interface NegotiationMessage {
   id: string;
@@ -14,6 +15,14 @@ export interface NegotiationMessage {
   created_at: string;
   is_read: boolean;
 }
+
+const MESSAGE_TYPES: NegotiationMessage['message_type'][] = ['text', 'location_pickup', 'price_update', 'special_request'];
+
+const toNegotiationMessage = (row: Tables<'negotiation_messages'>): NegotiationMessage => ({
+  ...row,
+  message_type: MESSAGE_TYPES.find((t) => t === row.message_type) ?? 'text',
+  is_read: row.is_read ?? false,
+});
 
 /**
  * Hilo de negociación entre un pasajero y un conductor sobre una solicitud.
@@ -60,7 +69,7 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      setMessages((data || []).map(toNegotiationMessage));
     } catch (error) {
       console.error('Error cargando mensajes:', error);
       showError('Error al cargar mensajes');
@@ -107,9 +116,11 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
     });
 
     // El servidor devuelve ok=false cuando el mensaje no cumple la política (ej. teléfono antes de aceptar)
-    if (error || data?.ok === false) {
+    const result = data && typeof data === 'object' && !Array.isArray(data) ? data : null;
+    if (error || result?.ok === false) {
       setMessages(prev => prev.filter(m => m.id !== tempId));
-      showError(data?.message || error?.message || 'Error al enviar mensaje');
+      const serverMessage = result?.message;
+      showError((typeof serverMessage === 'string' && serverMessage) || error?.message || 'Error al enviar mensaje');
       await loadThreadState();
       return false;
     }

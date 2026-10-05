@@ -3,7 +3,7 @@ import { View, StyleSheet, Animated, Easing } from 'react-native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 
 interface SkeletonProps {
-  width?: number | string
+  width?: number | `${number}%`
   height?: number
   borderRadius?: number
   marginBottom?: number

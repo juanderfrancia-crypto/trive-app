@@ -1,6 +1,8 @@
 import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../services/supabase";
+import { toAppRole } from "./useAuth";
+import type { Tables } from "../types/database.types";
 
 export interface Profile {
   id: string;
@@ -17,6 +19,22 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
+
+type ProfileRow = Omit<Tables<"profiles">, "phone">;
+
+const toProfile = (row: ProfileRow): Profile => ({
+  ...row,
+  email: row.email ?? "",
+  avatar_url: row.avatar_url ?? undefined,
+  vehicle_photo_url: row.vehicle_photo_url ?? undefined,
+  role: toAppRole(row.role),
+  rating: row.rating ?? 0,
+  total_trips: row.total_trips ?? 0,
+  total_spent: row.total_spent ?? 0,
+  is_driver_verified: row.is_driver_verified ?? false,
+  created_at: row.created_at ?? "",
+  updated_at: row.updated_at ?? "",
+});
 
 export const useProfile = (userId?: string) => {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -47,7 +65,7 @@ export const useProfile = (userId?: string) => {
         if (fetchError && fetchError.code !== 'PGRST116') {
           setError(fetchError.message);
         } else {
-          setProfile(data);
+          setProfile(data ? toProfile(data) : null);
         }
       } catch (err: any) {
         if (!isActive) return;
@@ -76,12 +94,13 @@ export const useProfile = (userId?: string) => {
         .eq("id", id)
         .maybeSingle();
 
+      const profile = data ? toProfile(data) : null;
       if (fetchError && fetchError.code !== 'PGRST116') {
         setProfile(null);
       } else {
-        setProfile(data);
+        setProfile(profile);
       }
-      return data;
+      return profile;
     } catch (err: any) {
       setError(err.message);
       setProfile(null);
@@ -113,8 +132,9 @@ export const useProfile = (userId?: string) => {
       if (updateError) throw updateError;
 
       if (data) {
-        setProfile(data);
-        return data;
+        const profile = toProfile(data);
+        setProfile(profile);
+        return profile;
       } else {
         const { data: updatedProfile, error: refetchError } = await supabase
           .from("profiles")
@@ -123,8 +143,9 @@ export const useProfile = (userId?: string) => {
           .single();
 
         if (refetchError) throw refetchError;
-        setProfile(updatedProfile);
-        return updatedProfile;
+        const profile = toProfile(updatedProfile);
+        setProfile(profile);
+        return profile;
       }
     } catch (err: any) {
       const message = err.message || "Error updating profile";
@@ -162,9 +183,10 @@ export const useProfile = (userId?: string) => {
 
         if (createError) throw new Error("No se pudo crear el perfil.");
 
-        setProfile(newProfile);
+        const profile = toProfile(newProfile);
+        setProfile(profile);
         setLoading(false);
-        return newProfile;
+        return profile;
       }
 
       const { data, error: updateError } = await supabase
@@ -188,9 +210,10 @@ export const useProfile = (userId?: string) => {
         updatedProfile = refetched;
       }
 
-      setProfile(updatedProfile);
+      const profile = toProfile(updatedProfile);
+      setProfile(profile);
       setLoading(false);
-      return updatedProfile;
+      return profile;
     } catch (err: any) {
       setError(err.message || "Error al cambiar el rol");
       setLoading(false);

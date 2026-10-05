@@ -16,16 +16,37 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
 import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme'
+import type { Database } from '../types/database.types'
+
+const PAYMENT_METHOD_TYPES = ['credit_card', 'debit_card', 'bank_account', 'digital_wallet'] as const
+type PaymentMethodType = (typeof PAYMENT_METHOD_TYPES)[number]
 
 interface PaymentMethod {
   id: string
   user_id: string
-  type: 'credit_card' | 'debit_card' | 'bank_account' | 'digital_wallet'
+  type: PaymentMethodType
   label: string
   last_four: string
   is_default: boolean
-  created_at: string
+  created_at: string | null
 }
+
+type PaymentMethodRow = Database['public']['Tables']['payment_methods']['Row']
+
+const isPaymentMethodType = (value: string): value is PaymentMethodType =>
+  (PAYMENT_METHOD_TYPES as readonly string[]).includes(value)
+
+// Filas de la base: `type` es texto libre y `is_default` puede ser null.
+// Un tipo desconocido se muestra como debit_card (misma etiqueta que ya usa la pantalla).
+const toPaymentMethod = (row: PaymentMethodRow): PaymentMethod => ({
+  id: row.id,
+  user_id: row.user_id,
+  type: isPaymentMethodType(row.type) ? row.type : 'debit_card',
+  label: row.label,
+  last_four: row.last_four,
+  is_default: row.is_default ?? false,
+  created_at: row.created_at,
+})
 
 export default function PaymentMethodsScreen() {
   const { user } = useAuth()
@@ -64,7 +85,7 @@ export default function PaymentMethodsScreen() {
         // No mostrar alert aquí, solo setear métodos vacío si es primer intento
         setMethods([])
       } else {
-        setMethods(data || [])
+        setMethods((data || []).map(toPaymentMethod))
       }
       
       setLoadedOnce(true)
@@ -186,7 +207,7 @@ export default function PaymentMethodsScreen() {
               .from('payment_methods')
               .delete()
               .eq('id', methodId)
-              .eq('user_id', user?.id)
+              .eq('user_id', user?.id ?? '')
 
             // Actualizar estado local inmediatamente (no llamar loadPaymentMethods)
             setMethods(methods.filter((m) => m.id !== methodId))

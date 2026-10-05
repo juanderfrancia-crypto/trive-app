@@ -75,7 +75,7 @@ export interface DriverDocument {
   file_name: string | null
   file_size: number | null
   file_type: string | null
-  status: 'pending' | 'verifying' | 'verified' | 'rejected'
+  status: 'pending' | 'verifying' | 'verified' | 'rejected' | 'expired'
   rejection_reason: string | null
   uploaded_at: string
   verified_at: string | null
@@ -386,7 +386,7 @@ export async function approveDocument(
     const { error } = await supabase
       .rpc('approve_document_admin', {
         doc_id: documentId,
-        exp_date: expiryDate || null,
+        exp_date: expiryDate || undefined,
       })
 
     if (error) throw error

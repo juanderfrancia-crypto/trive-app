@@ -19,7 +19,7 @@ import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { logLogin } from '../services/activityLogger'
@@ -128,7 +128,7 @@ export default function LoginPhoneScreen() {
 
         if (profile && isRealName(profile.name)) {
           // Usuario existente con nombre real → loguear directamente
-          setUser({ id: profile.id, name: profile.name, email: profile.email, phone: await getMyPhone(), role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
+          setUser({ id: profile.id, name: profile.name, email: profile.email ?? '', phone: (await getMyPhone()) ?? undefined, role: toAppRole(profile.role), rating: profile.rating ?? 0, balance: profile.balance || 0, membership_type: toAppMembership(profile.membership_type), membership_expiry: profile.membership_expiry })
           setAuthUser(data.user)
           otpGuard.recordSuccess()
           await logLogin(data.user.id)
@@ -196,7 +196,7 @@ export default function LoginPhoneScreen() {
         .eq('id', tempUser.id)
         .single()
       if (error) { errorHandler.handleSupabaseError(error, 'create_profile_name', {}); return }
-      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email, phone: formatPhone(phone), role: savedProfile.role, rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: savedProfile.membership_type || 'free', membership_expiry: savedProfile.membership_expiry || null })
+      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email ?? '', phone: formatPhone(phone), role: toAppRole(savedProfile.role), rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: toAppMembership(savedProfile.membership_type), membership_expiry: savedProfile.membership_expiry || null })
       setAuthUser(tempUser)
       await logLogin(tempUser.id)
     } catch (err: any) {
@@ -227,7 +227,7 @@ export default function LoginPhoneScreen() {
         const { data: profile, error: profileError } = await (await import('../services/supabase')).supabase
           .from('profiles').select(PROFILE_COLUMNS).eq('id', data.user.id).maybeSingle()
         if (profileError) { errorHandler.handleSupabaseError(profileError, 'fetch_profile', { userId: data.user.id }); return }
-        if (profile) setUser({ id: profile.id, name: profile.name, email: profile.email, phone: await getMyPhone(), role: profile.role, rating: profile.rating, balance: profile.balance || 0, membership_type: profile.membership_type || 'free', membership_expiry: profile.membership_expiry })
+        if (profile) setUser({ id: profile.id, name: profile.name, email: profile.email ?? '', phone: (await getMyPhone()) ?? undefined, role: toAppRole(profile.role), rating: profile.rating ?? 0, balance: profile.balance || 0, membership_type: toAppMembership(profile.membership_type), membership_expiry: profile.membership_expiry })
         setAuthUser(data.user)
         emailGuard.recordSuccess()
         await logLogin(data.user.id)

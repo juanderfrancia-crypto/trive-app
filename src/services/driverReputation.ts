@@ -143,10 +143,10 @@ export const getDriverReputation = async (driverId: string): Promise<DriverReput
     const recencyScore = await getRecencyScore(driverId)
 
     const weightedRating = calculateWeightedRating(
-      repData.avg_rating,
-      repData.rating_consistency,
+      repData.avg_rating ?? 0,
+      repData.rating_consistency ?? 0,
       recencyScore,
-      repData.recommend_percent,
+      repData.recommend_percent ?? 0,
       config
     )
 
@@ -186,12 +186,12 @@ export const getDriverReputation = async (driverId: string): Promise<DriverReput
 
     return {
       driverId,
-      driverName: repData.name,
-      avgRating: Math.round(repData.avg_rating * 10) / 10,
+      driverName: repData.name ?? '',
+      avgRating: Math.round((repData.avg_rating ?? 0) * 10) / 10,
       weightedRating,
-      totalReviews: repData.total_reviews,
-      completedTrips: repData.completed_trips,
-      recommendPercent: Math.round(repData.recommend_percent),
+      totalReviews: repData.total_reviews ?? 0,
+      completedTrips: repData.completed_trips ?? 0,
+      recommendPercent: Math.round(repData.recommend_percent ?? 0),
       achievements,
       reviewComments,
     }
@@ -217,7 +217,7 @@ const getRecencyScore = async (driverId: string): Promise<number> => {
 
     if (!data || data.length === 0) return 0
 
-    const dates = data.map((r) => r.created_at)
+    const dates = data.map((r) => r.created_at ?? '')
     return calculateRecencyScore(dates)
   } catch (error) {
     console.error('Error calculating recency score:', error)
@@ -299,10 +299,10 @@ export const checkAndUnlockAchievements = async (driverId: string): Promise<void
       const isUnlocked = unlockedIds.has(achievement.id)
       if (isUnlocked) continue
 
-      const meetsTrips = reputation.completedTrips >= achievement.min_trips
-      const meetsRating = reputation.weightedRating >= achievement.min_rating
+      const meetsTrips = reputation.completedTrips >= (achievement.min_trips ?? 0)
+      const meetsRating = reputation.weightedRating >= (achievement.min_rating ?? 0)
       const meetsRecommendations =
-        reputation.recommendPercent >= achievement.min_recommendations_percent
+        reputation.recommendPercent >= (achievement.min_recommendations_percent ?? 0)
 
       const shouldUnlock = meetsTrips && meetsRating && meetsRecommendations
 

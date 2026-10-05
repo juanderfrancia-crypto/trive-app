@@ -128,7 +128,7 @@ export const useRatingAnalytics = () => {
           id: review.id,
           rating: review.rating,
           comment: review.comment || '',
-          created_at: review.created_at,
+          created_at: review.created_at ?? '',
           driver_name: (reviewee as any)?.name || 'Conductor',
           passenger_name: (reviewer as any)?.name || 'Pasajero',
         };

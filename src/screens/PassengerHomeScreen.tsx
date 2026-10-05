@@ -11,6 +11,7 @@ import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
 import { supabase } from '../services/supabase'
 import { showSuccess, showError } from '../utils/showError'
+import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
 import { usePassengerBookings, confirmPassengerTrip } from './passenger/usePassengerBookings'
@@ -108,7 +109,7 @@ export default function PassengerHomeScreen() {
               const { data: prof } = userId
                 ? await supabase.from('profiles').select('emergency_contact').eq('id', userId).single()
                 : { data: null }
-              const contact: { name: string; phone: string } | null = prof?.emergency_contact ?? null
+              const contact = toEmergencyContact(prof?.emergency_contact)
               if (!contact) {
                 Alert.alert(
                   'Sin contacto de emergencia',

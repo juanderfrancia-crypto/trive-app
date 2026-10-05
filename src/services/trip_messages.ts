@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import type { Tables } from '../types/database.types'
 
 export interface TripMessage {
   id: string
@@ -10,6 +11,17 @@ export interface TripMessage {
   is_read: boolean
   read_at?: string
 }
+
+/**
+ * Convierte una fila de trip_messages al tipo local.
+ * created_at tiene default now() en la base; is_read es falsy-equivalente a false.
+ */
+const toTripMessage = (row: Tables<'trip_messages'>): TripMessage => ({
+  ...row,
+  created_at: row.created_at ?? '',
+  is_read: row.is_read ?? false,
+  read_at: row.read_at ?? undefined,
+})
 
 // ============================================
 // GET TRIP MESSAGES
@@ -40,7 +52,7 @@ export const getTripMessages = async (
 
     if (error) throw error
 
-    return data || []
+    return (data || []).map(toTripMessage)
   } catch (err: any) {
     if (__DEV__) console.error('Error fetching trip messages:', err)
     throw err
@@ -100,7 +112,7 @@ export const sendTripMessage = async (
     // La notificación push la envía la Edge Function notify-message
     // vía database trigger — no se hace desde el cliente
 
-    return data
+    return toTripMessage(data)
   } catch (err: any) {
     console.error('Error sending trip message:', err)
     throw err

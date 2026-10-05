@@ -270,14 +270,14 @@ const s = {
   messageRow: {
     marginBottom: SPACING.md,
     flexDirection: 'row' as const,
-    width: '100%',
+    width: '100%' as const,
   },
   ownMessageRow: {
     justifyContent: 'flex-end' as const,
   },
 
   messageBubble: {
-    maxWidth: '80%',
+    maxWidth: '80%' as const,
     backgroundColor: COLORS.border,
     borderRadius: 12,
     paddingHorizontal: SPACING.md,

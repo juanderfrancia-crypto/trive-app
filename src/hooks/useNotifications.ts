@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
+import type { Tables } from '../types/database.types';
 
 export interface Notification {
   id: string;
@@ -25,6 +26,28 @@ export interface Notification {
   is_read: boolean;
   created_at: string;
 }
+
+type NotificationRow = Tables<'notifications'>;
+
+const NOTIFICATION_TYPES: Notification['type'][] = [
+  'message', 'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending',
+  'trip_published', 'offer_received', 'offer_accepted', 'trip_confirmed', 'trip_started',
+  'trip_rated', 'trip_confirm', 'review_received',
+];
+
+const toNotificationType = (type: string): Notification['type'] =>
+  NOTIFICATION_TYPES.find((t) => t === type) ?? 'trip_update';
+
+const toNotificationData = (data: NotificationRow['data']): Notification['data'] =>
+  data !== null && typeof data === 'object' && !Array.isArray(data) ? (data as Notification['data']) : undefined;
+
+const toNotification = (row: NotificationRow): Notification => ({
+  ...row,
+  type: toNotificationType(row.type),
+  data: toNotificationData(row.data),
+  is_read: row.is_read ?? false,
+  created_at: row.created_at ?? '',
+});
 
 /** Si `data.audience` viene en el payload, filtra por rol (pasajero vs conductor). Sin campo = visible para todos. */
 function notificationIsRelevantForCurrentUser(n: Notification): boolean {
@@ -63,7 +86,7 @@ export const useNotifications = (userId?: string) => {
         .order('created_at', { ascending: false })
         .limit(100);
       if (fetchError) throw fetchError;
-      setNotifications((data || []).filter(notificationIsRelevantForCurrentUser));
+      setNotifications((data || []).map(toNotification).filter(notificationIsRelevantForCurrentUser));
     } catch (err: any) {
       setError(err.message || 'Error al cargar notificaciones');
     } finally {
@@ -161,7 +184,7 @@ export const useNotifications = (userId?: string) => {
         .select()
         .single();
       if (error) throw error;
-      setNotifications((prev) => [data, ...prev]);
+      setNotifications((prev) => [toNotification(data), ...prev]);
       return data;
     } catch (err: any) {
       console.error('Error creating notification:', err.message);

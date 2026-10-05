@@ -269,7 +269,7 @@ export default function ActiveTripsScreen() {
       if (user?.id) {
         insertNotificationForUser(user.id, {
           user_id: user.id,
-          type: 'refund',
+          type: 'trip_update',
           title: 'Reembolso procesado',
           message: `Tu reserva para ${trip.origin} → ${trip.destination} fue cancelada y el reembolso ha sido procesado.`,
           data: { booking_id: trip.bookingId, route_id: trip.id },

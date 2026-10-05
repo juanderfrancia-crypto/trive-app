@@ -132,11 +132,12 @@ export default function CompletedTripsScreen() {
             <View style={styles.cardDivider} />
             <View style={styles.cardActions}>
               <Button
-                title="⭐ Calificar viaje"
                 onPress={() => setRatingModal(trip.id)}
                 style={styles.rateBtn}
                 textStyle={styles.rateBtnText}
-              />
+              >
+                Calificar viaje
+              </Button>
             </View>
           </>
         )}

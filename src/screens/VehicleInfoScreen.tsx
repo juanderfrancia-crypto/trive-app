@@ -42,7 +42,7 @@ export function VehicleInfoScreen() {
       const { data, error } = await supabase
         .from('vehicles')
         .select('vehicle_make:make, vehicle_year:year, vehicle_plate:plate, vehicle_color:color')
-        .eq('driver_id', user?.id)
+        .eq('driver_id', user?.id ?? '')
         .order('is_active', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(1)

@@ -30,7 +30,17 @@ export const loadNotificationPreferences = async (
       return null
     }
 
-    return data || null
+    if (!data) return null
+
+    return {
+      ...data,
+      push_notifications: data.push_notifications ?? false,
+      email_notifications: data.email_notifications ?? false,
+      sms_notifications: data.sms_notifications ?? false,
+      in_app_notifications: data.in_app_notifications ?? false,
+      created_at: data.created_at ?? '',
+      updated_at: data.updated_at ?? '',
+    }
   } catch (err) {
     console.error('Unexpected error loading preferences:', err)
     return null
@@ -72,9 +82,11 @@ export const updateNotificationPreference = async (
   value: boolean
 ): Promise<boolean> => {
   try {
+    const patch: Partial<Pick<NotificationPreferences, typeof preference>> = { [preference]: value }
+
     const { error } = await supabase
       .from('user_notification_preferences')
-      .update({ [preference]: value })
+      .update(patch)
       .eq('user_id', userId)
 
     if (error) {

@@ -61,14 +61,14 @@ export function StatsScreen() {
       const { data: profile } = await supabase
         .from('profiles')
         .select('total_trips, rating')
-        .eq('id', user?.id)
+        .eq('id', user?.id ?? '')
         .single();
 
       // Get all routes for the user
       const { data: routes } = await supabase
         .from('routes')
         .select('id, origin, destination, total_seats, status')
-        .eq('driver_id', user?.id);
+        .eq('driver_id', user?.id ?? '');
 
       // Get bookings for earnings and passenger count
       const { data: bookings } = await supabase
@@ -83,7 +83,7 @@ export function StatsScreen() {
       const { data: reviews } = await supabase
         .from('reviews')
         .select('rating')
-        .eq('reviewee_id', user?.id);
+        .eq('reviewee_id', user?.id ?? '');
 
       const completedTrips = routes?.filter((r) => r.status === 'completed').length || 0;
       const cancelledTrips = routes?.filter((r) => r.status === 'cancelled').length || 0;

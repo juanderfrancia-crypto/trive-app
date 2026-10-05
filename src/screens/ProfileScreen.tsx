@@ -430,7 +430,7 @@ export default function ProfileScreen() {
       const newUrl = await regenerateExpiredPhotoUrl(currentUrl, 'vehicle-photos')
       if (newUrl === currentUrl) return
       setRegeneratedVehiclePhotoUrl(newUrl)
-      await supabase.from('profiles').update({ vehicle_photo_url: newUrl }).eq('id', user?.id)
+      await supabase.from('profiles').update({ vehicle_photo_url: newUrl }).eq('id', user?.id ?? '')
     } catch (err) {
       console.error('Error regenerando URL de foto del vehículo:', err)
     }

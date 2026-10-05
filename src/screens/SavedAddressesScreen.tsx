@@ -21,11 +21,11 @@ interface SavedAddress {
   user_id: string
   label: string
   address: string
-  latitude?: number
-  longitude?: number
-  is_home: boolean
-  is_work: boolean
-  created_at: string
+  latitude?: number | null
+  longitude?: number | null
+  is_home: boolean | null
+  is_work: boolean | null
+  created_at: string | null
 }
 
 export default function SavedAddressesScreen() {
@@ -153,8 +153,8 @@ export default function SavedAddressesScreen() {
   const handleEdit = (addressItem: SavedAddress) => {
     setLabel(addressItem.label)
     setAddress(addressItem.address)
-    setIsHome(addressItem.is_home)
-    setIsWork(addressItem.is_work)
+    setIsHome(addressItem.is_home ?? false)
+    setIsWork(addressItem.is_work ?? false)
     setEditingId(addressItem.id)
     setShowForm(true)
   }
@@ -171,7 +171,7 @@ export default function SavedAddressesScreen() {
               .from('saved_addresses')
               .delete()
               .eq('id', addressId)
-              .eq('user_id', user?.id)
+              .eq('user_id', user?.id ?? '')
 
             if (error) throw error
             

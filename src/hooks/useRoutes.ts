@@ -40,7 +40,7 @@ export interface Route {
 }
 
 // Campos que publish_route acepta en p_route (departure_time en hora local, sin zona).
-export interface PublishRoutePayload {
+export type PublishRoutePayload = {
   origin: string;
   destination: string;
   departure_time: string;
@@ -51,7 +51,7 @@ export interface PublishRoutePayload {
   pickup_point?: string;
   pickup_point_custom?: boolean;
   vehicle_type: 'auto' | 'taxi' | 'busetica' | 'buseta';
-}
+};
 
 const isMissingColumnError = (err: any, column: string) => {
   const message = (err?.message || '').toString().toLowerCase();
