@@ -1,0 +1,261 @@
+import React from 'react'
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import { getExpiryStatus, DOCUMENT_LABELS } from '../../utils/documentHelpers'
+import IllustratedCard from '../../components/illustrations/IllustratedCard'
+
+const REQUIRED_DOCS = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica', 'antecedentes']
+
+type DocState = { label: string; color: string; icon: 'checkmark-circle' | 'time-outline' | 'alert-circle' | 'close-circle' | 'ellipse-outline'; approved: boolean }
+
+function docState(doc: any): DocState {
+  if (!doc) return { label: 'Sin subir', color: COLORS.textTertiary, icon: 'ellipse-outline', approved: false }
+  const expired = doc.status === 'expired' || !!getExpiryStatus(doc.expiry_date)?.isExpired
+  if (expired) return { label: 'Vencido', color: COLORS.error, icon: 'alert-circle', approved: false }
+  if (doc.status === 'verified') return { label: 'Aprobado', color: COLORS.success, icon: 'checkmark-circle', approved: true }
+  if (doc.status === 'rejected') return { label: 'Rechazado · vuelve a subir', color: COLORS.error, icon: 'close-circle', approved: false }
+  return { label: 'En revisión', color: COLORS.warning, icon: 'time-outline', approved: false }
+}
+
+const VEHICLE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
+  verified: { label: 'Aprobado', color: COLORS.success, bg: COLORS.successLight },
+  pending: { label: 'En revisión', color: COLORS.warning, bg: COLORS.warningLight },
+  rejected: { label: 'Rechazado', color: COLORS.error, bg: COLORS.errorLight },
+}
+
+export type DriverProfileViewProps = {
+  user: any
+  profile: any
+  driverVehicle: any
+  driverDocs: Record<string, any>
+  recentRoutes: any[]
+  monthEarnings: number
+  totalTrips: number
+  rating: string
+  avatarUri?: string | null
+  initials: string
+  displayEmail: string | null | undefined
+  uploadingPhoto: boolean
+  uploadingVehiclePhoto: boolean
+  vehiclePhotoUrl: string | null
+  onChangeAvatar: () => void
+  onEditName: () => void
+  onChangeVehiclePhoto: () => void
+  onVehiclePhotoError: () => void
+  onOpenWallet: () => void
+  onOpenEarnings: () => void
+  onOpenPanel: () => void
+  onOpenTrips: () => void
+  onOpenPaymentMethods: () => void
+  onOpenReferral: () => void
+  onOpenSettings: () => void
+  onOpenHelp: () => void
+  onEditVehicle: () => void
+  onLogout: () => void
+}
+
+export default function DriverProfileView(p: DriverProfileViewProps) {
+  const docs = REQUIRED_DOCS.map((type) => ({ type, ...docState(p.driverDocs[type]) }))
+  const approvedCount = docs.filter((d) => d.approved).length
+  const vehicleStatus = VEHICLE_STATUS[p.driverVehicle?.vehicle_status ?? ''] ?? null
+  const vehicleName = p.driverVehicle
+    ? [p.driverVehicle.vehicle_make, p.driverVehicle.vehicle_model].filter(Boolean).join(' ') || 'Vehículo'
+    : 'Sin vehículo registrado'
+
+  return (
+    <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Tu perfil</Text>
+        <View style={styles.modePill}>
+          <Text style={styles.modeText}>Modo conductor</Text>
+        </View>
+      </View>
+
+      <View style={styles.identity}>
+        <TouchableOpacity onPress={p.onChangeAvatar} disabled={p.uploadingPhoto} activeOpacity={0.85} accessibilityLabel="Cambiar foto de perfil">
+          {p.uploadingPhoto ? (
+            <View style={[styles.avatar, styles.avatarBusy]}><ActivityIndicator color={COLORS.white} /></View>
+          ) : p.avatarUri ? (
+            <Image source={{ uri: p.avatarUri }} style={styles.avatar} />
+          ) : (
+            <View style={styles.avatar}><Text style={styles.avatarText}>{p.initials}</Text></View>
+          )}
+        </TouchableOpacity>
+        <View style={styles.identityText}>
+          <TouchableOpacity onPress={p.onEditName} activeOpacity={0.7}>
+            <Text style={styles.name} numberOfLines={1}>{p.user?.name || 'Conductor'}</Text>
+          </TouchableOpacity>
+          <Text style={styles.identitySub}>★ {p.rating} · {p.totalTrips} rutas</Text>
+          {!!p.displayEmail && <Text style={styles.email} numberOfLines={1}>{p.displayEmail}</Text>}
+        </View>
+      </View>
+
+      <IllustratedCard scene="earnings" tone="brand" style={styles.walletCard} sceneWidth={120} sceneHeight={90}>
+        <Text style={styles.walletLabel}>Saldo de tu billetera</Text>
+        <Text style={styles.walletValue}>${(p.user?.balance ?? 0).toLocaleString('es-CO')}</Text>
+        <Text style={styles.walletHint}>Cada ruta que publicas cuesta $2.000.</Text>
+        <TouchableOpacity style={styles.walletBtn} onPress={p.onOpenWallet} activeOpacity={0.85}>
+          <Text style={styles.walletBtnText}>Ver billetera</Text>
+        </TouchableOpacity>
+      </IllustratedCard>
+
+      <Text style={styles.section}>Verificación</Text>
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Documentos</Text>
+          <Text style={[styles.cardMeta, { color: approvedCount === REQUIRED_DOCS.length ? COLORS.success : COLORS.warning }]}>
+            {approvedCount} de {REQUIRED_DOCS.length} aprobados
+          </Text>
+        </View>
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${(approvedCount / REQUIRED_DOCS.length) * 100}%` }]} />
+        </View>
+        {docs.map((d, idx) => (
+          <View key={d.type} style={[styles.docRow, idx === 0 && styles.docRowFirst]}>
+            <Text style={styles.docName}>{DOCUMENT_LABELS[d.type] ?? d.type}</Text>
+            <View style={styles.docStatus}>
+              <Text style={[styles.docStatusText, { color: d.color }]}>{d.label}</Text>
+              <Ionicons name={d.icon} size={16} color={d.color} />
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <Text style={styles.section}>Mi vehículo</Text>
+      <View style={styles.card}>
+        <View style={styles.vehicleRow}>
+          <TouchableOpacity
+            style={styles.vehicleThumb}
+            onPress={p.onChangeVehiclePhoto}
+            disabled={p.uploadingVehiclePhoto}
+            activeOpacity={0.85}
+            accessibilityLabel="Cambiar foto del vehículo"
+          >
+            {p.uploadingVehiclePhoto ? (
+              <ActivityIndicator color={COLORS.primary} />
+            ) : p.vehiclePhotoUrl ? (
+              <Image source={{ uri: p.vehiclePhotoUrl }} style={styles.vehicleImg} onError={p.onVehiclePhotoError} />
+            ) : (
+              <Ionicons name="car-sport-outline" size={28} color={COLORS.primary} />
+            )}
+          </TouchableOpacity>
+          <View style={styles.vehicleText}>
+            <Text style={styles.cardTitle} numberOfLines={1}>{vehicleName}</Text>
+            <Text style={styles.cardMeta} numberOfLines={1}>
+              {[p.driverVehicle?.vehicle_plate, p.driverVehicle?.vehicle_color].filter(Boolean).join(' · ') || 'Sin datos'}
+            </Text>
+          </View>
+          {vehicleStatus && (
+            <View style={[styles.statusPill, { backgroundColor: vehicleStatus.bg }]}>
+              <Text style={[styles.statusPillText, { color: vehicleStatus.color }]}>{vehicleStatus.label}</Text>
+            </View>
+          )}
+        </View>
+        {!!p.driverVehicle && (
+          <TouchableOpacity style={styles.rowAction} onPress={p.onEditVehicle} activeOpacity={0.7}>
+            <Text style={styles.rowActionText}>Editar vehículo</Text>
+            <Ionicons name="chevron-forward" size={14} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <Text style={styles.section}>Mi trabajo</Text>
+      <View style={styles.list}>
+        <ListRow icon="cash-outline" title="Ganancias del mes" value={`$${p.monthEarnings.toLocaleString('es-CO')}`} onPress={p.onOpenEarnings} />
+        <ListRow icon="time-outline" title="Mis rutas" value={`${p.recentRoutes.length}`} onPress={p.onOpenTrips} />
+        <ListRow icon="speedometer-outline" title="Panel del conductor" onPress={p.onOpenPanel} />
+      </View>
+
+      <Text style={styles.section}>Cuenta</Text>
+      <View style={styles.list}>
+        <ListRow icon="phone-portrait-outline" title="Métodos de pago" subtitle="Nequi y Daviplata" onPress={p.onOpenPaymentMethods} />
+        <ListRow icon="gift-outline" title="Referidos" subtitle="Gana $2.000 por cada conductor que traigas" onPress={p.onOpenReferral} />
+        <ListRow icon="settings-outline" title="Configuración" subtitle="Preferencias y privacidad" onPress={p.onOpenSettings} />
+        <ListRow icon="help-circle-outline" title="Centro de ayuda" onPress={p.onOpenHelp} />
+        <ListRow icon="log-out-outline" title="Cerrar sesión" danger onPress={p.onLogout} />
+      </View>
+
+      <Text style={styles.footer}>Trive · versión 1.0.0</Text>
+    </ScrollView>
+  )
+}
+
+function ListRow({ icon, title, subtitle, value, danger, onPress }: {
+  icon: string; title: string; subtitle?: string; value?: string; danger?: boolean; onPress: () => void
+}) {
+  return (
+    <TouchableOpacity style={styles.listRow} onPress={onPress} activeOpacity={0.7}>
+      <Ionicons name={icon as any} size={20} color={danger ? COLORS.error : COLORS.primary} />
+      <View style={styles.listText}>
+        <Text style={[styles.listTitle, danger && { color: COLORS.error }]}>{title}</Text>
+        {!!subtitle && <Text style={styles.listSub}>{subtitle}</Text>}
+      </View>
+      {!!value && <Text style={styles.listValue}>{value}</Text>}
+      <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  content: { padding: SPACING.lg, paddingBottom: SPACING.xxxl },
+
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  title: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
+  modePill: { backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full },
+  modeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
+
+  identity: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, marginTop: SPACING.xl },
+  avatar: {
+    width: 68, height: 68, borderRadius: 34, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  avatarBusy: { backgroundColor: COLORS.primaryLight },
+  avatarText: { fontSize: 22, fontWeight: '800', color: COLORS.white },
+  identityText: { flex: 1 },
+  name: { fontSize: 20, fontWeight: '800', color: COLORS.textPrimary },
+  identitySub: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, marginTop: 2 },
+  email: { fontSize: 12, color: COLORS.textTertiary, marginTop: 2 },
+
+  walletCard: { marginTop: SPACING.xl, borderRadius: RADIUS.xl, padding: SPACING.xl },
+  walletLabel: { fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85 },
+  walletValue: { fontSize: 32, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5 },
+  walletHint: { fontSize: 13, color: COLORS.white, opacity: 0.85, marginTop: SPACING.xs, lineHeight: 19 },
+  walletBtn: { marginTop: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.white, alignItems: 'center', justifyContent: 'center' },
+  walletBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.primary },
+
+  section: { ...TYPOGRAPHY.bold, fontSize: 13, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: SPACING.xl, marginBottom: SPACING.sm },
+
+  card: { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, padding: SPACING.lg },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
+  cardMeta: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginTop: 2 },
+  progressTrack: { height: 6, borderRadius: 3, backgroundColor: COLORS.surfaceAlt, marginTop: SPACING.md, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 3, backgroundColor: COLORS.primary },
+  docRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.borderLight, marginTop: SPACING.sm },
+  docRowFirst: { marginTop: SPACING.md },
+  docName: { fontSize: 14, color: COLORS.textPrimary },
+  docStatus: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, flexShrink: 1, marginLeft: SPACING.sm },
+  docStatusText: { fontSize: 13, fontWeight: '700', textAlign: 'right' },
+
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  vehicleThumb: {
+    width: 64, height: 52, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  },
+  vehicleImg: { width: '100%', height: '100%' },
+  vehicleText: { flex: 1 },
+  statusPill: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
+  statusPillText: { fontSize: 12, fontWeight: '700' },
+  rowAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: SPACING.xs, marginTop: SPACING.md, paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
+  rowActionText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+
+  list: { backgroundColor: COLORS.white, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md + 2, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
+  listText: { flex: 1 },
+  listTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
+  listSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
+  listValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+
+  footer: { textAlign: 'center', fontSize: 11, color: COLORS.textTertiary, marginTop: SPACING.xl },
+})

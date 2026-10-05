@@ -69,6 +69,8 @@ export const COLORS = {
   primaryTint: '#E8ECFB',
   warningLight: '#FEF3E2',
   warningDark: '#B45309',
+  successLight: '#E7F6EF',
+  errorLight: '#FDECEC',
 }
 
 export const TYPOGRAPHY = {
