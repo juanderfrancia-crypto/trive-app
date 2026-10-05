@@ -76,25 +76,26 @@ export const COLORS = {
 export const TYPOGRAPHY = {
   h1: {
     fontSize: 32,
-    fontWeight: '700' as any,
-    lineHeight: 40,
-    letterSpacing: -0.5,
+    fontWeight: '800' as any,
+    lineHeight: 38,
+    letterSpacing: -0.8,
   },
   h2: {
-    fontSize: 28,
-    fontWeight: '700' as any,
-    lineHeight: 36,
-    letterSpacing: -0.3,
+    fontSize: 26,
+    fontWeight: '800' as any,
+    lineHeight: 32,
+    letterSpacing: -0.5,
   },
   h3: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '700' as any,
-    lineHeight: 32,
+    lineHeight: 28,
+    letterSpacing: -0.3,
   },
   h4: {
-    fontSize: 20,
-    fontWeight: '600' as any,
-    lineHeight: 28,
+    fontSize: 18,
+    fontWeight: '700' as any,
+    lineHeight: 24,
   },
   body: {
     fontSize: 16,
@@ -194,15 +195,22 @@ export const SPACING = {
 }
 
 export const RADIUS = {
-  xs: 4,
-  sm: 8,
-  md: 12,
+  xs: 6,
+  sm: 10,
+  md: 14,
   lg: 20,
   xl: 28,
   full: 9999,
 }
 
 export const SHADOWS = {
+  card: {
+    shadowColor: '#0F1A2E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
+    elevation: 2,
+  },
   xs: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
