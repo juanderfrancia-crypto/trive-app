@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import {
   View,
   Text,
@@ -14,25 +14,29 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
 import { Ionicons } from '@expo/vector-icons'
-import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
+import {
+  VEHICLE_TYPES,
+  VehicleTypeId,
+  ROUTE_FEE,
+  fmtMoney,
+  toLocalISO,
+} from './driver/PublishRouteFlow'
 
-const ROUTE_COMMISSION = 2000
+const TYPE_ICON: Record<VehicleTypeId, 'car-sport' | 'car' | 'bus'> = {
+  auto: 'car-sport',
+  taxi: 'car',
+  busetica: 'bus',
+  buseta: 'bus',
+}
 
-const VEHICLE_TYPES = [
-  { id: 'auto',     name: 'Auto',     maxSeats: 4,  icon: 'car-sport' as const },
-  { id: 'taxi',     name: 'Taxi',     maxSeats: 4,  icon: 'car'       as const },
-  { id: 'busetica', name: 'Minivan', maxSeats: 15, icon: 'bus'        as const },
-  { id: 'buseta',   name: 'Buseta',   maxSeats: 70, icon: 'bus'       as const },
-]
-
-const DELAY_OPTIONS   = [0, 5, 10, 15, 20]
+const DELAY_OPTIONS = [0, 5, 10, 15, 20]
 const DURATION_OPTIONS = [60, 90, 120, 150, 180, 240]
 
 interface RouteTemplate {
@@ -47,50 +51,40 @@ interface RouteTemplate {
   created_at: string
 }
 
-const toLocalISO = (d: Date) => {
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`
-}
-
 const fmtDuration = (mins: number) =>
   mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}`
 
 export default function RecurringRoutesScreen() {
-  const insets     = useSafeAreaInsets()
+  const insets = useSafeAreaInsets()
   const navigation = useNavigation<any>()
-  const user       = useAppStore((s) => s.user)
+  const user = useAppStore((s) => s.user)
   const setBalance = useAppStore((s) => s.setBalance)
   const { createRoute } = useRoutes()
 
-  // ── Templates ──────────────────────────────────────────────────────────────
-  const [templates, setTemplates]     = useState<RouteTemplate[]>([])
+  // ── Plantillas ─────────────────────────────────────────────────────────────
+  const [templates, setTemplates] = useState<RouteTemplate[]>([])
   const [tmplLoading, setTmplLoading] = useState(true)
 
-  // ── Vehicle data ───────────────────────────────────────────────────────────
-  const [vehicleData,    setVehicleData]    = useState<any>(null)
-  const [vehicleLoading, setVehicleLoading] = useState(true)
+  // ── Modal crear/editar plantilla ───────────────────────────────────────────
+  const [showCreate, setShowCreate] = useState(false)
+  const [editTarget, setEditTarget] = useState<RouteTemplate | null>(null)
+  const [fName, setFName] = useState('')
+  const [fOrigin, setFOrigin] = useState('')
+  const [fDest, setFDest] = useState('')
+  const [fPrice, setFPrice] = useState('')
+  const [fSeats, setFSeats] = useState('')
+  const [fVehicle, setFVehicle] = useState<VehicleTypeId>('auto')
+  const [fVia, setFVia] = useState('')
 
-  // ── Create/edit-template modal ─────────────────────────────────────────────
-  const [showCreate,  setShowCreate]  = useState(false)
-  const [editTarget,  setEditTarget]  = useState<RouteTemplate | null>(null)
-  const [fName,    setFName]    = useState('')
-  const [fOrigin,  setFOrigin]  = useState('')
-  const [fDest,    setFDest]    = useState('')
-  const [fPrice,   setFPrice]   = useState('')
-  const [fSeats,   setFSeats]   = useState('')
-  const [fVehicle, setFVehicle] = useState('auto')
-  const [fVia,     setFVia]     = useState('')
-
-  // ── Publish modal ──────────────────────────────────────────────────────────
-  const [publishTarget, setPublishTarget]   = useState<RouteTemplate | null>(null)
-  const [delayMins,     setDelayMins]       = useState(0)
-  const [customDelay,   setCustomDelay]     = useState('')
-  const [durationMins,  setDurationMins]    = useState(180)
+  // ── Modal publicar desde plantilla ─────────────────────────────────────────
+  const [publishTarget, setPublishTarget] = useState<RouteTemplate | null>(null)
+  const [delayMins, setDelayMins] = useState(0)
+  const [customDelay, setCustomDelay] = useState('')
+  const [durationMins, setDurationMins] = useState(180)
   const [customDuration, setCustomDuration] = useState('')
-  const [pubVia,        setPubVia]          = useState('')
-  const [publishing,    setPublishing]      = useState(false)
+  const [pubVia, setPubVia] = useState('')
+  const [publishing, setPublishing] = useState(false)
 
-  // ── Persistence helpers ────────────────────────────────────────────────────
   const loadTemplates = useCallback(async () => {
     if (!user?.id) return
     try {
@@ -104,26 +98,8 @@ export default function RecurringRoutesScreen() {
     setTmplLoading(false)
   }, [user?.id])
 
-  // ── Vehicle from Supabase ──────────────────────────────────────────────────
-  const loadVehicleData = useCallback(async () => {
-    if (!user?.id) return
-    try {
-      const { data } = await supabase
-        .from('vehicles')
-        .select('vehicle_make:make, vehicle_year:year, vehicle_plate:plate, vehicle_color:color')
-        .eq('driver_id', user.id)
-        .eq('is_active', true)
-        .eq('status', 'verified')
-        .maybeSingle()
-      setVehicleData(data ?? null)
-    } catch {}
-    setVehicleLoading(false)
-  }, [user?.id])
-
   useFocusEffect(useCallback(() => { loadTemplates() }, [loadTemplates]))
-  useEffect(() => { loadVehicleData() }, [loadVehicleData])
 
-  // ── Reset create form ──────────────────────────────────────────────────────
   const resetForm = () => {
     setFName(''); setFOrigin(''); setFDest(''); setFPrice('')
     setFSeats(''); setFVehicle('auto'); setFVia('')
@@ -136,14 +112,13 @@ export default function RecurringRoutesScreen() {
     setFDest(tpl.destination)
     setFPrice(String(tpl.price_per_seat))
     setFSeats(String(tpl.total_seats))
-    setFVehicle(tpl.vehicle_type)
-    setFVia(tpl.description)
+    setFVehicle(tpl.vehicle_type as VehicleTypeId)
+    setFVia(tpl.description ?? '')
     setEditTarget(tpl)
     setShowCreate(true)
   }
 
-  // ── Add template ───────────────────────────────────────────────────────────
-  const handleAddTemplate = async () => {
+  const handleSaveTemplate = async () => {
     if (!fOrigin.trim() || !fDest.trim()) {
       Alert.alert('Campos requeridos', 'Completa origen y destino.')
       return
@@ -162,13 +137,13 @@ export default function RecurringRoutesScreen() {
     if (!user?.id) return
     const autoName = `${fOrigin.trim().split(' - ')[0]} → ${fDest.trim().split(' - ')[0]}`
     const payload = {
-      name:           fName.trim() || autoName,
-      origin:         fOrigin.trim(),
-      destination:    fDest.trim(),
+      name: fName.trim() || autoName,
+      origin: fOrigin.trim(),
+      destination: fDest.trim(),
       price_per_seat: price,
-      total_seats:    seats,
-      vehicle_type:   fVehicle,
-      description:    fVia.trim() || null,
+      total_seats: seats,
+      vehicle_type: fVehicle,
+      description: fVia.trim() || null,
     }
 
     try {
@@ -193,7 +168,6 @@ export default function RecurringRoutesScreen() {
     }
   }
 
-  // ── Delete template ────────────────────────────────────────────────────────
   const handleDelete = (id: string) => {
     Alert.alert('Eliminar plantilla', '¿Eliminar esta ruta frecuente?', [
       { text: 'Cancelar', style: 'cancel' },
@@ -208,49 +182,32 @@ export default function RecurringRoutesScreen() {
     ])
   }
 
-  // ── Publish from template ──────────────────────────────────────────────────
+  // Publicar desde plantilla: el servidor valida requisitos y cobra; su mensaje llega tal cual.
   const handlePublish = async () => {
-    if (!publishTarget || !vehicleData || !user?.id) return
+    if (!publishTarget || !user?.id) return
+    const delay = customDelay.trim() ? parseInt(customDelay, 10) : delayMins
+    const duration = customDuration.trim() ? parseInt(customDuration, 10) : durationMins
+    if (!Number.isFinite(delay) || !Number.isFinite(duration) || duration < 1) {
+      showError('Revisa los minutos de salida y de duración.')
+      return
+    }
+
     setPublishing(true)
     try {
-      const balance = user?.balance ?? 0
-      if (balance < ROUTE_COMMISSION) {
-        Alert.alert(
-          'Saldo insuficiente',
-          `Necesitas $${ROUTE_COMMISSION.toLocaleString('es-CO')} para publicar.\nTu saldo: $${balance.toLocaleString('es-CO')}.`,
-          [{ text: 'Ir a billetera', onPress: () => { setPublishTarget(null); navigation.navigate('Wallet' as never) } }, { text: 'Cerrar', style: 'cancel' }]
-        )
-        return
-      }
-
-      const delay    = customDelay.trim()    ? parseInt(customDelay, 10)    : delayMins
-      const duration = customDuration.trim() ? parseInt(customDuration, 10) : durationMins
-      const now   = new Date()
-      const depDt = new Date(now.getTime() + delay * 60000)
+      const depDt = new Date(Date.now() + delay * 60000)
       const arrDt = new Date(depDt.getTime() + duration * 60000)
 
-      const routeData = {
-        driver_id:      user.id,
-        origin:         publishTarget.origin,
-        destination:    publishTarget.destination,
+      const newRoute = await createRoute({
+        origin: publishTarget.origin,
+        destination: publishTarget.destination,
         departure_time: toLocalISO(depDt),
-        arrival_time:   toLocalISO(arrDt),
+        arrival_time: toLocalISO(arrDt),
         price_per_seat: publishTarget.price_per_seat,
-        total_seats:    publishTarget.total_seats,
-        available_seats: publishTarget.total_seats,
-        vehicle_make:   vehicleData.vehicle_make,
-        vehicle_model:  vehicleData.vehicle_model || '',
-        vehicle_year:   vehicleData.vehicle_year,
-        vehicle_plate:  vehicleData.vehicle_plate,
-        vehicle_color:  vehicleData.vehicle_color,
-        vehicle_type:   publishTarget.vehicle_type,
-        status:         'scheduled',
-        description:    pubVia.trim() || null,
-      }
+        total_seats: publishTarget.total_seats,
+        vehicle_type: publishTarget.vehicle_type as VehicleTypeId,
+        description: pubVia.trim() || undefined,
+      })
 
-      const newRoute = await createRoute(routeData as any)
-
-      // Refresh balance from Supabase
       const { data: prof } = await supabase
         .from('profiles').select('balance').eq('id', user.id).single()
       if (prof?.balance !== undefined) setBalance(prof.balance)
@@ -266,7 +223,7 @@ export default function RecurringRoutesScreen() {
 
       setPublishTarget(null)
       setDelayMins(0); setCustomDelay(''); setDurationMins(180); setCustomDuration(''); setPubVia('')
-      showSuccess('¡Ruta publicada! Los pasajeros ya pueden reservar.')
+      showSuccess('¡Viaje publicado! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
       showError(err.message || 'No se pudo publicar la ruta.')
     } finally {
@@ -274,7 +231,6 @@ export default function RecurringRoutesScreen() {
     }
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   if (tmplLoading) {
     return (
       <View style={[styles.safe, styles.center, { paddingTop: insets.top }]}>
@@ -285,127 +241,94 @@ export default function RecurringRoutesScreen() {
 
   return (
     <View style={[styles.safe, { paddingTop: insets.top }]}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Ionicons name="chevron-back" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Rutas Frecuentes</Text>
+        <View style={styles.flex}>
+          <Text style={styles.headerTitle}>Rutas frecuentes</Text>
           <Text style={styles.headerSub}>Publica tus rutas habituales en segundos</Text>
         </View>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => { resetForm(); setShowCreate(true) }}
-          activeOpacity={0.8}
+          activeOpacity={0.85}
         >
-          <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.addBtnGrad}>
-            <Ionicons name="add" size={22} color="#fff" />
-          </LinearGradient>
+          <Ionicons name="add" size={22} color={COLORS.white} />
         </TouchableOpacity>
       </View>
 
-      {/* Balance strip */}
       <View style={styles.balanceStrip}>
-        <Ionicons name="wallet-outline" size={15} color={COLORS.primary} />
+        <Ionicons name="wallet-outline" size={16} color={COLORS.primary} />
         <Text style={styles.balanceText}>
-          Saldo: <Text style={{ fontWeight: '700', color: COLORS.primary }}>${(user?.balance ?? 0).toLocaleString('es-CO')}</Text>
+          Saldo: <Text style={styles.balanceStrong}>{fmtMoney(user?.balance ?? 0)}</Text>
         </Text>
         <View style={styles.costPill}>
-          <Text style={styles.costPillText}>Publicar = ${ROUTE_COMMISSION.toLocaleString('es-CO')}</Text>
+          <Text style={styles.costPillText}>Publicar = {fmtMoney(ROUTE_FEE)}</Text>
         </View>
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.flex} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {templates.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.emptyIcon}>
-              <Ionicons name="repeat" size={32} color={COLORS.primary} />
-            </LinearGradient>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="repeat" size={28} color={COLORS.primary} />
+            </View>
             <Text style={styles.emptyTitle}>Sin rutas frecuentes</Text>
             <Text style={styles.emptySub}>Guarda tus rutas habituales y publícalas en un toque.</Text>
             <TouchableOpacity
-              style={styles.emptyBtn}
+              style={styles.primaryBtn}
               onPress={() => { resetForm(); setShowCreate(true) }}
               activeOpacity={0.85}
             >
-              <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.emptyBtnGrad}>
-                <Ionicons name="add" size={18} color="#fff" />
-                <Text style={styles.emptyBtnText}>Crear mi primera plantilla</Text>
-              </LinearGradient>
+              <Text style={styles.primaryBtnText}>Crear mi primera plantilla</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          templates.map((tpl) => {
-            const vt = VEHICLE_TYPES.find((v) => v.id === tpl.vehicle_type)
-            return (
-              <View key={tpl.id} style={styles.card}>
-                {/* Card header */}
-                <View style={styles.cardHeader}>
-                  <LinearGradient colors={[COLORS.primaryTint, COLORS.primaryTint]} style={styles.cardIcon}>
-                    <Ionicons name={vt?.icon ?? 'car-outline'} size={20} color={COLORS.primary} />
-                  </LinearGradient>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.cardName} numberOfLines={1}>{tpl.name}</Text>
-                    <Text style={styles.cardRoute} numberOfLines={1}>{tpl.origin} → {tpl.destination}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.editBtn} onPress={() => openEdit(tpl)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="pencil" size={14} color={COLORS.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="trash" size={14} color={COLORS.error} />
-                  </TouchableOpacity>
+          templates.map((tpl) => (
+            <View key={tpl.id} style={styles.card}>
+              <View style={styles.cardHeader}>
+                <View style={styles.cardIcon}>
+                  <Ionicons
+                    name={TYPE_ICON[tpl.vehicle_type as VehicleTypeId] ?? 'car-outline'}
+                    size={20}
+                    color={COLORS.primary}
+                  />
                 </View>
-
-                {/* Meta row */}
-                <View style={styles.cardMeta}>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="cash-outline" size={13} color={COLORS.textSecondary} />
-                    <Text style={styles.metaText}>${tpl.price_per_seat.toLocaleString('es-CO')} / asiento</Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Ionicons name="people-outline" size={13} color={COLORS.textSecondary} />
-                    <Text style={styles.metaText}>{tpl.total_seats} puestos</Text>
-                  </View>
-                  {!!tpl.description && (
-                    <View style={styles.metaItem}>
-                      <Ionicons name="git-branch-outline" size={13} color={COLORS.textSecondary} />
-                      <Text style={styles.metaText} numberOfLines={1}>Vía {tpl.description}</Text>
-                    </View>
-                  )}
+                <View style={styles.flex}>
+                  <Text style={styles.cardName} numberOfLines={1}>{tpl.name}</Text>
+                  <Text style={styles.cardRoute} numberOfLines={1}>{tpl.origin} → {tpl.destination}</Text>
                 </View>
-
-                {/* Publish button */}
-                {vehicleLoading ? (
-                  <ActivityIndicator size="small" color={COLORS.primary} style={{ marginTop: SPACING.md }} />
-                ) : !vehicleData ? (
-                  <View style={styles.noVehicleWarn}>
-                    <Ionicons name="warning-outline" size={14} color={COLORS.warning} />
-                    <Text style={styles.noVehicleText}>Crea al menos una ruta para registrar tu vehículo.</Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    style={styles.publishBtn}
-                    onPress={() => { setPublishTarget(tpl); setPubVia(tpl.description || '') }}
-                    activeOpacity={0.85}
-                  >
-                    <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.publishBtnGrad}>
-                      <Ionicons name="flash" size={16} color="#fff" />
-                      <Text style={styles.publishBtnText}>Publicar ahora</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity style={styles.iconBtn} onPress={() => openEdit(tpl)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name="pencil" size={16} color={COLORS.primary} />
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.iconBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name="trash" size={16} color={COLORS.error} />
+                </TouchableOpacity>
               </View>
-            )
-          })
+
+              <View style={styles.cardMeta}>
+                <Text style={styles.metaText}>{fmtMoney(tpl.price_per_seat)} / asiento</Text>
+                <Text style={styles.metaText}>{tpl.total_seats} cupos</Text>
+                {!!tpl.description && <Text style={styles.metaText} numberOfLines={1}>Vía {tpl.description}</Text>}
+              </View>
+
+              <TouchableOpacity
+                style={styles.primaryBtn}
+                onPress={() => { setPublishTarget(tpl); setPubVia(tpl.description ?? '') }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.primaryBtnText}>Publicar ahora</Text>
+              </TouchableOpacity>
+            </View>
+          ))
         )}
       </ScrollView>
 
-      {/* ── CREATE MODAL ──────────────────────────────────────────────────── */}
+      {/* ── Modal crear/editar plantilla ── */}
       <Modal visible={showCreate} animationType="slide" transparent onRequestClose={() => setShowCreate(false)}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
-            {/* Handle */}
             <View style={styles.handle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editTarget ? 'Editar plantilla' : 'Nueva plantilla'}</Text>
@@ -416,151 +339,118 @@ export default function RecurringRoutesScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <FormField label="Nombre (opcional)" placeholder='Ej: "Armenia → Cali mañana"' value={fName} onChangeText={setFName} />
-              <FormField label="Origen *" placeholder='Ej: Armenia - Centro' value={fOrigin} onChangeText={setFOrigin} />
-              <FormField label="Destino *" placeholder='Ej: Cali - Terminal' value={fDest} onChangeText={setFDest} />
-              <FormField label="Precio / asiento *" placeholder='Ej: 25000' value={fPrice} onChangeText={setFPrice} keyboardType="numeric" />
-              <FormField label="Total asientos *" placeholder='Ej: 4' value={fSeats} onChangeText={setFSeats} keyboardType="numeric" />
+              <FormField label="Origen *" placeholder="Ej: Armenia - Centro" value={fOrigin} onChangeText={setFOrigin} />
+              <FormField label="Destino *" placeholder="Ej: Cali - Terminal" value={fDest} onChangeText={setFDest} />
+              <FormField label="Precio por cupo *" placeholder="Ej: 25000" value={fPrice} onChangeText={setFPrice} keyboardType="numeric" />
+              <FormField label="Cupos *" placeholder="Ej: 4" value={fSeats} onChangeText={setFSeats} keyboardType="numeric" />
 
-              {/* Vehicle type */}
               <Text style={styles.formLabel}>Tipo de vehículo *</Text>
-              <View style={styles.vtRow}>
-                {VEHICLE_TYPES.map((v) => (
-                  <TouchableOpacity
-                    key={v.id}
-                    style={[styles.vtChip, fVehicle === v.id && styles.vtChipActive]}
-                    onPress={() => setFVehicle(v.id)}
-                  >
-                    <Ionicons name={v.icon} size={14} color={fVehicle === v.id ? '#fff' : COLORS.textSecondary} />
-                    <Text style={[styles.vtChipText, fVehicle === v.id && styles.vtChipTextActive]}>{v.name}</Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.chipRow}>
+                {VEHICLE_TYPES.map((v) => {
+                  const active = fVehicle === v.id
+                  return (
+                    <TouchableOpacity key={v.id} style={[styles.chip, active && styles.chipActive]} onPress={() => setFVehicle(v.id)} activeOpacity={0.85}>
+                      <Text style={[styles.chipText, active && styles.chipTextActive]}>{v.name}</Text>
+                    </TouchableOpacity>
+                  )
+                })}
               </View>
 
-              <FormField label="Vía / parada (opcional)" placeholder='Ej: La Paila' value={fVia} onChangeText={setFVia} />
+              <FormField label="Vía / parada (opcional)" placeholder="Ej: La Paila" value={fVia} onChangeText={setFVia} />
 
-              <TouchableOpacity style={styles.saveBtn} onPress={handleAddTemplate} activeOpacity={0.85}>
-                <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.saveBtnGrad}>
-                  <Text style={styles.saveBtnText}>{editTarget ? 'Actualizar plantilla' : 'Guardar plantilla'}</Text>
-                </LinearGradient>
+              <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveTemplate} activeOpacity={0.85}>
+                <Text style={styles.primaryBtnText}>{editTarget ? 'Actualizar plantilla' : 'Guardar plantilla'}</Text>
               </TouchableOpacity>
-              <View style={{ height: 40 }} />
+              <View style={{ height: SPACING.xxl }} />
             </ScrollView>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* ── PUBLISH MODAL ─────────────────────────────────────────────────── */}
+      {/* ── Modal publicar desde plantilla ── */}
       {publishTarget && (
         <Modal visible animationType="slide" transparent onRequestClose={() => setPublishTarget(null)}>
           <View style={styles.modalOverlay}>
             <View style={styles.modalSheet}>
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Publicar ruta</Text>
+                <Text style={styles.modalTitle}>Publicar viaje</Text>
                 <TouchableOpacity onPress={() => { setPublishTarget(null); setCustomDuration(''); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Ionicons name="close" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                {/* Route summary */}
                 <View style={styles.pubSummary}>
-                  <Text style={styles.pubRoute}>{publishTarget.origin}</Text>
-                  <Ionicons name="arrow-forward" size={16} color={COLORS.textSecondary} style={{ marginHorizontal: 4 }} />
-                  <Text style={styles.pubRoute}>{publishTarget.destination}</Text>
-                </View>
-                <View style={styles.pubMeta}>
-                  <Text style={styles.pubMetaText}>${publishTarget.price_per_seat.toLocaleString('es-CO')} · {publishTarget.total_seats} puestos</Text>
+                  <Text style={styles.pubRoute}>{publishTarget.origin} → {publishTarget.destination}</Text>
+                  <Text style={styles.metaText}>{fmtMoney(publishTarget.price_per_seat)} · {publishTarget.total_seats} cupos</Text>
                 </View>
 
-                {/* Departure delay */}
                 <Text style={styles.formLabel}>¿Cuándo sales?</Text>
-                <View style={styles.optRow}>
-                  {DELAY_OPTIONS.map((m) => (
-                    <TouchableOpacity
-                      key={m}
-                      style={[styles.optChip, delayMins === m && !customDelay && styles.optChipActive]}
-                      onPress={() => { setDelayMins(m); setCustomDelay('') }}
-                    >
-                      <Text style={[styles.optChipText, delayMins === m && !customDelay && styles.optChipTextActive]}>
-                        {m === 0 ? 'Ahora' : `${m}m`}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                <View style={styles.chipRow}>
+                  {DELAY_OPTIONS.map((m) => {
+                    const active = delayMins === m && !customDelay
+                    return (
+                      <TouchableOpacity key={m} style={[styles.chip, active && styles.chipActive]} onPress={() => { setDelayMins(m); setCustomDelay('') }} activeOpacity={0.85}>
+                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{m === 0 ? 'Ahora' : `${m} min`}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
                 </View>
                 <View style={styles.customRow}>
                   <TextInput
                     style={styles.customInput}
-                    placeholder="Ej: 35"
+                    placeholder="Otro"
                     placeholderTextColor={COLORS.textTertiary}
                     value={customDelay}
                     onChangeText={setCustomDelay}
                     keyboardType="numeric"
                     maxLength={3}
                   />
-                  <Text style={styles.customLabel}>min personalizados</Text>
+                  <Text style={styles.metaText}>min personalizados</Text>
                 </View>
 
-                {/* Duration */}
-                <Text style={[styles.formLabel, { marginTop: SPACING.lg }]}>Duración del viaje</Text>
-                <View style={styles.optRow}>
-                  {DURATION_OPTIONS.map((m) => (
-                    <TouchableOpacity
-                      key={m}
-                      style={[styles.optChip, durationMins === m && !customDuration && styles.optChipActive]}
-                      onPress={() => { setDurationMins(m); setCustomDuration('') }}
-                    >
-                      <Text style={[styles.optChipText, durationMins === m && !customDuration && styles.optChipTextActive]}>
-                        {fmtDuration(m)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                <Text style={styles.formLabel}>Duración del viaje</Text>
+                <View style={styles.chipRow}>
+                  {DURATION_OPTIONS.map((m) => {
+                    const active = durationMins === m && !customDuration
+                    return (
+                      <TouchableOpacity key={m} style={[styles.chip, active && styles.chipActive]} onPress={() => { setDurationMins(m); setCustomDuration('') }} activeOpacity={0.85}>
+                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{fmtDuration(m)}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
                 </View>
                 <View style={styles.customRow}>
                   <TextInput
                     style={styles.customInput}
-                    placeholder="Ej: 200"
+                    placeholder="Otro"
                     placeholderTextColor={COLORS.textTertiary}
                     value={customDuration}
                     onChangeText={setCustomDuration}
                     keyboardType="numeric"
                     maxLength={3}
                   />
-                  <Text style={styles.customLabel}>min personalizados</Text>
+                  <Text style={styles.metaText}>min personalizados</Text>
                 </View>
 
-                {/* Por donde voy */}
-                <Text style={[styles.formLabel, { marginTop: SPACING.lg }]}>Por donde voy (opcional)</Text>
-                <TextInput
-                  style={styles.formInput}
-                  placeholder='Ej: La Paila, autopista sur'
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={pubVia}
-                  onChangeText={setPubVia}
-                />
+                <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
 
-                {/* Cost warning */}
-                <View style={styles.costWarn}>
+                <View style={styles.costNote}>
                   <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
-                  <Text style={styles.costWarnText}>
-                    Se descontarán <Text style={{ fontWeight: '700' }}>${ROUTE_COMMISSION.toLocaleString('es-CO')}</Text> de tu billetera.
-                    Saldo disponible: <Text style={{ fontWeight: '700' }}>${(user?.balance ?? 0).toLocaleString('es-CO')}</Text>
+                  <Text style={styles.costNoteText}>
+                    Se descontarán {fmtMoney(ROUTE_FEE)} de tu saldo. Saldo disponible: {fmtMoney(user?.balance ?? 0)}.
                   </Text>
                 </View>
 
-                <TouchableOpacity style={styles.saveBtn} onPress={handlePublish} disabled={publishing} activeOpacity={0.85}>
+                <TouchableOpacity style={[styles.primaryBtn, publishing && styles.btnDisabled]} onPress={handlePublish} disabled={publishing} activeOpacity={0.85}>
                   {publishing ? (
-                    <View style={styles.saveBtnGrad}>
-                      <ActivityIndicator color="#fff" />
-                    </View>
+                    <ActivityIndicator color={COLORS.white} />
                   ) : (
-                    <LinearGradient colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]} style={styles.saveBtnGrad}>
-                      <Ionicons name="flash" size={18} color="#fff" />
-                      <Text style={styles.saveBtnText}>Confirmar y publicar</Text>
-                    </LinearGradient>
+                    <Text style={styles.primaryBtnText}>Confirmar y publicar</Text>
                   )}
                 </TouchableOpacity>
-                <View style={{ height: 40 }} />
+                <View style={{ height: SPACING.xxl }} />
               </ScrollView>
             </View>
           </View>
@@ -570,7 +460,6 @@ export default function RecurringRoutesScreen() {
   )
 }
 
-// ── Small helper component ────────────────────────────────────────────────────
 function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
   label: string; placeholder: string; value: string
   onChangeText: (t: string) => void; keyboardType?: any
@@ -590,173 +479,95 @@ function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
   )
 }
 
-// ── Styles ────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: COLORS.surfaceAlt },
+  safe: { flex: 1, backgroundColor: COLORS.white },
   center: { justifyContent: 'center', alignItems: 'center' },
-  scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: SPACING.lg, paddingBottom: 40, paddingTop: SPACING.sm },
+  flex: { flex: 1 },
+  scrollContent: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.xxl, paddingTop: SPACING.sm, gap: SPACING.md },
 
-  // Header
-  header: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.md,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md },
+  backBtn: { width: 36, height: 36, justifyContent: 'center', marginLeft: -SPACING.sm },
+  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
+  headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  addBtn: {
+    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center',
   },
-  backBtn: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: COLORS.surfaceAlt, justifyContent: 'center', alignItems: 'center',
-  },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  headerSub:   { fontSize: 12, color: COLORS.textSecondary, marginTop: 1 },
-  addBtn:      { width: 44, height: 44, borderRadius: 14, overflow: 'hidden' },
-  addBtnGrad:  { flex: 1, justifyContent: 'center', alignItems: 'center' },
 
-  // Balance strip
   balanceStrip: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: SPACING.lg, paddingVertical: 10,
-    backgroundColor: COLORS.primaryTint,
-    borderBottomWidth: 1, borderBottomColor: COLORS.primaryTint,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    marginHorizontal: SPACING.xl, marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceAlt,
   },
-  balanceText: { flex: 1, fontSize: 13, color: COLORS.textSecondary },
-  costPill: {
-    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full,
-    paddingHorizontal: 10, paddingVertical: 3,
-  },
-  costPillText: { fontSize: 12, fontWeight: '600', color: COLORS.primaryDark },
+  balanceText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, flex: 1 },
+  balanceStrong: { fontWeight: '700', color: COLORS.primary },
+  costPill: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full, backgroundColor: COLORS.white },
+  costPillText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary },
 
-  // Empty state
-  emptyWrap:    { alignItems: 'center', paddingTop: 60, gap: 12 },
-  emptyIcon:    { width: 72, height: 72, borderRadius: 20, justifyContent: 'center', alignItems: 'center' },
-  emptyTitle:   { fontSize: 18, fontWeight: '700', color: COLORS.textPrimary },
-  emptySub:     { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 24 },
-  emptyBtn:     { marginTop: 8, borderRadius: 14, overflow: 'hidden' },
-  emptyBtnGrad: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingVertical: 14 },
-  emptyBtnText: { fontSize: 15, fontWeight: '600', color: '#fff' },
+  emptyWrap: { alignItems: 'center', paddingTop: SPACING.xxxl, gap: SPACING.sm },
+  emptyIcon: {
+    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm,
+  },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '700' },
+  emptySub: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
 
-  // Template card
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 18,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.border,
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.10,
-    shadowRadius: 16,
-    elevation: 4,
+  card: { borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg, gap: SPACING.md, backgroundColor: COLORS.white },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  cardIcon: {
+    width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center',
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: SPACING.md },
-  cardIcon:   { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-  cardName:   { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  cardRoute:  { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  editBtn: {
-    width: 32, height: 32, borderRadius: 10,
-    backgroundColor: COLORS.primaryTint, borderWidth: 1, borderColor: COLORS.primaryTint,
-    justifyContent: 'center', alignItems: 'center', marginRight: 6,
-  },
-  deleteBtn: {
-    width: 32, height: 32, borderRadius: 10,
-    backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  cardMeta:   { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: SPACING.md },
-  metaItem:   { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText:   { fontSize: 12, color: COLORS.textSecondary },
+  cardName: { ...TYPOGRAPHY.bodyMedium, fontWeight: '700', color: COLORS.textPrimary },
+  cardRoute: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  iconBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
+  cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
+  metaText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
-  noVehicleWarn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#FFFBEB', borderRadius: 10, padding: 10,
-    borderWidth: 1, borderColor: '#FDE68A',
+  primaryBtn: {
+    height: 50, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+    alignItems: 'center', justifyContent: 'center', marginTop: SPACING.sm,
   },
-  noVehicleText: { flex: 1, fontSize: 12, color: COLORS.warning },
+  primaryBtnText: { ...TYPOGRAPHY.button, fontWeight: '700', color: COLORS.white },
+  btnDisabled: { opacity: 0.6 },
 
-  publishBtn:     { borderRadius: 12, overflow: 'hidden' },
-  publishBtnGrad: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 12,
-  },
-  publishBtnText: { fontSize: 14, fontWeight: '600', color: '#fff' },
-
-  // Modal shared
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: COLORS.textPrimary + '66' },
   modalSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingHorizontal: SPACING.lg, paddingBottom: 32,
-    maxHeight: '90%',
+    backgroundColor: COLORS.white, borderTopLeftRadius: RADIUS.lg, borderTopRightRadius: RADIUS.lg,
+    padding: SPACING.xl, maxHeight: '90%',
   },
-  handle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginTop: 12, marginBottom: 8,
-  },
-  modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingVertical: SPACING.md, borderBottomWidth: 1, borderBottomColor: COLORS.border,
-    marginBottom: SPACING.md,
-  },
-  modalTitle: { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.border, marginBottom: SPACING.md },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
+  modalTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 
-  // Form
-  formLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textPrimary, marginBottom: 6, marginTop: SPACING.md },
+  pubSummary: { gap: SPACING.xs, marginBottom: SPACING.md },
+  pubRoute: { ...TYPOGRAPHY.subtitle2, fontWeight: '800', color: COLORS.textPrimary },
+
+  formLabel: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary, marginTop: SPACING.md, marginBottom: SPACING.xs },
   formInput: {
-    borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
+    ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary,
   },
-
-  // Vehicle type chips
-  vtRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  vtChip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: COLORS.primaryTint, backgroundColor: COLORS.surfaceAlt,
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  chip: {
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full,
+    borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white,
   },
-  vtChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  vtChipText:   { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
-  vtChipTextActive: { color: '#fff', fontWeight: '600' },
-
-  // Save button
-  saveBtn:     { borderRadius: 14, overflow: 'hidden', marginTop: SPACING.xl },
-  saveBtnGrad: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, paddingVertical: 16,
-  },
-  saveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-
-  // Publish modal extras
-  pubSummary: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.primaryTint, borderRadius: 12, padding: 12, marginBottom: 4,
-  },
-  pubRoute: { flex: 1, fontSize: 14, fontWeight: '600', color: COLORS.textPrimary, textAlign: 'center' },
-  pubMeta:  { alignItems: 'center', marginBottom: SPACING.lg },
-  pubMetaText: { fontSize: 13, color: COLORS.textSecondary },
-
-  optRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  optChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full,
-    borderWidth: 1, borderColor: COLORS.primaryTint, backgroundColor: COLORS.surfaceAlt,
-  },
-  optChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  optChipText:   { fontSize: 13, color: COLORS.textSecondary, fontWeight: '500' },
-  optChipTextActive: { color: '#fff', fontWeight: '600' },
-
-  customRow:  { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  chipActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryTint },
+  chipText: { ...TYPOGRAPHY.bodySmall, fontWeight: '600', color: COLORS.textSecondary },
+  chipTextActive: { color: COLORS.primary },
+  customRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.sm },
   customInput: {
-    borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 8,
-    fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt, width: 70,
+    width: 72, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.sm, paddingVertical: SPACING.sm,
+    ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary, textAlign: 'center',
   },
-  customLabel: { fontSize: 13, color: COLORS.textSecondary },
 
-  costWarn: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-    backgroundColor: COLORS.primaryTint, borderRadius: 12, padding: 12, marginTop: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.primaryTint,
+  costNote: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.lg,
+    padding: SPACING.md, borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceAlt,
   },
-  costWarnText: { flex: 1, fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
+  costNoteText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, flex: 1 },
 })

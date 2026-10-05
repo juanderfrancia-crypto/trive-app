@@ -39,6 +39,20 @@ export interface Route {
   vehicle_photo_url?: string | null;
 }
 
+// Campos que publish_route acepta en p_route (departure_time en hora local, sin zona).
+export interface PublishRoutePayload {
+  origin: string;
+  destination: string;
+  departure_time: string;
+  arrival_time?: string;
+  price_per_seat: number;
+  total_seats: number;
+  description?: string;
+  pickup_point?: string;
+  pickup_point_custom?: boolean;
+  vehicle_type: 'auto' | 'taxi' | 'busetica' | 'buseta';
+}
+
 const isMissingColumnError = (err: any, column: string) => {
   const message = (err?.message || '').toString().toLowerCase();
   return (
@@ -271,15 +285,16 @@ export const useRoutes = () => {
   }, []);
 
   // El cobro de $2.000 y la creación de la ruta ocurren en una sola transacción
-  // del servidor (publish_route). El cliente no maneja el saldo.
-  const createRoute = async (routeData: Omit<Route, "id" | "created_at" | "updated_at">) => {
+  // del servidor (publish_route). El servidor toma conductor, vehículo y saldo
+  // de la sesión; el cliente solo envía los datos del viaje.
+  const createRoute = async (routeData: PublishRoutePayload) => {
     try {
       setError(null);
 
       const { data, error } = await supabase.rpc("publish_route", { p_route: routeData });
       if (error) throw error;
 
-      return data;
+      return data as Route;
     } catch (err: any) {
       const message = err.message || "Error creating route";
       setError(message);
