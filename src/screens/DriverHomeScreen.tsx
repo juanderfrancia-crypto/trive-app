@@ -113,6 +113,21 @@ export default function DriverHomeScreen() {
 
         <TouchableOpacity
           style={styles.card}
+          onPress={() => navigation.navigate('DriverPayments' as never)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.cardIcon}>
+            <Ionicons name="cash-outline" size={20} color={COLORS.primary} />
+          </View>
+          <View style={styles.cardText}>
+            <Text style={styles.cardTitle}>Pagos por confirmar</Text>
+            <Text style={styles.cardSub}>Confirma los pagos que recibiste de tus pasajeros</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={COLORS.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.card}
           onPress={() => navigation.navigate('DriverPanel' as never)}
           activeOpacity={0.85}
         >

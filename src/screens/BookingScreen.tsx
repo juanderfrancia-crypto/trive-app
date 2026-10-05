@@ -43,6 +43,7 @@ export default function BookingScreen() {
   const navigation = useNavigation<any>()
   const selectedRoute = useAppStore((s) => s.selectedRoute)
   const bookingData = useAppStore((s) => s.bookingData)
+  const reservationCode: string = bookingData?.reservation_code ?? '---'
   const user = useAppStore((s) => s.user)
   const authUser = useAppStore((s) => s.authUser)
   const setBookingData = useAppStore((s) => s.setBookingData)
@@ -137,6 +138,15 @@ export default function BookingScreen() {
         </ScrollView>
 
         <View style={styles.footerStack}>
+          {paymentMethod === 'transfer' && reservationCode !== '---' && (
+            <TouchableOpacity
+              style={styles.cta}
+              onPress={() => navigation.navigate('PassengerPayment' as never, { reservationCode } as never)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.ctaText}>Pagar a {driverFirstName}</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity style={styles.cta} onPress={() => navigation.navigate('TripStatus' as never)} activeOpacity={0.85}>
             <Text style={styles.ctaText}>Ver mi viaje</Text>
           </TouchableOpacity>
@@ -171,7 +181,6 @@ export default function BookingScreen() {
 
   const { seat_numbers, total_price } = bookingData
   const seatCount = seat_numbers.length
-  const reservationCode: string = bookingData.reservation_code ?? '---'
 
   const getDropoffPoint = () => (dropoffOption === 'final' ? selectedRoute.destination : customDropoffPoint.trim())
 
