@@ -228,7 +228,7 @@ export function EditVehicleScreen({ route }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.backgroundAlt,
   },
   header: {
     padding: 20,

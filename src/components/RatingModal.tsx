@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.surfaceHover,
   },
   cancelButtonText: {
     ...TYPOGRAPHY.body,
