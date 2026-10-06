@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import DepthCard from '../components/DepthCard'
+import Icon from '../components/Icon'
+import Illustration, { type IllustrationName } from '../components/illustrations/Illustration'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
-import Icon from '../components/Icon'
 
-// ─── Lista de aeropuertos colombianos ────────────────────────────────────────
 interface Airport { name: string; city: string; iata: string }
 
 const COLOMBIA_AIRPORTS: Airport[] = [
@@ -47,25 +47,18 @@ const COLOMBIA_AIRPORTS: Airport[] = [
   { name: 'Aeropuerto Juan H. White',                 city: 'Barrancabermeja',     iata: 'EJA' },
 ]
 
-// ─── Destinos populares en Cali ────────────────────────────────────────────
-interface Destination { name: string; code: string }
-
-const CALI_DESTINATIONS: Destination[] = [
-  { name: 'Unicentro', code: 'UNI' },
-  { name: 'Jardín Plaza', code: 'JAR' },
-  { name: 'Centro Comercial (Centro)', code: 'CC' },
-  { name: 'Terminal de Buses', code: 'TER' },
-  { name: 'Hospital Universitario', code: 'HU' },
-  { name: 'Centro Histórico', code: 'CH' },
-  { name: 'San Fernando', code: 'SF' },
-  { name: 'Exito Menga', code: 'EM' },
-  { name: 'Carrefour Mayorca', code: 'CM' },
-  { name: 'Centro de Eventos', code: 'CE' },
-]
-
 const PRICE_RANGES = [
   { label: 'Municipios Valle del Cauca → Cali', range: '$60.000 – $120.000' },
   { label: 'Cali centro → Aeropuerto', range: '$30.000 – $60.000' },
+]
+
+type Tab = 'create' | 'my_requests' | 'active_trips' | 'completed_trips'
+
+const TABS: { key: Tab; label: string; icon: 'Plus' | 'List' | 'Car' | 'CheckCheck' }[] = [
+  { key: 'create', label: 'Crear', icon: 'Plus' },
+  { key: 'my_requests', label: 'Solicitudes', icon: 'List' },
+  { key: 'active_trips', label: 'Activos', icon: 'Car' },
+  { key: 'completed_trips', label: 'Completados', icon: 'CheckCheck' },
 ]
 
 const todayStr = () => {
@@ -79,21 +72,32 @@ const defaultTimeStr = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+function RouteRows({ from, to }: { from: string; to: string }) {
+  return (
+    <View style={s.routeRows}>
+      <View style={s.routeRow}>
+        <Icon name="CircleDot" size={16} color={COLORS.primary} />
+        <Text style={s.routeText} numberOfLines={1}>{from}</Text>
+      </View>
+      <View style={s.routeRow}>
+        <Icon name="MapPin" size={16} color={COLORS.textPrimary} />
+        <Text style={s.routeText} numberOfLines={1}>{to}</Text>
+      </View>
+    </View>
+  )
+}
+
 export default function AirportRequestScreen() {
   const navigation = useNavigation<any>()
   const { createRequest, requests, loading: loadingRequests, loadPassengerRequests, loadPassengerActiveTrips } = useAirportNegotiation()
   const user = useAppStore((s) => s.user)
 
-  // Tab state - Agregado: active_trips y completed_trips
-  const [activeTab, setActiveTab] = useState<'create' | 'my_requests' | 'active_trips' | 'completed_trips'>('create')
-
-  // Trip type state
+  const [activeTab, setActiveTab] = useState<Tab>('create')
   const [tripType, setTripType] = useState<'airport' | 'custom'>('airport')
 
   const [origin, setOrigin] = useState('')
   const [airportQuery, setAirportQuery] = useState('')
   const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null)
-  const [selectedCaliDest, setSelectedCaliDest] = useState<Destination | null>(null)
   const [customDestination, setCustomDestination] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
   const [passengers, setPassengers] = useState(1)
@@ -103,14 +107,10 @@ export default function AirportRequestScreen() {
   const [timeStr, setTimeStr] = useState(defaultTimeStr())
   const [loading, setLoading] = useState(false)
 
-  // Filtrar solicitudes activas del pasajero actual
   const activeRequests = requests.filter(r => r.passenger_id === user?.id && r.status === 'pending')
-  
-  // Agregar filtros para viajes activos y completados
   const activeTrips = requests.filter(r => r.passenger_id === user?.id && r.status === 'accepted')
   const completedTrips = requests.filter(r => r.passenger_id === user?.id && r.status === 'completed')
 
-  //  Estado para chat de negociación
   const [showChatModal, setShowChatModal] = useState(false)
   const [chatRequest, setChatRequest] = useState<any>(null)
 
@@ -128,39 +128,23 @@ export default function AirportRequestScreen() {
     setShowDropdown(false)
   }
 
-  const selectCaliDestination = (dest: Destination) => {
-    setSelectedCaliDest(dest)
-    setShowDropdown(false)
-  }
-
   const clearAirport = () => {
     setSelectedAirport(null)
     setAirportQuery('')
     setShowDropdown(false)
   }
 
-  const clearCaliDest = () => {
-    setSelectedCaliDest(null)
-  }
-
-  const clearCustomDest = () => {
-    setCustomDestination('')
-  }
-
   const adjustPassengers = (delta: number) =>
     setPassengers(prev => Math.min(8, Math.max(1, prev + delta)))
 
-  // Cargar solicitudes del usuario cuando la pantalla se enfoca
   useFocusEffect(
     React.useCallback(() => {
       if (user?.id) {
-        // Cargar todos los requests del pasajero para mantener realtime sync
         loadPassengerRequests(user.id)
       }
     }, [user?.id, loadPassengerRequests])
   )
 
-  // Cargar viajes activos cuando se cambia a esa pestaña
   React.useEffect(() => {
     if (user?.id && activeTab === 'active_trips') {
       loadPassengerActiveTrips(user.id)
@@ -177,7 +161,6 @@ export default function AirportRequestScreen() {
     if (!user?.id) { showError('Debes iniciar sesión'); return }
     if (!origin.trim()) { showError('Indica tu ciudad de origen'); return }
 
-    // Validar destino según tipo
     let destination = ''
     if (tripType === 'airport') {
       if (!selectedAirport) { showError('Selecciona el aeropuerto de destino'); return }
@@ -208,7 +191,6 @@ export default function AirportRequestScreen() {
         notes: notes.trim() || undefined,
       })
       showSuccess('Solicitud publicada. Te avisamos cuando un conductor acepte.')
-      // Limpiar formulario
       setOrigin('')
       setAirportQuery('')
       setSelectedAirport(null)
@@ -218,7 +200,6 @@ export default function AirportRequestScreen() {
       setPassengers(1)
       setDateStr(todayStr())
       setTimeStr(defaultTimeStr())
-      // Cambiar a tab de mis solicitudes para ver la que acaba de crear
       setActiveTab('my_requests')
     } catch (err: any) {
       showError(err.message || 'Error al publicar solicitud')
@@ -227,597 +208,439 @@ export default function AirportRequestScreen() {
     }
   }
 
-  return (
-    <SafeAreaView style={s.safe}>
+  const openDetails = (requestId: string) =>
+    navigation.navigate('AirportRequestDetails' as never, { requestId } as never)
 
-      {/* Header con gradiente */}
-      <LinearGradient
-        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.header}
-      >
+  const renderEmpty = (illustration: IllustrationName, title: string, text: string) => (
+    <View style={s.emptyState}>
+      <Illustration name={illustration} width={180} />
+      <Text style={s.emptyTitle}>{title}</Text>
+      <Text style={s.emptyText}>{text}</Text>
+    </View>
+  )
+
+  return (
+    <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
+      <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Icon name="ArrowLeft" size={22} color="#fff" />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={s.headerHero}>
-          <Icon name="Car" size={22} color="rgba(255,255,255,0.9)" />
-          <Text style={s.headerTitle}>Mis Viajes</Text>
+          <Text style={s.headerTitle}>Rutas personalizadas</Text>
+          <Text style={s.headerSub}>Publica a dónde vas y recibe ofertas de conductores</Text>
         </View>
-      </LinearGradient>
+      </View>
 
-      {/* Tabs Navigation */}
       <View style={s.tabsContainer}>
-        <TouchableOpacity
-          style={[s.tab, activeTab === 'create' && s.tabActive]}
-          onPress={() => setActiveTab('create')}
-          activeOpacity={0.7}
-        >
-          <Icon name="Plus" size={16} color={activeTab === 'create' ? '#fff' : '#666'} />
-          <Text style={[s.tabText, activeTab === 'create' && s.tabTextActive]}>Crear</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[s.tab, activeTab === 'my_requests' && s.tabActive]}
-          onPress={() => setActiveTab('my_requests')}
-          activeOpacity={0.7}
-        >
-          <Icon name="List" size={16} color={activeTab === 'my_requests' ? '#fff' : '#666'} />
-          <Text style={[s.tabText, activeTab === 'my_requests' && s.tabTextActive]}>Solicitudes</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[s.tab, activeTab === 'active_trips' && s.tabActive]}
-          onPress={() => setActiveTab('active_trips')}
-          activeOpacity={0.7}
-        >
-          <Icon name="Car" size={16} color={activeTab === 'active_trips' ? '#fff' : '#666'} />
-          <Text style={[s.tabText, activeTab === 'active_trips' && s.tabTextActive]}>Activos</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[s.tab, activeTab === 'completed_trips' && s.tabActive]}
-          onPress={() => setActiveTab('completed_trips')}
-          activeOpacity={0.7}
-        >
-          <Icon name="CheckCheck" size={16} color={activeTab === 'completed_trips' ? '#fff' : '#666'} />
-          <Text style={[s.tabText, activeTab === 'completed_trips' && s.tabTextActive]}>Completados</Text>
-        </TouchableOpacity>
+        {TABS.map((tab) => {
+          const active = activeTab === tab.key
+          return (
+            <TouchableOpacity
+              key={tab.key}
+              style={[s.tab, active && s.tabActive]}
+              onPress={() => setActiveTab(tab.key)}
+              activeOpacity={0.7}
+            >
+              <Icon name={tab.icon} size={18} color={active ? COLORS.primary : COLORS.textTertiary} />
+              <Text style={[s.tabText, active && s.tabTextActive]}>{tab.label}</Text>
+            </TouchableOpacity>
+          )
+        })}
       </View>
 
-      {/* TAB: CREAR SOLICITUD */}
       {activeTab === 'create' && (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={{ flex: 1 }}
-        >
-          {/* Trip type selector */}
-          <View style={s.tripTypeSelector}>
-        <TouchableOpacity
-          style={[s.tripTypeBtn, tripType === 'airport' && s.tripTypeBtnActive]}
-          onPress={() => {
-            setTripType('airport')
-            setCustomDestination('')
-          }}
-          activeOpacity={0.75}
-        >
-          <Icon name="Plane" size={18} color={tripType === 'airport' ? '#fff' : COLORS.primary} />
-          <Text style={[s.tripTypeBtnText, tripType === 'airport' && s.tripTypeBtnTextActive]}>Aeropuerto</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[s.tripTypeBtn, tripType === 'custom' && s.tripTypeBtnActive]}
-          onPress={() => {
-            setTripType('custom')
-            setSelectedAirport(null)
-            setAirportQuery('')
-            setSelectedCaliDest(null)
-          }}
-          activeOpacity={0.75}
-        >
-          <Icon name="MapPin" size={18} color={tripType === 'custom' ? '#fff' : COLORS.primary} />
-          <Text style={[s.tripTypeBtnText, tripType === 'custom' && s.tripTypeBtnTextActive]}>Otro</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView
-        contentContainerStyle={s.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-
-        {/* Sección de solicitudes activas */}
-        {activeRequests.length > 0 && (
-          <View style={s.activeRequestsSection}>
-            <View style={s.sectionHeader}>
-              <Icon name="List" size={18} color={COLORS.primary} />
-              <Text style={s.sectionTitle}>Mis solicitudes activas</Text>
-            </View>
-            <View style={s.activeRequestsList}>
-              {activeRequests.map(req => (
-                <TouchableOpacity
-                  key={req.id}
-                  style={s.activeRequestCard}
-                  onPress={() => navigation.navigate('AirportRequestDetails' as never, { requestId: req.id } as never)}
-                  activeOpacity={0.75}
-                >
-                  <View style={s.activeRequestTop}>
-                    <View style={s.activeRequestInfo}>
-                      <Text style={s.activeRequestDest} numberOfLines={1}>
-                        {req.destination.split(' —')[0]}
-                      </Text>
-                      <Text style={s.activeRequestTime} numberOfLines={1}>
-                        {new Date(req.departure_time).toLocaleDateString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </View>
-                    <View style={s.activeRequestPriceBox}>
-                      <Text style={s.activeRequestPrice}>
-                        ${req.offered_price.toLocaleString('es-CO')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={s.activeRequestBottom}>
-                    <View style={[s.activeRequestBadge, req.offered_price > req.initial_price && s.activeRequestBadgeUpdated]}>
-                      <Icon name="CircleAlert" size={13} color={req.offered_price > req.initial_price ? COLORS.warning : COLORS.primary} />
-                      <Text style={[s.activeRequestBadgeText, req.offered_price > req.initial_price && s.activeRequestBadgeTextUpdated]}>
-                        {req.offered_price > req.initial_price ? 'Precio aumentado' : 'Esperando ofertas'}
-                      </Text>
-                    </View>
-                    <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
-
-        {/* Formulario con sombra */}
-        <View style={s.formCard}>
-
-          {/* Origen */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>ORIGEN</Text>
-            <View style={s.inputRow}>
-              <Icon name="MapPin" size={18} color={COLORS.primary} style={s.inputIcon} />
-              <TextInput
-                style={s.input}
-                placeholder="Ej: Palmira, Buga, Cali..."
-                placeholderTextColor={COLORS.textTertiary}
-                value={origin}
-                onChangeText={setOrigin}
-                returnKeyType="next"
-              />
-            </View>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.flex}>
+          <View style={s.segmented}>
+            <TouchableOpacity
+              style={[s.segment, tripType === 'airport' && s.segmentActive]}
+              onPress={() => {
+                setTripType('airport')
+                setCustomDestination('')
+              }}
+              activeOpacity={0.75}
+            >
+              <Icon name="Plane" size={16} color={tripType === 'airport' ? COLORS.white : COLORS.primary} />
+              <Text style={[s.segmentText, tripType === 'airport' && s.segmentTextActive]}>Aeropuerto</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.segment, tripType === 'custom' && s.segmentActive]}
+              onPress={() => {
+                setTripType('custom')
+                setSelectedAirport(null)
+                setAirportQuery('')
+              }}
+              activeOpacity={0.75}
+            >
+              <Icon name="MapPin" size={16} color={tripType === 'custom' ? COLORS.white : COLORS.primary} />
+              <Text style={[s.segmentText, tripType === 'custom' && s.segmentTextActive]}>Otro destino</Text>
+            </TouchableOpacity>
           </View>
 
-          <View style={s.divider} />
-
-          {/* Destino - Aeropuerto */}
-          {tripType === 'airport' && (
-            <>
-              <View style={s.fieldGroup}>
-                <Text style={s.fieldLabel}>AEROPUERTO DESTINO</Text>
-                <View style={[s.inputRow, selectedAirport && s.inputRowSelected]}>
-                  <Icon
-                    name="Plane"
-                    size={18}
-                    color={selectedAirport ? COLORS.primary : COLORS.textTertiary}
-                    style={s.inputIcon}
-                  />
-                  <TextInput
-                    style={s.input}
-                    placeholder="Busca por ciudad o aeropuerto"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={airportQuery}
-                    onChangeText={(t) => {
-                      setAirportQuery(t)
-                      setSelectedAirport(null)
-                      setShowDropdown(true)
-                    }}
-                    onFocus={() => setShowDropdown(true)}
-                  />
-                  {airportQuery.length > 0 && (
-                    <TouchableOpacity onPress={clearAirport} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
-                {/* Dropdown */}
-                {showDropdown && filteredAirports.length > 0 && (
-                  <View style={s.dropdown}>
-                    {filteredAirports.map((airport, idx) => (
-                      <TouchableOpacity
-                        key={airport.iata + idx}
-                        style={[s.dropdownItem, idx < filteredAirports.length - 1 && s.dropdownItemBorder]}
-                        onPress={() => selectAirport(airport)}
-                        activeOpacity={0.7}
-                      >
-                        <View style={s.dropdownIcon}>
-                          <Icon name="Plane" size={13} color={COLORS.primary} />
+          <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {activeRequests.length > 0 && (
+              <View style={s.block}>
+                <Text style={s.blockTitle}>Solicitudes activas</Text>
+                {activeRequests.map(req => (
+                  <TouchableOpacity key={req.id} onPress={() => openDetails(req.id)} activeOpacity={0.8}>
+                    <DepthCard style={s.cardWrap} contentStyle={s.cardContent}>
+                      <View style={s.cardTop}>
+                        <View style={s.cardTopInfo}>
+                          <Text style={s.cardDest} numberOfLines={1}>{req.destination.split(' —')[0]}</Text>
+                          <Text style={s.cardMeta}>
+                            {new Date(req.departure_time).toLocaleDateString('es-CO', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </Text>
                         </View>
-                        <View style={s.dropdownTexts}>
-                          <Text style={s.dropdownName}>{airport.name}</Text>
-                          <Text style={s.dropdownCity}>{airport.city} · {airport.iata}</Text>
+                        <Text style={s.priceText}>${req.offered_price.toLocaleString('es-CO')}</Text>
+                      </View>
+                      <View style={s.cardBottom}>
+                        <View style={[s.tag, req.offered_price > req.initial_price && s.tagWarning]}>
+                          <Text style={[s.tagText, req.offered_price > req.initial_price && s.tagTextWarning]}>
+                            {req.offered_price > req.initial_price ? 'Precio aumentado' : 'Esperando ofertas'}
+                          </Text>
                         </View>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-
-                {/* Sin resultados */}
-                {showDropdown && airportQuery.length >= 2 && filteredAirports.length === 0 && !selectedAirport && (
-                  <View style={s.dropdownEmpty}>
-                    <Icon name="Search" size={15} color={COLORS.textTertiary} />
-                    <Text style={s.dropdownEmptyText}>Sin resultados para "{airportQuery}"</Text>
-                  </View>
-                )}
+                        <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
+                      </View>
+                    </DepthCard>
+                  </TouchableOpacity>
+                ))}
               </View>
-              <View style={s.divider} />
-            </>
-          )}
+            )}
 
-          {/* Destino - Personalizado */}
-          {tripType === 'custom' && (
-            <>
-              <View style={s.fieldGroup}>
-                <Text style={s.fieldLabel}>¿ADÓNDE VAS?</Text>
-                <View style={[s.inputRow, customDestination && s.inputRowSelected]}>
-                  <Icon name="MapPin" size={18} color={customDestination ? COLORS.primary : COLORS.textTertiary} style={s.inputIcon} />
+            <DepthCard style={s.formWrap} contentStyle={s.formContent}>
+              <View style={s.field}>
+                <Text style={s.label}>Origen</Text>
+                <View style={s.inputRow}>
+                  <Icon name="CircleDot" size={16} color={COLORS.primary} />
                   <TextInput
                     style={s.input}
-                    placeholder="Describe tu destino (ej: Terminal Palmaseca, Casa en Pereira)"
+                    placeholder="Ej: Palmira, Buga, Cali..."
                     placeholderTextColor={COLORS.textTertiary}
-                    value={customDestination}
-                    onChangeText={setCustomDestination}
+                    value={origin}
+                    onChangeText={setOrigin}
                     returnKeyType="next"
                   />
-                  {customDestination.length > 0 && (
-                    <TouchableOpacity onPress={clearCustomDest} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
-                    </TouchableOpacity>
+                </View>
+              </View>
+
+              {tripType === 'airport' ? (
+                <View style={s.field}>
+                  <Text style={s.label}>Aeropuerto de destino</Text>
+                  <View style={[s.inputRow, selectedAirport && s.inputRowSelected]}>
+                    <Icon name="Plane" size={16} color={selectedAirport ? COLORS.primary : COLORS.textTertiary} />
+                    <TextInput
+                      style={s.input}
+                      placeholder="Busca por ciudad o aeropuerto"
+                      placeholderTextColor={COLORS.textTertiary}
+                      value={airportQuery}
+                      onChangeText={(t) => {
+                        setAirportQuery(t)
+                        setSelectedAirport(null)
+                        setShowDropdown(true)
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                    />
+                    {airportQuery.length > 0 && (
+                      <TouchableOpacity onPress={clearAirport} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                        <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {showDropdown && filteredAirports.length > 0 && (
+                    <View style={s.dropdown}>
+                      {filteredAirports.map((airport, idx) => (
+                        <TouchableOpacity
+                          key={airport.iata + idx}
+                          style={[s.dropdownItem, idx < filteredAirports.length - 1 && s.dropdownItemBorder]}
+                          onPress={() => selectAirport(airport)}
+                          activeOpacity={0.7}
+                        >
+                          <View style={s.dropdownIcon}>
+                            <Icon name="Plane" size={13} color={COLORS.primary} />
+                          </View>
+                          <View style={s.dropdownTexts}>
+                            <Text style={s.dropdownName}>{airport.name}</Text>
+                            <Text style={s.dropdownCity}>{airport.city} · {airport.iata}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+
+                  {showDropdown && airportQuery.length >= 2 && filteredAirports.length === 0 && !selectedAirport && (
+                    <View style={s.dropdownEmpty}>
+                      <Icon name="Search" size={15} color={COLORS.textTertiary} />
+                      <Text style={s.dropdownEmptyText}>Sin resultados para "{airportQuery}"</Text>
+                    </View>
                   )}
                 </View>
-              </View>
-              <View style={s.divider} />
-            </>
-          )}
-
-          {/* Fecha y hora */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>FECHA Y HORA DE SALIDA</Text>
-            <View style={s.dateRow}>
-              <View style={[s.inputRow, s.dateInput]}>
-                <Icon name="Calendar" size={16} color={COLORS.primary} style={s.inputIcon} />
-                <TextInput
-                  style={s.input}
-                  placeholder="AAAA-MM-DD"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={dateStr}
-                  onChangeText={setDateStr}
-                  keyboardType="numeric"
-                  maxLength={10}
-                  onFocus={() => setShowDropdown(false)}
-                />
-              </View>
-              <View style={[s.inputRow, s.timeInput]}>
-                <Icon name="Clock" size={16} color={COLORS.primary} style={s.inputIcon} />
-                <TextInput
-                  style={s.input}
-                  placeholder="HH:MM"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={timeStr}
-                  onChangeText={setTimeStr}
-                  keyboardType="numeric"
-                  maxLength={5}
-                  onFocus={() => setShowDropdown(false)}
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={s.divider} />
-
-          {/* Personas */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>PERSONAS</Text>
-            <View style={s.counterRow}>
-              <TouchableOpacity
-                style={[s.counterBtn, passengers <= 1 && s.counterBtnDisabled]}
-                onPress={() => adjustPassengers(-1)}
-                disabled={passengers <= 1}
-              >
-                <Icon name="Minus" size={18} color={passengers <= 1 ? COLORS.textTertiary : COLORS.primary} />
-              </TouchableOpacity>
-              <View style={s.counterValueBox}>
-                <Text style={s.counterValueText}>{passengers}</Text>
-              </View>
-              <TouchableOpacity
-                style={[s.counterBtn, passengers >= 8 && s.counterBtnDisabled]}
-                onPress={() => adjustPassengers(1)}
-                disabled={passengers >= 8}
-              >
-                <Icon name="Plus" size={18} color={passengers >= 8 ? COLORS.textTertiary : COLORS.primary} />
-              </TouchableOpacity>
-              <Text style={s.counterLabel}>
-                {passengers === 1 ? '1 persona' : `${passengers} personas`}
-              </Text>
-            </View>
-          </View>
-
-          <View style={s.divider} />
-
-          {/* Precio */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>PRECIO QUE OFRECES</Text>
-            <View style={s.inputRow}>
-              <Text style={s.currencyPrefix}>$</Text>
-              <TextInput
-                style={[s.input, s.priceInput]}
-                placeholder="0"
-                placeholderTextColor={COLORS.textTertiary}
-                value={offeredPrice}
-                onChangeText={(t) => setOfferedPrice(formatPriceInput(t))}
-                keyboardType="numeric"
-                onFocus={() => setShowDropdown(false)}
-              />
-            </View>
-            <View style={s.rangesBox}>
-              {PRICE_RANGES.map((r) => (
-                <View key={r.label} style={s.rangeRow}>
-                  <View style={s.rangeDot} />
-                  <Text style={s.rangeText}>{r.label}: <Text style={s.rangeValue}>{r.range}</Text></Text>
+              ) : (
+                <View style={s.field}>
+                  <Text style={s.label}>¿Adónde vas?</Text>
+                  <View style={[s.inputRow, !!customDestination && s.inputRowSelected]}>
+                    <Icon name="MapPin" size={16} color={customDestination ? COLORS.primary : COLORS.textTertiary} />
+                    <TextInput
+                      style={s.input}
+                      placeholder="Ej: Terminal Palmaseca, Casa en Pereira"
+                      placeholderTextColor={COLORS.textTertiary}
+                      value={customDestination}
+                      onChangeText={setCustomDestination}
+                      returnKeyType="next"
+                    />
+                    {customDestination.length > 0 && (
+                      <TouchableOpacity onPress={() => setCustomDestination('')} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                        <Icon name="CircleX" size={17} color={COLORS.textTertiary} />
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              ))}
-            </View>
-          </View>
+              )}
 
-          <View style={s.divider} />
+              <View style={s.field}>
+                <Text style={s.label}>Fecha y hora de salida</Text>
+                <View style={s.dateRow}>
+                  <View style={[s.inputRow, s.dateInput]}>
+                    <Icon name="Calendar" size={15} color={COLORS.primary} />
+                    <TextInput
+                      style={s.input}
+                      placeholder="AAAA-MM-DD"
+                      placeholderTextColor={COLORS.textTertiary}
+                      value={dateStr}
+                      onChangeText={setDateStr}
+                      keyboardType="numeric"
+                      maxLength={10}
+                      onFocus={() => setShowDropdown(false)}
+                    />
+                  </View>
+                  <View style={[s.inputRow, s.timeInput]}>
+                    <Icon name="Clock" size={15} color={COLORS.primary} />
+                    <TextInput
+                      style={s.input}
+                      placeholder="HH:MM"
+                      placeholderTextColor={COLORS.textTertiary}
+                      value={timeStr}
+                      onChangeText={setTimeStr}
+                      keyboardType="numeric"
+                      maxLength={5}
+                      onFocus={() => setShowDropdown(false)}
+                    />
+                  </View>
+                </View>
+              </View>
 
-          {/* Notas */}
-          <View style={s.fieldGroup}>
-            <Text style={s.fieldLabel}>NOTAS (OPCIONAL)</Text>
-            <TextInput
-              style={s.notesInput}
-              placeholder="Ej: Vuelo a las 8am, salgo a las 5am..."
-              placeholderTextColor={COLORS.textTertiary}
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={3}
-              onFocus={() => setShowDropdown(false)}
-            />
-          </View>
+              <View style={s.field}>
+                <Text style={s.label}>Pasajeros</Text>
+                <View style={s.counterRow}>
+                  <TouchableOpacity
+                    style={[s.counterBtn, passengers <= 1 && s.counterBtnDisabled]}
+                    onPress={() => adjustPassengers(-1)}
+                    disabled={passengers <= 1}
+                  >
+                    <Icon name="Minus" size={18} color={passengers <= 1 ? COLORS.textTertiary : COLORS.primary} />
+                  </TouchableOpacity>
+                  <Text style={s.counterValue}>{passengers}</Text>
+                  <TouchableOpacity
+                    style={[s.counterBtn, passengers >= 8 && s.counterBtnDisabled]}
+                    onPress={() => adjustPassengers(1)}
+                    disabled={passengers >= 8}
+                  >
+                    <Icon name="Plus" size={18} color={passengers >= 8 ? COLORS.textTertiary : COLORS.primary} />
+                  </TouchableOpacity>
+                  <Text style={s.counterLabel}>{passengers === 1 ? '1 persona' : `${passengers} personas`}</Text>
+                </View>
+              </View>
 
-        </View>
+              <View style={s.field}>
+                <Text style={s.label}>Precio que ofreces</Text>
+                <View style={s.inputRow}>
+                  <Text style={s.currency}>$</Text>
+                  <TextInput
+                    style={[s.input, s.priceInput]}
+                    placeholder="0"
+                    placeholderTextColor={COLORS.textTertiary}
+                    value={offeredPrice}
+                    onChangeText={(t) => setOfferedPrice(formatPriceInput(t))}
+                    keyboardType="numeric"
+                    onFocus={() => setShowDropdown(false)}
+                  />
+                </View>
+                <View style={s.ranges}>
+                  {PRICE_RANGES.map((r) => (
+                    <View key={r.label} style={s.rangeRow}>
+                      <View style={s.rangeDot} />
+                      <Text style={s.rangeText}>{r.label}: <Text style={s.rangeValue}>{r.range}</Text></Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
 
-        {/* Botón publicar */}
-        <TouchableOpacity
-          style={[s.publishBtnWrap, loading && s.publishBtnDisabled]}
-          onPress={handlePublish}
-          disabled={loading}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.publishBtn}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <>
-                <Icon name="Send" size={18} color="#fff" />
-                <Text style={s.publishBtnText}>Publicar solicitud</Text>
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+              <View style={[s.field, s.fieldLast]}>
+                <Text style={s.label}>Notas (opcional)</Text>
+                <TextInput
+                  style={s.notesInput}
+                  placeholder="Ej: Vuelo a las 8am, salgo a las 5am..."
+                  placeholderTextColor={COLORS.textTertiary}
+                  value={notes}
+                  onChangeText={setNotes}
+                  multiline
+                  numberOfLines={3}
+                  onFocus={() => setShowDropdown(false)}
+                />
+              </View>
+            </DepthCard>
 
-        <Text style={s.disclaimer}>
-          Al publicar, los conductores verificados podrán ver tu solicitud.
-        </Text>
-      </ScrollView>
+            <TouchableOpacity
+              style={[s.publishBtn, loading && s.publishBtnDisabled]}
+              onPress={handlePublish}
+              disabled={loading}
+              activeOpacity={0.85}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.white} size="small" />
+              ) : (
+                <>
+                  <Icon name="Send" size={18} color={COLORS.white} />
+                  <Text style={s.publishBtnText}>Publicar solicitud</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <Text style={s.disclaimer}>Al publicar, los conductores verificados podrán ver tu solicitud.</Text>
+          </ScrollView>
         </KeyboardAvoidingView>
       )}
 
-      {/* TAB: MIS SOLICITUDES */}
       {activeTab === 'my_requests' && (
-        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+        <ScrollView contentContainerStyle={s.scroll}>
           {loadingRequests ? (
-            <View style={s.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <View style={s.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
           ) : activeRequests.length === 0 ? (
-            <View style={s.emptyState}>
-              <Icon name="Folder" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
-              <Text style={s.emptyTitle}>Sin solicitudes activas</Text>
-              <Text style={s.emptyText}>Crea una solicitud para que los conductores puedan verte</Text>
-            </View>
+            renderEmpty('noData', 'Sin solicitudes activas', 'Crea una solicitud para que los conductores puedan verte')
           ) : (
-            <View style={s.requestsList}>
-              {activeRequests.map(req => (
-                <TouchableOpacity
-                  key={req.id}
-                  style={s.requestCard}
-                  onPress={() => navigation.navigate('AirportRequestDetails' as never, { requestId: req.id } as never)}
-                  activeOpacity={0.75}
-                >
-                  <View style={s.requestCardHeader}>
-                    <View>
-                      <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Icon name="ArrowRight" size={14} color={COLORS.textTertiary} />
-                      <Text style={s.requestTo}>{req.destination}</Text>
+            activeRequests.map(req => (
+              <TouchableOpacity key={req.id} onPress={() => openDetails(req.id)} activeOpacity={0.8}>
+                <DepthCard style={s.cardWrap} contentStyle={s.cardContent}>
+                  <View style={s.cardTop}>
+                    <View style={s.cardTopInfo}>
+                      <RouteRows from={req.origin} to={req.destination} />
                     </View>
-                    <View style={s.requestPrice}>
-                      <Text style={s.requestPriceLabel}>Ofrecido</Text>
-                      <Text style={s.requestPriceValue}>${req.offered_price.toLocaleString('es-CO')}</Text>
-                    </View>
+                    <Text style={s.priceText}>${req.offered_price.toLocaleString('es-CO')}</Text>
                   </View>
-                  <View style={s.requestDivider} />
-                  <View style={s.requestCardFooter}>
-                    <View style={s.requestDetail}>
+                  <View style={s.cardFooter}>
+                    <View style={s.metaItem}>
                       <Icon name="Clock" size={13} color={COLORS.textTertiary} />
-                      <Text style={s.requestDetailText}>
-                        {new Date(req.departure_time).toLocaleDateString('es-CO')}
-                      </Text>
+                      <Text style={s.metaText}>{new Date(req.departure_time).toLocaleDateString('es-CO')}</Text>
                     </View>
-                    <View style={s.requestDetail}>
+                    <View style={s.metaItem}>
                       <Icon name="Users" size={13} color={COLORS.textTertiary} />
-                      <Text style={s.requestDetailText}>{req.passengers} pasajero(s)</Text>
+                      <Text style={s.metaText}>{req.passengers} pasajero(s)</Text>
                     </View>
-                    <View style={[s.requestBadge, s.requestBadgeActive]}>
-                      <Text style={s.requestBadgeText}>Activa</Text>
+                    <View style={s.tag}>
+                      <Text style={s.tagText}>Activa</Text>
                     </View>
                   </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                </DepthCard>
+              </TouchableOpacity>
+            ))
           )}
         </ScrollView>
       )}
 
-      {/* TAB: VIAJES ACTIVOS */}
       {activeTab === 'active_trips' && (
-        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+        <ScrollView contentContainerStyle={s.scroll}>
           {loadingRequests ? (
-            <View style={s.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <View style={s.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
           ) : activeTrips.length === 0 ? (
-            <View style={s.emptyState}>
-              <Icon name="Car" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
-              <Text style={s.emptyTitle}>Sin viajes activos</Text>
-              <Text style={s.emptyText}>Tus viajes confirmados aparecerán aquí</Text>
-            </View>
+            renderEmpty('routePlanning', 'Sin viajes activos', 'Tus viajes confirmados aparecerán aquí')
           ) : (
-            <View style={s.requestsList}>
-              {activeTrips.map(req => (
+            activeTrips.map(req => (
+              <DepthCard key={req.id} style={s.cardWrap} contentStyle={s.cardContent}>
+                <View style={s.cardTop}>
+                  <View style={s.cardTopInfo}>
+                    <RouteRows from={req.origin} to={req.destination} />
+                  </View>
+                  <Text style={s.priceText}>${req.offered_price.toLocaleString('es-CO')}</Text>
+                </View>
+                <View style={s.divider} />
+                <View style={s.detailList}>
+                  <View style={s.metaItem}>
+                    <Icon name="UserCircle" size={15} color={COLORS.primary} />
+                    <Text style={s.detailValue}>{req.driver_name || 'Conductor'}</Text>
+                  </View>
+                  <View style={s.metaItem}>
+                    <Icon name="Calendar" size={14} color={COLORS.textTertiary} />
+                    <Text style={s.metaText}>{new Date(req.departure_time).toLocaleDateString('es-CO')}</Text>
+                  </View>
+                  <View style={s.metaItem}>
+                    <Icon name="Clock" size={14} color={COLORS.textTertiary} />
+                    <Text style={s.metaText}>{new Date(req.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</Text>
+                  </View>
+                  <View style={s.metaItem}>
+                    <Icon name="Users" size={14} color={COLORS.textTertiary} />
+                    <Text style={s.metaText}>{req.passengers} {req.passengers === 1 ? 'persona' : 'personas'}</Text>
+                  </View>
+                  {!!req.notes && (
+                    <View style={s.metaItem}>
+                      <Icon name="MessageCircle" size={14} color={COLORS.textTertiary} />
+                      <Text style={s.metaText} numberOfLines={1}>{req.notes}</Text>
+                    </View>
+                  )}
+                </View>
+                <View style={s.divider} />
                 <TouchableOpacity
-                  key={req.id}
-                  style={[s.requestCard, s.activeTripCard]}
-                  onPress={() => navigation.navigate('AirportRequestDetails' as never, { requestId: req.id } as never)}
-                  activeOpacity={0.75}
+                  style={s.chatBtn}
+                  onPress={() => {
+                    setChatRequest(req)
+                    setShowChatModal(true)
+                  }}
+                  activeOpacity={0.7}
                 >
-                  <View style={s.requestCardHeader}>
-                    <View>
-                      <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Icon name="ArrowRight" size={14} color={COLORS.primary} />
-                      <Text style={s.requestTo}>{req.destination}</Text>
-                    </View>
-                    <View style={s.requestPrice}>
-                      <Text style={s.requestPriceLabel}>Precio</Text>
-                      <Text style={s.requestPriceValue}>${req.offered_price.toLocaleString('es-CO')}</Text>
-                    </View>
-                  </View>
-                  <View style={s.requestDivider} />
-                  <View style={s.requestCardFooter}>
-                    <View style={s.requestDetail}>
-                      <Icon name="UserCircle" size={16} color={COLORS.primary} />
-                      <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
-                    </View>
-                    <View style={[s.requestBadge, s.requestBadgeAccepted]}>
-                      <Text style={s.requestBadgeText}>Confirmado</Text>
-                    </View>
-                  </View>
-                  <View style={s.requestDivider} />
-                  <View style={s.activeTripDetails}>
-                    <View style={s.detailRow}>
-                      <Icon name="Calendar" size={14} color={COLORS.textTertiary} />
-                      <Text style={s.detailLabel}>Fecha:</Text>
-                      <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleDateString('es-CO')}</Text>
-                    </View>
-                    <View style={s.detailRow}>
-                      <Icon name="Clock" size={14} color={COLORS.textTertiary} />
-                      <Text style={s.detailLabel}>Hora:</Text>
-                      <Text style={s.detailValue}>{new Date(req.departure_time).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}</Text>
-                    </View>
-                    <View style={s.detailRow}>
-                      <Icon name="Users" size={14} color={COLORS.textTertiary} />
-                      <Text style={s.detailLabel}>Pasajeros:</Text>
-                      <Text style={s.detailValue}>{req.passengers} {req.passengers === 1 ? 'persona' : 'personas'}</Text>
-                    </View>
-                    {req.notes && (
-                      <View style={s.detailRow}>
-                        <Icon name="MessageCircle" size={14} color={COLORS.textTertiary} />
-                        <Text style={s.detailLabel}>Notas:</Text>
-                        <Text style={s.detailValue} numberOfLines={1}>{req.notes}</Text>
-                      </View>
-                    )}
-                  </View>
-                  <View style={s.requestDivider} />
-                  {/*  Botón de Chat para pasajero */}
-                  <TouchableOpacity
-                    style={s.chatButtonRow}
-                    onPress={() => {
-                      setChatRequest(req);
-                      setShowChatModal(true);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Icon name="MessageCircle" size={16} color={COLORS.primary} />
-                    <Text style={s.chatButtonText}>Chatear con el conductor</Text>
-                  </TouchableOpacity>
+                  <Icon name="MessageCircle" size={16} color={COLORS.primary} />
+                  <Text style={s.chatBtnText}>Chatear con el conductor</Text>
                 </TouchableOpacity>
-              ))}
-            </View>
+              </DepthCard>
+            ))
           )}
         </ScrollView>
       )}
 
-      {/* TAB: VIAJES COMPLETADOS */}
       {activeTab === 'completed_trips' && (
-        <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+        <ScrollView contentContainerStyle={s.scroll}>
           {loadingRequests ? (
-            <View style={s.center}>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-            </View>
+            <View style={s.center}><ActivityIndicator size="large" color={COLORS.primary} /></View>
           ) : completedTrips.length === 0 ? (
-            <View style={s.emptyState}>
-              <Icon name="CheckCheck" size={48} color={COLORS.textTertiary} style={s.emptyIcon} />
-              <Text style={s.emptyTitle}>Sin viajes completados</Text>
-              <Text style={s.emptyText}>Una vez completes viajes, podrás calificar aquí</Text>
-            </View>
+            renderEmpty('allChecked', 'Sin viajes completados', 'Una vez completes viajes, podrás calificar aquí')
           ) : (
-            <View style={s.requestsList}>
-              {completedTrips.map(req => (
-                <TouchableOpacity
-                  key={req.id}
-                  style={[s.requestCard, s.completedTripCard]}
-                  onPress={() => navigation.navigate('CompletedTrips' as never, { requestId: req.id } as never)}
-                  activeOpacity={0.75}
-                >
-                  <View style={s.requestCardHeader}>
-                    <View>
-                      <Text style={s.requestFrom}>{req.origin}</Text>
-                      <Icon name="ArrowRight" size={14} color={COLORS.textTertiary} />
-                      <Text style={s.requestTo}>{req.destination}</Text>
+            completedTrips.map(req => (
+              <TouchableOpacity
+                key={req.id}
+                onPress={() => navigation.navigate('CompletedTrips' as never, { requestId: req.id } as never)}
+                activeOpacity={0.8}
+              >
+                <DepthCard style={s.cardWrap} contentStyle={s.cardContent}>
+                  <View style={s.cardTop}>
+                    <View style={s.cardTopInfo}>
+                      <RouteRows from={req.origin} to={req.destination} />
                     </View>
-                    <View style={s.requestPrice}>
-                      <Text style={s.requestPriceLabel}>Pagado</Text>
-                      <Text style={s.requestPriceValue}>${req.offered_price.toLocaleString('es-CO')}</Text>
-                    </View>
+                    <Text style={s.priceText}>${req.offered_price.toLocaleString('es-CO')}</Text>
                   </View>
-                  <View style={s.requestDivider} />
-                  <View style={s.requestCardFooter}>
-                    <View style={s.requestDetail}>
-                      <Icon name="UserCircle" size={16} color={COLORS.textTertiary} />
-                      <Text style={s.requestDetailText}>{req.driver_name || 'Conductor'}</Text>
+                  <View style={s.cardFooter}>
+                    <View style={s.metaItem}>
+                      <Icon name="UserCircle" size={15} color={COLORS.textTertiary} />
+                      <Text style={s.metaText}>{req.driver_name || 'Conductor'}</Text>
                     </View>
-                    <View style={[s.requestBadge, s.requestBadgeCompleted]}>
+                    <View style={[s.tag, s.tagSuccess]}>
                       <Icon name="CircleCheck" size={13} color={COLORS.success} />
-                      <Text style={s.requestBadgeCompletedText}>Completado</Text>
+                      <Text style={[s.tagText, s.tagTextSuccess]}>Completado</Text>
                     </View>
                   </View>
-                </TouchableOpacity>
-              ))}
-            </View>
+                </DepthCard>
+              </TouchableOpacity>
+            ))
           )}
         </ScrollView>
       )}
 
-      {/*  Modal de Chat de Negociación */}
       {chatRequest && (
         <NegotiationChatModal
           visible={showChatModal}
@@ -834,449 +657,22 @@ export default function AirportRequestScreen() {
 
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.surface },
+  flex: { flex: 1 },
 
-  // Header con gradiente
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerHero: { flex: 1, alignItems: 'center', gap: 3 },
-  headerTitle: { fontSize: 17, fontWeight: '800', color: '#fff', letterSpacing: -0.3 },
+  headerHero: { flex: 1, gap: 2 },
+  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
-  scroll: { paddingBottom: 40 },
-
-  formCard: {
-    backgroundColor: '#fff',
-  },
-  fieldGroup: { padding: SPACING.lg },
-  divider: { height: 1, backgroundColor: COLORS.surfaceAlt },
-  fieldLabel: {
-    fontSize: 11, fontWeight: '700', color: COLORS.textTertiary,
-    letterSpacing: 0.8, marginBottom: SPACING.sm,
-  },
-
-  inputRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, paddingVertical: 11,
-  },
-  inputRowSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryTint,
-  },
-  inputIcon: { marginRight: SPACING.sm },
-  input: { flex: 1, fontSize: 15, color: COLORS.textPrimary, padding: 0 },
-
-  // Autocomplete dropdown
-  dropdown: {
-    marginTop: 6,
-    backgroundColor: '#fff',
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  dropdownItem: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-    paddingHorizontal: SPACING.md, paddingVertical: 11,
-  },
-  dropdownItemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.surfaceAlt },
-  dropdownIcon: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  dropdownTexts: { flex: 1 },
-  dropdownName: { fontSize: 14, fontWeight: '600', color: COLORS.textPrimary },
-  dropdownCity: { fontSize: 12, color: COLORS.textTertiary, marginTop: 1 },
-  dropdownEmpty: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    marginTop: 6, paddingHorizontal: SPACING.md, paddingVertical: 10,
-    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  dropdownEmptyText: { fontSize: 13, color: COLORS.textTertiary },
-
-  dateRow: { flexDirection: 'row', gap: SPACING.sm },
-  dateInput: { flex: 2 },
-  timeInput: { flex: 1 },
-
-  currencyPrefix: { fontSize: 16, fontWeight: '700', color: COLORS.textSecondary, marginRight: 6 },
-  priceInput: { fontSize: 18, fontWeight: '700' },
-
-  rangesBox: { marginTop: SPACING.sm, gap: 5 },
-  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  rangeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: COLORS.primary, opacity: 0.4 },
-  rangeText: { fontSize: 12, color: COLORS.textTertiary },
-  rangeValue: { fontWeight: '600', color: COLORS.textSecondary },
-
-  counterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  counterBtn: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: COLORS.background, borderWidth: 1.5, borderColor: COLORS.border,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  counterBtnDisabled: { opacity: 0.4 },
-  counterValueBox: {
-    width: 44, height: 38, borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primaryTint, borderWidth: 1.5, borderColor: COLORS.primary + '40',
-    justifyContent: 'center', alignItems: 'center',
-  },
-  counterValueText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
-  counterLabel: { fontSize: 14, color: COLORS.textSecondary, marginLeft: SPACING.sm },
-
-  notesInput: {
-    backgroundColor: COLORS.background, borderRadius: RADIUS.md,
-    borderWidth: 1.5, borderColor: COLORS.border,
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    fontSize: 15, color: COLORS.textPrimary, minHeight: 80,
-    textAlignVertical: 'top',
-  },
-
-  publishBtnWrap: {
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
-    borderRadius: RADIUS.md, overflow: 'hidden',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35, shadowRadius: 12, elevation: 8,
-  },
-  publishBtnDisabled: { opacity: 0.6 },
-  publishBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
-    paddingVertical: 15,
-  },
-  publishBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
-
-  disclaimer: {
-    fontSize: 12, color: COLORS.textTertiary, textAlign: 'center', lineHeight: 18,
-    marginHorizontal: SPACING.lg, marginTop: SPACING.md, marginBottom: SPACING.lg,
-  },
-
-  // Active requests section
-  activeRequestsSection: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceAlt,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  activeRequestsList: {
-    gap: SPACING.sm,
-  },
-  activeRequestCard: {
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
-  },
-  activeRequestTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  activeRequestInfo: {
-    flex: 1,
-  },
-  activeRequestDest: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    marginBottom: 3,
-  },
-  activeRequestTime: {
-    fontSize: 12,
-    color: COLORS.textTertiary,
-  },
-  activeRequestPriceBox: {
-    backgroundColor: COLORS.successLight,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-  },
-  activeRequestPrice: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.success,
-  },
-  activeRequestBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  activeRequestBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.primaryTint,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.sm,
-  },
-  activeRequestBadgeUpdated: {
-    backgroundColor: COLORS.warningLight,
-  },
-  activeRequestBadgeText: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: COLORS.primary,
-  },
-  activeRequestBadgeTextUpdated: {
-    color: COLORS.warningDark,
-  },
-
-  // Trip type selector
-  tripTypeSelector: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: '#fff',
-  },
-  tripTypeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryTint,
-  },
-  tripTypeBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  tripTypeBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  tripTypeBtnTextActive: {
-    color: '#fff',
-  },
-
-  // Destination chips
-
-  // Tab toggle button
-
-  // Scroll content
-  scrollContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: 40,
-  },
-
-  // Empty state
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.xxxl,
-  },
-  emptyIcon: {
-    marginBottom: SPACING.lg,
-    opacity: 0.4,
-  },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: COLORS.textTertiary,
-    textAlign: 'center',
-    maxWidth: 240,
-  },
-
-  // Requests list
-  requestsList: {
-    paddingVertical: SPACING.lg,
-    gap: SPACING.md,
-  },
-  requestCard: {
-    backgroundColor: '#fff',
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  requestCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.md,
-  },
-  requestFrom: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: 4,
-  },
-  requestTo: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.error,
-    marginTop: 4,
-  },
-  requestPrice: {
-    alignItems: 'flex-end',
-  },
-  requestPriceLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.textTertiary,
-    marginBottom: 2,
-  },
-  requestPriceValue: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: COLORS.primary,
-  },
-  requestDivider: {
-    height: 1,
-    backgroundColor: COLORS.surfaceAlt,
-    marginHorizontal: SPACING.lg,
-  },
-  requestCardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  requestDetail: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  requestDetailText: {
-    fontSize: 12,
-    color: COLORS.textTertiary,
-  },
-  requestBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 3,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surfaceAlt,
-  },
-  requestBadgeActive: {
-    backgroundColor: COLORS.successLight,
-  },
-  requestBadgeAccepted: {
-    backgroundColor: COLORS.primaryTint,
-  },
-  requestBadgeCompleted: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: COLORS.successLight,
-  },
-  requestBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.success,
-  },
-  requestBadgeCompletedText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: COLORS.success,
-  },
-
-  // Active trips styling
-  activeTripCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-  },
-
-  // Trip details section
-  activeTripDetails: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    gap: SPACING.sm,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  detailLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.textTertiary,
-    minWidth: 60,
-  },
-  detailValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    flex: 1,
-  },
-
-  // Chat button in active trips
-  chatButtonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    justifyContent: 'center',
-  },
-  chatButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.primary,
-  },
-
-  // Completed trips styling
-  completedTripCard: {
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.success,
-    opacity: 0.9,
-  },
-
-  // Tabs navigation
   tabsContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     paddingHorizontal: SPACING.sm,
@@ -1288,22 +684,202 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
     borderBottomWidth: 3,
     borderBottomColor: 'transparent',
   },
-  tabActive: {
-    borderBottomColor: COLORS.primary,
+  tabActive: { borderBottomColor: COLORS.primary },
+  tabText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textTertiary },
+  tabTextActive: { color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold },
+
+  segmented: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    margin: SPACING.lg,
+    marginBottom: SPACING.sm,
+    padding: 4,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  tabText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
+  segment: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 44,
+    borderRadius: RADIUS.md,
   },
-  tabTextActive: {
+  segmentActive: { backgroundColor: COLORS.primary },
+  segmentText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  segmentTextActive: { color: COLORS.white },
+
+  scroll: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: SPACING.xxxl },
+
+  block: { marginBottom: SPACING.lg },
+  blockTitle: { ...TYPOGRAPHY.label, color: COLORS.textTertiary, marginBottom: SPACING.sm },
+
+  cardWrap: { marginBottom: SPACING.md },
+  cardContent: { padding: SPACING.lg },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: SPACING.md },
+  cardTopInfo: { flex: 1 },
+  cardDest: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  cardMeta: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginTop: 2 },
+  cardBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: SPACING.md },
+  cardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  priceText: { ...TYPOGRAPHY.h3, color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  routeRows: { gap: SPACING.sm },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  routeText: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textPrimary, flex: 1 },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.md },
+  detailList: { gap: SPACING.sm },
+  detailValue: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textPrimary },
+  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, flexShrink: 1 },
+
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
+  },
+  tagText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  tagWarning: { backgroundColor: COLORS.warningLight },
+  tagTextWarning: { color: COLORS.warningDark },
+  tagSuccess: { backgroundColor: COLORS.successLight },
+  tagTextSuccess: { color: COLORS.success },
+
+  chatBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm, paddingVertical: SPACING.xs },
+  chatBtnText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+
+  formWrap: { marginBottom: SPACING.lg },
+  formContent: { padding: SPACING.lg, gap: SPACING.lg },
+  field: { gap: SPACING.sm },
+  fieldLast: { marginBottom: 0 },
+  label: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    minHeight: 52,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.md,
+  },
+  inputRowSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryTint },
+  input: { flex: 1, ...TYPOGRAPHY.body, color: COLORS.textPrimary, paddingVertical: SPACING.sm },
+  priceInput: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold },
+  currency: { ...TYPOGRAPHY.h4, color: COLORS.textSecondary },
+
+  dropdown: {
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    overflow: 'hidden',
+  },
+  dropdownItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
+  dropdownItemBorder: { borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  dropdownIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: COLORS.primaryTint,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownTexts: { flex: 1 },
+  dropdownName: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textPrimary },
+  dropdownCity: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
+  dropdownEmpty: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  dropdownEmptyText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
+
+  dateRow: { flexDirection: 'row', gap: SPACING.sm },
+  dateInput: { flex: 3 },
+  timeInput: { flex: 2 },
+
+  counterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  counterBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  counterBtnDisabled: { opacity: 0.4 },
+  counterValue: {
+    ...TYPOGRAPHY.h4,
     color: COLORS.primary,
-    fontWeight: '700',
+    minWidth: 40,
+    textAlign: 'center',
+    fontWeight: TYPOGRAPHY.weight.extrabold,
   },
+  counterLabel: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, marginLeft: SPACING.xs },
+
+  ranges: { gap: 6 },
+  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rangeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: COLORS.primary },
+  rangeText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
+  rangeValue: { fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+
+  notesInput: {
+    ...TYPOGRAPHY.body,
+    minHeight: 80,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    color: COLORS.textPrimary,
+    textAlignVertical: 'top',
+  },
+
+  publishBtn: {
+    height: 56,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  publishBtnDisabled: { opacity: 0.6 },
+  publishBtnText: { ...TYPOGRAPHY.button, color: COLORS.white, fontWeight: TYPOGRAPHY.weight.bold },
+  disclaimer: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
+    textAlign: 'center',
+    marginTop: SPACING.md,
+  },
+
+  emptyState: { alignItems: 'center', paddingVertical: SPACING.xxxl, paddingHorizontal: SPACING.xl, gap: SPACING.sm },
+  emptyTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textTertiary, textAlign: 'center' },
 })
-
-
