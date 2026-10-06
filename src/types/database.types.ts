@@ -2584,6 +2584,7 @@ export type Database = {
           id: string
           is_active: boolean
           make: string
+          photo_url: string | null
           plate: string
           rejection_reason: string | null
           status: string
@@ -2612,6 +2613,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           make?: string
+          photo_url?: string | null
           plate?: string
           rejection_reason?: string | null
           status?: string
@@ -2906,6 +2908,7 @@ export type Database = {
         Returns: boolean
       }
       approve_vehicle: { Args: { p_vehicle_id: string }; Returns: undefined }
+      set_vehicle_photo: { Args: { p_vehicle_id: string; p_url: string }; Returns: undefined }
       auto_confirm_expired_trips: { Args: never; Returns: number }
       can_view_profile: { Args: { p_target: string }; Returns: boolean }
       cancel_airport_request: {

@@ -89,7 +89,7 @@ export default function ProfileScreen() {
     const [{ data: vehicle }, { data: routes }, { data: docs }] = await Promise.all([
       supabase
         .from('vehicles')
-        .select('id, plate, make, year, color, status, is_active')
+        .select('id, plate, make, year, color, status, is_active, photo_url')
         .eq('driver_id', user.id)
         .in('status', ['pending', 'verified'])
         .order('is_active', { ascending: false })
@@ -108,11 +108,6 @@ export default function ProfileScreen() {
         .select('document_type, status, expiry_date')
         .eq('driver_id', user.id),
     ])
-    const { data: photoRow } = await supabase
-      .from('profiles')
-      .select('vehicle_photo_url')
-      .eq('id', user.id)
-      .maybeSingle()
     if (vehicle) {
       setDriverVehicle({
         id: vehicle.id,
@@ -122,7 +117,7 @@ export default function ProfileScreen() {
         vehicle_year: vehicle.year,
         vehicle_color: vehicle.color,
         vehicle_status: vehicle.status,
-        vehicle_photo_url: photoRow?.vehicle_photo_url ?? null,
+        vehicle_photo_url: vehicle.photo_url ?? null,
       })
     } else {
       setDriverVehicle(null)
@@ -401,7 +396,9 @@ export default function ProfileScreen() {
       const newUrl = await regenerateExpiredPhotoUrl(currentUrl, 'vehicle-photos')
       if (newUrl === currentUrl) return
       setRegeneratedVehiclePhotoUrl(newUrl)
-      await supabase.from('profiles').update({ vehicle_photo_url: newUrl }).eq('id', user?.id ?? '')
+      if (driverVehicle?.id) {
+        await supabase.rpc('set_vehicle_photo', { p_vehicle_id: String(driverVehicle.id), p_url: newUrl })
+      }
     } catch (err) {
       console.error('Error regenerando URL de foto del vehículo:', err)
     }

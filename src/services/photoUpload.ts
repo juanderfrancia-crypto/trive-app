@@ -238,6 +238,10 @@ export async function uploadVehiclePhoto(
       throw new Error('No tienes permiso para subir fotos como este usuario')
     }
 
+    if (!routeId) {
+      throw new Error('Primero registra tu vehículo para agregar su foto')
+    }
+
     // Read file as Uint8Array using fetch (cross-platform compatible)
     const bytes = await uriToUint8Array(fileUri)
 
@@ -289,33 +293,14 @@ export async function uploadVehiclePhoto(
     const photoUrl = await getStorageUrl('vehicle-photos', uploadedFilePath, { allowPublicUrl: true })
     console.log('✅ [uploadVehiclePhoto] URL generada:', photoUrl.substring(0, 100) + '...')
 
-    // La foto del vehículo del conductor vive en su perfil (columna permitida para el propio usuario).
-    const { error: dbError } = await supabase
-      .from('profiles')
-      .update({ vehicle_photo_url: photoUrl, updated_at: new Date().toISOString() })
-      .eq('id', driverId)
+    const { error: dbError } = await supabase.rpc('set_vehicle_photo', {
+      p_vehicle_id: routeId,
+      p_url: photoUrl,
+    })
 
     if (dbError) {
       console.error('❌ Error guardando la foto del vehículo:', dbError)
       throw new Error('No se pudo guardar la foto del vehículo')
-    }
-
-    // ✅ NUEVO: Guardar vehicle_photo_url en profiles (para caching)
-    try {
-      console.log('📝 [uploadVehiclePhoto] Actualizando profiles con driverId:', driverId)
-      const { error: profileError, data: profileData } = await supabase
-        .from('profiles')
-        .update({ vehicle_photo_url: photoUrl })
-        .eq('id', driverId)
-        .select()
-
-      if (profileError) {
-        console.error('❌ Error updating profile vehicle photo URL:', profileError)
-      } else {
-        console.log('✅ [uploadVehiclePhoto] Guardada en profiles:', photoUrl.substring(0, 100) + '...')
-      }
-    } catch (profileErr) {
-      console.error('❌ Error saving profile vehicle photo URL:', profileErr)
     }
 
     return photoUrl
