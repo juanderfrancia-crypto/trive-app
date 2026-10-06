@@ -1,5 +1,7 @@
+import { useEffect } from 'react'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { View, StyleSheet, Platform } from 'react-native'
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
 import Icon, { type IconName } from '../components/Icon'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
@@ -13,6 +15,26 @@ import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
 
 const Tab = createBottomTabNavigator()
+
+function TabIcon({ name, color, size, focused }: { name: IconName; color: string; size: number; focused: boolean }) {
+  const progreso = useSharedValue(focused ? 1 : 0)
+
+  useEffect(() => {
+    progreso.value = withSpring(focused ? 1 : 0, { damping: 16, stiffness: 180 })
+  }, [focused, progreso])
+
+  const pastilla = useAnimatedStyle(() => ({
+    opacity: progreso.value,
+    transform: [{ scaleX: 0.6 + 0.4 * progreso.value }],
+  }))
+
+  return (
+    <View style={styles.iconBox}>
+      <Animated.View style={[styles.pill, pastilla]} />
+      <Icon name={name} size={size} color={color} />
+    </View>
+  )
+}
 
 function TripsTab() {
   const isDriver = useAppStore((s) => isDriverRole(s.user))
@@ -48,34 +70,35 @@ export default function TabNavigator() {
           }
 
           return (
-            <View style={focused ? styles.iconActive : styles.iconInactive}>
-              <Icon name={iconName} size={size} color={focused ? COLORS.primary : color} />
-            </View>
+            <TabIcon name={iconName} size={size} focused={focused} color={focused ? COLORS.primary : color} />
           )
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textSecondary,
         tabBarContainerStyle: {
-          backgroundColor: COLORS.surface,
+          backgroundColor: COLORS.white,
           borderTopWidth: 0,
         },
+        tabBarBackground: () => (
+          <View style={styles.barBackground}>
+            <View style={styles.barShadow} />
+            <View style={styles.barSurface} />
+          </View>
+        ),
         tabBarStyle: {
-          backgroundColor: COLORS.surface,
-          borderTopWidth: 0,
-          height: 55 + insets.bottom,
-          paddingBottom: SPACING.sm + insets.bottom,
-          paddingTop: SPACING.xs,
-          paddingHorizontal: 0,
-          marginHorizontal: 0,
-          marginBottom: 0,
-          borderRadius: 0,
-          // Android: elevation baja para sombra sutil
-          elevation: Platform.OS === 'android' ? 4 : 0,
-          // iOS: sombra suave
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 6,
+          position: 'relative',
+          marginHorizontal: SPACING.lg,
+          marginBottom: SPACING.sm + insets.bottom,
+          height: 64,
+          paddingTop: SPACING.sm,
+          paddingBottom: SPACING.sm,
+          borderRadius: RADIUS.xl,
+          borderWidth: 1,
+          borderTopWidth: 1,
+          borderColor: COLORS.border,
+          backgroundColor: COLORS.white,
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarIconSize: 22,
         sceneContainerStyle: {
@@ -115,16 +138,36 @@ export default function TabNavigator() {
 }
 
 const styles = StyleSheet.create({
-  iconActive: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
-    paddingBottom: 4,
+  barBackground: {
+    flex: 1,
   },
-  iconInactive: {
+  barShadow: {
+    position: 'absolute',
+    top: SPACING.sm,
+    left: SPACING.md,
+    right: SPACING.md,
+    bottom: -SPACING.sm,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.shadowBlue,
+  },
+  barSurface: {
+    flex: 1,
+    borderRadius: RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  iconBox: {
+    width: 56,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingBottom: 4,
+  },
+  pill: {
+    position: 'absolute',
+    width: 56,
+    height: 32,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
   },
 })

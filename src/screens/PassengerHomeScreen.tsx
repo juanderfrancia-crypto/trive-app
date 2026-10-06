@@ -212,7 +212,7 @@ export default function PassengerHomeScreen() {
 
         <Text style={styles.headline}>¿A dónde vas hoy?</Text>
 
-        <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent}>
+        <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent} borderColor={COLORS.textPrimary}>
           <View style={styles.searchRow}>
             <Icon name="CircleDot" size={18} color={COLORS.primary} />
             <TextInput
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
   ridesList: { marginTop: SPACING.sm + 2, gap: SPACING.sm + 2 },
   rideRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border,
+    borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.textPrimary,
   },
   rideTime: { minWidth: 56, alignItems: 'center' },
   rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },

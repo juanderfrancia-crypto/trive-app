@@ -5,35 +5,45 @@ interface Props {
   children: React.ReactNode
   style?: StyleProp<ViewStyle>
   contentStyle?: StyleProp<ViewStyle>
+  borderColor?: string
 }
 
-// Profundidad sin sombra de elevación: en algunos Android la sombra sale cuadrada.
-export default function DepthCard({ children, style, contentStyle }: Props) {
+// Sombra en capas translúcidas: la elevación de Android sale cuadrada en algunos equipos.
+export default function DepthCard({ children, style, contentStyle, borderColor = COLORS.border }: Props) {
   return (
     <View style={[styles.wrap, style]}>
-      <View style={styles.base} />
-      <View style={[styles.front, contentStyle]}>{children}</View>
+      <View style={styles.shadowOuter} />
+      <View style={styles.shadowInner} />
+      <View style={[styles.front, { borderColor }, contentStyle]}>{children}</View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
-  base: {
+  shadowOuter: {
     position: 'absolute',
     top: SPACING.sm,
-    left: SPACING.sm,
-    right: SPACING.sm,
+    left: -SPACING.xs,
+    right: -SPACING.xs,
+    bottom: -SPACING.md,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.shadowSoft,
+  },
+  shadowInner: {
+    position: 'absolute',
+    top: SPACING.xs,
+    left: SPACING.xs / 2,
+    right: SPACING.xs / 2,
     bottom: -SPACING.sm,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primaryTint,
+    backgroundColor: COLORS.shadowSoftStrong,
   },
   front: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.border,
     backgroundColor: COLORS.white,
     overflow: 'hidden',
     padding: SPACING.lg,

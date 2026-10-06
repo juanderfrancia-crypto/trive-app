@@ -6,6 +6,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import Icon from '../components/Icon'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
+import DepthCard from '../components/DepthCard'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -25,8 +26,18 @@ const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
   buseta: 'Bus',
 }
 
-const DELAY_OPTIONS = [0, 5, 10, 15, 20]
-const DURATION_OPTIONS = [60, 90, 120, 150, 180, 240]
+const parseHHMM = (texto: string): number | null => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(texto.trim())
+  if (!m) return null
+  const horas = Number(m[1]), minutos = Number(m[2])
+  if (horas > 23 || minutos > 59) return null
+  return horas * 60 + minutos
+}
+
+const formatHHMM = (texto: string): string => {
+  const digitos = texto.replace(/\D/g, '').slice(0, 4)
+  return digitos.length > 2 ? `${digitos.slice(0, 2)}:${digitos.slice(2)}` : digitos
+}
 
 interface RouteTemplate {
   id: string
@@ -42,9 +53,6 @@ interface RouteTemplate {
   dropoff_point: string | null
   created_at: string
 }
-
-const fmtDuration = (mins: number) =>
-  mins < 60 ? `${mins}m` : `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}`
 
 export default function RecurringRoutesScreen() {
   const insets = useSafeAreaInsets()
@@ -70,10 +78,8 @@ export default function RecurringRoutesScreen() {
 
   // ── Modal publicar desde plantilla ─────────────────────────────────────────
   const [publishTarget, setPublishTarget] = useState<RouteTemplate | null>(null)
-  const [delayMins, setDelayMins] = useState(0)
-  const [customDelay, setCustomDelay] = useState('')
-  const [durationMins, setDurationMins] = useState(180)
-  const [customDuration, setCustomDuration] = useState('')
+  const [departureTime, setDepartureTime] = useState('')
+  const [durationText, setDurationText] = useState('03:00')
   const [pubVia, setPubVia] = useState('')
   const [publishing, setPublishing] = useState(false)
 
@@ -177,12 +183,18 @@ export default function RecurringRoutesScreen() {
   // Publicar desde plantilla: el servidor valida requisitos y cobra; su mensaje llega tal cual.
   const handlePublish = async () => {
     if (!publishTarget || !user?.id) return
-    const delay = customDelay.trim() ? parseInt(customDelay, 10) : delayMins
-    const duration = customDuration.trim() ? parseInt(customDuration, 10) : durationMins
-    if (!Number.isFinite(delay) || !Number.isFinite(duration) || duration < 1) {
-      showError('Revisa los minutos de salida y de duración.')
-      return
+    let delay = 0
+    if (departureTime.trim()) {
+      const salida = parseHHMM(departureTime)
+      if (salida === null) { showError('Escribe la hora de salida en formato HH:MM.'); return }
+      const ahora = new Date()
+      const dep = new Date(ahora)
+      dep.setHours(Math.floor(salida / 60), salida % 60, 0, 0)
+      delay = Math.round((dep.getTime() - ahora.getTime()) / 60000)
+      if (delay < 0) { showError('La hora de salida ya pasó.'); return }
     }
+    const duration = parseHHMM(durationText)
+    if (!duration) { showError('Escribe la duración en formato HH:MM.'); return }
 
     setPublishing(true)
     try {
@@ -218,7 +230,7 @@ export default function RecurringRoutesScreen() {
       }).catch(() => {})
 
       setPublishTarget(null)
-      setDelayMins(0); setCustomDelay(''); setDurationMins(180); setCustomDuration(''); setPubVia('')
+      setDepartureTime(''); setDurationText('03:00'); setPubVia('')
       showSuccess('¡Viaje publicado! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
       showError(err.message || 'No se pudo publicar la ruta.')
@@ -280,7 +292,7 @@ export default function RecurringRoutesScreen() {
           </View>
         ) : (
           templates.map((tpl) => (
-            <View key={tpl.id} style={styles.card}>
+            <DepthCard key={tpl.id} style={styles.cardWrap} contentStyle={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
                   <Icon
@@ -302,9 +314,20 @@ export default function RecurringRoutesScreen() {
               </View>
 
               <View style={styles.cardMeta}>
-                <Text style={styles.metaText}>{fmtMoney(tpl.price_per_seat)} / asiento</Text>
-                <Text style={styles.metaText}>{tpl.total_seats} cupos</Text>
-                {!!tpl.description && <Text style={styles.metaText} numberOfLines={1}>Vía {tpl.description}</Text>}
+                <View style={styles.metaChip}>
+                  <Icon name="Banknote" size={13} color={COLORS.primary} />
+                  <Text style={styles.metaText}>{fmtMoney(tpl.price_per_seat)} / asiento</Text>
+                </View>
+                <View style={styles.metaChip}>
+                  <Icon name="Users" size={13} color={COLORS.primary} />
+                  <Text style={styles.metaText}>{tpl.total_seats} cupos</Text>
+                </View>
+                {!!tpl.description && (
+                  <View style={styles.metaChip}>
+                    <Icon name="Route" size={13} color={COLORS.primary} />
+                    <Text style={styles.metaText} numberOfLines={1}>{tpl.description}</Text>
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity
@@ -314,7 +337,7 @@ export default function RecurringRoutesScreen() {
               >
                 <Text style={styles.primaryBtnText}>Publicar ahora</Text>
               </TouchableOpacity>
-            </View>
+            </DepthCard>
           ))
         )}
       </ScrollView>
@@ -365,68 +388,39 @@ export default function RecurringRoutesScreen() {
       {publishTarget && (
         <Modal visible animationType="slide" transparent onRequestClose={() => setPublishTarget(null)}>
           <View style={styles.modalOverlay}>
-            <View style={styles.modalSheet}>
+            <View style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Publicar viaje</Text>
-                <TouchableOpacity onPress={() => { setPublishTarget(null); setCustomDuration(''); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => { setPublishTarget(null); setDepartureTime(''); setDurationText('03:00'); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Icon name="X" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <View style={styles.pubSummary}>
-                  <Text style={styles.pubRoute}>{publishTarget.origin} → {publishTarget.destination}</Text>
-                  <Text style={styles.metaText}>{fmtMoney(publishTarget.price_per_seat)} · {publishTarget.total_seats} cupos</Text>
+                  <View style={styles.pubPoint}>
+                    <Icon name="CircleDot" size={16} color={COLORS.primary} />
+                    <Text style={styles.pubRoute}>{publishTarget.origin}</Text>
+                  </View>
+                  <View style={styles.pubPoint}>
+                    <Icon name="MapPin" size={16} color={COLORS.textPrimary} />
+                    <Text style={styles.pubRoute}>{publishTarget.destination}</Text>
+                  </View>
+                  <View style={styles.pubChips}>
+                    <View style={styles.metaChip}>
+                      <Icon name="Banknote" size={13} color={COLORS.primary} />
+                      <Text style={styles.metaText}>{fmtMoney(publishTarget.price_per_seat)} / asiento</Text>
+                    </View>
+                    <View style={styles.metaChip}>
+                      <Icon name="Users" size={13} color={COLORS.primary} />
+                      <Text style={styles.metaText}>{publishTarget.total_seats} cupos</Text>
+                    </View>
+                  </View>
                 </View>
 
-                <Text style={styles.formLabel}>¿Cuándo sales?</Text>
-                <View style={styles.chipRow}>
-                  {DELAY_OPTIONS.map((m) => {
-                    const active = delayMins === m && !customDelay
-                    return (
-                      <TouchableOpacity key={m} style={[styles.chip, active && styles.chipActive]} onPress={() => { setDelayMins(m); setCustomDelay('') }} activeOpacity={0.85}>
-                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{m === 0 ? 'Ahora' : `${m} min`}</Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-                <View style={styles.customRow}>
-                  <TextInput
-                    style={styles.customInput}
-                    placeholder="Otro"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={customDelay}
-                    onChangeText={setCustomDelay}
-                    keyboardType="numeric"
-                    maxLength={3}
-                  />
-                  <Text style={styles.metaText}>min personalizados</Text>
-                </View>
-
-                <Text style={styles.formLabel}>Duración del viaje</Text>
-                <View style={styles.chipRow}>
-                  {DURATION_OPTIONS.map((m) => {
-                    const active = durationMins === m && !customDuration
-                    return (
-                      <TouchableOpacity key={m} style={[styles.chip, active && styles.chipActive]} onPress={() => { setDurationMins(m); setCustomDuration('') }} activeOpacity={0.85}>
-                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{fmtDuration(m)}</Text>
-                      </TouchableOpacity>
-                    )
-                  })}
-                </View>
-                <View style={styles.customRow}>
-                  <TextInput
-                    style={styles.customInput}
-                    placeholder="Otro"
-                    placeholderTextColor={COLORS.textTertiary}
-                    value={customDuration}
-                    onChangeText={setCustomDuration}
-                    keyboardType="numeric"
-                    maxLength={3}
-                  />
-                  <Text style={styles.metaText}>min personalizados</Text>
-                </View>
+                <FormField label="Hora de salida (HH:MM)" placeholder="Vacío = ahora · Ej: 14:30" value={departureTime} onChangeText={(t) => setDepartureTime(formatHHMM(t))} keyboardType="number-pad" />
+                <FormField label="Duración del viaje (HH:MM)" placeholder="Ej: 03:00" value={durationText} onChangeText={(t) => setDurationText(formatHHMM(t))} keyboardType="number-pad" />
 
                 <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
 
@@ -437,6 +431,8 @@ export default function RecurringRoutesScreen() {
                   </Text>
                 </View>
 
+              </ScrollView>
+              <View style={styles.modalFooter}>
                 <TouchableOpacity style={[styles.primaryBtn, publishing && styles.btnDisabled]} onPress={handlePublish} disabled={publishing} activeOpacity={0.85}>
                   {publishing ? (
                     <ActivityIndicator color={COLORS.white} />
@@ -444,8 +440,7 @@ export default function RecurringRoutesScreen() {
                     <Text style={styles.primaryBtnText}>Confirmar y publicar</Text>
                   )}
                 </TouchableOpacity>
-                <View style={{ height: SPACING.xxl }} />
-              </ScrollView>
+              </View>
             </View>
           </View>
         </Modal>
@@ -459,7 +454,7 @@ function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
   onChangeText: (t: string) => void; keyboardType?: any
 }) {
   return (
-    <>
+    <View style={styles.formField}>
       <Text style={styles.formLabel}>{label}</Text>
       <TextInput
         style={styles.formInput}
@@ -469,7 +464,7 @@ function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
         onChangeText={onChangeText}
         keyboardType={keyboardType ?? 'default'}
       />
-    </>
+    </View>
   )
 }
 
@@ -491,8 +486,8 @@ const styles = StyleSheet.create({
   balanceStrip: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
     marginHorizontal: SPACING.xl, marginBottom: SPACING.md,
-    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md, backgroundColor: COLORS.surfaceAlt,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg, backgroundColor: COLORS.primaryTint,
   },
   balanceText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, flex: 1 },
   balanceStrong: { fontWeight: '700', color: COLORS.primary },
@@ -503,7 +498,8 @@ const styles = StyleSheet.create({
   emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '700' },
   emptySub: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
 
-  card: { ...SHADOWS.sm, borderRadius: RADIUS.lg, padding: SPACING.lg, gap: SPACING.md, backgroundColor: COLORS.white },
+  cardWrap: { marginBottom: SPACING.md },
+  card: { gap: SPACING.md },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   cardIcon: {
     width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
@@ -512,7 +508,8 @@ const styles = StyleSheet.create({
   cardName: { ...TYPOGRAPHY.bodyMedium, fontWeight: '700', color: COLORS.textPrimary },
   cardRoute: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
   iconBtn: { width: 30, height: 30, alignItems: 'center', justifyContent: 'center' },
-  cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.md },
+  cardMeta: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  metaChip: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full, backgroundColor: COLORS.surfaceAlt },
   metaText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
   primaryBtn: {
@@ -531,16 +528,26 @@ const styles = StyleSheet.create({
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
   modalTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 
-  pubSummary: { gap: SPACING.xs, marginBottom: SPACING.md },
+  pubSummary: { gap: SPACING.sm, marginBottom: SPACING.lg },
+  pubPoint: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  pubChips: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.xs },
   pubRoute: { ...TYPOGRAPHY.subtitle2, fontWeight: '800', color: COLORS.textPrimary },
 
-  formLabel: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary, marginTop: SPACING.md, marginBottom: SPACING.xs },
-  formInput: {
-    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+  formField: {
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
-    ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary,
+    backgroundColor: COLORS.white, marginTop: SPACING.sm,
+  },
+  formLabel: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+  formInput: {
+    ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary,
+    padding: 0, marginTop: SPACING.xs,
   },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
+  chipCell: { width: '23%', alignItems: 'center' },
+  sectionLabel: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, marginTop: SPACING.lg, marginBottom: SPACING.sm },
+  modalFooter: { paddingTop: SPACING.md },
   chip: {
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, borderRadius: RADIUS.full,
     borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white,
@@ -550,9 +557,9 @@ const styles = StyleSheet.create({
   chipTextActive: { color: COLORS.primary },
   customRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.sm },
   customInput: {
-    width: 72, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md,
+    width: 72, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.sm, paddingVertical: SPACING.sm,
-    ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary, textAlign: 'center',
+    ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, textAlign: 'center',
   },
 
   costNote: {

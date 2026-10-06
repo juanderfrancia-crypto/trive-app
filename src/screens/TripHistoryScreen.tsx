@@ -60,7 +60,7 @@ const FILTERS: { id: FilterType; label: string }[] = [
   { id: 'cancelled', label: 'Cancelados' },
 ]
 
-export default function TripHistoryScreen() {
+export default function TripHistoryScreen({ embedded = false }: { embedded?: boolean }) {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
   const isDriver = user?.role === 'driver'
@@ -362,10 +362,10 @@ export default function TripHistoryScreen() {
     : 'No tienes viajes cancelados'
 
   return (
-    <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+    <SafeAreaView style={s.safe} edges={embedded ? [] : ['top', 'left', 'right']}>
+      {!embedded && <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />}
 
-      <View style={s.header}>
+      {!embedded && <View style={s.header}>
         <TouchableOpacity style={s.headerBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
@@ -377,7 +377,7 @@ export default function TripHistoryScreen() {
         ) : (
           <View style={s.headerBtnPlaceholder} />
         )}
-      </View>
+      </View>}
 
       <View style={s.filters}>
         {FILTERS.map((f) => {

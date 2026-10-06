@@ -68,6 +68,9 @@ export const COLORS = {
 
   // Tintes de marca y advertencia
   primaryTint: '#E8ECFB',
+  shadowSoft: 'rgba(15, 26, 46, 0.05)',
+  shadowSoftStrong: 'rgba(15, 26, 46, 0.07)',
+  shadowBlue: 'rgba(18, 48, 184, 0.16)',
   warningLight: '#FEF3E2',
   warningDark: '#B45309',
   successLight: '#E7F6EF',

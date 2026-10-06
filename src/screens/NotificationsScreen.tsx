@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon, { type IconName as IconNameType } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -105,6 +105,7 @@ const timestampOf = (iso: string): Date => new Date(/(Z|[+-]\d{2}:?\d{2})$/.test
 
 export default function NotificationsScreen() {
   const navigation = useNavigation()
+  const insets = useSafeAreaInsets()
   const currentUser = useAppStore((s) => s.user)
   const isDriver = isDriverRole(currentUser)
   const {
@@ -488,7 +489,7 @@ export default function NotificationsScreen() {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ width: '100%' }}
           >
-          <TouchableOpacity activeOpacity={1} style={styles.modalSheet} onPress={() => {}}>
+          <TouchableOpacity activeOpacity={1} style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]} onPress={() => {}}>
             <View style={styles.modalHandle} />
 
             {detailNotif && _dStyle && (
@@ -499,7 +500,6 @@ export default function NotificationsScreen() {
                   </View>
                   <View style={styles.modalHeaderText}>
                     <Text style={styles.modalTitle} numberOfLines={2}>{detailNotif.title || 'Alerta'}</Text>
-                    <Text style={styles.modalTime}>{timeLabelOf(detailNotif.created_at)}</Text>
                   </View>
                   <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setDetailNotif(null)}>
                     <Icon name="X" size={18} color={COLORS.textSecondary} />
@@ -567,19 +567,6 @@ export default function NotificationsScreen() {
                     </View>
                   )}
 
-                  {detailNotif.type === 'booking' && (
-                    <TouchableOpacity
-                      style={styles.rateDriverBtn}
-                      activeOpacity={0.85}
-                      onPress={() => {
-                        setDetailNotif(null)
-                        ;(navigation as any).navigate('ActiveTrips')
-                      }}
-                    >
-                      <Icon name="Car" size={16} color={COLORS.white} />
-                      <Text style={styles.rateDriverBtnText}>Ver mi viaje</Text>
-                    </TouchableOpacity>
-                  )}
 
                   {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
                     <>
@@ -606,6 +593,19 @@ export default function NotificationsScreen() {
 
                   <View style={{ height: 24 }} />
                 </ScrollView>
+                {detailNotif.type === 'booking' && (
+                  <TouchableOpacity
+                    style={styles.rateDriverBtn}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      setDetailNotif(null)
+                      ;(navigation as any).navigate('ActiveTrips')
+                    }}
+                  >
+                    <Icon name="Car" size={16} color={COLORS.white} />
+                    <Text style={styles.rateDriverBtnText}>Ver mi viaje</Text>
+                  </TouchableOpacity>
+                )}
               </>
             )}
 
@@ -889,10 +889,6 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.weight.extrabold,
     color: COLORS.textPrimary,
   },
-  modalTime: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textTertiary,
-  },
   modalCloseBtn: {
     width: 36,
     height: 36,
@@ -905,7 +901,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   modalMessage: {
-    ...TYPOGRAPHY.bodyMedium,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.textPrimary,
     fontWeight: TYPOGRAPHY.weight.medium,
     marginBottom: SPACING.md,

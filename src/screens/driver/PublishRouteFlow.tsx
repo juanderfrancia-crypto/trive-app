@@ -772,10 +772,13 @@ const styles = StyleSheet.create({
 
   requirementList: { gap: SPACING.sm, marginTop: SPACING.sm },
   card: {
-    ...SHADOWS.sm,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderBottomWidth: 4,
+    borderBottomColor: COLORS.primaryTint,
   },
   reviewCard: { padding: SPACING.lg },
   cardRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -832,7 +835,7 @@ const styles = StyleSheet.create({
   summaryLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   summaryLabel: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
   summaryValue: { ...TYPOGRAPHY.bodySmall, fontWeight: '700', color: COLORS.textPrimary },
-  costCard: { backgroundColor: COLORS.surfaceAlt, borderWidth: 0, marginTop: SPACING.md },
+  costCard: { backgroundColor: COLORS.surfaceAlt, borderWidth: 0, borderBottomWidth: 0, marginTop: SPACING.md },
   costLabel: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary },
   costItem: { ...TYPOGRAPHY.bodyMedium, color: COLORS.textPrimary },
   costItemStrong: { ...TYPOGRAPHY.bodyMedium, fontWeight: '800', color: COLORS.textPrimary },

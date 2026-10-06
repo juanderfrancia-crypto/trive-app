@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react'
+import TripHistoryScreen from '../TripHistoryScreen'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -22,6 +23,7 @@ export default function PassengerTripsScreen() {
   const user = useAppStore((s) => s.user)
   const { bookings, loading, refetch } = usePassengerBookings(user?.id)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [segmento, setSegmento] = useState<'proximos' | 'historial'>('proximos')
 
   useFocusEffect(useCallback(() => { refetch() }, [refetch]))
 
@@ -152,17 +154,31 @@ export default function PassengerTripsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={styles.topBar}>
         <Text style={styles.title}>Mis viajes</Text>
 
         <View style={styles.segment}>
-          <View style={styles.segmentActive}>
-            <Text style={styles.segmentActiveText}>Próximos</Text>
-          </View>
-          <TouchableOpacity style={styles.segmentItem} onPress={() => navigation.navigate('TripHistory')} activeOpacity={0.8}>
-            <Text style={styles.segmentText}>Historial</Text>
+          <TouchableOpacity
+            style={segmento === 'proximos' ? styles.segmentActive : styles.segmentItem}
+            onPress={() => setSegmento('proximos')}
+            activeOpacity={0.8}
+          >
+            <Text style={segmento === 'proximos' ? styles.segmentActiveText : styles.segmentText}>Próximos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={segmento === 'historial' ? styles.segmentActive : styles.segmentItem}
+            onPress={() => setSegmento('historial')}
+            activeOpacity={0.8}
+          >
+            <Text style={segmento === 'historial' ? styles.segmentActiveText : styles.segmentText}>Historial</Text>
           </TouchableOpacity>
         </View>
+      </View>
+
+      {segmento === 'historial' ? (
+        <TripHistoryScreen embedded />
+      ) : (
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {loading && bookings.length === 0 && (
           <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
@@ -186,12 +202,14 @@ export default function PassengerTripsScreen() {
           </View>
         )}
       </ScrollView>
+      )}
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+  topBar: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
   content: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xxxl },
 
   title: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },

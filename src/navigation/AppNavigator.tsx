@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { NavigationContainer } from '@react-navigation/native'
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
+import { COLORS } from '../theme/theme'
+
+const navigationTheme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: COLORS.white, card: COLORS.white },
+}
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import TabNavigator from './TabNavigator'
 import LoginPhoneScreen from '../screens/LoginPhoneScreen'
@@ -197,7 +203,7 @@ export default function AppNavigator() {
   const needsPhoneVerification = isUserAuthenticated && !session?.user?.phone
 
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       {needsPhoneVerification ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="VerifyPhone" component={VerifyPhoneScreen} />
