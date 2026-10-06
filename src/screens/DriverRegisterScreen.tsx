@@ -9,7 +9,8 @@ export default function DriverRegisterScreen() {
   return (
     <PublishRouteFlow
       onExit={() => navigation.goBack()}
-      onOpenPanel={() => navigation.navigate('Main' as never)}
+      onOpenPanel={() => navigation.navigate('DriverPanel' as never)}
+      onOpenHome={() => navigation.navigate('Main' as never)}
       onOpenWallet={() => navigation.navigate('Wallet' as never)}
     />
   )

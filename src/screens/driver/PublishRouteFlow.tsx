@@ -107,6 +107,7 @@ interface VehicleInfo {
 interface Props {
   onExit: () => void
   onOpenPanel: () => void
+  onOpenHome: () => void
   onOpenWallet: () => void
 }
 
@@ -117,7 +118,7 @@ const STEP_LABELS = [
   '',
 ]
 
-export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: Props) {
+export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOpenWallet }: Props) {
   const insets = useSafeAreaInsets()
   const user = useAppStore((s) => s.user)
   const setBalance = useAppStore((s) => s.setBalance)
@@ -175,7 +176,6 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
     if (!draft.origin.trim()) return 'Escribe la ciudad de origen.'
     if (!draft.destination.trim()) return 'Escribe la ciudad de destino.'
     if (!draft.pickup.trim()) return 'Escribe el punto de salida en el municipio de origen.'
-    if (!draft.routeVia.trim()) return 'Escribe por dónde va la ruta.'
     if (!draft.dropoffPoint.trim()) return 'Escribe el punto de llegada en el destino.'
     const dep = parseHHMM(draft.departureTime)
     if (!dep) return 'Escribe la hora de salida en formato HH:MM.'
@@ -515,7 +515,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.fieldLabel}>Por dónde va</Text>
+        <Text style={styles.fieldLabel}>Por dónde va (opcional)</Text>
         <TextInput
           style={styles.fieldInput}
           placeholder="Ej: Por la Simón Bolívar, sin pasar por Cañas Gordas"
@@ -523,7 +523,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
           value={draft.routeVia}
           onChangeText={(t) => update('routeVia', t)}
         />
-        <Text style={styles.fieldHint}>Así el pasajero sabe si le sirve la vía.</Text>
+        <Text style={styles.fieldHint}>Solo si tomas una vía distinta a la directa.</Text>
       </View>
 
       <View style={styles.card}>
@@ -678,10 +678,17 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
       )
     }
     return (
-      <>
-        <PrimaryButton label="Ver mi panel" onPress={onOpenPanel} />
-        <SecondaryButton label="Publicar otro viaje" onPress={resetFlow} />
-      </>
+      <View style={styles.doneRow}>
+        <TouchableOpacity style={styles.doneOutlineBtn} onPress={resetFlow} activeOpacity={0.85}>
+          <Text style={styles.doneOutlineText}>Publicar otra</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.doneOutlineBtn} onPress={onOpenHome} activeOpacity={0.85}>
+          <Text style={styles.doneOutlineText}>Ir al inicio</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.donePrimaryBtn} onPress={onOpenPanel} activeOpacity={0.85}>
+          <Text style={styles.donePrimaryText}>Ver mi panel</Text>
+        </TouchableOpacity>
+      </View>
     )
   }
 
@@ -866,4 +873,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   secondaryOutlineText: { ...TYPOGRAPHY.bodyMedium, fontWeight: '700', color: COLORS.textPrimary },
+  doneRow: { flexDirection: 'row', gap: SPACING.sm },
+  doneOutlineBtn: {
+    flex: 1, height: 50, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
+    backgroundColor: COLORS.white, justifyContent: 'center', alignItems: 'center',
+  },
+  doneOutlineText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  donePrimaryBtn: {
+    flex: 1, height: 50, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  donePrimaryText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
 })

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ActivityIndicator, Clipboard, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import * as Clipboard from 'expo-clipboard'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
 import { useNavigation, useRoute } from '@react-navigation/native'
-import { COLORS, RADIUS, SPACING } from '../../theme/theme'
+import { COLORS, RADIUS, SPACING, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { formatDia, formatHora, formatPrecio } from '../passenger/passengerFormat'
@@ -32,7 +33,11 @@ export default function PassengerPaymentScreen() {
 
   const copiarLlave = () => {
     if (!breBKey) return
-    Clipboard.setString(breBKey)
+    copiarTexto(breBKey)
+  }
+
+  const copiarTexto = (texto: string) => {
+    Clipboard.setStringAsync(texto)
     setCopiado(true)
     if (temporizador.current) clearTimeout(temporizador.current)
     temporizador.current = setTimeout(() => setCopiado(false), 2000)
@@ -133,8 +138,17 @@ export default function PassengerPaymentScreen() {
           <Text style={styles.codigoEtiqueta}>Código de tu reserva</Text>
           <View style={styles.filaCodigo}>
             <Text style={styles.codigo} selectable>{summary.reservationCode}</Text>
-            <Text style={styles.codigoAyuda}>Escríbelo en el concepto</Text>
+            <TouchableOpacity
+              style={styles.copiarCodigo}
+              onPress={() => copiarTexto(summary.reservationCode)}
+              activeOpacity={0.8}
+              accessibilityLabel="Copiar código de reserva"
+            >
+              <Icon name={copiado ? 'Check' : 'Copy'} size={16} color={COLORS.primary} />
+              <Text style={styles.copiarCodigoTexto}>{copiado ? 'Copiado' : 'Copiar'}</Text>
+            </TouchableOpacity>
           </View>
+          <Text style={styles.codigoAyuda}>Escríbelo en el concepto de la transferencia</Text>
         </View>
 
         {message ? <Text style={styles.mensaje}>{message}</Text> : null}
@@ -215,7 +229,9 @@ const styles = StyleSheet.create({
   codigoEtiqueta: { fontSize: 12, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.5 },
   filaCodigo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.xs },
   codigo: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: 1 },
-  codigoAyuda: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
+  copiarCodigo: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full, backgroundColor: COLORS.primaryTint },
+  copiarCodigoTexto: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  codigoAyuda: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
   mensaje: { marginTop: SPACING.lg, fontSize: 13, color: COLORS.textSecondary, textAlign: 'center' },
   pie: {
     paddingHorizontal: SPACING.xl,

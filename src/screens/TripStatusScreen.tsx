@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
-import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
@@ -82,7 +81,6 @@ export default function TripStatusScreen() {
   })
 
   const departureDate = new Date(selectedRoute.departure_time).toLocaleDateString('es-CO', {
-    weekday: 'short',
     day: 'numeric',
     month: 'short',
   })
@@ -252,9 +250,6 @@ export default function TripStatusScreen() {
             >
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Cupos del vehículo</Text>
-                <Text style={styles.seatsSubtitle}>
-                  {availableSeats} de {totalSeats} disponibles
-                </Text>
               </View>
 
               <View style={styles.seatsGrid}>
@@ -281,13 +276,6 @@ export default function TripStatusScreen() {
                         </Text>
                       )}
                     </View>
-                    <Text style={styles.seatLabel}>
-                      {seat.status === 'occupied'
-                        ? 'Ocupado'
-                        : seat.status === 'selected'
-                        ? 'Tu asiento'
-                        : 'Libre'}
-                    </Text>
                   </View>
                 ))}
               </View>
@@ -297,8 +285,8 @@ export default function TripStatusScreen() {
                   <View style={[styles.progressFill, { width: `${occupiedPercentage}%` }]} />
                 </View>
                 <View style={styles.progressLabels}>
-                  <Text style={styles.progressText}>{occupiedSeats} ocupados</Text>
-                  <Text style={styles.progressText}>{availableSeats} disponibles</Text>
+                  <Text style={styles.progressText}>{occupiedSeats} ocupado{occupiedSeats === 1 ? '' : 's'}</Text>
+                  <Text style={styles.progressText}>{availableSeats} libre{availableSeats === 1 ? '' : 's'}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -312,34 +300,14 @@ export default function TripStatusScreen() {
             >
               <View style={[styles.vehicleHeader, { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md, marginBottom: SPACING.sm }]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.vehicleName}>{selectedRoute.vehicle_model || 'Vehículo'}</Text>
+                  <Text style={styles.vehicleName}>Vehículo</Text>
                   <Text style={styles.vehicleDetails}>
-                    {selectedRoute.license_plate} · {selectedRoute.vehicle_color}
+                    {[selectedRoute.vehicle_color, selectedRoute.vehicle_plate].filter(Boolean).join(' · ')}
                   </Text>
                 </View>
 
-                <View style={styles.vehicleRightSection}>
-                  <View style={styles.vehicleBadge}>
-                    <Icon name="Car" size={20} color={COLORS.primary} />
-                  </View>
-                  <View style={styles.actionButtonsColumn}>
-                    <TouchableOpacity
-                      style={styles.messageBtn}
-                      onPress={() => {
-                        if (!selectedRoute?.driver_id) {
-                          showError('No está disponible el chat con el conductor')
-                          return
-                        }
-                        setSelectedTripForChat({
-                          id: selectedRoute.id,
-                          driverId: selectedRoute.driver_id,
-                          driverName: selectedRoute.driver_name,
-                        })
-                      }}
-                    >
-                      <Icon name="MessageCircle" size={16} color={COLORS.primary} />
-                    </TouchableOpacity>
-                  </View>
+                <View style={styles.vehicleBadge}>
+                  <Icon name="Car" size={20} color={COLORS.primary} />
                 </View>
               </View>
 
@@ -418,25 +386,15 @@ export default function TripStatusScreen() {
             <CancellationPolicyCard />
 
             {/* Action Buttons */}
-            <LinearGradient
-              colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.newTripBtnGradient}
+            <TouchableOpacity
+              style={styles.shareBtn}
+              onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
+              activeOpacity={0.8}
             >
-              <TouchableOpacity
-                style={styles.newTripBtnInner}
-                onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
-                activeOpacity={0.8}
-              >
-                <Icon name="Search" size={20} color="#fff" />
-                <Text style={styles.newTripBtnText}>Buscar nuevas rutas</Text>
-              </TouchableOpacity>
-            </LinearGradient>
+              <Icon name="Search" size={20} color={COLORS.primary} />
+              <Text style={styles.shareBtnText}>Buscar nuevas rutas</Text>
+            </TouchableOpacity>
 
-            <View style={{ alignItems: 'center' }}>
-              <Illustration name="sharingArticles" width={160} />
-            </View>
             <TouchableOpacity
               style={styles.shareBtn}
               onPress={handleShareTrip}

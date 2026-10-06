@@ -105,14 +105,13 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
         <View style={styles.ticketBody}>
           <View style={styles.ticketInfo}>
             <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
-            {!!ride.pickup_point && (
-              <Text style={styles.routeDetail} numberOfLines={1}>Sale de {ride.pickup_point}</Text>
+            {!!(ride.pickup_point || ride.dropoff_point) && (
+              <Text style={styles.routeDetail} numberOfLines={1}>
+                {ride.pickup_point ?? ride.origin} → {ride.dropoff_point ?? ride.destination}
+              </Text>
             )}
             {!!ride.route_via && (
-              <Text style={styles.routeDetail} numberOfLines={2}>Por {ride.route_via}</Text>
-            )}
-            {!!ride.dropoff_point && (
-              <Text style={styles.routeDetail} numberOfLines={1}>Llega a {ride.dropoff_point}</Text>
+              <Text style={styles.routeDetail} numberOfLines={1}>{ride.route_via}</Text>
             )}
             <View style={styles.driverRow}>
               <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>

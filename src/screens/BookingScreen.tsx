@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore'
 import { useBookings, PaymentMethod } from '../hooks/useBookings'
 import { getPaymentPreference } from '../services/passengerPaymentPreference'
 import { insertNotificationForUser } from '../services/notificationInsert'
+import * as Clipboard from 'expo-clipboard'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { supabase } from '../services/supabase'
@@ -53,6 +54,7 @@ export default function BookingScreen() {
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])
   const [bookingFinalized, setBookingFinalized] = useState(false)
+  const [codigoCopiado, setCodigoCopiado] = useState(false)
   const [confirmation, setConfirmation] = useState<Confirmation | null>(null)
   const [driverPaymentMethods, setDriverPaymentMethods] = useState<any[]>([])
 
@@ -69,16 +71,23 @@ export default function BookingScreen() {
   }, [selectedRoute?.driver_id])
 
   // Si el pasajero sale sin confirmar, se liberan los asientos pendientes.
+  // La referencia evita liberar reservas recién confirmadas al cambiar el estado.
+  const pendingRef = useRef({ ids: pendingBookingIds, finalized: bookingFinalized, routeId: selectedRoute?.id })
+  pendingRef.current = { ids: pendingBookingIds, finalized: bookingFinalized, routeId: selectedRoute?.id }
+
   useEffect(() => {
     return () => {
-      if (!bookingFinalized && pendingBookingIds.length > 0 && selectedRoute) {
-        releasePendingBookings(pendingBookingIds).catch((error) => {
-          console.warn('Error releasing pending bookings on unmount:', error)
+      const { ids, finalized, routeId } = pendingRef.current
+      if (!finalized && ids.length > 0 && routeId) {
+        releasePendingBookings(ids).catch((error) => {
+          if (!String(error?.message ?? '').includes('ya no se puede cancelar')) {
+            console.warn('Error releasing pending bookings on unmount:', error)
+          }
         })
         setBookingData(null)
       }
     }
-  }, [bookingFinalized, pendingBookingIds, releasePendingBookings, selectedRoute, setBookingData])
+  }, [releasePendingBookings, setBookingData])
 
   const driverFirstName = selectedRoute?.driver_name?.split(' ')[0] ?? 'el conductor'
   const transferAvailable = driverPaymentMethods.length > 0
@@ -379,7 +388,7 @@ export default function BookingScreen() {
             accessibilityState={{ selected: dropoffOption === 'custom' }}
           >
             <Text style={[styles.optionTitle, dropoffOption !== 'custom' && styles.optionTitleMuted]}>
-              Otro punto (escribe la dirección)
+              Otro punto de llegada
             </Text>
             <Radio selected={dropoffOption === 'custom'} />
           </TouchableOpacity>
@@ -387,7 +396,7 @@ export default function BookingScreen() {
           {dropoffOption === 'custom' && (
             <TextInput
               style={styles.addressInput}
-              placeholder="Ej: Centro comercial, calle 5ta, farmacia..."
+              placeholder="Ej: Jardín Plaza, Centro comercial, Farmacia"
               placeholderTextColor={COLORS.textTertiary}
               value={customDropoffPoint}
               onChangeText={setCustomDropoffPoint}
@@ -407,7 +416,7 @@ export default function BookingScreen() {
           >
             <View style={styles.optionBody}>
               <Text style={styles.optionTitle}>Efectivo</Text>
-              <Text style={styles.optionSubtitle}>Pagas al conductor al llegar</Text>
+              <Text style={styles.optionSubtitle}>Pago directo al conductor</Text>
             </View>
             <Radio selected={paymentMethod === 'cash'} />
           </TouchableOpacity>
@@ -425,7 +434,7 @@ export default function BookingScreen() {
             <View style={styles.optionBody}>
               <Text style={styles.optionTitle}>Transferencia Bre-B</Text>
               <Text style={styles.optionSubtitle}>
-                {transferAvailable ? `Llave de ${driverFirstName}` : 'El conductor aún no tiene transferencia'}
+                {transferAvailable ? `Llave de ${driverFirstName}` : 'Disponible cuando el conductor configure su llave'}
               </Text>
             </View>
             <Radio selected={paymentMethod === 'transfer'} disabled={!transferAvailable} />
@@ -449,7 +458,19 @@ export default function BookingScreen() {
               <Text style={styles.optionTitle}>Código de tu reserva</Text>
               <Text style={styles.optionSubtitle}>Lo escribes en el concepto de la transferencia</Text>
             </View>
-            <Text style={styles.codeValue}>{reservationCode}</Text>
+            <TouchableOpacity
+              style={styles.copyCodeBtn}
+              onPress={() => {
+                Clipboard.setStringAsync(reservationCode)
+                setCodigoCopiado(true)
+                setTimeout(() => setCodigoCopiado(false), 2000)
+              }}
+              activeOpacity={0.8}
+              accessibilityLabel="Copiar código de reserva"
+            >
+              <Text style={styles.codeValue}>{reservationCode}</Text>
+              <Icon name={codigoCopiado ? 'Check' : 'Copy'} size={16} color={COLORS.primary} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -584,6 +605,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   codeValue: { fontSize: 14, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.5 },
+  copyCodeBtn: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full, backgroundColor: COLORS.primaryTint },
 
   note: { marginTop: 16, fontSize: 13, color: COLORS.textSecondary, lineHeight: 20 },
 

@@ -41,6 +41,16 @@ export function getNotificationRoute(
     }
   }
 
+  if (notification.type === 'trip_published') {
+    if (isDriver) {
+      return { screenName: 'DriverPanel', params: {} }
+    }
+    return {
+      screenName: 'AvailableRides',
+      params: { origin: data.origin, destination: data.destination },
+    }
+  }
+
   if (airportActiveTypes.has(notification.type)) {
     if (isDriver) {
       return {

@@ -166,7 +166,7 @@ export default function SeatSelectionScreen() {
     const routeId = selectedRoute?.id
     if (!routeId) return
     const channel = supabase
-      .channel(`seats_${routeId}`)
+      .channel(`seats_${routeId}_${Date.now()}`)
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'routes', filter: `id=eq.${routeId}` },

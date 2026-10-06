@@ -2,9 +2,9 @@ import { useCallback, useState } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, RefreshControl, Alert, Modal, TextInput, Pressable } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import DepthCard from '../components/DepthCard'
 import { useAirportNegotiation, AirportRequest } from '../hooks/useAirportNegotiation'
 import { SkeletonAirportCard } from '../components/Skeleton'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
@@ -175,7 +175,7 @@ export default function AirportFeedScreen() {
     const isActiveTripsTab = activeTab === 'active_trips'
 
     return (
-      <View style={s.card}>
+      <DepthCard style={s.cardWrap} contentStyle={s.cardContent}>
         {/* Encabezado: pasajero + precio */}
         <View style={s.cardTop}>
           <View style={s.avatar}>
@@ -188,30 +188,28 @@ export default function AirportFeedScreen() {
               <Text style={s.dateText}>{formatDateTime(item.departure_time)}</Text>
             </View>
           </View>
-          <View style={s.priceBadge}>
-            <Text style={s.priceBadgeText}>${item.offered_price.toLocaleString('es-CO')}</Text>
-          </View>
+          <Text style={s.priceText}>${item.offered_price.toLocaleString('es-CO')}</Text>
         </View>
 
         {/* Ruta + Tipo de viaje */}
         <View style={s.routeBox}>
           <View style={s.routeLine}>
-            <View style={s.dotGreen} />
+            <Icon name="CircleDot" size={16} color={COLORS.primary} />
             <View style={s.lineSegment} />
-            <View style={s.dotBlue} />
+            <Icon name="MapPin" size={16} color={COLORS.textPrimary} />
           </View>
           <View style={[s.routeLabels, { flex: 1 }]}>
             <Text style={s.routeCity} numberOfLines={1}>{item.origin}</Text>
             <Text style={s.routeCity} numberOfLines={1}>{item.destination}</Text>
           </View>
           {/* Trip type badge */}
-          <View style={[s.tripBadge, item.trip_type === 'airport' && s.tripBadgeAirport, item.trip_type === 'city_destination' && s.tripBadgeCenter, item.trip_type === 'custom' && s.tripBadgeCustom]}>
-            <Icon 
-              name={item.trip_type === 'airport' ? 'Plane' : item.trip_type === 'city_destination' ? 'Building2' : 'MapPin'} 
-              size={12} 
-              color={item.trip_type === 'airport' ? '#fff' : item.trip_type === 'city_destination' ? '#fff' : '#fff'}
+          <View style={s.tripTag}>
+            <Icon
+              name={item.trip_type === 'airport' ? 'Plane' : item.trip_type === 'city_destination' ? 'Building2' : 'MapPin'}
+              size={12}
+              color={COLORS.primary}
             />
-            <Text style={s.tripBadgeText}>{item.trip_type === 'airport' ? 'Aero' : item.trip_type === 'city_destination' ? 'Centro' : 'Otro'}</Text>
+            <Text style={s.tripTagText}>{item.trip_type === 'airport' ? 'Aeropuerto' : item.trip_type === 'city_destination' ? 'Centro' : 'Personalizada'}</Text>
           </View>
         </View>
 
@@ -334,7 +332,7 @@ export default function AirportFeedScreen() {
             </TouchableOpacity>
           </View>
         )}
-      </View>
+      </DepthCard>
     )
   }
 
@@ -349,20 +347,15 @@ export default function AirportFeedScreen() {
   return (
     <SafeAreaView style={s.safe}>
       {/* Header con gradiente */}
-      <LinearGradient
-        colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={s.header}
-      >
+      <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
-          <Icon name="ArrowLeft" size={22} color="#fff" />
+          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={s.headerHero}>
-          <Icon name="Car" size={22} color="rgba(255,255,255,0.9)" />
-          <Text style={s.headerTitle}>Mis Viajes</Text>
+          <Text style={s.headerTitle}>Rutas personalizadas</Text>
+          <Text style={s.headerSub}>Solicitudes de pasajeros para tus rutas</Text>
         </View>
-      </LinearGradient>
+      </View>
 
       {/* Tabs Navigation */}
       <View style={s.tabsContainer}>
@@ -419,7 +412,7 @@ export default function AirportFeedScreen() {
               ListEmptyComponent={() => renderEmptyState(
                 'theSearch',
                 'Sin solicitudes por ahora',
-                'Cuando un pasajero publique un viaje (al aeropuerto, centro o destino personalizado) aparecerá aquí.'
+                'Cuando un pasajero publique a dónde quiere ir, la solicitud aparecerá aquí.'
               )}
               refreshControl={
                 <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
@@ -647,13 +640,14 @@ const s = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
-  headerHero: { flex: 1, alignItems: 'center', gap: 3 },
-  headerTitle: { ...TYPOGRAPHY.h3, color: '#fff' },
+  headerHero: { flex: 1, gap: 2 },
+  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
   // Commission strip
   commissionStrip: {
@@ -674,15 +668,8 @@ const s = StyleSheet.create({
   listEmpty: { flex: 1 },
 
   // Card
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    ...SHADOWS.sm,
-  },
+  cardWrap: { marginBottom: SPACING.md },
+  cardContent: { padding: SPACING.lg },
   cardTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
   avatar: {
     width: 44,
@@ -697,13 +684,7 @@ const s = StyleSheet.create({
   passengerName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginBottom: 3 },
   dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   dateText: { fontSize: 12, color: COLORS.textTertiary },
-  priceBadge: {
-    backgroundColor: COLORS.successLight,
-    borderRadius: RADIUS.sm,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  priceBadgeText: { color: COLORS.success, fontSize: 14, fontWeight: '700' },
+  priceText: { ...TYPOGRAPHY.h4, color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.extrabold },
 
   // Route
   routeBox: {
@@ -716,9 +697,7 @@ const s = StyleSheet.create({
     borderBottomColor: COLORS.border,
   },
   routeLine: { alignItems: 'center', gap: 0 },
-  dotGreen: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.success },
   lineSegment: { width: 2, height: 28, backgroundColor: COLORS.border, marginVertical: 3 },
-  dotBlue: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
   routeLabels: { flex: 1, gap: 12 },
   routeCity: { fontSize: 14, fontWeight: '500', color: COLORS.textPrimary },
 
@@ -835,28 +814,16 @@ const s = StyleSheet.create({
   submitBtnDisabled: { opacity: 0.6 },
 
   // Trip type badge
-  tripBadge: {
+  tripTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
   },
-  tripBadgeAirport: {
-    backgroundColor: COLORS.primary,
-  },
-  tripBadgeCenter: {
-    backgroundColor: COLORS.success,
-  },
-  tripBadgeCustom: {
-    backgroundColor: COLORS.warning,
-  },
-  tripBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#fff',
-  },
+  tripTagText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.primary },
 
   // Tabs navigation
   tabsContainer: {

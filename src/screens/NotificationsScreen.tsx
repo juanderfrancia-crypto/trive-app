@@ -52,14 +52,14 @@ const TRIP_ACTION_TYPES: NotifType[] = ['booking', 'trip_update', 'driver_arrive
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
 
 const dayGroupOf = (iso: string): DayGroup => {
-  const diff = Math.round((startOfDay(new Date()) - startOfDay(new Date(iso))) / 86400000)
+  const diff = Math.round((startOfDay(new Date()) - startOfDay(timestampOf(iso))) / 86400000)
   if (diff <= 0) return 'Hoy'
   if (diff === 1) return 'Ayer'
   return 'Anteriores'
 }
 
 const timeLabelOf = (iso: string): string => {
-  const d = new Date(iso)
+  const d = timestampOf(iso)
   if (dayGroupOf(iso) === 'Anteriores') return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
   return d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })
 }
@@ -92,12 +92,16 @@ const tileOf = (type: NotifType): { icon: IconName; bg: string; fg: string } => 
   }
 }
 
-const ctaOf = (type: NotifType): string | null => {
-  if (type === 'trip_confirm') return 'Confirmar'
-  if (type === 'review_pending') return 'Calificar'
-  if (type === 'trip_published') return 'Ver solicitud'
+const ctaOf = (notification: NotificationWithSender): string | null => {
+  if (notification.type === 'trip_confirm') return 'Confirmar'
+  if (notification.type === 'review_pending') return 'Calificar'
+  if (notification.type === 'trip_published') {
+    return notification.data?.request_id ? 'Ver solicitud' : 'Ver ruta'
+  }
   return null
 }
+
+const timestampOf = (iso: string): Date => new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`)
 
 export default function NotificationsScreen() {
   const navigation = useNavigation()
@@ -256,7 +260,7 @@ export default function NotificationsScreen() {
 
   const renderNotification = (item: NotificationWithSender) => {
     const tile = tileOf(item.type)
-    const cta = ctaOf(item.type)
+    const cta = ctaOf(item)
     const isUnread = !item.is_read
     const isSelected = selectedIds.includes(item.id)
 
@@ -285,9 +289,7 @@ export default function NotificationsScreen() {
             {item.type === 'message' && item.senderName ? `${item.senderName}: ${item.message}` : item.message}
           </Text>
           {cta && (
-            <View style={styles.ctaPill}>
-              <Text style={styles.ctaText}>{cta}</Text>
-            </View>
+            <Text style={styles.ctaLink}>{cta} ›</Text>
           )}
         </View>
 
@@ -562,14 +564,21 @@ export default function NotificationsScreen() {
                           <Text style={styles.modalInfoValue}>{_dFmtDate}</Text>
                         </View>
                       )}
-                      {_dBookingId && (
-                        <View style={[styles.modalInfoRow, styles.modalIdRow]}>
-                          <Icon name="Receipt" size={13} color={COLORS.textTertiary} />
-                          <Text style={[styles.modalInfoLabel, styles.modalIdText]}>ID reserva</Text>
-                          <Text style={[styles.modalInfoValue, styles.modalIdText]}>{_dBookingId}</Text>
-                        </View>
-                      )}
                     </View>
+                  )}
+
+                  {detailNotif.type === 'booking' && (
+                    <TouchableOpacity
+                      style={styles.rateDriverBtn}
+                      activeOpacity={0.85}
+                      onPress={() => {
+                        setDetailNotif(null)
+                        ;(navigation as any).navigate('ActiveTrips')
+                      }}
+                    >
+                      <Icon name="Car" size={16} color={COLORS.white} />
+                      <Text style={styles.rateDriverBtnText}>Ver mi viaje</Text>
+                    </TouchableOpacity>
                   )}
 
                   {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
@@ -693,10 +702,12 @@ const styles = StyleSheet.create({
   },
   filterScroll: {
     flexGrow: 0,
-    marginTop: SPACING.lg,
+    height: 56,
+    marginTop: SPACING.md,
   },
   filterContainer: {
     paddingHorizontal: SPACING.xl,
+    alignItems: 'center',
     gap: SPACING.sm,
   },
   filterPill: {
@@ -782,18 +793,11 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     marginTop: 2,
   },
-  ctaPill: {
-    alignSelf: 'flex-start',
-    marginTop: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.primary,
-  },
-  ctaText: {
+  ctaLink: {
     ...TYPOGRAPHY.labelMedium,
     fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.white,
+    color: COLORS.primary,
+    marginTop: SPACING.xs,
   },
   side: {
     alignItems: 'flex-end',

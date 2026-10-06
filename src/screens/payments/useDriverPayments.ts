@@ -31,6 +31,7 @@ export const useDriverPayments = (driverId?: string) => {
         .select('reservation_code, seat_number, price, payment_marked_at, routes:route_id!inner(driver_id, origin, destination, departure_time), passenger:profiles!passenger_id(name)')
         .eq('routes.driver_id', driverId)
         .not('reservation_code', 'is', null)
+        .eq('payment_method', 'transfer')
         .in('booking_status', PAYABLE_STATUSES)
         .is('payment_confirmed_at', null)
 

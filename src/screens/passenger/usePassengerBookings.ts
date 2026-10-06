@@ -14,6 +14,10 @@ export interface PassengerBooking {
   driverId: string
   driverName: string
   driverRating: number
+  reservationCode: string | null
+  paymentMethod: string | null
+  paymentMarkedAt: string | null
+  paymentConfirmedAt: string | null
 }
 
 const ACTIVE_STATUSES = ['pending', 'confirmed', 'awaiting_confirmation']
@@ -29,7 +33,7 @@ export const usePassengerBookings = (passengerId?: string) => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, booking_status, seat_number, routes:route_id(id, origin, destination, departure_time, status, driver_id, profiles:driver_id(name, rating))')
+        .select('id, booking_status, seat_number, reservation_code, payment_method, payment_marked_at, payment_confirmed_at, routes:route_id(id, origin, destination, departure_time, status, driver_id, profiles:driver_id(name, rating))')
         .eq('passenger_id', passengerId)
         .in('booking_status', ACTIVE_STATUSES)
 
@@ -47,6 +51,10 @@ export const usePassengerBookings = (passengerId?: string) => {
           driverId: b.routes.driver_id,
           driverName: b.routes.profiles?.name ?? 'Conductor',
           driverRating: Number(b.routes.profiles?.rating ?? 0),
+          reservationCode: b.reservation_code ?? null,
+          paymentMethod: b.payment_method ?? null,
+          paymentMarkedAt: b.payment_marked_at ?? null,
+          paymentConfirmedAt: b.payment_confirmed_at ?? null,
         }))
         .sort((a, b) => {
           const prioridadA = a.bookingStatus === 'awaiting_confirmation' ? 0 : 1

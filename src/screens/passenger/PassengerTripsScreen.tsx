@@ -65,7 +65,10 @@ export default function PassengerTripsScreen() {
     if (phone) {
       Linking.openURL(`tel:${phone}`)
     } else {
-      Alert.alert('Sin teléfono', 'No pudimos obtener el número del conductor en este momento.')
+      Alert.alert(
+        'No pudimos hacer la llamada',
+        'No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.'
+      )
     }
   }
 
@@ -112,6 +115,22 @@ export default function PassengerTripsScreen() {
               <Text style={styles.primaryBtnText}>Confirmar viaje</Text>
             </TouchableOpacity>
           </>
+        )}
+
+        {esConfirmado && booking.paymentMethod === 'transfer' && booking.reservationCode && (
+          booking.paymentConfirmedAt ? (
+            <Text style={styles.sub}>Pago confirmado por {booking.driverName}</Text>
+          ) : booking.paymentMarkedAt ? (
+            <Text style={styles.sub}>Marcaste el pago. Esperando que {booking.driverName} lo confirme.</Text>
+          ) : (
+            <TouchableOpacity
+              style={styles.primaryBtn}
+              onPress={() => navigation.navigate('PassengerPayment', { reservationCode: booking.reservationCode })}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.primaryBtnText}>Pagar a {booking.driverName}</Text>
+            </TouchableOpacity>
+          )
         )}
 
         {esConfirmado && (

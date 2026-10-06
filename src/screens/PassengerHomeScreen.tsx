@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import DepthCard from '../components/DepthCard'
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg'
 import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -41,7 +42,14 @@ export default function PassengerHomeScreen() {
   const { trip: upcomingTrip, loading: tripLoading } = useUpcomingTrip(user?.id)
   const { routes: recentRoutes } = useRecentRoutes(user?.id)
   const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
-  const { rides: salidasHoy } = useTodayDepartures(preferredMunicipality)
+  const { rides: salidasHoy, reload: reloadDepartures } = useTodayDepartures(preferredMunicipality)
+  const [refreshing, setRefreshing] = useState(false)
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await Promise.all([refetchBookings(), reloadDepartures()])
+    setRefreshing(false)
+  }
 
   const reservaPorConfirmar = bookings.find((b) => b.bookingStatus === 'awaiting_confirmation') ?? null
 
@@ -183,7 +191,11 @@ export default function PassengerHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />}
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
@@ -200,9 +212,9 @@ export default function PassengerHomeScreen() {
 
         <Text style={styles.headline}>¿A dónde vas hoy?</Text>
 
-        <View style={styles.searchCard}>
+        <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent}>
           <View style={styles.searchRow}>
-            <View style={[styles.dot, { backgroundColor: COLORS.primary }]} />
+            <Icon name="CircleDot" size={18} color={COLORS.primary} />
             <TextInput
               style={styles.searchInput}
               placeholder="¿De dónde sales?"
@@ -214,7 +226,7 @@ export default function PassengerHomeScreen() {
           </View>
           <View style={styles.searchDivider} />
           <View style={styles.searchRow}>
-            <View style={[styles.dot, { backgroundColor: COLORS.textPrimary, borderRadius: 2 }]} />
+            <Icon name="MapPin" size={18} color={COLORS.textPrimary} />
             <TextInput
               style={styles.searchInput}
               placeholder="¿A dónde vas?"
@@ -242,7 +254,7 @@ export default function PassengerHomeScreen() {
             <Icon name="Search" size={18} color={canSearch ? COLORS.white : COLORS.textTertiary} />
             <Text style={[styles.searchBtnText, !canSearch && styles.searchBtnTextDisabled]}>Buscar cupos</Text>
           </TouchableOpacity>
-        </View>
+        </DepthCard>
 
         {recentRoutes.length > 0 && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chipsContent}>
@@ -327,7 +339,9 @@ export default function PassengerHomeScreen() {
                 </View>
                 <View style={styles.rideMiddle}>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
-                  <Text style={styles.rideSeats}>{ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'}</Text>
+                  <Text style={styles.rideSeats}>
+                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} · Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
+                  </Text>
                 </View>
                 <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>
               </TouchableOpacity>
@@ -337,7 +351,7 @@ export default function PassengerHomeScreen() {
 
         <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
           <Text style={styles.airportText}>
-            ¿Vas al aeropuerto? <Text style={styles.airportLinkText}>Solicita un viaje privado</Text>
+            ¿Vas a otro lugar? <Text style={styles.airportLinkText}>Publica una ruta personalizada</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -365,23 +379,23 @@ const styles = StyleSheet.create({
   },
   avatarText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
 
-  headline: { fontSize: 30, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.6, marginTop: SPACING.xl, lineHeight: 36 },
+  headline: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.8, marginTop: SPACING.xl, lineHeight: 42 },
 
-  searchCard: {
-    marginTop: SPACING.lg, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg,
-    borderWidth: 1, borderColor: COLORS.border,
-  },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 44 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
+  searchCardWrap: { marginTop: SPACING.lg },
+  searchCardContent: { padding: SPACING.lg },
+  searchRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 48 },
   searchInput: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.textPrimary },
-  searchDivider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 22 },
+  searchDivider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 30 },
   searchBtn: {
     marginTop: SPACING.md, height: 52, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.primaryDark,
   },
-  searchBtnDisabled: { backgroundColor: COLORS.surfaceAlt },
+  searchBtnDisabled: {
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed',
+  },
   searchBtnText: { fontSize: 16, fontWeight: '700', color: COLORS.white },
-  searchBtnTextDisabled: { color: COLORS.textTertiary },
+  searchBtnTextDisabled: { color: COLORS.textSecondary },
 
   chipsScroll: { marginTop: SPACING.md },
   chipsContent: { gap: SPACING.sm },

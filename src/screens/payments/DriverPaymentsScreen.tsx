@@ -58,6 +58,12 @@ export default function DriverPaymentsScreen() {
           <Text style={styles.monto}>{formatPrecio(pago.total)}</Text>
         </View>
 
+        {!marcado && (
+          <Text style={styles.notaTexto}>
+            El pasajero aún no marca que pagó. Cuando lo haga, aquí podrás confirmar si recibiste el dinero.
+          </Text>
+        )}
+
         {marcado ? (
           <View style={styles.acciones}>
             <TouchableOpacity

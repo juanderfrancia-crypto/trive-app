@@ -34,5 +34,5 @@ export const useTodayDepartures = (municipality: string | null) => {
 
   useFocusEffect(useCallback(() => { load() }, [load]))
 
-  return { rides }
+  return { rides, reload: load }
 }

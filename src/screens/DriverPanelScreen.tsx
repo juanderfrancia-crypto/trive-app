@@ -754,11 +754,22 @@ export default function DriverPanelScreen() {
                   <View style={styles.actionsSection}>
                     {/* CTA principal */}
                     <TouchableOpacity
-                      style={[(isUpdating || seatsFilled === 0) && styles.primaryBtnDisabled]}
                       onPress={() => updateRouteStatus(route.id, 'in_progress')}
                       disabled={isUpdating || seatsFilled === 0}
                       activeOpacity={0.85}
                     >
+                      {isUpdating || seatsFilled === 0 ? (
+                        <View style={[styles.primaryActionBtn, styles.primaryActionBtnDisabled]}>
+                          {isUpdating ? (
+                            <ActivityIndicator size="small" color={COLORS.primary} />
+                          ) : (
+                            <>
+                              <Icon name="CirclePlay" size={20} color={COLORS.textTertiary} />
+                              <Text style={[styles.primaryActionText, styles.primaryActionTextDisabled]}>Salir ahora</Text>
+                            </>
+                          )}
+                        </View>
+                      ) : (
                       <LinearGradient
                         colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -773,7 +784,11 @@ export default function DriverPanelScreen() {
                           </>
                         )}
                       </LinearGradient>
+                      )}
                     </TouchableOpacity>
+                    {seatsFilled === 0 && (
+                      <Text style={styles.startHint}>Podrás salir cuando haya al menos un pasajero reservado.</Text>
+                    )}
 
                     {/* Acciones secundarias */}
                     <View style={styles.secondaryActionsRow}>
@@ -811,7 +826,6 @@ export default function DriverPanelScreen() {
                 {route.status === 'in_progress' && (
                   <View style={styles.actionsSection}>
                     <TouchableOpacity
-                      style={[isUpdating && styles.primaryBtnDisabled]}
                       onPress={() => updateRouteStatus(route.id, 'completed')}
                       disabled={isUpdating}
                       activeOpacity={0.85}
@@ -1271,17 +1285,25 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   primaryActionBtn: {
-    ...SHADOWS.xs,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.3,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, borderRadius: RADIUS.md, paddingVertical: 14,
+    gap: 8, borderRadius: RADIUS.md, paddingVertical: 14, overflow: 'hidden',
+  },
+  primaryActionBtnDisabled: {
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   primaryActionText: {
     fontSize: 15, fontWeight: '700', color: '#fff', letterSpacing: -0.2,
   },
-  primaryBtnDisabled: {
-    opacity: 0.5,
+  primaryActionTextDisabled: {
+    color: COLORS.textTertiary,
+  },
+  startHint: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
   },
   secondaryActionsRow: {
     flexDirection: 'row', alignItems: 'center',
