@@ -70,6 +70,10 @@ Esta regla se implementa en **una sola función del servidor** (`puede_conducir`
 ## 5. Vehículos
 
 - El vehículo es una entidad propia, separada de la persona.
+- **Aprobación del vehículo:** se activa automáticamente cuando el administrador completa el checklist (selfie vs. cédula, placa, dueño, vencimientos y consulta manual del RUNT) y sus documentos (tarjeta de propiedad, SOAT y tecnomecánica) están verificados y vigentes. Es verificación manual por ahora.
+- **Documentos ligados a la placa:** la tarjeta de propiedad, el SOAT y la tecnomecánica pertenecen al vehículo (`driver_documents.vehicle_id`).
+- **Dueño distinto al conductor:** exige autorización firmada del dueño registrado, con su cédula adjunta y vigencia limitada (renovable). Sin autorización vigente, el vehículo no se activa.
+- **Si la tarjeta no está a nombre del conductor ni hay autorización, la aprobación no procede.** Hoy esto se revisa a mano; la verificación con proveedor externo queda para cuando haya recursos.
 - **Placa única** entre vehículos activos.
 - Un conductor puede tener varios vehículos registrados, pero **solo uno activo** a la vez.
 - Al cambiar de carro: el vehículo nuevo se registra con sus documentos, un admin lo aprueba, y el anterior pasa a **inactivo** (no se borra).
