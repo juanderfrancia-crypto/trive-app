@@ -21,7 +21,6 @@ import {
 
 const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
   auto: 'Car',
-  taxi: 'Car',
   busetica: 'Bus',
   buseta: 'Bus',
 }
@@ -38,6 +37,9 @@ interface RouteTemplate {
   total_seats: number
   vehicle_type: string
   description: string | null
+  pickup_point: string | null
+  route_via: string | null
+  dropoff_point: string | null
   created_at: string
 }
 
@@ -195,7 +197,11 @@ export default function RecurringRoutesScreen() {
         price_per_seat: publishTarget.price_per_seat,
         total_seats: publishTarget.total_seats,
         vehicle_type: publishTarget.vehicle_type as VehicleTypeId,
-        description: pubVia.trim() || undefined,
+        description: publishTarget.description ?? undefined,
+        route_via: pubVia.trim() || undefined,
+        pickup_point: publishTarget.pickup_point ?? undefined,
+        pickup_point_custom: !!publishTarget.pickup_point,
+        dropoff_point: publishTarget.dropoff_point ?? undefined,
       })
 
       const { data: prof } = await supabase
@@ -303,7 +309,7 @@ export default function RecurringRoutesScreen() {
 
               <TouchableOpacity
                 style={styles.primaryBtn}
-                onPress={() => { setPublishTarget(tpl); setPubVia(tpl.description ?? '') }}
+                onPress={() => { setPublishTarget(tpl); setPubVia(tpl.route_via ?? '') }}
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryBtnText}>Publicar ahora</Text>

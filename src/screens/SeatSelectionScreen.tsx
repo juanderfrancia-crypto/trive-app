@@ -401,7 +401,7 @@ export default function SeatSelectionScreen() {
                 <View style={styles.driverStats}>
                   <Icon name="Star" size={13} color={COLORS.accent} />
                   <Text style={styles.driverStatValue}>
-                    {Number(selectedRoute.driver_rating ?? 0).toFixed(1)}
+                    {selectedRoute.driver_rating ? Number(selectedRoute.driver_rating).toFixed(1) : 'Nuevo'}
                   </Text>
                   <Text style={styles.driverStatMuted}>
                     · {Number(selectedRoute.driver_review_count ?? 0)} reseñas

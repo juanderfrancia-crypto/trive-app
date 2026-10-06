@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
 import { supabase } from '../services/supabase'
 import Icon from '../components/Icon'
+import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
 
 const ROUTE_COMMISSION = 2000
 
@@ -46,7 +47,7 @@ export default function WalletScreen() {
   const setUser = useAppStore((s) => s.setUser)
 
   const [balance, setBalance]         = useState<number>(user?.balance ?? 0)
-  const [driverStats, setDriverStats] = useState({ rating: 0, trips: 0 })
+  const [driverStats, setDriverStats] = useState({ rating: 0, trips: 0, reviews: 0 })
   const [transactions, setTransactions] = useState<WalletTx[]>([])
   const [selectedAmount, setSelectedAmount] = useState<number>(10000)
   const [loadingBalance, setLoadingBalance] = useState(false)
@@ -57,16 +58,27 @@ export default function WalletScreen() {
     if (!user?.id) return
     setLoadingBalance(true)
     try {
-      const [profileRes, txRes] = await Promise.all([
-        supabase.from('profiles').select('balance, rating, total_trips').eq('id', user.id).single(),
+      const [profileRes, txRes, tripsRes, reviewsRes] = await Promise.all([
+        supabase.from('profiles').select('balance, rating').eq('id', user.id).single(),
         supabase.from('wallet_transactions')
           .select('id, amount, type, status, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20),
+        supabase.from('routes')
+          .select('id', { count: 'exact', head: true })
+          .eq('driver_id', user.id)
+          .eq('status', 'completed'),
+        supabase.from('reviews')
+          .select('id', { count: 'exact', head: true })
+          .eq('reviewee_id', user.id),
       ])
       if (profileRes.data) {
-        setDriverStats({ rating: profileRes.data.rating ?? 0, trips: profileRes.data.total_trips ?? 0 })
+        setDriverStats({
+          rating: profileRes.data.rating ?? 0,
+          trips: tripsRes.count ?? 0,
+          reviews: reviewsRes.count ?? 0,
+        })
         const newBalance = profileRes.data.balance ?? 0
         setBalance(newBalance)
         setUser({ ...user, balance: newBalance })
@@ -157,7 +169,7 @@ export default function WalletScreen() {
                   <View style={s.identityText}>
                     <Text style={s.identityName} numberOfLines={1}>{user?.name ?? 'Conductor'}</Text>
                     <Text style={s.identitySub}>
-                      ★ {driverStats.rating.toFixed(1)} · {driverStats.trips} {driverStats.trips === 1 ? 'ruta' : 'rutas'}
+                      {driverStats.reviews >= MIN_REVIEWS_TO_SHOW_RATING ? `★ ${driverStats.rating.toFixed(1)}` : 'Nuevo en Trive'} ·{driverStats.trips} {driverStats.trips === 1 ? 'ruta' : 'rutas'}
                     </Text>
                   </View>
                 </View>
@@ -345,7 +357,7 @@ const s = StyleSheet.create({
   // Info
   infoCard: {
     ...SHADOWS.sm,
-    backgroundColor: `${COLORS.primary}08`, borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.lg, padding: SPACING.lg,
   },
   infoRow: { flexDirection: 'row', gap: SPACING.md },
   infoIcon: { width: 36, height: 36, borderRadius: RADIUS.md, backgroundColor: `${COLORS.primary}15`, justifyContent: 'center', alignItems: 'center' },

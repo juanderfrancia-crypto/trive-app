@@ -1,0 +1,1 @@
+export const MIN_REVIEWS_TO_SHOW_RATING = 5

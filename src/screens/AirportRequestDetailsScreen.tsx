@@ -249,7 +249,7 @@ export default function AirportRequestDetailsScreen() {
                   <View style={styles.ratingRow}>
                     <Icon name="Star" size={13} color={COLORS.warning} />
                     <Text style={styles.ratingText}>
-                      {acceptedOffer.driver_rating?.toFixed(1) || '0.0'}
+                      {acceptedOffer.driver_rating ? acceptedOffer.driver_rating.toFixed(1) : 'Nuevo'}
                     </Text>
                   </View>
                 </View>
@@ -289,7 +289,7 @@ export default function AirportRequestDetailsScreen() {
                       <View style={styles.ratingRow}>
                         <Icon name="Star" size={13} color={COLORS.warning} />
                         <Text style={styles.ratingText}>
-                          {offer.driver_rating?.toFixed(1) || '0.0'}
+                          {offer.driver_rating ? offer.driver_rating.toFixed(1) : 'Nuevo'}
                         </Text>
                       </View>
                     </View>

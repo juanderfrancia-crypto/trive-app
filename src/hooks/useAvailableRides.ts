@@ -18,6 +18,9 @@ export interface AvailableRide {
   vehicle_plate: string
   status: string
   description: string | null
+  pickup_point: string | null
+  route_via: string | null
+  dropoff_point: string | null
   driver_user_id: string
   driver_name: string
   driver_phone: string

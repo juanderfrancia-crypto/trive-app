@@ -93,6 +93,8 @@ export interface DriverDocument {
  * @param fileSize - Size of the file in bytes
  * @param mimeType - MIME type of the file
  */
+const VEHICLE_DOCUMENT_TYPES = ['tarjeta_propiedad', 'soat', 'tecnomecanica']
+
 export async function uploadDriverDocument(
   driverId: string,
   documentType: string,
@@ -151,6 +153,24 @@ export async function uploadDriverDocument(
         .catch((err) => console.warn('Could not delete old file:', err))
     }
 
+    let vehicleId: string | null = null
+    if (VEHICLE_DOCUMENT_TYPES.includes(documentType)) {
+      const { data: vehicle } = await supabase
+        .from('vehicles')
+        .select('id')
+        .eq('driver_id', driverId)
+        .in('status', ['pending', 'verified'])
+        .order('is_active', { ascending: false })
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      if (!vehicle) {
+        throw new Error('Registra tu vehículo antes de subir sus documentos')
+      }
+      vehicleId = vehicle.id
+    }
+
     // Insert or update the document record in the database
     const { data, error } = await supabase
       .from('driver_documents')
@@ -159,6 +179,7 @@ export async function uploadDriverDocument(
           {
             driver_id: driverId,
             document_type: documentType,
+            vehicle_id: vehicleId,
             file_path: filePath,
             file_name: sanitizedFileName,
             file_size: fileSize,

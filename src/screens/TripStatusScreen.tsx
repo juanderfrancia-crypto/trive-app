@@ -351,7 +351,7 @@ export default function TripStatusScreen() {
                   <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
                   <View style={styles.ratingRow}>
                     <Icon name="Star" size={12} color={COLORS.accent} />
-                    <Text style={styles.ratingText}>{selectedRoute.driver_rating || '0'}</Text>
+                    <Text style={styles.ratingText}>{selectedRoute.driver_rating ? selectedRoute.driver_rating : 'Nuevo'}</Text>
                     <Text style={styles.ratingLabel}> · conductor verificado</Text>
                   </View>
                 </View>

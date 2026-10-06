@@ -735,6 +735,7 @@ export type Database = {
           status: string | null
           updated_at: string | null
           uploaded_at: string | null
+          vehicle_id: string | null
           verified_at: string | null
         }
         Insert: {
@@ -751,6 +752,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           uploaded_at?: string | null
+          vehicle_id?: string | null
           verified_at?: string | null
         }
         Update: {
@@ -1815,6 +1817,9 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          pickup_point: string | null
+          route_via: string | null
+          dropoff_point: string | null
           destination: string
           driver_id: string
           id: string
@@ -1827,6 +1832,9 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          pickup_point?: string | null
+          route_via?: string | null
+          dropoff_point?: string | null
           destination: string
           driver_id: string
           id?: string
@@ -1839,6 +1847,9 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          pickup_point?: string | null
+          route_via?: string | null
+          dropoff_point?: string | null
           destination?: string
           driver_id?: string
           id?: string

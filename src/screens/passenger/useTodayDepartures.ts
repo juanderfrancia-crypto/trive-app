@@ -24,7 +24,9 @@ export const useTodayDepartures = (municipality: string | null) => {
       .order('departure_time', { ascending: true })
       .limit(SALIDAS_MOSTRADAS)
 
-    if (municipality) consulta = consulta.ilike('origin', `%${municipality}%`)
+    if (municipality) {
+      consulta = consulta.or(`origin.ilike.%${municipality}%,destination.ilike.%${municipality}%`)
+    }
 
     const { data, error } = await consulta
     setRides(error ? [] : ((data as AvailableRide[]) ?? []))

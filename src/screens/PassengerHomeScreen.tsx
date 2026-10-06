@@ -326,7 +326,7 @@ export default function PassengerHomeScreen() {
                   <Text style={styles.ridePeriod}>{hora.periodo}</Text>
                 </View>
                 <View style={styles.rideMiddle}>
-                  <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · ★ {Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+                  <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
                   <Text style={styles.rideSeats}>{ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'}</Text>
                 </View>
                 <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>

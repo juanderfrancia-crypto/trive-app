@@ -11,12 +11,16 @@ import { supabase } from '../../services/supabase'
 import { insertNotificationForUser } from '../../services/notificationInsert'
 import { showSuccess } from '../../utils/showError'
 
-export type VehicleTypeId = 'auto' | 'taxi' | 'busetica' | 'buseta'
+export type VehicleTypeId = 'auto' | 'busetica' | 'buseta'
 export type PaymentMethodId = 'efectivo' | 'nequi' | 'daviplata'
+
+function formatTimeInput(text: string): string {
+  const digits = text.replace(/\D/g, '').slice(0, 4)
+  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits
+}
 
 export const VEHICLE_TYPES: { id: VehicleTypeId; name: string; maxSeats: number }[] = [
   { id: 'auto', name: 'Auto', maxSeats: 4 },
-  { id: 'taxi', name: 'Taxi', maxSeats: 4 },
   { id: 'busetica', name: 'Minivan', maxSeats: 15 },
   { id: 'buseta', name: 'Buseta', maxSeats: 70 },
 ]
@@ -72,6 +76,8 @@ interface Draft {
   seats: string
   paymentMethods: PaymentMethodId[]
   pickup: string
+  routeVia: string
+  dropoffPoint: string
   description: string
   saveAsTemplate: boolean
 }
@@ -87,6 +93,8 @@ const INITIAL_DRAFT: Draft = {
   seats: '',
   paymentMethods: [],
   pickup: '',
+  routeVia: '',
+  dropoffPoint: '',
   description: '',
   saveAsTemplate: false,
 }
@@ -166,6 +174,9 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
   const validateDraft = (): string | null => {
     if (!draft.origin.trim()) return 'Escribe la ciudad de origen.'
     if (!draft.destination.trim()) return 'Escribe la ciudad de destino.'
+    if (!draft.pickup.trim()) return 'Escribe el punto de salida en el municipio de origen.'
+    if (!draft.routeVia.trim()) return 'Escribe por dónde va la ruta.'
+    if (!draft.dropoffPoint.trim()) return 'Escribe el punto de llegada en el destino.'
     const dep = parseHHMM(draft.departureTime)
     if (!dep) return 'Escribe la hora de salida en formato HH:MM.'
     if (draft.departureDay === 0 && dateAt(0, dep) < new Date(Date.now() - 15 * 60000)) {
@@ -193,6 +204,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
       price_per_seat: Number(draft.price),
       total_seats: Number(draft.seats),
       vehicle_type: draft.vehicleType as VehicleTypeId,
+      route_via: draft.routeVia.trim(),
+      dropoff_point: draft.dropoffPoint.trim(),
     }
     const arr = parseHHMM(draft.arrivalTime)
     if (arr) {
@@ -201,10 +214,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
       payload.arrival_time = toLocalISO(a)
     }
     if (draft.description.trim()) payload.description = draft.description.trim()
-    if (draft.pickup.trim()) {
-      payload.pickup_point = draft.pickup.trim()
-      payload.pickup_point_custom = true
-    }
+    payload.pickup_point = draft.pickup.trim()
+    payload.pickup_point_custom = true
     return payload
   }
 
@@ -261,6 +272,9 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
         total_seats: payload.total_seats,
         vehicle_type: payload.vehicle_type,
         description: payload.description ?? null,
+        pickup_point: payload.pickup_point ?? null,
+        route_via: payload.route_via,
+        dropoff_point: payload.dropoff_point,
       })
       if (error && __DEV__) console.warn('No se guardó la plantilla:', error.message)
     }
@@ -420,8 +434,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
             placeholder="14:30"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.departureTime}
-            onChangeText={(t) => update('departureTime', t)}
-            keyboardType="numbers-and-punctuation"
+            onChangeText={(t) => update('departureTime', formatTimeInput(t))}
+            keyboardType="number-pad"
             maxLength={5}
           />
         </View>
@@ -432,8 +446,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
             placeholder="Sin definir"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.arrivalTime}
-            onChangeText={(t) => update('arrivalTime', t)}
-            keyboardType="numbers-and-punctuation"
+            onChangeText={(t) => update('arrivalTime', formatTimeInput(t))}
+            keyboardType="number-pad"
             maxLength={5}
           />
         </View>
@@ -489,14 +503,39 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenWallet }: 
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.fieldLabel}>Punto de encuentro</Text>
+        <Text style={styles.fieldLabel}>Punto de salida</Text>
         <TextInput
           style={styles.fieldInput}
-          placeholder="Parque principal de Puerto Tejada"
+          placeholder="Ej: Parque principal de Puerto Tejada"
           placeholderTextColor={COLORS.textTertiary}
           value={draft.pickup}
           onChangeText={(t) => update('pickup', t)}
         />
+        <Text style={styles.fieldHint}>De qué punto del origen sale el carro.</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>Por dónde va</Text>
+        <TextInput
+          style={styles.fieldInput}
+          placeholder="Ej: Por la Simón Bolívar, sin pasar por Cañas Gordas"
+          placeholderTextColor={COLORS.textTertiary}
+          value={draft.routeVia}
+          onChangeText={(t) => update('routeVia', t)}
+        />
+        <Text style={styles.fieldHint}>Así el pasajero sabe si le sirve la vía.</Text>
+      </View>
+
+      <View style={styles.card}>
+        <Text style={styles.fieldLabel}>Punto de llegada</Text>
+        <TextInput
+          style={styles.fieldInput}
+          placeholder="Ej: Jardín Plaza, Cali"
+          placeholderTextColor={COLORS.textTertiary}
+          value={draft.dropoffPoint}
+          onChangeText={(t) => update('dropoffPoint', t)}
+        />
+        <Text style={styles.fieldHint}>A qué punto del destino llega el carro.</Text>
       </View>
 
       <View style={styles.card}>

@@ -50,6 +50,8 @@ export type PublishRoutePayload = {
   description?: string;
   pickup_point?: string;
   pickup_point_custom?: boolean;
+  route_via?: string;
+  dropoff_point?: string;
   vehicle_type: 'auto' | 'taxi' | 'busetica' | 'buseta';
 };
 

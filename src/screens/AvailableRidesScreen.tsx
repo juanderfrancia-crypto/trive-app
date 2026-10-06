@@ -4,7 +4,7 @@ import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAvailableRides, AvailableRide } from '../hooks/useAvailableRides'
 import { SkeletonRideCard } from '../components/Skeleton'
@@ -105,10 +105,19 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
         <View style={styles.ticketBody}>
           <View style={styles.ticketInfo}>
             <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
+            {!!ride.pickup_point && (
+              <Text style={styles.routeDetail} numberOfLines={1}>Sale de {ride.pickup_point}</Text>
+            )}
+            {!!ride.route_via && (
+              <Text style={styles.routeDetail} numberOfLines={2}>Por {ride.route_via}</Text>
+            )}
+            {!!ride.dropoff_point && (
+              <Text style={styles.routeDetail} numberOfLines={1}>Llega a {ride.dropoff_point}</Text>
+            )}
             <View style={styles.driverRow}>
               <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
               <Icon name="Star" size={12} color={COLORS.warning} />
-              <Text style={styles.ratingText}>{Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+              <Text style={styles.ratingText}>{ride.driver_rating ? Number(ride.driver_rating).toFixed(1) : 'Nuevo'}</Text>
             </View>
             {!!ride.vehicle_plate && (
               <View style={styles.platePill}>
@@ -365,6 +374,7 @@ const styles = StyleSheet.create({
   ticketBody: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   ticketInfo: { flex: 1, gap: 4 },
   routeText: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  routeDetail: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   driverName: { fontSize: 13, color: COLORS.textSecondary, flexShrink: 1 },
   ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
