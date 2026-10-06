@@ -2,16 +2,23 @@ import React, { useRef, useState } from 'react'
 import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { LinearGradient } from 'expo-linear-gradient'
+import { SvgXml } from 'react-native-svg'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
-import Icon from '../components/Icon'
-import Illustration, { type IllustrationName } from '../components/illustrations/Illustration'
+import {
+  byTheRoadXml,
+  certificationXml,
+  sendMoneyXml,
+  biometricLoginXml,
+} from '../components/illustrations/onboarding/onboardingIllustrations'
 
 const { width } = Dimensions.get('window')
+const ILLUSTRATION_MAX_HEIGHT = 340
+const ILLUSTRATION_MAX_WIDTH = width - SPACING.xxl * 2
 
 type Slide = {
   id: string
-  illustration: IllustrationName
+  xml: string
+  ratio: number
   eyebrow: string
   title: string
   description: string
@@ -20,26 +27,42 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     id: '1',
-    illustration: 'routePlanning',
-    eyebrow: 'MOVILIDAD INTERMUNICIPAL',
-    title: 'Viaja cuando quieras',
-    description: 'Encuentra cupo en la ruta que necesitas y reserva en segundos, sin filas ni intermediarios.',
+    xml: byTheRoadXml,
+    ratio: 888 / 623.13,
+    eyebrow: 'RUTAS COMPARTIDAS',
+    title: 'Encuentra tu ruta y reserva tu cupo',
+    description: 'Busca viajes publicados por conductores y reserva en pocos toques.',
   },
   {
     id: '2',
-    illustration: 'personalFile',
-    eyebrow: 'CONDUCTORES VERIFICADOS',
-    title: 'Viaja con confianza',
-    description: 'Revisamos los documentos y el vehículo de cada conductor antes de que pueda publicar una ruta.',
+    xml: certificationXml,
+    ratio: 428.873 / 567.469,
+    eyebrow: 'CONDUCTORES REGISTRADOS',
+    title: 'Conoce al conductor antes de subir',
+    description: 'Revisamos los documentos del conductor y del vehículo antes de publicar cualquier ruta.',
   },
   {
     id: '3',
-    illustration: 'mobileEncryption',
-    eyebrow: 'TODO DESDE TU CELULAR',
-    title: 'Reserva en minutos',
-    description: 'Busca tu ruta, reserva tu cupo y sigue el estado de tu viaje desde un solo lugar.',
+    xml: sendMoneyXml,
+    ratio: 800 / 483.13,
+    eyebrow: 'PAGO SIN INTERMEDIARIOS',
+    title: 'Pagas directo al conductor',
+    description: 'Efectivo, Nequi, Daviplata o transferencia. Trive no retiene tu dinero.',
+  },
+  {
+    id: '4',
+    xml: biometricLoginXml,
+    ratio: 933.5 / 800,
+    eyebrow: 'EMPECEMOS',
+    title: 'Crea tu cuenta en un minuto',
+    description: 'Usa tu correo y confirma tu celular. Cada persona tiene una sola cuenta.',
   },
 ]
+
+function illustrationSize(ratio: number) {
+  const height = Math.min(ILLUSTRATION_MAX_HEIGHT, ILLUSTRATION_MAX_WIDTH / ratio)
+  return { width: height * ratio, height }
+}
 
 interface Props {
   onComplete: () => void
@@ -49,7 +72,6 @@ export default function OnboardingScreen({ onComplete }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const listRef = useRef<FlatList<Slide>>(null)
   const insets = useSafeAreaInsets()
-  const slide = SLIDES[currentIndex]
   const isLast = currentIndex === SLIDES.length - 1
 
   const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -58,11 +80,12 @@ export default function OnboardingScreen({ onComplete }: Props) {
   }
 
   const handleNext = () => {
-    if (!isLast) {
-      listRef.current?.scrollToIndex({ index: currentIndex + 1, animated: true })
-    } else {
+    if (isLast) {
       onComplete()
+      return
     }
+    listRef.current?.scrollToOffset({ offset: (currentIndex + 1) * width, animated: true })
+    setCurrentIndex(currentIndex + 1)
   }
 
   return (
@@ -80,6 +103,15 @@ export default function OnboardingScreen({ onComplete }: Props) {
         )}
       </View>
 
+      <View style={styles.progress}>
+        {SLIDES.map((s, idx) => (
+          <View
+            key={s.id}
+            style={[styles.progressSegment, idx <= currentIndex ? styles.progressActive : styles.progressInactive]}
+          />
+        ))}
+      </View>
+
       <FlatList
         ref={listRef}
         data={SLIDES}
@@ -90,41 +122,45 @@ export default function OnboardingScreen({ onComplete }: Props) {
         onMomentumScrollEnd={onMomentumEnd}
         style={styles.pager}
         renderItem={({ item }) => (
-          <View style={styles.slide}>
-            <View style={styles.illustrationCard}>
-              <Illustration name={item.illustration} width={Math.min(width - 96, 260)} />
+          <View style={[styles.slide, { width }]}>
+            <View style={styles.illustrationBox}>
+              <SvgXml {...illustrationSize(item.ratio)} xml={item.xml} />
+            </View>
+            <View style={styles.textBlock}>
+              <Text style={styles.eyebrow}>{item.eyebrow}</Text>
+              <Text style={styles.title}>{item.title}</Text>
+              <Text style={styles.description}>{item.description}</Text>
             </View>
           </View>
         )}
       />
 
-      <View style={styles.textBlock}>
-        <Text style={styles.eyebrow}>{slide.eyebrow}</Text>
-        <Text style={styles.title}>{slide.title}</Text>
-        <Text style={styles.description}>{slide.description}</Text>
-      </View>
-
       <View style={styles.footer}>
-        <View style={styles.dots}>
-          {SLIDES.map((_, idx) => (
-            <View
-              key={idx}
-              style={[styles.dot, idx === currentIndex ? styles.dotActive : styles.dotInactive]}
-            />
-          ))}
-        </View>
-
-        <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.88}>
-          <LinearGradient
-            colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.btnGradient}
-          >
-            <Text style={styles.btnText}>{isLast ? 'Comenzar' : 'Continuar'}</Text>
-            <Icon name={isLast ? 'CircleCheck' : 'ArrowRight'} size={18} color={COLORS.white} />
-          </LinearGradient>
-        </TouchableOpacity>
+        {!isLast ? (
+          <>
+            <View style={styles.dots}>
+              {SLIDES.map((s, idx) => (
+                <View
+                  key={s.id}
+                  style={[styles.dot, idx === currentIndex ? styles.dotActive : styles.dotInactive]}
+                />
+              ))}
+            </View>
+            <TouchableOpacity style={styles.primaryBtn} onPress={handleNext} activeOpacity={0.88}>
+              <Text style={styles.primaryBtnText}>Continuar</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity style={styles.primaryBtn} onPress={onComplete} activeOpacity={0.88}>
+              <Text style={styles.primaryBtnText}>Crear cuenta</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.secondaryBtn} onPress={onComplete} activeOpacity={0.88}>
+              <Text style={styles.secondaryBtnText}>Ya tengo cuenta</Text>
+            </TouchableOpacity>
+            <Text style={styles.terms}>Al continuar aceptas los términos de uso.</Text>
+          </>
+        )}
       </View>
     </SafeAreaView>
   )
@@ -150,43 +186,72 @@ const styles = StyleSheet.create({
   skipText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.primary },
   skipPlaceholder: { width: 64, height: 32 },
 
-  pager: { flexGrow: 0, height: 380 },
-  slide: { width, height: 380, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl },
-  illustrationCard: {
-    width: '100%',
-    height: 320,
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  textBlock: { paddingHorizontal: SPACING.xxl, paddingTop: SPACING.md, flex: 1 },
-  eyebrow: { ...TYPOGRAPHY.labelSmall, fontWeight: '700', letterSpacing: 1.6, color: COLORS.primary, marginBottom: SPACING.sm },
-  title: { ...TYPOGRAPHY.h1, color: COLORS.textPrimary, marginBottom: SPACING.md },
-  description: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, lineHeight: 24 },
-
-  footer: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.lg, gap: SPACING.lg },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.sm },
-  dot: { height: 8, borderRadius: 4 },
-  dotActive: { width: 24, backgroundColor: COLORS.primary },
-  dotInactive: { width: 8, backgroundColor: COLORS.border },
-
-  btn: {
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  btnGradient: {
-    height: 58,
+  progress: {
     flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: SPACING.xxl,
+    marginTop: SPACING.sm,
+  },
+  progressSegment: { flex: 1, height: 4, borderRadius: 4 },
+  progressActive: { backgroundColor: COLORS.primary },
+  progressInactive: { backgroundColor: COLORS.border },
+
+  pager: { flex: 1 },
+  slide: { flex: 1, paddingTop: SPACING.lg },
+  illustrationBox: {
+    height: ILLUSTRATION_MAX_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
   },
-  btnText: { ...TYPOGRAPHY.button, color: COLORS.white, fontWeight: '800' },
+
+  textBlock: { paddingHorizontal: SPACING.xxl, marginTop: SPACING.lg },
+  eyebrow: {
+    ...TYPOGRAPHY.labelSmall,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    letterSpacing: 1.4,
+    color: COLORS.primary,
+  },
+  title: {
+    ...TYPOGRAPHY.h1,
+    fontWeight: TYPOGRAPHY.weight.extrabold,
+    color: COLORS.textPrimary,
+    marginTop: SPACING.sm,
+  },
+  description: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textSecondary,
+    lineHeight: 24,
+    marginTop: SPACING.md,
+  },
+
+  footer: {
+    paddingHorizontal: SPACING.xxl,
+    paddingBottom: SPACING.lg,
+    paddingTop: SPACING.lg,
+    gap: SPACING.md,
+  },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.sm, marginBottom: SPACING.xs },
+  dot: { height: 6, borderRadius: 6 },
+  dotActive: { width: 22, backgroundColor: COLORS.primary },
+  dotInactive: { width: 6, borderRadius: 3, backgroundColor: COLORS.grayLight },
+
+  primaryBtn: {
+    height: 56,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBtnText: { ...TYPOGRAPHY.button, color: COLORS.white, fontWeight: TYPOGRAPHY.weight.bold },
+  secondaryBtn: {
+    height: 56,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  secondaryBtnText: { ...TYPOGRAPHY.button, color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold },
+  terms: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, textAlign: 'center' },
 })
