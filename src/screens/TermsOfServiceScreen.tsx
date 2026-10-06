@@ -35,7 +35,7 @@ export default function TermsOfServiceScreen() {
         <Section title="2. Naturaleza del servicio">
           Trive Technologies SAS opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
           Trive no es una empresa de transporte público, privado colectivo ni individual, ni presta servicios de taxi o similares. Las rutas publicadas corresponden a viajes que los conductores ya tienen planeado realizar, en los cuales ofrecen puestos disponibles a otros usuarios para compartir gastos de desplazamiento.{'\n\n'}
-          Los viajes especiales (aeropuerto o particulares) son solicitudes de trayecto publicadas por pasajeros y aceptadas por conductores. Trive no fija el precio de estos trayectos, no participa en su ejecución y no es parte del acuerdo entre pasajero y conductor.
+          Las rutas personalizadas (aeropuerto o particulares) son solicitudes de trayecto publicadas por pasajeros y aceptadas por conductores. Trive no fija el precio de estos trayectos, no participa en su ejecución y no es parte del acuerdo entre pasajero y conductor.
         </Section>
 
         <Section title="3. Requisitos para el uso">
@@ -59,7 +59,7 @@ export default function TermsOfServiceScreen() {
           • Ser aprobado por Trive, que verifica la identidad del conductor y el estado de su vehículo antes de habilitarle la publicación. Trive puede retirar esta habilitación si los documentos vencen o si el conductor incumple estos términos.{'\n'}
           • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación de ruta descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
           • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.{'\n\n'}
-          <B>Viajes especiales:</B> los conductores aprobados pueden aceptar solicitudes de viaje al aeropuerto o particulares publicadas por pasajeros. Al aceptar una solicitud, o una oferta de precio sobre ella, se descuentan automáticamente $5.000 de la billetera del conductor como costo de uso de la Plataforma para esta modalidad. Si el saldo es insuficiente, el conductor no podrá aceptar hasta recargar su billetera. El precio del trayecto lo acuerdan directamente pasajero y conductor.
+          <B>Rutas personalizadas:</B> los conductores aprobados pueden aceptar solicitudes de ruta al aeropuerto o particulares publicadas por pasajeros. Al aceptar una solicitud, o una oferta de precio sobre ella, se descuentan automáticamente $5.000 de la billetera del conductor como costo de uso de la Plataforma para esta modalidad. Si el saldo es insuficiente, el conductor no podrá aceptar hasta recargar su billetera. El precio del trayecto lo acuerdan directamente pasajero y conductor.
         </Section>
 
         <Section title="6. Pasajeros">
@@ -72,7 +72,7 @@ export default function TermsOfServiceScreen() {
 
         <Section title="7. Tarifas y pagos">
           El precio de cada ruta lo fija el conductor y el pago se acuerda y realiza directamente entre conductor y pasajero (efectivo, Nequi, Daviplata u otros). Trive no intermedia ni retiene ese dinero, y no garantiza devoluciones de pagos hechos entre usuarios.{'\n\n'}
-          <B>Saldo de la billetera:</B> Trive cobra únicamente los $2.000 por publicar una ruta y los $5.000 por aceptar un viaje especial. Ambos se descuentan del saldo del conductor. El saldo se recarga mediante los medios de pago habilitados en la aplicación.{'\n\n'}
+          <B>Saldo de la billetera:</B> Trive cobra únicamente los $2.000 por publicar una ruta y los $5.000 por aceptar una ruta personalizada. Ambos se descuentan del saldo del conductor. El saldo se recarga mediante los medios de pago habilitados en la aplicación.{'\n\n'}
           El saldo es de uso exclusivo dentro de Trive. <B>No es retirable, no se transfiere a terceros y no se convierte en dinero en efectivo.</B> Las recargas no son reembolsables. Esta regla aplica también si la cuenta se cierra: el saldo que quede se pierde al cierre, salvo los casos de error de la aplicación descritos en la sección 8.{'\n\n'}
           <B>Referidos:</B> cuando un conductor nuevo se registra con el código de otro conductor y completa y confirma su primera reserva, el conductor que refirió recibe $2.000 de crédito en su saldo y el conductor nuevo recibe $1.000 de crédito. Este beneficio aplica una sola vez por conductor nuevo y se otorga solo si Trive confirma la reserva.
         </Section>
@@ -82,7 +82,7 @@ export default function TermsOfServiceScreen() {
           • Se devuelven automáticamente al saldo si el conductor cancela antes de pulsar "Salir" y la ruta no tiene reservas confirmadas. Máximo tres devoluciones automáticas por conductor al día.{'\n'}
           • No se devuelven si hay reservas confirmadas, si el conductor pulsa "Salir", o si pasa la hora de salida sin que el conductor pulse "Salir". En ese caso la ruta se cierra y los pasajeros reservados son avisados.{'\n'}
           • Se devuelven si hubo un error de la aplicación, como un cobro duplicado.{'\n\n'}
-          <B>Viaje especial aceptado ($5.000):</B>{'\n'}
+          <B>Ruta personalizada aceptada ($5.000):</B>{'\n'}
           • Si el pasajero cancela antes del inicio del viaje, los $5.000 se devuelven al saldo del conductor.{'\n'}
           • Si el conductor cancela, o el viaje se realiza, no hay devolución.{'\n'}
           • Si hubo un error de la aplicación, se devuelve el monto cobrado.{'\n\n'}
@@ -96,7 +96,7 @@ export default function TermsOfServiceScreen() {
 
         <Section title="9. Conducta prohibida">
           Está terminantemente prohibido:{'\n\n'}
-          • Utilizar la Plataforma para ofrecer servicios de transporte remunerado (taxi, transporte especial, etc.).{'\n'}
+          • Utilizar la Plataforma para ofrecer servicio de taxi o de transporte público, o para ofrecer trayectos de forma habitual como actividad de transporte.{'\n'}
           • Publicar información falsa o engañosa.{'\n'}
           • Discriminar a otros usuarios por razón de raza, sexo, religión, orientación sexual u otra condición.{'\n'}
           • Realizar actividades ilícitas durante los trayectos.{'\n'}

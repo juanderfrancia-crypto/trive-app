@@ -14,9 +14,9 @@ Decisiones confirmadas por el dueño. Son reglas que el código debe cumplir.
 - **Pago anticipado:** el conductor recarga su billetera. Ninguna acción que cuesta dinero se ejecuta sin saldo suficiente.
 - **El saldo nunca puede ser negativo.** Se garantiza en la base de datos, no solo en la app.
 - **No hay límite de viajes por conductor.** Cada viaje se cobra; el volumen no se restringe.
-- **Recarga en línea** desde el botón "Recargar" de la billetera, por Wompi (Nequi, PSE, tarjeta o Bancolombia). Un admin puede acreditar recargas manualmente con comprobante (`admin_credit_balance`).
+- **Recarga en línea** desde el botón "Recargar" de la billetera, por Wompi (Nequi, PSE, tarjeta o Bancolombia). Wompi se activa en el momento de lanzar la plataforma. Un admin puede acreditar recargas manualmente con comprobante (`admin_credit_balance`).
 - **El saldo no es retirable, no es transferible y no es reembolsable.** Las recargas tampoco se devuelven.
-- **Cierre de cuenta:** el saldo que quede al cerrar la cuenta no se devuelve. Hoy `anonymize_account` no registra ese saldo en el libro; queda guardado en el perfil bloqueado. Pendiente: registrar un movimiento `account_closed` para que quede trazable.
+- **Cierre de cuenta:** el saldo que quede al cerrar la cuenta se pierde. `anonymize_account` registra un movimiento `account_closed` por el monto perdido y deja el saldo en 0 (migración `20261008140000_account_closed_forfeit.sql`, pendiente de aplicar).
 
 ## 2. Reembolsos
 
@@ -54,7 +54,7 @@ Para **conducir** (publicar rutas, aceptar solicitudes, hacer ofertas y chatear 
 - Cédula registrada y conductor aprobado por Trive.
 - Al menos un **vehículo activo y verificado**.
 - Documentos revisados por un admin: licencia, tarjeta de propiedad, SOAT y revisión técnico-mecánica. Esta revisión es manual; `puede_conducir` no la verifica automáticamente.
-- Certificado de antecedentes: **pendiente**. Se planea exigirlo, con almacenamiento privado y consentimiento según la Ley 1581 de 2012, pero hoy no es requisito del sistema.
+- **Certificado de antecedentes judiciales: requisito obligatorio** para conducir, decidido por el dueño. Se trata con las mismas reglas que la cédula: almacenamiento privado, acceso solo para verificación y consentimiento explícito según la Ley 1581 de 2012. Su plazo de conservación lo define el abogado. **Estado:** el requisito todavía no está implementado en `puede_conducir` ni en la carga de documentos.
 - Cuenta activa, sin suspensiones.
 
 El **pasajero** solo necesita su número de teléfono para registrarse. No requiere documentos.

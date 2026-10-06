@@ -58,7 +58,7 @@ Trive no garantiza devoluciones de dinero entregado directamente entre usuarios.
 
 - El saldo es de uso exclusivo dentro de Trive. No es retirable, no es transferible y no se convierte en efectivo.
 - Las recargas no son reembolsables.
-- Al cerrar la cuenta, el saldo que quede no se devuelve. Las únicas devoluciones son las de los casos de error de la app de las secciones 2 y 3, que se acreditan al saldo.
+- Al cerrar la cuenta, el saldo que quede se pierde y se registra como movimiento `account_closed` en el libro (migración `20261008140000_account_closed_forfeit.sql`, pendiente de aplicar). Las únicas devoluciones son las de los casos de error de la app de las secciones 2 y 3, que se acreditan al saldo.
 - Los términos de uso (sección 7 y 8A) describen estas reglas.
 
 ## 6. Principios
