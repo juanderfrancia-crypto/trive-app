@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
-import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme'
+import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
 
 interface SavedAddress {
   id: string
@@ -63,9 +64,22 @@ export default function SavedAddressesScreen() {
     }
   }
 
+  const resetForm = () => {
+    setLabel('')
+    setAddress('')
+    setIsHome(false)
+    setIsWork(false)
+    setEditingId(null)
+  }
+
+  const toggleForm = () => {
+    resetForm()
+    setShowForm(!showForm)
+  }
+
   const handleSave = async () => {
     if (!label.trim() || !address.trim()) {
-      Alert.alert('Error', 'Por favor completa tous los campos')
+      Alert.alert('Error', 'Por favor completa todos los campos')
       return
     }
 
@@ -125,15 +139,10 @@ export default function SavedAddressesScreen() {
         }
       }
 
-      // Reset form
-      setLabel('')
-      setAddress('')
-      setIsHome(false)
-      setIsWork(false)
-      setEditingId(null)
+      resetForm()
       setShowForm(false)
 
-      Alert.alert('Éxito', editingId ? 'Dirección actualizada' : 'Dirección guardada')
+      Alert.alert('Listo', editingId ? 'Dirección actualizada' : 'Dirección guardada')
     } catch (err) {
       console.error('Error saving address:', err)
       Alert.alert('Error', 'No se pudo guardar la dirección')
@@ -166,7 +175,7 @@ export default function SavedAddressesScreen() {
               .eq('user_id', user?.id ?? '')
 
             if (error) throw error
-            
+
             // Optimistic update - remove from list
             setAddresses(addresses.filter((addr) => addr.id !== addressId))
           } catch (err) {
@@ -177,216 +186,10 @@ export default function SavedAddressesScreen() {
     ])
   }
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: COLORS.background,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: SPACING.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: COLORS.border,
-      backgroundColor: COLORS.surface,
-    },
-    title: {
-      fontSize: TYPOGRAPHY.size.lg,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-      flex: 1,
-      textAlign: 'center',
-    },
-    addBtn: {
-      backgroundColor: COLORS.primary,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: SPACING.xs,
-    },
-    addBtnText: {
-      color: COLORS.textInverse,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    listContainer: {
-      padding: SPACING.md,
-    },
-    addressCard: {
-      backgroundColor: COLORS.surface,
-      borderRadius: 12,
-      padding: SPACING.md,
-      marginBottom: SPACING.md,
-      borderLeftWidth: 4,
-      borderLeftColor: COLORS.primary,
-    },
-    addressHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: SPACING.sm,
-    },
-    addressLabel: {
-      fontSize: TYPOGRAPHY.size.sm,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.primary,
-      flex: 1,
-    },
-    badgesContainer: {
-      flexDirection: 'row',
-      gap: SPACING.xs,
-    },
-    badge: {
-      backgroundColor: COLORS.primary + '20',
-      paddingHorizontal: SPACING.sm,
-      paddingVertical: SPACING.xs,
-      borderRadius: 8,
-    },
-    badgeText: {
-      fontSize: 10,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.primary,
-    },
-    addressText: {
-      fontSize: TYPOGRAPHY.size.sm,
-      color: COLORS.textSecondary,
-      marginBottom: SPACING.sm,
-    },
-    actions: {
-      flexDirection: 'row',
-      gap: SPACING.sm,
-      marginTop: SPACING.md,
-      paddingTop: SPACING.md,
-      borderTopWidth: 1,
-      borderTopColor: COLORS.border,
-    },
-    actionBtn: {
-      flex: 1,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: SPACING.xs,
-    },
-    editBtn: {
-      backgroundColor: COLORS.primary + '20',
-    },
-    deleteBtn: {
-      backgroundColor: COLORS.error + '20',
-    },
-    editBtnText: {
-      color: COLORS.primary,
-      fontSize: TYPOGRAPHY.size.xs,
-      fontWeight: TYPOGRAPHY.weight.bold,
-    },
-    deleteBtnText: {
-      color: COLORS.error,
-      fontSize: TYPOGRAPHY.size.xs,
-      fontWeight: TYPOGRAPHY.weight.bold,
-    },
-    form: {
-      backgroundColor: COLORS.surface,
-      padding: SPACING.lg,
-      margin: SPACING.md,
-      borderRadius: 12,
-      marginBottom: SPACING.lg,
-    },
-    formTitle: {
-      fontSize: TYPOGRAPHY.size.md,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-      marginBottom: SPACING.md,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: COLORS.border,
-      borderRadius: 8,
-      paddingHorizontal: SPACING.md,
-      paddingVertical: SPACING.sm,
-      marginBottom: SPACING.md,
-      backgroundColor: COLORS.background,
-      color: COLORS.textPrimary,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    checkboxContainer: {
-      flexDirection: 'row',
-      gap: SPACING.md,
-      marginBottom: SPACING.md,
-    },
-    checkbox: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: SPACING.sm,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      backgroundColor: COLORS.background,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: COLORS.border,
-    },
-    checkboxText: {
-      flex: 1,
-      fontSize: TYPOGRAPHY.size.sm,
-      color: COLORS.textPrimary,
-    },
-    buttonGroup: {
-      flexDirection: 'row',
-      gap: SPACING.md,
-    },
-    saveBtn: {
-      flex: 1,
-      backgroundColor: COLORS.primary,
-      paddingVertical: SPACING.md,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    saveBtnText: {
-      color: COLORS.textInverse,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    cancelBtn: {
-      flex: 1,
-      backgroundColor: COLORS.border,
-      paddingVertical: SPACING.md,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    cancelBtnText: {
-      color: COLORS.textPrimary,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: SPACING.lg,
-    },
-    emptyIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
-    emptyText: {
-      fontSize: TYPOGRAPHY.size.md,
-      color: COLORS.textSecondary,
-      textAlign: 'center',
-    },
-  })
-
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+        <View style={styles.centered}>
           <ActivityIndicator size="large" color={COLORS.primary} />
         </View>
       </SafeAreaView>
@@ -394,77 +197,47 @@ export default function SavedAddressesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>📍 Mis Direcciones</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            setLabel('')
-            setAddress('')
-            setIsHome(false)
-            setIsWork(false)
-            setEditingId(null)
-            setShowForm(!showForm)
-          }}
-        >
-          <Icon name="CirclePlus" size={20} color={COLORS.textInverse} />
-          <Text style={styles.addBtnText}>
-            {showForm ? 'Cancelar' : 'Añadir dirección'}
-          </Text>
+        <Text style={styles.title}>Direcciones guardadas</Text>
+        <TouchableOpacity style={styles.addBtn} onPress={toggleForm} activeOpacity={0.85}>
+          <Icon name={showForm ? 'X' : 'CirclePlus'} size={16} color={COLORS.white} />
+          <Text style={styles.addBtnText}>{showForm ? 'Cerrar' : 'Agregar'}</Text>
         </TouchableOpacity>
       </View>
 
       {showForm && (
         <View style={styles.form}>
-          <Text style={styles.formTitle}>
-            {editingId ? 'Editar dirección' : 'Nueva dirección'}
-          </Text>
+          <Text style={styles.formTitle}>{editingId ? 'Editar dirección' : 'Nueva dirección'}</Text>
 
+          <Text style={styles.label}>Nombre</Text>
           <TextInput
             style={styles.input}
-            placeholder="Ej: Casa, Oficina, etc."
+            placeholder="Ej: Casa, oficina, la del barrio"
             placeholderTextColor={COLORS.textTertiary}
             value={label}
             onChangeText={setLabel}
           />
 
+          <Text style={styles.label}>Dirección</Text>
           <TextInput
-            style={[styles.input, { minHeight: 50 }]}
-            placeholder="Ej: Calle 5 #10-20, Apto 305"
+            style={[styles.input, styles.inputMultiline]}
+            placeholder="Ej: Calle 5 #10-20, apto 305"
             placeholderTextColor={COLORS.textTertiary}
             value={address}
             onChangeText={setAddress}
             multiline
           />
 
-          <View style={styles.checkboxContainer}>
-            <TouchableOpacity
-              style={[styles.checkbox, isHome && { borderColor: COLORS.primary }]}
-              onPress={() => setIsHome(!isHome)}
-            >
-              <Icon
-                name={isHome ? 'SquareCheckBig' : 'SquareCheck'}
-                size={18}
-                color={isHome ? COLORS.primary : COLORS.textTertiary}
-              />
-              <Text style={styles.checkboxText}>Casa</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.checkbox, isWork && { borderColor: COLORS.primary }]}
-              onPress={() => setIsWork(!isWork)}
-            >
-              <Icon
-                name={isWork ? 'SquareCheckBig' : 'SquareCheck'}
-                size={18}
-                color={isWork ? COLORS.primary : COLORS.textTertiary}
-              />
-              <Text style={styles.checkboxText}>Trabajo</Text>
-            </TouchableOpacity>
+          <Text style={styles.label}>Marcar como</Text>
+          <View style={styles.tagRow}>
+            <TagToggle icon="House" label="Casa" active={isHome} onPress={() => setIsHome(!isHome)} />
+            <TagToggle icon="Briefcase" label="Trabajo" active={isWork} onPress={() => setIsWork(!isWork)} />
           </View>
 
           <View style={styles.buttonGroup}>
@@ -474,20 +247,20 @@ export default function SavedAddressesScreen() {
                 setShowForm(false)
                 setEditingId(null)
               }}
+              activeOpacity={0.85}
             >
               <Text style={styles.cancelBtnText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.saveBtn}
+              style={[styles.saveBtn, saving && styles.btnDisabled]}
               onPress={handleSave}
               disabled={saving}
+              activeOpacity={0.85}
             >
               {saving ? (
-                <ActivityIndicator color={COLORS.textInverse} />
+                <ActivityIndicator color={COLORS.white} />
               ) : (
-                <Text style={styles.saveBtnText}>
-                  {editingId ? 'Actualizar' : 'Guardar'}
-                </Text>
+                <Text style={styles.saveBtnText}>{editingId ? 'Actualizar' : 'Guardar'}</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -498,55 +271,229 @@ export default function SavedAddressesScreen() {
         <FlatList
           data={addresses}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <View style={styles.addressCard}>
-              <View style={styles.addressHeader}>
-                <Text style={styles.addressLabel}>{item.label}</Text>
-                <View style={styles.badgesContainer}>
-                  {item.is_home && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>CASA</Text>
-                    </View>
-                  )}
-                  {item.is_work && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>TRABAJO</Text>
-                    </View>
-                  )}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const tagIcon: IconName = item.is_home ? 'House' : item.is_work ? 'Briefcase' : 'MapPin'
+            return (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardIcon}>
+                    <Icon name={tagIcon} size={18} color={COLORS.primary} />
+                  </View>
+                  <View style={styles.cardTitleCol}>
+                    <Text style={styles.cardLabel}>{item.label}</Text>
+                    <Text style={styles.cardAddress}>{item.address}</Text>
+                  </View>
+                </View>
+
+                {(item.is_home || item.is_work) && (
+                  <View style={styles.badgeRow}>
+                    {item.is_home && <Text style={styles.badge}>Casa</Text>}
+                    {item.is_work && <Text style={styles.badge}>Trabajo</Text>}
+                  </View>
+                )}
+
+                <View style={styles.actions}>
+                  <TouchableOpacity style={styles.editBtn} onPress={() => handleEdit(item)} activeOpacity={0.85}>
+                    <Icon name="Pencil" size={15} color={COLORS.primary} />
+                    <Text style={styles.editBtnText}>Editar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)} activeOpacity={0.85}>
+                    <Icon name="Trash2" size={15} color={COLORS.error} />
+                    <Text style={styles.deleteBtnText}>Eliminar</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-              <Text style={styles.addressText}>{item.address}</Text>
-
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.editBtn]}
-                  onPress={() => handleEdit(item)}
-                >
-                  <Icon name="Pencil" size={16} color={COLORS.primary} />
-                  <Text style={styles.editBtnText}>Editar</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.deleteBtn]}
-                  onPress={() => handleDelete(item.id)}
-                >
-                  <Icon name="Trash2" size={16} color={COLORS.error} />
-                  <Text style={styles.deleteBtnText}>Eliminar</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
+            )
+          }}
         />
       ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>📭</Text>
-          <Text style={styles.emptyText}>
-            No tienes direcciones guardadas{'\n'}
-            Añade direcciones frecuentes para ahorrar tiempo
-          </Text>
+        <View style={styles.empty}>
+          <Illustration name="routePlanning" width={170} />
+          <Text style={styles.emptyTitle}>Sin direcciones guardadas</Text>
+          <Text style={styles.emptyText}>Guarda tus lugares frecuentes para reservar más rápido.</Text>
         </View>
       )}
     </SafeAreaView>
   )
 }
+
+function TagToggle({ icon, label, active, onPress }: {
+  icon: IconName
+  label: string
+  active: boolean
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity
+      style={[styles.tag, active && styles.tagActive]}
+      onPress={onPress}
+      activeOpacity={0.85}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: active }}
+    >
+      <Icon name={icon} size={16} color={active ? COLORS.white : COLORS.textSecondary} />
+      <Text style={[styles.tagText, active && styles.tagTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.background },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    gap: SPACING.sm,
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  title: { ...TYPOGRAPHY.h4, flex: 1, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  addBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    height: 40,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+  },
+  addBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
+
+  form: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    padding: SPACING.lg,
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderRadius: RADIUS.lg,
+  },
+  formTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
+  label: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary, marginTop: SPACING.sm, marginBottom: SPACING.xs },
+  input: {
+    height: 50,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.background,
+    ...TYPOGRAPHY.body,
+    color: COLORS.textPrimary,
+  },
+  inputMultiline: { height: 70, paddingTop: SPACING.md, textAlignVertical: 'top' },
+
+  tagRow: { flexDirection: 'row', gap: SPACING.sm },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    height: 40,
+    borderRadius: RADIUS.full,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  tagActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tagText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
+  tagTextActive: { color: COLORS.white },
+
+  buttonGroup: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.lg },
+  cancelBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelBtnText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  saveBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveBtnText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.white },
+  btnDisabled: { opacity: 0.6 },
+
+  list: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  card: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    gap: SPACING.md,
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md },
+  cardIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitleCol: { flex: 1, gap: 2 },
+  cardLabel: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  cardAddress: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+  badgeRow: { flexDirection: 'row', gap: SPACING.xs },
+  badge: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.primary,
+    backgroundColor: COLORS.primaryTint,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: RADIUS.full,
+    overflow: 'hidden',
+  },
+  actions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+  editBtn: {
+    flex: 1,
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+  },
+  editBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  deleteBtn: {
+    flex: 1,
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.errorLight,
+  },
+  deleteBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.error },
+
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl, gap: SPACING.sm },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
+})

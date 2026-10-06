@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -15,7 +15,8 @@ import { supabase } from '../services/supabase'
 import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
+import { APP_VERSION_LABEL } from '../config/appInfo'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
@@ -118,293 +119,87 @@ export default function SettingsScreen() {
     }
   }
 
+  const go = (screen: string) => () => navigation.navigate(screen as never)
+
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Header */}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-          activeOpacity={0.8}
-        >
-          <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.title}>Configuración</Text>
-        <View style={{ width: 44 }} />
+        <View style={styles.backBtnPlaceholder} />
       </View>
 
-      {/* Notificaciones */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notificaciones</Text>
-        
-        <View style={styles.settingCard}>
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Bell" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Notificaciones Push</Text>
-              <Text style={styles.settingDescription}>Alertas de viajes y reservas</Text>
-            </View>
-            <Switch 
-              value={pushNotifications}
-              onValueChange={handlePushNotificationsChange}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '30' }}
-              thumbColor={pushNotifications ? COLORS.primary : COLORS.textTertiary}
-            />
-          </View>
-        </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Group title="Notificaciones">
+          <SwitchRow
+            icon="Bell"
+            title="Notificaciones push"
+            sub="Alertas de viajes y reservas"
+            value={pushNotifications}
+            onChange={handlePushNotificationsChange}
+          />
+          <Divider />
+          <SwitchRow
+            icon="Mail"
+            title="Correo electrónico"
+            sub="Resúmenes y avisos por correo"
+            value={emailNotifications}
+            onChange={handleEmailNotificationsChange}
+          />
+        </Group>
 
-        <View style={styles.settingCard}>
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Mail" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Correo Electrónico</Text>
-              <Text style={styles.settingDescription}>Notificaciones por email</Text>
-            </View>
-            <Switch 
-              value={emailNotifications}
-              onValueChange={handleEmailNotificationsChange}
-              trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '30' }}
-              thumbColor={emailNotifications ? COLORS.primary : COLORS.textTertiary}
-            />
-          </View>
-        </View>
+        <Group title="Seguridad y privacidad">
+          <NavRow icon="ShieldCheck" title="Seguridad" sub="Contraseña, dispositivos y actividad" onPress={go('Security')} />
+          <Divider />
+          <NavRow icon="Eye" title="Privacidad" sub="Tus datos y tu cuenta" onPress={go('Privacy')} />
+          <Divider />
+          <NavRow
+            icon="CircleAlert"
+            tone="danger"
+            title="Contacto de emergencia"
+            sub={emergencyContact ? emergencyContact.phone : 'Recibe tu ubicación con el botón SOS'}
+            status={emergencyContact ? 'Configurado' : 'Sin configurar'}
+            onPress={() => {
+              setSosName(emergencyContact?.name || '')
+              setSosPhone(emergencyContact?.phone || '')
+              setSosModalVisible(true)
+            }}
+          />
+        </Group>
 
-      </View>
+        <Group title="Viajes">
+          <NavRow
+            icon="MapPin"
+            title="Mi municipio"
+            sub={preferredMunicipality ?? 'Filtra los viajes de tu zona'}
+            onPress={() => setShowMunicipalityPicker(true)}
+          />
+          <Divider />
+          <NavRow icon="House" title="Direcciones guardadas" sub="Casa, trabajo y lugares frecuentes" onPress={go('SavedAddresses')} />
+          <Divider />
+          <NavRow icon="Settings" title="Preferencias de viaje" sub="Música, temperatura y equipaje" onPress={go('TravelPreferences')} />
+          <Divider />
+          <NavRow icon="Star" title="Rutas favoritas" sub="Tus rutas guardadas" onPress={go('FavoriteRoutes')} />
+          <Divider />
+          <NavRow icon="Receipt" title="Cancelaciones" sub="Tus cancelaciones y reembolsos" onPress={go('CancellationHistory')} />
+        </Group>
 
-      {/* Privacidad y Seguridad */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Privacidad y Seguridad</Text>
-        
-        <TouchableOpacity
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('ChangePassword' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Lock" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Cambiar Contraseña</Text>
-              <Text style={styles.settingDescription}>Actualiza tu contraseña de forma segura</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
+        <Group title="Información">
+          <NavRow icon="Info" title="Acerca de Trive" sub={`Versión ${APP_VERSION_LABEL}`} onPress={go('AboutTrive')} />
+          <Divider />
+          <NavRow icon="FileText" title="Términos de uso" onPress={go('TermsOfService')} />
+          <Divider />
+          <NavRow icon="ShieldCheck" title="Política de privacidad" onPress={go('PrivacyPolicy')} />
+          <Divider />
+          <NavRow icon="CircleHelp" title="Soporte y ayuda" sub="Escríbenos o revisa las preguntas frecuentes" onPress={go('Support')} />
+        </Group>
 
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('Privacy' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Eye" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Configuración de Privacidad</Text>
-              <Text style={styles.settingDescription}>Controla quién ve tu perfil</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('SessionHistory' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Smartphone" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Sesiones Activas</Text>
-              <Text style={styles.settingDescription}>Dispositivos conectados a tu cuenta</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.settingCard}
-          onPress={() => {
-            setSosName(emergencyContact?.name || '')
-            setSosPhone(emergencyContact?.phone || '')
-            setSosModalVisible(true)
-          }}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={[styles.settingIcon, { backgroundColor: COLORS.errorLight }]}>
-              <Icon name="CircleAlert" size={20} color={COLORS.error} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Contacto de Emergencia</Text>
-              <Text style={styles.settingDescription}>
-                {emergencyContact ? emergencyContact.phone : 'No configurado — se usa para el botón SOS'}
-              </Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-      </View>
-
-
-
-      {/* Viaje Personalizado */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Viaje Personalizado</Text>
-
-        <TouchableOpacity
-          style={styles.settingCard}
-          onPress={() => setShowMunicipalityPicker(true)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="MapPin" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Mi municipio</Text>
-              <Text style={styles.settingDescription}>
-                {preferredMunicipality ?? 'No configurado — filtra los viajes de tu zona'}
-              </Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('TravelPreferences' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Settings" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Preferencias de Viaje</Text>
-              <Text style={styles.settingDescription}>Música, aire acondicionado, smoking</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('FavoriteRoutes' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Star" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Rutas Favoritas</Text>
-              <Text style={styles.settingDescription}>Tus rutas guardadas</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('CancellationHistory' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Receipt" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Historial de Cancelaciones</Text>
-              <Text style={styles.settingDescription}>Tus cancelaciones y reembolsos</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Información */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Información</Text>
-        
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('AboutTrive' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="Info" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Acerca de Trive</Text>
-              <Text style={styles.settingDescription}>Versión 1.0.0</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('TermsOfService' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="FileText" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Términos de Servicio</Text>
-              <Text style={styles.settingDescription}>Políticas y condiciones de uso</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('PrivacyPolicy' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Política de Privacidad</Text>
-              <Text style={styles.settingDescription}>Cómo usamos tus datos</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={styles.settingCard}
-          onPress={() => navigation.navigate('Support' as never)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.settingHeader}>
-            <View style={styles.settingIcon}>
-              <Icon name="CircleHelp" size={20} color={COLORS.primary} />
-            </View>
-            <View style={styles.settingContent}>
-              <Text style={styles.settingLabel}>Soporte y Ayuda</Text>
-              <Text style={styles.settingDescription}>Comunícate con nosotros</Text>
-            </View>
-            <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-          </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <Text style={styles.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
+      </ScrollView>
 
       <MunicipalityPickerModal
         visible={showMunicipalityPicker}
@@ -413,36 +208,39 @@ export default function SettingsScreen() {
         onClose={() => setShowMunicipalityPicker(false)}
       />
 
-      {/* Modal contacto de emergencia */}
       <Modal visible={sosModalVisible} transparent animationType="fade" onRequestClose={() => setSosModalVisible(false)}>
-        <View style={sosStyles.overlay}>
-          <View style={sosStyles.sheet}>
-            <View style={sosStyles.header}>
-              <Icon name="CircleAlert" size={22} color={COLORS.error} />
-              <Text style={sosStyles.title}>Contacto de Emergencia</Text>
+        <View style={styles.overlay}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeader}>
+              <View style={styles.sheetIcon}>
+                <Icon name="CircleAlert" size={20} color={COLORS.error} />
+              </View>
+              <Text style={styles.sheetTitle}>Contacto de emergencia</Text>
             </View>
-            <Text style={sosStyles.sub}>Este contacto recibirá tu ubicación al presionar el botón SOS durante un viaje.</Text>
+            <Text style={styles.sheetText}>
+              Tu contacto recibirá tu ubicación cuando presiones el botón SOS durante un viaje.
+            </Text>
             <TextInput
-              style={sosStyles.input}
+              style={styles.input}
               placeholder="Nombre (ej. Mamá)"
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.textTertiary}
               value={sosName}
               onChangeText={setSosName}
             />
             <TextInput
-              style={sosStyles.input}
-              placeholder="Número WhatsApp (ej. 3001234567)"
-              placeholderTextColor="#999"
+              style={styles.input}
+              placeholder="Número de WhatsApp (ej. 3001234567)"
+              placeholderTextColor={COLORS.textTertiary}
               value={sosPhone}
               onChangeText={setSosPhone}
               keyboardType="phone-pad"
             />
-            <View style={sosStyles.btnRow}>
-              <TouchableOpacity style={sosStyles.cancelBtn} onPress={() => setSosModalVisible(false)}>
-                <Text style={sosStyles.cancelText}>Cancelar</Text>
+            <View style={styles.sheetButtons}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setSosModalVisible(false)} activeOpacity={0.85}>
+                <Text style={styles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={sosStyles.saveBtn} onPress={saveEmergencyContact}>
-                <Text style={sosStyles.saveText}>Guardar</Text>
+              <TouchableOpacity style={styles.saveBtn} onPress={saveEmergencyContact} activeOpacity={0.85}>
+                <Text style={styles.saveText}>Guardar</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -452,98 +250,200 @@ export default function SettingsScreen() {
   )
 }
 
-const sosStyles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: SPACING.lg },
-  sheet: { backgroundColor: '#fff', borderRadius: 20, padding: SPACING.lg, width: '100%', gap: SPACING.md },
-  header: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  title: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
-  sub: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
-  input: { borderWidth: 1, borderColor: COLORS.primaryTint, borderRadius: 12, padding: 12, fontSize: 14, color: COLORS.textPrimary, backgroundColor: COLORS.surfaceAlt },
-  btnRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: 4 },
-  cancelBtn: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: COLORS.surfaceAlt, alignItems: 'center' },
-  cancelText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
-  saveBtn: { flex: 1, padding: 12, borderRadius: 12, backgroundColor: COLORS.error, alignItems: 'center' },
-  saveText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-})
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <Text style={styles.groupTitle}>{title}</Text>
+      <View style={styles.groupCard}>{children}</View>
+    </View>
+  )
+}
+
+function Divider() {
+  return <View style={styles.divider} />
+}
+
+function Tile({ icon, tone }: { icon: IconName; tone?: 'danger' }) {
+  const bg = tone === 'danger' ? COLORS.errorLight : COLORS.primaryTint
+  const color = tone === 'danger' ? COLORS.error : COLORS.primary
+  return (
+    <View style={[styles.tile, { backgroundColor: bg }]}>
+      <Icon name={icon} size={18} color={color} />
+    </View>
+  )
+}
+
+function SwitchRow({ icon, title, sub, value, onChange }: {
+  icon: IconName
+  title: string
+  sub: string
+  value: boolean
+  onChange: (value: boolean) => void
+}) {
+  return (
+    <View style={styles.row}>
+      <Tile icon={icon} />
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowSub}>{sub}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onChange}
+        trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
+        thumbColor={value ? COLORS.primary : COLORS.textTertiary}
+      />
+    </View>
+  )
+}
+
+function NavRow({ icon, title, sub, status, tone, onPress }: {
+  icon: IconName
+  title: string
+  sub?: string
+  status?: string
+  tone?: 'danger'
+  onPress: () => void
+}) {
+  return (
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
+      <Tile icon={icon} tone={tone} />
+      <View style={styles.rowText}>
+        <Text style={[styles.rowTitle, tone === 'danger' && { color: COLORS.error }]}>{title}</Text>
+        {!!sub && <Text style={styles.rowSub} numberOfLines={1}>{sub}</Text>}
+      </View>
+      {status ? (
+        <View style={[styles.pill, status === 'Configurado' ? styles.pillOk : styles.pillWarn]}>
+          <Text style={[styles.pillText, status === 'Configurado' ? styles.pillOkText : styles.pillWarnText]}>{status}</Text>
+        </View>
+      ) : (
+        <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
+      )}
+    </TouchableOpacity>
+  )
+}
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  
-  // Header
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.lg,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   backBtn: {
-    width: 44,
-    height: 44,
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-  
-  // Section
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
-  sectionTitle: {
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h3, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+
+  group: { marginTop: SPACING.lg },
+  groupTitle: {
     ...TYPOGRAPHY.label,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.lg,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: SPACING.sm,
   },
-  
-  // Setting Card
-  settingCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    overflow: 'hidden',
+  groupCard: {
     ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
   },
-  settingHeader: {
+  divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 64 },
+
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
+    gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    gap: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
-  settingIcon: {
-    width: 44,
-    height: 44,
+  tile: {
+    width: 36,
+    height: 36,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowText: { flex: 1 },
+  rowTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  rowSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
+
+  pill: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
+  pillOk: { backgroundColor: COLORS.successLight },
+  pillWarn: { backgroundColor: COLORS.warningLight },
+  pillText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold },
+  pillOkText: { color: COLORS.success },
+  pillWarnText: { color: COLORS.warningDark },
+
+  footer: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, textAlign: 'center', marginTop: SPACING.xl },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,26,46,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: SPACING.lg,
   },
-  settingContent: {
-    flex: 1,
-    gap: SPACING.xs,
+  sheet: {
+    ...SHADOWS.md,
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    gap: SPACING.md,
   },
-  settingLabel: {
-    ...TYPOGRAPHY.bodyMedium,
+  sheetHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  sheetIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.errorLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sheetTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary },
+  sheetText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, lineHeight: 20 },
+  input: {
+    height: 50,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
-    fontWeight: '500',
+    backgroundColor: COLORS.white,
   },
-  settingDescription: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
+  sheetButtons: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.xs },
+  cancelBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  cancelText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
+  saveBtn: {
+    flex: 1,
+    height: 50,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.white },
 })

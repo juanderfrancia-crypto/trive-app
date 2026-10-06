@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { supabase } from '../services/supabase'
 import { getUserSessions, endUserSession, UserSessionRecord } from '../services/userSessions'
@@ -10,7 +11,6 @@ import { getItem } from '../utils/storage'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
 export default function SessionHistoryScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const [sessions, setSessions] = useState<UserSessionRecord[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,182 +75,182 @@ export default function SessionHistoryScreen() {
     loadSessions()
   }, [])
 
-  return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Dispositivos Conectados</Text>
-          <View style={{ width: 28 }} />
+  const renderBody = () => {
+    if (loading) return <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+    if (error) return <Text style={styles.errorText}>{error}</Text>
+    if (sessions.length === 0) {
+      return (
+        <View style={styles.empty}>
+          <Illustration name="mobileEncryption" width={160} />
+          <Text style={styles.emptyTitle}>Sin sesiones activas</Text>
+          <Text style={styles.emptyText}>Inicia sesión de nuevo para actualizar esta lista.</Text>
         </View>
+      )
+    }
+    return sessions.map((session) => (
+      <View key={session.id} style={styles.sessionCard}>
+        <View style={styles.sessionHeader}>
+          <View style={styles.sessionTitleCol}>
+            <View style={styles.deviceIcon}>
+              <Icon name="Smartphone" size={18} color={COLORS.primary} />
+            </View>
+            <View style={styles.sessionTitleText}>
+              <Text style={styles.deviceName}>{session.device_name || 'Dispositivo'}</Text>
+              {session.is_current && (
+                <View style={styles.currentBadge}>
+                  <Text style={styles.currentBadgeText}>Este dispositivo</Text>
+                </View>
+              )}
+            </View>
+          </View>
+          {session.session_key !== localSessionKey && (
+            <TouchableOpacity
+              style={styles.logoutBtn}
+              onPress={() => handleCloseSession(session.id)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.logoutBtnText}>Cerrar</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.sessionDetails}>
+          <View style={styles.detailItem}>
+            <Icon name="Smartphone" size={14} color={COLORS.textTertiary} />
+            <Text style={styles.detailText}>{session.device_type || 'App'}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Icon name="Laptop" size={14} color={COLORS.textTertiary} />
+            <Text style={styles.detailText}>{session.os_version || 'Versión no disponible'}</Text>
+          </View>
+          <View style={styles.detailItem}>
+            <Icon name="Clock" size={14} color={COLORS.textTertiary} />
+            <Text style={styles.detailText}>{session.last_active_at ? new Date(session.last_active_at).toLocaleString('es-CO') : 'Última actividad desconocida'}</Text>
+          </View>
+        </View>
+      </View>
+    ))
+  }
 
-        <View style={styles.section}>
+  return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Dispositivos conectados</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {!loading && !error && sessions.length > 0 && (
           <Text style={styles.sectionSubtitle}>
             {sessions.length} dispositivo{sessions.length !== 1 ? 's' : ''} conectado{sessions.length !== 1 ? 's' : ''}
           </Text>
+        )}
 
-          {loading ? (
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          ) : error ? (
-            <Text style={styles.errorText}>{error}</Text>
-          ) : sessions.length === 0 ? (
-            <Text style={styles.detailText}>
-              No se encontró ninguna sesión activa. Inicia sesión nuevamente para actualizar este listado.
-            </Text>
-          ) : (
-            sessions.map((session) => (
-              <View key={session.id} style={styles.sessionCard}>
-                <View style={styles.sessionHeader}>
-                  <View>
-                    <Text style={styles.deviceName}>{session.device_name || 'Dispositivo'}</Text>
-                    {session.is_current && (
-                      <View style={styles.currentBadge}>
-                        <Text style={styles.currentBadgeText}>Actual</Text>
-                      </View>
-                    )}
-                  </View>
-                  {session.session_key !== localSessionKey && (
-                    <TouchableOpacity
-                      style={styles.logoutBtn}
-                      onPress={() => handleCloseSession(session.id)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.logoutBtnText}>Cerrar sesión</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <View style={styles.sessionDetails}>
-                  <View style={styles.detailItem}>
-                    <Icon name="Smartphone" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.detailText}>{session.device_type || 'App'}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Icon name="Laptop" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.detailText}>{session.os_version || 'Versión no disponible'}</Text>
-                  </View>
-                  <View style={styles.detailItem}>
-                    <Icon name="Clock" size={16} color={COLORS.textSecondary} />
-                    <Text style={styles.detailText}>{session.last_active_at ? new Date(session.last_active_at).toLocaleString('es-CO') : 'Última actividad desconocida'}</Text>
-                  </View>
-                </View>
-              </View>
-            ))
-          )}
-        </View>
+        {renderBody()}
 
         <View style={styles.infoBox}>
-          <Icon name="Info" size={20} color={COLORS.primary} />
+          <Icon name="Info" size={16} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Si no reconoces algún dispositivo, cierra la sesión y cambia tu contraseña
+            Si no reconoces algún dispositivo, ciérralo y cambia tu contraseña.
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
   sectionSubtitle: {
-    ...TYPOGRAPHY.label,
+    ...TYPOGRAPHY.labelMedium,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
   },
+  loader: { marginTop: SPACING.xxl },
+  errorText: { ...TYPOGRAPHY.bodySmall, color: COLORS.error, marginTop: SPACING.md },
+
+  empty: { alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.xl },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
+
   sessionCard: {
-    backgroundColor: COLORS.surface,
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
     marginBottom: SPACING.md,
-    ...SHADOWS.md,
   },
   sessionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: SPACING.md,
   },
-  deviceName: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
+  sessionTitleCol: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, flex: 1 },
+  deviceIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  sessionTitleText: { flex: 1, gap: SPACING.xs },
+  deviceName: { ...TYPOGRAPHY.bodyMedium, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.bold },
   currentBadge: {
-    backgroundColor: COLORS.primary + '20',
-    borderRadius: RADIUS.sm,
+    alignSelf: 'flex-start',
+    backgroundColor: COLORS.successLight,
+    borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    marginTop: SPACING.xs,
+    paddingVertical: 2,
   },
-  currentBadgeText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
+  currentBadgeText: { ...TYPOGRAPHY.caption, color: COLORS.success, fontWeight: TYPOGRAPHY.weight.bold },
   logoutBtn: {
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    height: 36,
+    justifyContent: 'center',
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.error + '15',
+    backgroundColor: COLORS.errorLight,
   },
-  logoutBtnText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.error,
-    fontWeight: '600',
-  },
-  sessionDetails: {
-    gap: SPACING.sm,
-  },
-  detailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-  },
-  detailText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  errorText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.error,
-    marginTop: SPACING.sm,
-  },
+  logoutBtnText: { ...TYPOGRAPHY.labelMedium, color: COLORS.error, fontWeight: TYPOGRAPHY.weight.bold },
+
+  sessionDetails: { gap: SPACING.sm, paddingLeft: SPACING.xs },
+  detailItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  detailText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+
   infoBox: {
     flexDirection: 'row',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.primary + '10',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
     borderRadius: RADIUS.lg,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
+    backgroundColor: COLORS.primaryTint,
   },
-  infoText: {
-    flex: 1,
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
+  infoText: { ...TYPOGRAPHY.caption, flex: 1, color: COLORS.primaryDark, lineHeight: 18 },
 })

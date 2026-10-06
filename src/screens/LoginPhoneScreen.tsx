@@ -1,11 +1,11 @@
 import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
-import React, { useCallback, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
@@ -40,6 +40,13 @@ export default function LoginPhoneScreen() {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [resendIn, setResendIn] = useState(0)
+
+  useEffect(() => {
+    if (resendIn <= 0) return
+    const t = setTimeout(() => setResendIn((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendIn])
 
   const emailGuard = useBruteForceGuard()
   const otpGuard = useBruteForceGuard()
@@ -80,6 +87,7 @@ export default function LoginPhoneScreen() {
       setIsSubmitting(true)
       await signInWithOTP(formatPhone(phone))
       setStep('otp')
+      setResendIn(60)
       showSuccess(`Código enviado al +57 ${phone.replace(/[^\d]/g, '')}. Válido por 10 minutos.`)
     } catch (err: any) {
       if (err.message?.includes('Network') || err.message?.includes('Failed to fetch')) {
@@ -256,10 +264,32 @@ export default function LoginPhoneScreen() {
           keyboardDismissMode="interactive"
         >
 
-          {/* Logo + encabezado */}
           <View style={s.header}>
             <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           </View>
+
+          {step === 'input' && (
+            <View style={s.segment}>
+              <TouchableOpacity
+                style={[s.segmentItem, method === 'phone' && s.segmentItemActive]}
+                onPress={() => switchMethod('phone')}
+                disabled={isSubmitting}
+                activeOpacity={0.8}
+              >
+                <Icon name="Smartphone" size={16} color={method === 'phone' ? COLORS.primary : COLORS.textSecondary} />
+                <Text style={[s.segmentText, method === 'phone' && s.segmentTextActive]}>Teléfono</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[s.segmentItem, method === 'email' && s.segmentItemActive]}
+                onPress={() => switchMethod('email')}
+                disabled={isSubmitting}
+                activeOpacity={0.8}
+              >
+                <Icon name="Mail" size={16} color={method === 'email' ? COLORS.primary : COLORS.textSecondary} />
+                <Text style={[s.segmentText, method === 'email' && s.segmentTextActive]}>Correo</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* ── Name step ── */}
           {step === 'name' ? (
@@ -368,9 +398,11 @@ export default function LoginPhoneScreen() {
                 </View>
               )}
 
-              <TouchableOpacity style={s.resendRow} onPress={handleSendOTP} disabled={isSubmitting}>
+              <TouchableOpacity style={s.resendRow} onPress={handleSendOTP} disabled={isSubmitting || resendIn > 0}>
                 <Text style={s.resendText}>¿No recibiste el código? </Text>
-                <Text style={s.resendLink}>Reenviar</Text>
+                <Text style={[s.resendLink, resendIn > 0 && { color: COLORS.textTertiary }]}>
+                  {resendIn > 0 ? `Reenviar en ${resendIn}s` : 'Reenviar'}
+                </Text>
               </TouchableOpacity>
             </View>
 
@@ -384,9 +416,8 @@ export default function LoginPhoneScreen() {
                 <Text style={s.label}>Número de teléfono</Text>
                 <View style={[s.phoneRow, errors.phone && s.inputError]}>
                   <View style={s.countryBadge}>
-                    <Text style={s.countryFlag}>🇨🇴</Text>
+                    <Icon name="Phone" size={18} color={COLORS.primary} />
                     <Text style={s.countryCode}>+57</Text>
-                    <Icon name="ChevronDown" size={13} color={COLORS.textSecondary} />
                   </View>
                   <View style={s.phoneDivider} />
                   <TextInput
@@ -417,20 +448,11 @@ export default function LoginPhoneScreen() {
               </Button>
 
               <TermsText />
-
-              <TouchableOpacity style={s.emailLink} onPress={() => switchMethod('email')} disabled={isSubmitting}>
-                <Text style={s.emailLinkText}>Iniciar sesión con correo electrónico</Text>
-              </TouchableOpacity>
             </View>
 
           ) : (
             /* ── Email step ── */
             <View style={s.section}>
-              <TouchableOpacity style={s.backRow} onPress={() => switchMethod('phone')}>
-                <Icon name="ArrowLeft" size={20} color={COLORS.textPrimary} />
-                <Text style={s.backText}>Volver</Text>
-              </TouchableOpacity>
-
               <Text style={s.heading}>Inicia con tu correo</Text>
               <Text style={s.subheading}>Ingresa tu correo y contraseña de Trive</Text>
 
@@ -505,6 +527,10 @@ export default function LoginPhoneScreen() {
                   }
                 </LinearGradient>
               </TouchableOpacity>
+
+              <TouchableOpacity style={s.registerLink} onPress={() => navigation.navigate('Register' as never)} disabled={isSubmitting}>
+                <Text style={s.registerLinkText}>¿No tienes cuenta? <Text style={s.registerLinkStrong}>Regístrate con tu correo</Text></Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -557,18 +583,38 @@ const s = StyleSheet.create({
     paddingTop: 8,
   },
 
+  segment: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: RADIUS.lg,
+    padding: 4,
+    marginBottom: SPACING.xl,
+  },
+  segmentItem: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    height: 44,
+    borderRadius: RADIUS.md,
+  },
+  segmentItemActive: {
+    backgroundColor: COLORS.white,
+    ...SHADOWS.xs,
+  },
+  segmentText: { ...TYPOGRAPHY.bodySmall, fontWeight: '700', color: COLORS.textSecondary },
+  segmentTextActive: { color: COLORS.primary },
+
   heading: {
-    fontSize: 28,
-    fontWeight: '800',
+    ...TYPOGRAPHY.h2,
     color: COLORS.textPrimary,
-    marginBottom: 10,
-    letterSpacing: -0.3,
+    marginBottom: SPACING.sm,
   },
   subheading: {
-    fontSize: 15,
+    ...TYPOGRAPHY.body,
     color: COLORS.textSecondary,
-    lineHeight: 22,
-    marginBottom: 36,
+    marginBottom: SPACING.xxl,
   },
 
   // Inputs
@@ -632,7 +678,6 @@ const s = StyleSheet.create({
     gap: 5,
     paddingRight: 4,
   },
-  countryFlag: { fontSize: 18 },
   countryCode: {
     fontSize: 15,
     fontWeight: '700',
@@ -693,18 +738,6 @@ const s = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Email link (secondary, low prominence)
-  emailLink: {
-    alignSelf: 'center',
-    marginTop: 24,
-    paddingVertical: 8,
-  },
-  emailLinkText: {
-    fontSize: 12.5,
-    color: COLORS.textTertiary,
-    textDecorationLine: 'underline',
-  },
-
   // OTP header
   otpHeader: {
     alignItems: 'center',
@@ -748,20 +781,6 @@ const s = StyleSheet.create({
   resendText: { fontSize: 14, color: COLORS.textSecondary },
   resendLink: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
 
-  // Back row (email step)
-  backRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 28,
-    alignSelf: 'flex-start',
-  },
-  backText: {
-    fontSize: 15,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
-
   // Forgot password
   forgotBtn: {
     alignSelf: 'flex-end',
@@ -773,6 +792,10 @@ const s = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
+
+  registerLink: { alignItems: 'center', marginTop: SPACING.xl, paddingVertical: SPACING.sm },
+  registerLinkText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
+  registerLinkStrong: { color: COLORS.primary, fontWeight: '700' },
 
   // OTP boxes
   otpBoxRow: {

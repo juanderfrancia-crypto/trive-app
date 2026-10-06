@@ -1,0 +1,492 @@
+{
+  "src/screens/ActiveChatsScreen.tsx": {
+    "total": 13,
+    "color": 3,
+    "fontSize": 6,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/screens/ActiveTripsScreen.tsx": {
+    "total": 20,
+    "color": 4,
+    "fontSize": 4,
+    "fontWeight": 12,
+    "iconoIonicons": 0
+  },
+  "src/screens/AdminDocumentsScreen.tsx": {
+    "total": 27,
+    "color": 11,
+    "fontSize": 6,
+    "fontWeight": 10,
+    "iconoIonicons": 0
+  },
+  "src/screens/AirportFeedScreen.tsx": {
+    "total": 73,
+    "color": 31,
+    "fontSize": 22,
+    "fontWeight": 20,
+    "iconoIonicons": 0
+  },
+  "src/screens/AirportHubScreen.tsx": {
+    "total": 7,
+    "color": 0,
+    "fontSize": 3,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/screens/AirportRequestDetailsScreen.tsx": {
+    "total": 65,
+    "color": 11,
+    "fontSize": 28,
+    "fontWeight": 26,
+    "iconoIonicons": 0
+  },
+  "src/screens/AirportRequestScreen.tsx": {
+    "total": 83,
+    "color": 25,
+    "fontSize": 33,
+    "fontWeight": 25,
+    "iconoIonicons": 0
+  },
+  "src/screens/AvailableRidesScreen.tsx": {
+    "total": 29,
+    "color": 0,
+    "fontSize": 16,
+    "fontWeight": 13,
+    "iconoIonicons": 0
+  },
+  "src/screens/BookingScreen.tsx": {
+    "total": 40,
+    "color": 0,
+    "fontSize": 25,
+    "fontWeight": 15,
+    "iconoIonicons": 0
+  },
+  "src/screens/ChangePasswordScreen.tsx": {
+    "total": 2,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/screens/CompletedTripsScreen.tsx": {
+    "total": 45,
+    "color": 21,
+    "fontSize": 14,
+    "fontWeight": 10,
+    "iconoIonicons": 0
+  },
+  "src/screens/driver/DriverTripsScreen.tsx": {
+    "total": 26,
+    "color": 0,
+    "fontSize": 14,
+    "fontWeight": 12,
+    "iconoIonicons": 0
+  },
+  "src/screens/driver/PublishRouteFlow.tsx": {
+    "total": 20,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 20,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverDocumentsScreen.tsx": {
+    "total": 42,
+    "color": 6,
+    "fontSize": 24,
+    "fontWeight": 12,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverEarningsScreen.tsx": {
+    "total": 30,
+    "color": 0,
+    "fontSize": 19,
+    "fontWeight": 11,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverHomeScreen.tsx": {
+    "total": 22,
+    "color": 0,
+    "fontSize": 13,
+    "fontWeight": 9,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverOnboardingScreen.tsx": {
+    "total": 43,
+    "color": 16,
+    "fontSize": 15,
+    "fontWeight": 12,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverPanelScreen.tsx": {
+    "total": 81,
+    "color": 24,
+    "fontSize": 28,
+    "fontWeight": 29,
+    "iconoIonicons": 0
+  },
+  "src/screens/DriverPaymentMethodsScreen.tsx": {
+    "total": 29,
+    "color": 1,
+    "fontSize": 17,
+    "fontWeight": 11,
+    "iconoIonicons": 0
+  },
+  "src/screens/EditVehicleScreen.tsx": {
+    "total": 13,
+    "color": 1,
+    "fontSize": 7,
+    "fontWeight": 5,
+    "iconoIonicons": 0
+  },
+  "src/screens/GroupTripsScreen.tsx": {
+    "total": 5,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/screens/LoginPhoneScreen.tsx": {
+    "total": 34,
+    "color": 6,
+    "fontSize": 15,
+    "fontWeight": 13,
+    "iconoIonicons": 0
+  },
+  "src/screens/OnboardingScreen.tsx": {
+    "total": 3,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 3,
+    "iconoIonicons": 0
+  },
+  "src/screens/PassengerHomeScreen.tsx": {
+    "total": 46,
+    "color": 0,
+    "fontSize": 25,
+    "fontWeight": 21,
+    "iconoIonicons": 0
+  },
+  "src/screens/payments/DriverPaymentsScreen.tsx": {
+    "total": 23,
+    "color": 0,
+    "fontSize": 14,
+    "fontWeight": 9,
+    "iconoIonicons": 0
+  },
+  "src/screens/payments/PassengerPaymentScreen.tsx": {
+    "total": 28,
+    "color": 0,
+    "fontSize": 17,
+    "fontWeight": 11,
+    "iconoIonicons": 0
+  },
+  "src/screens/PrivacyPolicyScreen.tsx": {
+    "total": 7,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 7,
+    "iconoIonicons": 0
+  },
+  "src/screens/profile/DriverProfileView.tsx": {
+    "total": 41,
+    "color": 0,
+    "fontSize": 23,
+    "fontWeight": 18,
+    "iconoIonicons": 0
+  },
+  "src/screens/ProfileScreen.tsx": {
+    "total": 52,
+    "color": 7,
+    "fontSize": 26,
+    "fontWeight": 19,
+    "iconoIonicons": 0
+  },
+  "src/screens/RatingAnalyticsDashboard.tsx": {
+    "total": 1,
+    "color": 0,
+    "fontSize": 1,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  },
+  "src/screens/RecoveryAccountScreen.tsx": {
+    "total": 4,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/screens/RecurringRoutesScreen.tsx": {
+    "total": 10,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 10,
+    "iconoIonicons": 0
+  },
+  "src/screens/ReferralScreen.tsx": {
+    "total": 48,
+    "color": 15,
+    "fontSize": 18,
+    "fontWeight": 15,
+    "iconoIonicons": 0
+  },
+  "src/screens/RegisterScreen.tsx": {
+    "total": 10,
+    "color": 1,
+    "fontSize": 7,
+    "fontWeight": 2,
+    "iconoIonicons": 0
+  },
+  "src/screens/ReviewsScreen.tsx": {
+    "total": 9,
+    "color": 2,
+    "fontSize": 0,
+    "fontWeight": 7,
+    "iconoIonicons": 0
+  },
+  "src/screens/ScheduledTripsScreen.tsx": {
+    "total": 47,
+    "color": 26,
+    "fontSize": 1,
+    "fontWeight": 20,
+    "iconoIonicons": 0
+  },
+  "src/screens/SearchScreen.tsx": {
+    "total": 15,
+    "color": 0,
+    "fontSize": 8,
+    "fontWeight": 7,
+    "iconoIonicons": 0
+  },
+  "src/screens/SeatSelectionScreen.tsx": {
+    "total": 20,
+    "color": 0,
+    "fontSize": 10,
+    "fontWeight": 10,
+    "iconoIonicons": 0
+  },
+  "src/screens/SettingsScreen.tsx": {
+    "total": 1,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  },
+  "src/screens/StatsScreen.tsx": {
+    "total": 28,
+    "color": 3,
+    "fontSize": 16,
+    "fontWeight": 9,
+    "iconoIonicons": 0
+  },
+  "src/screens/TermsOfServiceScreen.tsx": {
+    "total": 6,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 6,
+    "iconoIonicons": 0
+  },
+  "src/screens/TripHistoryScreen.tsx": {
+    "total": 8,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 8,
+    "iconoIonicons": 0
+  },
+  "src/screens/TripStatusScreen.tsx": {
+    "total": 47,
+    "color": 25,
+    "fontSize": 3,
+    "fontWeight": 19,
+    "iconoIonicons": 0
+  },
+  "src/screens/VehicleInfoScreen.tsx": {
+    "total": 12,
+    "color": 1,
+    "fontSize": 7,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/screens/VerifyEmailScreen.tsx": {
+    "total": 9,
+    "color": 2,
+    "fontSize": 0,
+    "fontWeight": 7,
+    "iconoIonicons": 0
+  },
+  "src/screens/VerifyPhoneScreen.tsx": {
+    "total": 7,
+    "color": 0,
+    "fontSize": 1,
+    "fontWeight": 6,
+    "iconoIonicons": 0
+  },
+  "src/screens/WalletScreen.tsx": {
+    "total": 48,
+    "color": 12,
+    "fontSize": 21,
+    "fontWeight": 15,
+    "iconoIonicons": 0
+  },
+  "src/components/AdminMenuButton.tsx": {
+    "total": 7,
+    "color": 3,
+    "fontSize": 2,
+    "fontWeight": 2,
+    "iconoIonicons": 0
+  },
+  "src/components/AirportHub/ActiveChatsTab.tsx": {
+    "total": 5,
+    "color": 0,
+    "fontSize": 1,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/components/AirportHub/ActiveTripsTab.tsx": {
+    "total": 10,
+    "color": 0,
+    "fontSize": 4,
+    "fontWeight": 6,
+    "iconoIonicons": 0
+  },
+  "src/components/AirportHub/AvailableOffersTab.tsx": {
+    "total": 19,
+    "color": 0,
+    "fontSize": 5,
+    "fontWeight": 14,
+    "iconoIonicons": 0
+  },
+  "src/components/AirportHub/PendingRequestsTab.tsx": {
+    "total": 10,
+    "color": 0,
+    "fontSize": 2,
+    "fontWeight": 8,
+    "iconoIonicons": 0
+  },
+  "src/components/AirportHub/TripHistoryTab.tsx": {
+    "total": 4,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/components/Badge.tsx": {
+    "total": 3,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 3,
+    "iconoIonicons": 0
+  },
+  "src/components/Button.tsx": {
+    "total": 6,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 6,
+    "iconoIonicons": 0
+  },
+  "src/components/CancellationPolicyCard.tsx": {
+    "total": 1,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/components/driver/PublishSheet.tsx": {
+    "total": 3,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 2,
+    "iconoIonicons": 0
+  },
+  "src/components/ErrorBoundary.tsx": {
+    "total": 5,
+    "color": 0,
+    "fontSize": 3,
+    "fontWeight": 2,
+    "iconoIonicons": 0
+  },
+  "src/components/LoadingIndicator.tsx": {
+    "total": 1,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  },
+  "src/components/MunicipalityPickerModal.tsx": {
+    "total": 11,
+    "color": 2,
+    "fontSize": 6,
+    "fontWeight": 3,
+    "iconoIonicons": 0
+  },
+  "src/components/NegotiationChatModal.tsx": {
+    "total": 9,
+    "color": 1,
+    "fontSize": 7,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/components/OfflineBanner.tsx": {
+    "total": 1,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/components/RatingModal.tsx": {
+    "total": 17,
+    "color": 9,
+    "fontSize": 3,
+    "fontWeight": 5,
+    "iconoIonicons": 0
+  },
+  "src/components/RatingStars.tsx": {
+    "total": 4,
+    "color": 2,
+    "fontSize": 1,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/components/ReputationCard.tsx": {
+    "total": 4,
+    "color": 2,
+    "fontSize": 0,
+    "fontWeight": 2,
+    "iconoIonicons": 0
+  },
+  "src/components/ReviewComments.tsx": {
+    "total": 4,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 4,
+    "iconoIonicons": 0
+  },
+  "src/components/Skeleton.tsx": {
+    "total": 3,
+    "color": 3,
+    "fontSize": 0,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  },
+  "src/components/toastConfig.tsx": {
+    "total": 4,
+    "color": 1,
+    "fontSize": 2,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
+  "src/components/TripDetailsModal.tsx": {
+    "total": 10,
+    "color": 0,
+    "fontSize": 0,
+    "fontWeight": 10,
+    "iconoIonicons": 0
+  },
+  "src/components/TripMessageList.tsx": {
+    "total": 1,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  }
+}

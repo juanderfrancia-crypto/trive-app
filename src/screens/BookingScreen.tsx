@@ -8,6 +8,7 @@ import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings, PaymentMethod } from '../hooks/useBookings'
+import { getPaymentPreference } from '../services/passengerPaymentPreference'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
@@ -45,6 +46,9 @@ export default function BookingScreen() {
   const { reservePendingBookings, finalizePendingBookings, releasePendingBookings, loading } = useBookings()
   const { isOnline } = useNetworkStatus()
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash')
+  useEffect(() => {
+    if (user?.id) getPaymentPreference(user.id).then(setPaymentMethod)
+  }, [user?.id])
   const [dropoffOption, setDropoffOption] = useState<'final' | 'custom'>('final')
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])

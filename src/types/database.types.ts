@@ -1536,39 +1536,6 @@ export type Database = {
           },
         ]
       }
-      payment_methods: {
-        Row: {
-          created_at: string | null
-          id: string
-          is_default: boolean | null
-          label: string
-          last_four: string
-          type: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          label: string
-          last_four: string
-          type: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          is_default?: boolean | null
-          label?: string
-          last_four?: string
-          type?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1579,6 +1546,7 @@ export type Database = {
           driver_verified_at: string | null
           email: string | null
           emergency_contact: Json | null
+          preferred_payment_method: string | null
           id: string
           is_admin: boolean | null
           is_driver: boolean | null
@@ -1611,6 +1579,7 @@ export type Database = {
           driver_verified_at?: string | null
           email?: string | null
           emergency_contact?: Json | null
+          preferred_payment_method?: string | null
           id: string
           is_admin?: boolean | null
           is_driver?: boolean | null
@@ -1643,6 +1612,7 @@ export type Database = {
           driver_verified_at?: string | null
           email?: string | null
           emergency_contact?: Json | null
+          preferred_payment_method?: string | null
           id?: string
           is_admin?: boolean | null
           is_driver?: boolean | null
@@ -2685,6 +2655,7 @@ export type Database = {
           amount: number
           created_at: string
           id: string
+          route_id: string | null
           status: string
           type: string
           user_id: string
@@ -2695,6 +2666,7 @@ export type Database = {
           amount: number
           created_at?: string
           id?: string
+          route_id?: string | null
           status?: string
           type: string
           user_id: string
@@ -2985,6 +2957,10 @@ export type Database = {
       driver_set_route_status: {
         Args: { p_route_id: string; p_status: string }
         Returns: undefined
+      }
+      driver_cancel_route: {
+        Args: { p_route_id: string }
+        Returns: Json
       }
       finalize_bookings_atomic: {
         Args: { p_booking_ids: string[]; p_payment_method?: string }

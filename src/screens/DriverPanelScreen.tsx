@@ -9,12 +9,13 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
-import { checkDriverApprovalStatus, getDriverRestrictionMessage, type DriverApprovalStatus } from '../services/driverApproval'
+import { useCreateRouteGate } from '../hooks/useCreateRouteGate'
 import { notifyRouteCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
+import PublishSheet from '../components/driver/PublishSheet'
 
 interface Passenger {
   booking_id: string
@@ -55,9 +56,9 @@ export default function DriverPanelScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [updatingRouteId, setUpdatingRouteId] = useState<string | null>(null)
-  const [approvalStatus, setApprovalStatus] = useState<DriverApprovalStatus | null>(null)
-  const [checkingApproval, setCheckingApproval] = useState(true)
-  const [showAddMenu, setShowAddMenu] = useState(false)
+  const [now, setNow] = useState(() => Date.now())
+  const { approvalStatus, checkingApproval, goToCreateRoute } = useCreateRouteGate(user?.id)
+  const [showPublishSheet, setShowPublishSheet] = useState(false)
   const pollingIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFetchingRef = useRef(false)
   const failureCountRef = useRef(0)
@@ -249,21 +250,6 @@ export default function DriverPanelScreen() {
     }, [fetchDriverRoutes, user?.id])
   )
 
-  useEffect(() => {
-    const checkApprovalStatus = async () => {
-      if (!user?.id) {
-        setCheckingApproval(false)
-        return
-      }
-
-      const status = await checkDriverApprovalStatus(user.id)
-      setApprovalStatus(status)
-      setCheckingApproval(false)
-    }
-
-    checkApprovalStatus()
-  }, [user?.id])
-
   const notifyPassengers = async (route: DriverRoute) => {
     if (!route.passengers?.length) return
 
@@ -288,6 +274,26 @@ export default function DriverPanelScreen() {
   const onRefresh = () => {
     setRefreshing(true)
     fetchDriverRoutes()
+  }
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(timer)
+  }, [])
+
+  const cancelRoute = async (routeId: string) => {
+    try {
+      setUpdatingRouteId(routeId)
+      const { data, error } = await supabase.rpc('driver_cancel_route', { p_route_id: routeId })
+      if (error) throw error
+      const result = data as { refunded: boolean; message: string }
+      setRoutes((prevRoutes) => prevRoutes.filter((route) => route.id !== routeId))
+      Alert.alert('Viaje cancelado', result.message)
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'No se pudo cancelar el viaje')
+    } finally {
+      setUpdatingRouteId(null)
+    }
   }
 
   const updateRouteStatus = async (routeId: string, newStatus: string) => {
@@ -343,6 +349,12 @@ export default function DriverPanelScreen() {
     return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
   }
 
+  const countdownLabel = (dateString: string, nowMs: number) => {
+    const minutes = Math.ceil((new Date(dateString).getTime() - nowMs) / 60000)
+    if (minutes <= 0) return 'Hora de salida: sal ahora o cancela'
+    return `Sale en ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
@@ -366,44 +378,23 @@ export default function DriverPanelScreen() {
     } catch (_e) {}
   }
 
-  const handleCreateRoute = () => {
-    if (!approvalStatus) {
-      Alert.alert('Error', 'Verificando estado de aprobación...')
-      return
-    }
-
-    if (!approvalStatus.canCreateRoutes) {
-      const message = getDriverRestrictionMessage(approvalStatus)
-      Alert.alert('No puedes crear rutas', message, [
-        {
-          text: 'Ver documentos',
-          onPress: () => navigation.navigate('DriverDocuments' as never),
-        },
-        { text: 'Cerrar', style: 'cancel' },
-      ])
-      return
-    }
-
-    navigation.navigate('DriverRegister' as never)
-  }
-
   const getSeatsFilled = (route: DriverRoute) => {
     // Contar directamente los pasajeros confirmados en lugar de confiar en available_seats
     return route.passengers ? route.passengers.length : 0
   }
 
-  const getStatusInfo = (status: string) => {
+  const getStatusInfo = (status: string): { label: string; color: string; icon: IconName } => {
     switch (status) {
       case 'scheduled':
-        return { label: 'Programado', color: COLORS.info, icon: 'time-outline' }
+        return { label: 'Programado', color: COLORS.info, icon: 'Clock' }
       case 'in_progress':
-        return { label: 'En curso', color: COLORS.warning, icon: 'car-outline' }
+        return { label: 'En curso', color: COLORS.warning, icon: 'Car' }
       case 'completed':
-        return { label: 'Completado', color: COLORS.success, icon: 'checkmark-circle-outline' }
+        return { label: 'Completado', color: COLORS.success, icon: 'CircleCheck' }
       case 'cancelled':
-        return { label: 'Cancelado', color: COLORS.error, icon: 'close-circle-outline' }
+        return { label: 'Cancelado', color: COLORS.error, icon: 'CircleX' }
       default:
-        return { label: status, color: COLORS.textSecondary, icon: 'help-circle-outline' }
+        return { label: status, color: COLORS.textSecondary, icon: 'CircleHelp' }
     }
   }
 
@@ -466,15 +457,8 @@ export default function DriverPanelScreen() {
           </Text>
         </View>
         <TouchableOpacity
-          style={styles.recurringBtn}
-          onPress={() => navigation.navigate('RecurringRoutes' as never)}
-          activeOpacity={0.8}
-        >
-          <Icon name="Repeat" size={20} color="rgba(255,255,255,0.85)" />
-        </TouchableOpacity>
-        <TouchableOpacity
           style={styles.addBtn}
-          onPress={() => setShowAddMenu(true)}
+          onPress={() => setShowPublishSheet(true)}
           activeOpacity={0.8}
         >
           <Icon name="Plus" size={24} color="#fff" />
@@ -505,7 +489,7 @@ export default function DriverPanelScreen() {
                     styles.createRouteBtn,
                     !approvalStatus?.canCreateRoutes && styles.createRouteBtnDisabled,
                   ]}
-                  onPress={handleCreateRoute}
+                  onPress={goToCreateRoute}
                   disabled={!approvalStatus?.canCreateRoutes}
                 >
                   <Icon name="CirclePlus" size={20} color={!approvalStatus?.canCreateRoutes ? COLORS.textTertiary : COLORS.textInverse} />
@@ -559,9 +543,12 @@ export default function DriverPanelScreen() {
                     <Text style={styles.routeDateTime}>
                       {formatDate(route.departure_time)} · {formatTime(route.departure_time)}
                     </Text>
+                    {route.status === 'scheduled' && (
+                      <Text style={styles.countdown}>{countdownLabel(route.departure_time, now)}</Text>
+                    )}
                   </View>
                   <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + '20' }]}>
-                    <Icon name={statusInfo.icon as any} size={13} color={statusInfo.color} />
+                    <Icon name={statusInfo.icon} size={13} color={statusInfo.color} />
                     <Text style={[styles.statusText, { color: statusInfo.color }]}>
                       {statusInfo.label}
                     </Text>
@@ -782,7 +769,7 @@ export default function DriverPanelScreen() {
                         ) : (
                           <>
                             <Icon name="CirclePlay" size={20} color="#fff" />
-                            <Text style={styles.primaryActionText}>Iniciar Viaje</Text>
+                            <Text style={styles.primaryActionText}>Salir ahora</Text>
                           </>
                         )}
                       </LinearGradient>
@@ -808,7 +795,7 @@ export default function DriverPanelScreen() {
                           '¿Cancelar este viaje? Se notificará a los pasajeros.',
                           [
                             { text: 'No', style: 'cancel' },
-                            { text: 'Sí, cancelar', style: 'destructive', onPress: () => updateRouteStatus(route.id, 'cancelled') },
+                            { text: 'Sí, cancelar', style: 'destructive', onPress: () => cancelRoute(route.id) },
                           ]
                         )}
                         disabled={isUpdating}
@@ -852,58 +839,12 @@ export default function DriverPanelScreen() {
         )}
       </ScrollView>
 
-      {/* ── Add menu overlay (sin Modal) ── */}
-      {showAddMenu && (
-        <View style={styles.menuOverlay}>
-          <TouchableOpacity
-            style={{ flex: 1 }}
-            activeOpacity={1}
-            onPress={() => setShowAddMenu(false)}
-          />
-          <View style={styles.menuSheet}>
-            <View style={styles.menuHandle} />
-            <Text style={styles.menuTitle}>¿Qué quieres hacer?</Text>
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              activeOpacity={0.8}
-              onPress={() => {
-                setShowAddMenu(false)
-                setTimeout(() => handleCreateRoute(), 150)
-              }}
-            >
-              <LinearGradient colors={[COLORS.primaryDark, COLORS.primaryLight]} style={styles.menuItemIcon}>
-                <Icon name="CirclePlus" size={20} color="#fff" />
-              </LinearGradient>
-              <View style={styles.menuItemText}>
-                <Text style={styles.menuItemTitle}>Crear ruta</Text>
-                <Text style={styles.menuItemSub}>Publica un viaje nuevo ahora</Text>
-              </View>
-              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-
-            <View style={styles.menuDivider} />
-
-            <TouchableOpacity
-              style={styles.menuItem}
-              activeOpacity={0.8}
-              onPress={() => {
-                setShowAddMenu(false)
-                setTimeout(() => navigation.navigate('RecurringRoutes' as never), 150)
-              }}
-            >
-              <LinearGradient colors={[COLORS.primary, COLORS.primary]} style={styles.menuItemIcon}>
-                <Icon name="Repeat" size={20} color="#fff" />
-              </LinearGradient>
-              <View style={styles.menuItemText}>
-                <Text style={styles.menuItemTitle}>Plantillas de ruta</Text>
-                <Text style={styles.menuItemSub}>Publica tus rutas habituales rápido</Text>
-              </View>
-              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      <PublishSheet
+        visible={showPublishSheet}
+        onClose={() => setShowPublishSheet(false)}
+        onCreateRoute={goToCreateRoute}
+        onRecurringRoutes={() => navigation.navigate('RecurringRoutes' as never)}
+      />
 
       {selectedChat && user?.id && (
         <TripMessagesModal
@@ -962,24 +903,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    fontSize: 22,
-    fontWeight: '700',
+    ...TYPOGRAPHY.h3,
     color: '#fff',
-    letterSpacing: -0.3,
   },
   subtitle: {
     fontSize: 13,
     color: 'rgba(255,255,255,0.75)',
     marginTop: 2,
     fontWeight: '500',
-  },
-  recurringBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   addBtn: {
     width: 40,
@@ -1016,7 +947,9 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.xl,
     gap: SPACING.sm,
-    ...SHADOWS.orangeSoft,
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
   },
   createRouteBtnText: {
     ...TYPOGRAPHY.bodyMedium,
@@ -1044,20 +977,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.xl,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    shadowColor: COLORS.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.07,
-    shadowRadius: 10,
-    elevation: 3,
     overflow: 'hidden',
   },
   routeCardActive: {
     borderColor: COLORS.success,
     borderLeftWidth: 4,
     backgroundColor: COLORS.background,
-    shadowColor: COLORS.success,
-    shadowOpacity: 0.12,
-    elevation: 4,
   },
   inProgressBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -1120,6 +1045,7 @@ const styles = StyleSheet.create({
   destText: {
     fontSize: 14, fontWeight: '600', color: COLORS.textPrimary,
   },
+  countdown: { fontSize: 13, fontWeight: '800', color: COLORS.primary, marginTop: 2 },
   routeDateTime: {
     fontSize: 13, color: COLORS.textTertiary, fontWeight: '500', marginTop: 2,
   },
@@ -1372,44 +1298,6 @@ const styles = StyleSheet.create({
   },
   secondaryActionText: {
     fontSize: 13, fontWeight: '600',
-  },
-
-  // Add menu
-  menuOverlay: {
-    position: 'absolute', top: 0, bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end',
-    zIndex: 999,
-  },
-  menuSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    paddingHorizontal: SPACING.lg, paddingBottom: 36, paddingTop: 10,
-  },
-  menuHandle: {
-    width: 40, height: 4, borderRadius: 2,
-    backgroundColor: COLORS.primaryTint, alignSelf: 'center', marginBottom: 16,
-  },
-  menuTitle: {
-    fontSize: 11, fontWeight: '600', color: COLORS.textTertiary,
-    letterSpacing: 0.3, marginBottom: SPACING.md, textTransform: 'uppercase',
-  },
-  menuItem: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    paddingVertical: 14,
-  },
-  menuItemIcon: {
-    width: 44, height: 44, borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center', flexShrink: 0,
-  },
-  menuItemText: { flex: 1 },
-  menuItemTitle: {
-    fontSize: 15, fontWeight: '700', color: COLORS.textPrimary,
-  },
-  menuItemSub: {
-    fontSize: 13, color: COLORS.textSecondary, marginTop: 2,
-  },
-  menuDivider: {
-    height: 1, backgroundColor: COLORS.surfaceAlt, marginHorizontal: 58,
   },
 
   // Warning

@@ -13,6 +13,8 @@ import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
 import { supabase } from '../services/supabase'
 import { VehicleVector } from '../components/illustrations/VehicleVector'
+import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
+import { showSuccess } from '../utils/showError'
 
 // Reserva2: elegir conductor. Llega con origen, destino y pasajeros (búsqueda)
 // o solo con municipio (Viajes ahora desde Inicio).
@@ -44,10 +46,12 @@ type RideCardProps = {
   passengers: number
   isSearch: boolean
   selected: boolean
+  favorite: boolean
   onSelect: (id: string) => void
+  onToggleFavorite: () => void
 }
 
-function RideCard({ ride, passengers, isSearch, selected, onSelect }: RideCardProps) {
+function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, onToggleFavorite }: RideCardProps) {
   const seats = ride.seats_available_count ?? 0
   const fits = seats >= passengers
   const isFull = seats === 0
@@ -73,40 +77,69 @@ function RideCard({ ride, passengers, isSearch, selected, onSelect }: RideCardPr
     }
   }
 
+  const total = ride.total_seats ?? seats
+  const taken = Math.max(total - seats, 0)
+
   return (
     <TouchableOpacity
       activeOpacity={fits ? 0.85 : 1}
       onPress={() => { if (fits) onSelect(ride.id) }}
       accessibilityState={{ selected, disabled: !fits }}
-      style={[styles.card, selected && styles.cardSelected, isFull && styles.cardDimmed]}
+      style={[styles.ticket, selected && styles.ticketSelected, isFull && styles.ticketDimmed]}
     >
-      <View style={styles.cardTop}>
-        <View style={styles.timeCol}>
-          <Text style={styles.hour}>{hour}</Text>
-          <Text style={styles.period}>{period}</Text>
-        </View>
-        <View style={styles.vDivider} />
-        <View style={styles.middle}>
-          <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
-          <View style={styles.driverRow}>
-            <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
-            <Icon name="Star" size={12} color={COLORS.warning} />
-            <Text style={styles.ratingText}>{Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+      <View style={styles.ticketTop}>
+        <View style={styles.ticketHead}>
+          <View style={styles.timePill}>
+            <Text style={styles.timeText}>{hour} {period}</Text>
           </View>
-          {!!ride.vehicle_plate && (
-            <View style={styles.platePill}>
-              <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
-            </View>
-          )}
+          <TouchableOpacity
+            onPress={onToggleFavorite}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={styles.favBtn}
+            accessibilityLabel={favorite ? 'Quitar de favoritas' : 'Guardar en favoritas'}
+            accessibilityState={{ selected: favorite }}
+          >
+            <Icon name="Heart" size={18} color={favorite ? COLORS.error : COLORS.textTertiary} />
+          </TouchableOpacity>
         </View>
-        <VehicleVector type={ride.vehicle_type} />
+        <View style={styles.ticketBody}>
+          <View style={styles.ticketInfo}>
+            <Text style={styles.routeText} numberOfLines={1}>{ride.origin} → {ride.destination}</Text>
+            <View style={styles.driverRow}>
+              <Text style={styles.driverName} numberOfLines={1}>{ride.driver_name}</Text>
+              <Icon name="Star" size={12} color={COLORS.warning} />
+              <Text style={styles.ratingText}>{Number(ride.driver_rating ?? 0).toFixed(1)}</Text>
+            </View>
+            {!!ride.vehicle_plate && (
+              <View style={styles.platePill}>
+                <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
+              </View>
+            )}
+          </View>
+          <VehicleVector type={ride.vehicle_type} width={84} />
+        </View>
       </View>
 
-      <View style={styles.hDivider} />
+      <View style={styles.perforation}>
+        <View style={[styles.notch, styles.notchLeft]} />
+        <View style={styles.perfLine} />
+        <View style={[styles.notch, styles.notchRight]} />
+      </View>
 
-      <View style={styles.cardBottom}>
-        <Text style={[styles.status, { color: status.color }]}>{status.text}</Text>
-        <Text style={styles.price}>{formatCOP(ride.price_per_seat)}</Text>
+      <View style={styles.ticketBottom}>
+        <View style={styles.seatsCol}>
+          <Text style={styles.label}>CUPOS</Text>
+          <View style={styles.seatRow}>
+            {Array.from({ length: Math.min(total, 10) }).map((_, index) => (
+              <View key={index} style={[styles.seatBox, index < taken ? styles.seatTaken : styles.seatFree]} />
+            ))}
+          </View>
+          <Text style={[styles.status, { color: status.color }]} numberOfLines={2}>{status.text}</Text>
+        </View>
+        <View style={styles.priceCol}>
+          <Text style={styles.label}>POR CUPO</Text>
+          <Text style={styles.price}>{formatCOP(ride.price_per_seat)}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   )
@@ -119,6 +152,17 @@ export default function AvailableRidesScreen() {
   const { rides, loading, error, refetch } = useAvailableRides()
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const authUser = useAppStore((s) => s.authUser)
+  const { isFavorite, addFavorite, removeFavorite } = useFavoriteRoutes(authUser?.id)
+
+  const toggleFavorite = (ride: AvailableRide) => {
+    if (isFavorite(ride.id)) {
+      removeFavorite(ride.id)
+      showSuccess('Ruta quitada de favoritas')
+    } else {
+      addFavorite({ id: ride.id, origin: ride.origin, destination: ride.destination })
+      showSuccess('Ruta guardada en favoritas')
+    }
+  }
   const user = useAppStore((s) => s.user)
   const [refreshing, setRefreshing] = useState(false)
   const [municipality, setMunicipality] = useState<string | null>(params.municipality ?? null)
@@ -221,10 +265,18 @@ export default function AvailableRidesScreen() {
           ) : (
             <>
               <Text style={styles.title}>Viajes ahora</Text>
-              <TouchableOpacity onPress={() => setShowPicker(true)} activeOpacity={0.7}>
-                <Text style={styles.subtitle} numberOfLines={1}>
-                  {municipality ? `${municipality} · cambiar municipio` : 'Toca para elegir tu municipio'}
+              <TouchableOpacity
+                style={styles.municipalityPill}
+                onPress={() => setShowPicker(true)}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel={municipality ? `Municipio: ${municipality}. Toca para cambiarlo` : 'Elige tu municipio'}
+              >
+                <Icon name="MapPin" size={14} color={COLORS.primary} />
+                <Text style={styles.municipalityText} numberOfLines={1}>
+                  {municipality ?? 'Elige tu municipio'}
                 </Text>
+                <Icon name="ChevronDown" size={14} color={COLORS.primary} />
               </TouchableOpacity>
             </>
           )}
@@ -250,7 +302,9 @@ export default function AvailableRidesScreen() {
               passengers={passengers}
               isSearch={isSearch}
               selected={item.id === selectedId}
+              favorite={isFavorite(item.id)}
               onSelect={setSelectedId}
+              onToggleFavorite={() => toggleFavorite(item)}
             />
           )}
           keyExtractor={(item) => item.id}
@@ -288,6 +342,64 @@ export default function AvailableRidesScreen() {
 }
 
 const styles = StyleSheet.create({
+  ticket: {
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+  },
+  ticketSelected: { borderColor: COLORS.primary, borderWidth: 2 },
+  ticketDimmed: { opacity: 0.55 },
+  ticketTop: { padding: SPACING.lg, gap: SPACING.sm },
+  ticketHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  timePill: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
+  },
+  timeText: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  favBtn: { width: 34, height: 34, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surfaceAlt },
+  ticketBody: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  ticketInfo: { flex: 1, gap: 4 },
+  routeText: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  driverName: { fontSize: 13, color: COLORS.textSecondary, flexShrink: 1 },
+  ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  platePill: {
+    alignSelf: 'flex-start',
+    marginTop: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.primaryTint,
+  },
+  plateText: { fontSize: 12, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.4 },
+  perforation: { height: 18, justifyContent: 'center', marginHorizontal: -1 },
+  perfLine: { marginHorizontal: SPACING.lg, borderTopWidth: 1.5, borderStyle: 'dashed', borderColor: COLORS.border },
+  notch: { position: 'absolute', width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.background, top: 0 },
+  notchLeft: { left: -9 },
+  notchRight: { right: -9 },
+  ticketBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.lg,
+    gap: SPACING.md,
+  },
+  seatsCol: { flex: 1, gap: SPACING.xs },
+  label: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.6 },
+  seatRow: { flexDirection: 'row', gap: 4 },
+  seatBox: { width: 16, height: 16, borderRadius: 4 },
+  seatFree: { backgroundColor: COLORS.primary },
+  seatTaken: { backgroundColor: COLORS.border },
+  status: { fontSize: 12, fontWeight: '700' },
+  priceCol: { alignItems: 'flex-end' },
+  price: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, lineHeight: 26 },
   safe: { flex: 1, backgroundColor: COLORS.background },
 
   header: {
@@ -330,31 +442,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  cardDimmed: { opacity: 0.55 },
-  cardTop: { flexDirection: 'row', alignItems: 'center' },
-  timeCol: { minWidth: 58, alignItems: 'center' },
-  hour: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
-  period: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
-  vDivider: { width: 1, height: 52, backgroundColor: COLORS.border, marginHorizontal: 14 },
-  middle: { flex: 1, paddingRight: 6 },
-  routeText: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
-  driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  driverName: { fontSize: 13, color: COLORS.textSecondary, flexShrink: 1 },
-  ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
-  platePill: {
+  municipalityPill: {
     alignSelf: 'flex-start',
-    marginTop: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryTint,
   },
-  plateText: { fontSize: 12, fontWeight: '800', color: COLORS.primary, letterSpacing: 0.4 },
+  municipalityText: { fontSize: 13, fontWeight: '700', color: COLORS.primary, maxWidth: 220 },
 
-  hDivider: { height: 1, backgroundColor: COLORS.borderLight, marginVertical: 12 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  status: { fontSize: 13, fontWeight: '700' },
-  price: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
 
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: SPACING.xl },
   emptyTitle: { marginTop: SPACING.md, fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },

@@ -16,7 +16,7 @@ interface EmptyStateProps {
 }
 
 export default function EmptyState({
-  icon = 'inbox-outline',
+  icon = 'Inbox',
   title,
   description,
   actionLabel,

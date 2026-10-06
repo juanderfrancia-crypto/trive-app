@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -22,246 +23,155 @@ export default function FavoriteRoutesScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <View style={styles.headerContent}>
-            <Text style={styles.title}>Mis Rutas Favoritas</Text>
-            <Text style={styles.subtitle}>Rutas guardadas desde los resultados de búsqueda</Text>
-          </View>
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Rutas favoritas</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
 
-        {loading && (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
-        )}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        {loading && <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
 
         {!loading && favorites.length === 0 && (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconWrapper}>
-              <Icon name="Heart" size={64} color={COLORS.textTertiary} />
-            </View>
+          <View style={styles.empty}>
+            <Illustration name="sharingArticles" width={170} />
             <Text style={styles.emptyTitle}>Sin rutas favoritas</Text>
             <Text style={styles.emptyText}>
-              Toca el ícono ♡ en la esquina de cualquier card en la búsqueda para guardar una ruta aquí
+              Guarda una ruta desde los resultados de búsqueda y aparecerá aquí para reservar más rápido.
             </Text>
             <TouchableOpacity
               style={styles.searchBtn}
               onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
+              activeOpacity={0.85}
             >
-              <Icon name="Search" size={20} color={COLORS.textInverse} />
-              <Text style={styles.searchBtnText}>Ir a buscar rutas</Text>
+              <Icon name="Search" size={18} color={COLORS.white} />
+              <Text style={styles.searchBtnText}>Buscar rutas</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {!loading && favorites.length > 0 && (
-          <View style={styles.content}>
-            {favorites.map((fav) => (
-              <View key={fav.route_id} style={styles.routeCard}>
-                <View style={styles.routeRow}>
-                  <View style={styles.routePoint}>
-                    <View style={styles.routeDot} />
-                    <Text style={styles.routeText} numberOfLines={1}>{fav.origin}</Text>
-                  </View>
-                  <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} style={{ paddingHorizontal: SPACING.sm }} />
-                  <View style={styles.routePoint}>
-                    <View style={[styles.routeDot, styles.routeDotEnd]} />
-                    <Text style={styles.routeText} numberOfLines={1}>{fav.destination}</Text>
-                  </View>
-                </View>
-
-                <Text style={styles.savedDate}>
-                  Guardada el {new Date(fav.saved_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
-                </Text>
-
-                <View style={styles.cardActions}>
-                  <TouchableOpacity
-                    style={styles.bookBtn}
-                    onPress={() => handleSearch(fav.origin, fav.destination)}
-                    activeOpacity={0.85}
-                  >
-                    <Icon name="Search" size={16} color={COLORS.textInverse} />
-                    <Text style={styles.bookBtnText}>Buscar esta ruta</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.removeBtn}
-                    onPress={() => removeFavorite(fav.route_id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.7}
-                  >
-                    <Icon name="Trash2" size={20} color={COLORS.error} />
-                  </TouchableOpacity>
-                </View>
+        {!loading && favorites.map((fav) => (
+          <View key={fav.route_id} style={styles.card}>
+            <View style={styles.routeRow}>
+              <View style={styles.routePoint}>
+                <View style={styles.routeDot} />
+                <Text style={styles.routeText} numberOfLines={1}>{fav.origin}</Text>
               </View>
-            ))}
-          </View>
-        )}
+              <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} />
+              <View style={styles.routePoint}>
+                <View style={[styles.routeDot, styles.routeDotEnd]} />
+                <Text style={styles.routeText} numberOfLines={1}>{fav.destination}</Text>
+              </View>
+            </View>
 
+            <Text style={styles.savedDate}>
+              Guardada el {new Date(fav.saved_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
+            </Text>
+
+            <View style={styles.cardActions}>
+              <TouchableOpacity
+                style={styles.bookBtn}
+                onPress={() => handleSearch(fav.origin, fav.destination)}
+                activeOpacity={0.85}
+              >
+                <Icon name="Search" size={16} color={COLORS.white} />
+                <Text style={styles.bookBtnText}>Buscar esta ruta</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.removeBtn}
+                onPress={() => removeFavorite(fav.route_id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.7}
+                accessibilityLabel="Quitar de favoritas"
+              >
+                <Icon name="Trash2" size={18} color={COLORS.error} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
       </ScrollView>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    gap: SPACING.md,
+    paddingVertical: SPACING.md,
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    ...SHADOWS.sm,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  title: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-  subtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-    marginTop: 2,
-  },
-  loadingContainer: {
-    paddingTop: 80,
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  emptyContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xl,
-    paddingTop: 80,
-  },
-  emptyIconWrapper: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
-  },
-  emptyTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.xs,
-  },
-  emptyText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-    lineHeight: 22,
-  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  loader: { marginTop: SPACING.xxl },
+
+  empty: { alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.xl, paddingHorizontal: SPACING.lg },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20, marginBottom: SPACING.md },
   searchBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
-    backgroundColor: COLORS.primary,
+    height: 50,
     paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    ...SHADOWS.sm,
-  },
-  searchBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '600',
-  },
-  content: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xxxl,
-    paddingTop: SPACING.sm,
-  },
-  routeCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  routeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    flex: 1,
-  },
-  routeDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.primary,
   },
-  routeDotEnd: {
-    backgroundColor: COLORS.accent,
+  searchBtnText: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
+
+  card: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
   },
-  routeText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-    flex: 1,
-  },
-  savedDate: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textTertiary,
-    marginBottom: SPACING.lg,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
+  routeRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
+  routePoint: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  routeDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.primary },
+  routeDotEnd: { backgroundColor: COLORS.accent },
+  routeText: { ...TYPOGRAPHY.bodyMedium, flex: 1, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  savedDate: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginBottom: SPACING.md },
+
+  cardActions: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   bookBtn: {
     flex: 1,
+    height: 46,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.sm,
+    borderRadius: RADIUS.md,
     backgroundColor: COLORS.primary,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    ...SHADOWS.sm,
   },
-  bookBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textInverse,
-    fontWeight: '600',
-  },
+  bookBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
   removeBtn: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: RADIUS.md,
-    backgroundColor: `${COLORS.error}12`,
+    backgroundColor: COLORS.errorLight,
     justifyContent: 'center',
     alignItems: 'center',
   },

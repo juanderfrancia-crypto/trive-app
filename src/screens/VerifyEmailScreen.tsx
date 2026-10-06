@@ -71,35 +71,7 @@ export default function VerifyEmailScreen() {
       const data = await confirmEmail(email, verificationCode)
 
       if (data?.user) {
-        // Fetchthe created profile
-        const { data: profile } = await (await import('../services/supabase')).supabase
-          .from('profiles')
-          .select(PROFILE_COLUMNS)
-          .eq('id', data.user.id)
-          .maybeSingle()
-
-        if (profile) {
-          setUser({
-            id: profile.id,
-            name: profile.name,
-            email: profile.email ?? '',
-            phone: (await getMyPhone()) ?? undefined,
-            role: toAppRole(profile.role),
-            rating: profile.rating || 0,
-            balance: profile.balance || 0,
-            membership_type: toAppMembership(profile.membership_type),
-            membership_expiry: profile.membership_expiry || null,
-          })
-        }
-
-        setAuthUser(data.user)
-
-        // Limpiar estado de verificación pendiente
-        const { clearPendingVerification } = useAppStore.getState()
-        clearPendingVerification()
-
-        // Navegar al Main después de verificación exitosa
-        navigation.navigate('Main' as never)
+        useAppStore.getState().clearPendingVerification()
       }
     } catch (err: any) {
       if (err.message?.includes('Network') || err.message?.includes('Failed to fetch')) {

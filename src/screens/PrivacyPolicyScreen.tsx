@@ -1,8 +1,8 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Linking, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
 
 export default function PrivacyPolicyScreen() {
@@ -22,9 +22,12 @@ export default function PrivacyPolicyScreen() {
           <View style={{ width: 28 }} />
         </View>
 
-        <Text style={s.company}>Trive Technologies SAS</Text>
-        <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
-        <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
+        <View style={s.brandBlock}>
+          <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
+          <Text style={s.company}>Trive Technologies SAS</Text>
+          <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
+          <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
+        </View>
 
         <Section title="1. Responsable del tratamiento">
           <B>Trive Technologies SAS</B>{'\n'}
@@ -151,65 +154,52 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
+  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 
+  brandBlock: { alignItems: 'center', marginTop: SPACING.sm, marginBottom: SPACING.xl },
+  logo: { width: 160, height: 72 },
   company: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.labelMedium,
     color: COLORS.primary,
-    textAlign: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: 4,
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    marginTop: SPACING.sm,
   },
   law: {
-    fontSize: 11.5,
+    ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
-    textAlign: 'center',
-    marginBottom: 4,
-    fontStyle: 'italic',
+    marginTop: 2,
   },
   date: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-    fontStyle: 'italic',
+    marginTop: 2,
   },
 
   section: {
+    ...SHADOWS.sm,
     marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
+    ...TYPOGRAPHY.labelMedium,
     color: COLORS.primary,
+    fontWeight: '800',
     marginBottom: SPACING.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionBody: {
-    fontSize: 14,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.textPrimary,
     lineHeight: 22,
-    letterSpacing: 0.2,
   },
 
   sicBox: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
@@ -217,13 +207,11 @@ const s = StyleSheet.create({
     marginBottom: SPACING.lg,
     backgroundColor: COLORS.primaryTint,
     padding: SPACING.lg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '25',
+    borderRadius: RADIUS.lg,
   },
   sicText: {
+    ...TYPOGRAPHY.caption,
     flex: 1,
-    fontSize: 13,
     color: COLORS.textSecondary,
     lineHeight: 20,
   },
@@ -233,27 +221,24 @@ const s = StyleSheet.create({
   },
 
   contactBox: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
     marginHorizontal: SPACING.lg,
-    backgroundColor: COLORS.primary + '08',
+    backgroundColor: COLORS.primaryTint,
     padding: SPACING.lg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '20',
+    borderRadius: RADIUS.lg,
   },
   contactLabel: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption,
     fontWeight: '700',
     color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     marginBottom: 2,
   },
   contactValue: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: '700',
     color: COLORS.primary,
   },
 })

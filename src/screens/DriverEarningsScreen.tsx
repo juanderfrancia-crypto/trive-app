@@ -60,10 +60,10 @@ export default function DriverEarningsScreen() {
   // Funciones helper para iconos y colores de transacciones
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'trip':       return 'checkmark-circle-outline'
-      case 'cancellation': return 'close-circle-outline'
-      case 'upcoming':   return 'time-outline'
-      default:           return 'wallet-outline'
+      case 'trip':       return 'CircleCheck'
+      case 'cancellation': return 'CircleX'
+      case 'upcoming':   return 'Clock'
+      default:           return 'Wallet'
     }
   }
 

@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../../theme/theme'
+import Icon from '../../components/Icon'
+import Illustration from '../../components/illustrations/Illustration'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { getCounterpartPhone } from '../../services/profileColumns'
 import { showSuccess, showError } from '../../utils/showError'
@@ -40,16 +42,16 @@ export default function PassengerTripsScreen() {
     if (!user?.id) return
     try {
       await cancelPassengerBooking(booking, user.id)
-      showSuccess('Viaje cancelado exitosamente')
+      showSuccess('Viaje cancelado')
       refetch()
     } catch {
-      showError('Error al cancelar viaje')
+      showError('No pudimos cancelar el viaje')
     }
   }
 
   const handleCancel = (booking: PassengerBooking) => {
     Alert.alert(
-      'Cancelar Viaje',
+      'Cancelar viaje',
       `¿Deseas cancelar el viaje de ${booking.origin} a ${booking.destination}?`,
       [
         { text: 'No, mantener', style: 'cancel' },
@@ -77,13 +79,13 @@ export default function PassengerTripsScreen() {
         <View style={styles.cardTop}>
           <Text style={styles.cardDay}>{formatDia(booking.departureTime)} · {formatHora(booking.departureTime)}</Text>
           {esConfirmado && (
-            <View style={styles.pillOk}><Text style={styles.pillOkText}>Confirmado</Text></View>
+            <View style={[styles.pill, styles.pillOk]}><Text style={[styles.pillText, styles.pillOkText]}>Confirmado</Text></View>
           )}
           {porConfirmar && (
-            <View style={styles.pillWarn}><Text style={styles.pillWarnText}>Por confirmar</Text></View>
+            <View style={[styles.pill, styles.pillWarn]}><Text style={[styles.pillText, styles.pillWarnText]}>Por confirmar</Text></View>
           )}
           {esPendiente && (
-            <View style={styles.pillNeutral}><Text style={styles.pillNeutralText}>Pendiente</Text></View>
+            <View style={[styles.pill, styles.pillNeutral]}><Text style={[styles.pillText, styles.pillNeutralText]}>Pendiente</Text></View>
           )}
         </View>
 
@@ -115,6 +117,7 @@ export default function PassengerTripsScreen() {
         {esConfirmado && (
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.tintBtn} onPress={() => handleCall(booking)} activeOpacity={0.85}>
+              <Icon name="Phone" size={16} color={COLORS.primary} />
               <Text style={styles.tintBtnText}>Llamar al conductor</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.outlineBtn} onPress={() => handleCancel(booking)} activeOpacity={0.85}>
@@ -125,6 +128,8 @@ export default function PassengerTripsScreen() {
       </View>
     )
   }
+
+  const showEmpty = !loading && bookings.length === 0
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -140,12 +145,25 @@ export default function PassengerTripsScreen() {
           </TouchableOpacity>
         </View>
 
+        {loading && bookings.length === 0 && (
+          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+        )}
+
         {bookings.map(renderBooking)}
 
-        {!loading && bookings.length === 0 && (
+        {showEmpty && (
           <View style={styles.empty}>
-            <Text style={styles.emptyTitle}>No tienes viajes próximos</Text>
-            <Text style={styles.emptySub}>Busca cupos desde Inicio para reservar tu próximo viaje.</Text>
+            <Illustration name="schedule" width={170} />
+            <Text style={styles.emptyTitle}>Aún no tienes viajes próximos</Text>
+            <Text style={styles.emptyText}>Cuando reserves un viaje, lo verás aquí con su día, hora y conductor.</Text>
+            <TouchableOpacity
+              style={styles.searchBtn}
+              onPress={() => navigation.navigate('Search')}
+              activeOpacity={0.85}
+            >
+              <Icon name="Search" size={18} color={COLORS.white} />
+              <Text style={styles.searchBtnText}>Buscar viajes</Text>
+            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -155,58 +173,100 @@ export default function PassengerTripsScreen() {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  content: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md, paddingBottom: SPACING.xxxl },
+  content: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xxxl },
 
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
+  title: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
 
   segment: {
-    marginTop: SPACING.lg, flexDirection: 'row', backgroundColor: COLORS.borderLight, borderRadius: RADIUS.md + 2, padding: SPACING.xs,
+    marginTop: SPACING.lg,
+    flexDirection: 'row',
+    backgroundColor: COLORS.surfaceAlt,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.xs,
   },
   segmentActive: {
-    flex: 1, height: 40, borderRadius: RADIUS.md - 1, backgroundColor: COLORS.white,
-    alignItems: 'center', justifyContent: 'center',
-    shadowColor: COLORS.textPrimary, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2,
+    ...SHADOWS.xs,
+    flex: 1,
+    height: 42,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  segmentActiveText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
-  segmentItem: { flex: 1, height: 40, alignItems: 'center', justifyContent: 'center' },
-  segmentText: { fontSize: 14, fontWeight: '600', color: COLORS.textSecondary },
+  segmentActiveText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.primary },
+  segmentItem: { flex: 1, height: 42, alignItems: 'center', justifyContent: 'center' },
+  segmentText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+
+  loader: { marginTop: SPACING.xxl },
 
   card: {
-    marginTop: SPACING.lg, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
   },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardDay: { flex: 1, fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, marginRight: SPACING.sm },
-  route: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary, marginTop: SPACING.sm },
-  sub: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs },
-  question: { marginTop: SPACING.md, fontSize: 13, color: COLORS.textSecondary, lineHeight: 19 },
+  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.sm },
+  cardDay: { ...TYPOGRAPHY.labelMedium, flex: 1, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
+  route: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginTop: SPACING.sm },
+  sub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  question: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginTop: SPACING.md, lineHeight: 20 },
 
-  pillOk: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 1, borderRadius: RADIUS.full, backgroundColor: COLORS.successLight },
-  pillOkText: { fontSize: 12, fontWeight: '700', color: COLORS.success },
-  pillWarn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 1, borderRadius: RADIUS.full, backgroundColor: COLORS.warningLight },
-  pillWarnText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
-  pillNeutral: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 1, borderRadius: RADIUS.full, backgroundColor: COLORS.surfaceAlt },
-  pillNeutralText: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary },
+  pill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
+  pillText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold },
+  pillOk: { backgroundColor: COLORS.successLight },
+  pillOkText: { color: COLORS.success },
+  pillWarn: { backgroundColor: COLORS.warningLight },
+  pillWarnText: { color: COLORS.warningDark },
+  pillNeutral: { backgroundColor: COLORS.surfaceAlt },
+  pillNeutralText: { color: COLORS.textSecondary },
 
   primaryBtn: {
-    marginTop: SPACING.md, height: 42, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
-    alignItems: 'center', justifyContent: 'center',
+    marginTop: SPACING.md,
+    height: 46,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  primaryBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.white },
+  primaryBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
   btnDisabled: { opacity: 0.6 },
 
-  actionsRow: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.md },
+  actionsRow: { flexDirection: 'row', gap: SPACING.sm, marginTop: SPACING.md },
   tintBtn: {
-    flex: 1, height: 42, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center',
+    flex: 1,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
   },
-  tintBtnText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
+  tintBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
   outlineBtn: {
-    height: 42, paddingHorizontal: SPACING.lg, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border,
-    alignItems: 'center', justifyContent: 'center',
+    height: 44,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  outlineBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  outlineBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
 
-  empty: { marginTop: SPACING.xxl, alignItems: 'center' },
-  emptyTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
-  emptySub: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs, textAlign: 'center', lineHeight: 19 },
+  empty: { alignItems: 'center', marginTop: SPACING.xl, gap: SPACING.sm },
+  emptyTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginTop: SPACING.sm, textAlign: 'center' },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  searchBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    height: 50,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+    marginTop: SPACING.md,
+  },
+  searchBtnText: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
 })

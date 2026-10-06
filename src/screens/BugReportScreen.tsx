@@ -1,11 +1,12 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Linking, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { useState } from 'react'
 import * as Device from 'expo-device'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { APP_VERSION_LABEL } from '../config/appInfo'
 
 type BugCategory = 'crash' | 'visual' | 'network' | 'performance' | 'other'
 
@@ -16,8 +17,22 @@ interface BugReport {
   email: string
 }
 
+const CATEGORIES: { id: BugCategory; label: string; icon: IconName }[] = [
+  { id: 'crash', label: 'La app se cierra', icon: 'CircleAlert' },
+  { id: 'visual', label: 'Problema visual', icon: 'Palette' },
+  { id: 'network', label: 'Conexión', icon: 'Wifi' },
+  { id: 'performance', label: 'Va lenta', icon: 'Gauge' },
+  { id: 'other', label: 'Otro', icon: 'CircleHelp' },
+]
+
+const TIPS = [
+  'Sé específico: describe exactamente qué pasó.',
+  'Incluye los pasos que seguiste antes del problema.',
+  'Menciona si es la primera vez que ocurre.',
+  'Indica la versión de tu teléfono si es relevante.',
+]
+
 export default function BugReportScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const [report, setReport] = useState<BugReport>({
     title: '',
@@ -26,14 +41,6 @@ export default function BugReportScreen() {
     email: '',
   })
   const [loading, setLoading] = useState(false)
-
-  const categories: { id: BugCategory; label: string; icon: string }[] = [
-    { id: 'crash', label: 'Aplicación se cierra', icon: 'alert-circle-outline' },
-    { id: 'visual', label: 'Problema visual', icon: 'color-palette-outline' },
-    { id: 'network', label: 'Conexión/Red', icon: 'wifi-outline' },
-    { id: 'performance', label: 'Rendimiento lento', icon: 'speedometer-outline' },
-    { id: 'other', label: 'Otro', icon: 'help-circle-outline' },
-  ]
 
   const handleSubmitReport = async () => {
     // Validations
@@ -62,17 +69,19 @@ export default function BugReportScreen() {
     setLoading(true)
 
     try {
+      const categoryLabel = CATEGORIES.find((c) => c.id === report.category)?.label
+
       // Create bug report email
       const deviceInfo = `
 Dispositivo: ${Device.modelName || 'Unknown'}
 SO: ${Device.osName || 'Unknown'} ${Device.osVersion || 'Unknown'}
-App Version: 1.0.0
-Categoría: ${categories.find(c => c.id === report.category)?.label}`
+App Version: ${APP_VERSION_LABEL}
+Categoría: ${categoryLabel}`
 
       const emailBody = `Reporte de Bug
 ========================================
 Título: ${report.title}
-Categoría: ${categories.find(c => c.id === report.category)?.label}
+Categoría: ${categoryLabel}
 
 Descripción:
 ${report.description}
@@ -90,8 +99,8 @@ Correo de contacto: ${report.email}
       setTimeout(() => {
         setLoading(false)
         Alert.alert(
-          'Reporte Enviado',
-          'Tu reporte de bug ha sido enviado. Nuestro equipo revisará tu mensaje pronto.',
+          'Revisa tu correo',
+          'Se abrió tu app de correo con el reporte listo. Envíalo para que nuestro equipo lo revise. ¡Gracias por ayudarnos a mejorar!',
           [
             {
               text: 'OK',
@@ -110,350 +119,258 @@ Correo de contacto: ${report.email}
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Reportar Problema</Text>
-          <View style={{ width: 28 }} />
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Reportar un problema</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <View style={styles.welcome}>
+          <View style={styles.welcomeIcon}>
+            <Icon name="Bug" size={26} color={COLORS.error} />
+          </View>
+          <Text style={styles.welcomeTitle}>Ayúdanos a mejorar</Text>
+          <Text style={styles.welcomeText}>Cada reporte nos ayuda a hacer Trive más estable.</Text>
         </View>
 
-        {/* Welcome Section */}
-        <View style={styles.section}>
-          <View style={styles.welcomeBox}>
-            <Icon name="Bug" size={48} color={COLORS.error} />
-            <Text style={styles.welcomeTitle}>Ayúdanos a Mejorar</Text>
-            <Text style={styles.welcomeText}>
-              Tus reportes de bugs nos ayudan a mejorar Trive constantemente
-            </Text>
-          </View>
+        <Field label="Título del problema *" count={`${report.title.length}/100`}>
+          <TextInput
+            style={styles.input}
+            placeholder="Ej: La app se cierra al reservar"
+            placeholderTextColor={COLORS.textTertiary}
+            value={report.title}
+            onChangeText={(text) => setReport({ ...report, title: text })}
+            maxLength={100}
+          />
+        </Field>
+
+        <Text style={styles.label}>Categoría *</Text>
+        <View style={styles.categoryGrid}>
+          {CATEGORIES.map((category) => {
+            const active = report.category === category.id
+            return (
+              <TouchableOpacity
+                key={category.id}
+                style={[styles.categoryButton, active && styles.categoryButtonActive]}
+                onPress={() => setReport({ ...report, category: category.id })}
+                activeOpacity={0.7}
+              >
+                <Icon name={category.icon} size={20} color={active ? COLORS.primary : COLORS.textTertiary} />
+                <Text style={[styles.categoryLabel, active && styles.categoryLabelActive]}>{category.label}</Text>
+              </TouchableOpacity>
+            )
+          })}
         </View>
 
-        {/* Form Section */}
-        <View style={styles.section}>
-          {/* Title Field */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>
-              Título del Problema *
-            </Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ej: La aplicación se cierra al reservar"
-              placeholderTextColor={COLORS.textTertiary}
-              value={report.title}
-              onChangeText={(text) => setReport({ ...report, title: text })}
-              maxLength={100}
-            />
-            <Text style={styles.characterCount}>{report.title.length}/100</Text>
-          </View>
+        <Field label="Descripción del problema *" count={`${report.description.length}/1000`}>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Describe qué pasó, cuándo ocurrió y qué esperabas que sucediera."
+            placeholderTextColor={COLORS.textTertiary}
+            value={report.description}
+            onChangeText={(text) => setReport({ ...report, description: text })}
+            multiline
+            textAlignVertical="top"
+            maxLength={1000}
+          />
+        </Field>
 
-          {/* Category Field */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Categoría del Problema *</Text>
-            <View style={styles.categoryGrid}>
-              {categories.map((category) => (
-                <TouchableOpacity
-                  key={category.id}
-                  style={[
-                    styles.categoryButton,
-                    report.category === category.id && styles.categoryButtonActive,
-                  ]}
-                  onPress={() => setReport({ ...report, category: category.id })}
-                  activeOpacity={0.7}
-                >
-                  <Icon
-                    name={category.icon as any}
-                    size={20}
-                    color={report.category === category.id ? COLORS.primary : COLORS.textTertiary}
-                  />
-                  <Text
-                    style={[
-                      styles.categoryLabel,
-                      report.category === category.id && styles.categoryLabelActive,
-                    ]}
-                  >
-                    {category.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+        <Field label="Tu correo electrónico *" hint="Para contactarte con la solución.">
+          <TextInput
+            style={styles.input}
+            placeholder="tu@correo.com"
+            placeholderTextColor={COLORS.textTertiary}
+            value={report.email}
+            onChangeText={(text) => setReport({ ...report, email: text })}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            maxLength={100}
+          />
+        </Field>
+
+        <View style={styles.tipsCard}>
+          <View style={styles.tipsHeader}>
+            <Icon name="Lightbulb" size={18} color={COLORS.primary} />
+            <Text style={styles.tipsTitle}>Para un mejor reporte</Text>
+          </View>
+          {TIPS.map((tip, index) => (
+            <View key={tip} style={styles.tipItem}>
+              <View style={styles.tipNumber}>
+                <Text style={styles.tipNumberText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.tipText}>{tip}</Text>
             </View>
-          </View>
-
-          {/* Description Field */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Descripción del Problema *</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Describe en detalle qué pasó, cuándo ocurrió y qué esperabas que sucediera..."
-              placeholderTextColor={COLORS.textTertiary}
-              value={report.description}
-              onChangeText={(text) => setReport({ ...report, description: text })}
-              multiline
-              textAlignVertical="top"
-              maxLength={1000}
-            />
-            <Text style={styles.characterCount}>{report.description.length}/1000</Text>
-          </View>
-
-          {/* Email Field */}
-          <View style={styles.fieldContainer}>
-            <Text style={styles.label}>Tu Correo Electrónico *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="tu@correo.com"
-              placeholderTextColor={COLORS.textTertiary}
-              value={report.email}
-              onChangeText={(text) => setReport({ ...report, email: text })}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              maxLength={100}
-            />
-            <Text style={styles.helperText}>
-              Para que podamos contactarte con la solución
-            </Text>
-          </View>
+          ))}
         </View>
 
-        {/* Tips Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Consejos para un Mejor Reporte</Text>
-          
-          <View style={styles.tipItem}>
-            <View style={styles.tipNumber}>
-              <Text style={styles.tipNumberText}>1</Text>
-            </View>
-            <Text style={styles.tipText}>Sé específico: describe exactamente qué pasó</Text>
-          </View>
+        <TouchableOpacity
+          style={[styles.submitButton, loading && styles.submitButtonDisabled]}
+          onPress={handleSubmitReport}
+          activeOpacity={0.85}
+          disabled={loading}
+        >
+          <Icon name="Send" size={18} color={COLORS.white} />
+          <Text style={styles.submitButtonText}>{loading ? 'Enviando…' : 'Enviar reporte'}</Text>
+        </TouchableOpacity>
 
-          <View style={styles.tipItem}>
-            <View style={styles.tipNumber}>
-              <Text style={styles.tipNumberText}>2</Text>
-            </View>
-            <Text style={styles.tipText}>Incluye los pasos que seguiste antes del problema</Text>
-          </View>
-
-          <View style={styles.tipItem}>
-            <View style={styles.tipNumber}>
-              <Text style={styles.tipNumberText}>3</Text>
-            </View>
-            <Text style={styles.tipText}>Menciona si es la primera vez que ocurre</Text>
-          </View>
-
-          <View style={styles.tipItem}>
-            <View style={styles.tipNumber}>
-              <Text style={styles.tipNumberText}>4</Text>
-            </View>
-            <Text style={styles.tipText}>Incluye la versión de tu dispositivo si es relevante</Text>
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <View style={styles.section}>
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.submitButtonDisabled]}
-            onPress={handleSubmitReport}
-            activeOpacity={0.8}
-            disabled={loading}
-          >
-            <Icon name="Send" size={20} color={COLORS.background} />
-            <Text style={styles.submitButtonText}>
-              {loading ? 'Enviando...' : 'Enviar Reporte'}
-            </Text>
-          </TouchableOpacity>
-
-          <View style={styles.infoBox}>
-            <Icon name="Info" size={20} color={COLORS.primary} />
-            <Text style={styles.infoText}>
-              Tu correo no será compartido públicamente. Solo usaremos para contactarte con actualizaciones.
-            </Text>
-          </View>
+        <View style={styles.infoBox}>
+          <Icon name="Info" size={16} color={COLORS.primary} />
+          <Text style={styles.infoText}>
+            Tu correo no se comparte públicamente. Solo lo usaremos para responderte.
+          </Text>
         </View>
       </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+function Field({ label, count, hint, children }: {
+  label: string
+  count?: string
+  hint?: string
+  children: React.ReactNode
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      {children}
+      {count ? <Text style={styles.counter}>{count}</Text> : null}
+      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.md,
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  welcomeBox: {
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.error + '08',
+  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+
+  welcome: {
+    alignItems: 'center',
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.errorLight,
+    marginBottom: SPACING.lg,
+  },
+  welcomeIcon: {
+    width: 52,
+    height: 52,
     borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
   },
-  welcomeTitle: {
-    ...TYPOGRAPHY.h3,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-    textAlign: 'center',
-  },
-  welcomeText: {
-    ...TYPOGRAPHY.body,
-    textAlign: 'center',
-    color: COLORS.textSecondary,
-  },
-  fieldContainer: {
-    marginBottom: SPACING.xl,
-  },
+  welcomeTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginBottom: SPACING.xs },
+  welcomeText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
+
+  field: { marginBottom: SPACING.lg },
   label: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '600',
+    ...TYPOGRAPHY.labelMedium,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.textPrimary,
     marginBottom: SPACING.sm,
   },
   input: {
-    borderWidth: 1,
+    height: 52,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.white,
     ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
   },
   textArea: {
-    minHeight: 120,
-    maxHeight: 200,
+    height: 130,
     paddingTop: SPACING.md,
   },
-  characterCount: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textTertiary,
-    marginTop: SPACING.xs,
-    textAlign: 'right',
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.md,
-  },
+  counter: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginTop: SPACING.xs, textAlign: 'right' },
+  hint: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginTop: SPACING.xs },
+
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginBottom: SPACING.lg },
   categoryButton: {
-    flex: 1,
-    minWidth: '45%',
+    width: '31%',
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.md,
-    borderWidth: 1,
+    gap: SPACING.xs,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.white,
   },
-  categoryButtonActive: {
-    backgroundColor: COLORS.primary + '12',
-    borderColor: COLORS.primary,
+  categoryButtonActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryTint },
+  categoryLabel: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, textAlign: 'center', fontWeight: TYPOGRAPHY.weight.semibold },
+  categoryLabelActive: { color: COLORS.primary, fontWeight: TYPOGRAPHY.weight.bold },
+
+  tipsCard: {
+    ...SHADOWS.sm,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.white,
+    marginBottom: SPACING.lg,
   },
-  categoryLabel: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.sm,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  categoryLabelActive: {
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  helperText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textTertiary,
-    marginTop: SPACING.xs,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: SPACING.md,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
+  tipsHeader: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.md },
+  tipsTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  tipItem: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md, marginBottom: SPACING.sm },
   tipNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primaryTint,
     alignItems: 'center',
-    marginRight: SPACING.lg,
+    justifyContent: 'center',
     flexShrink: 0,
   },
-  tipNumberText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
-    color: COLORS.background,
-  },
-  tipText: {
-    ...TYPOGRAPHY.body,
-    flex: 1,
-    color: COLORS.textPrimary,
-    lineHeight: 20,
-    paddingTop: 6,
-  },
+  tipNumberText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  tipText: { ...TYPOGRAPHY.labelMedium, flex: 1, color: COLORS.textSecondary, paddingTop: 2 },
+
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.error,
-    paddingVertical: SPACING.lg,
+    gap: SPACING.sm,
+    height: 54,
     borderRadius: RADIUS.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
+    backgroundColor: COLORS.primary,
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
-    color: COLORS.background,
-    marginLeft: SPACING.sm,
-    fontSize: 16,
-  },
+  submitButtonDisabled: { opacity: 0.6 },
+  submitButtonText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.white },
+
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: COLORS.primary + '08',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.md,
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryTint,
   },
-  infoText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginLeft: SPACING.md,
-    flex: 1,
-    lineHeight: 18,
-  },
+  infoText: { ...TYPOGRAPHY.caption, flex: 1, color: COLORS.primaryDark, lineHeight: 18 },
 })

@@ -27,42 +27,42 @@ const REQUIRED_DOCUMENTS: DocumentItem[] = [
     id: 'cedula',
     documentType: 'cedula',
     name: 'Cédula de Ciudadanía',
-    icon: 'document-outline',
+    icon: 'FileText',
     description: 'Identificación válida',
   },
   {
     id: 'licencia',
     documentType: 'licencia',
     name: 'Licencia de Conducción',
-    icon: 'card-outline',
+    icon: 'CreditCard',
     description: 'Categoría B - Vigente',
   },
   {
     id: 'tarjeta_propiedad',
     documentType: 'tarjeta_propiedad',
     name: 'Tarjeta de Propiedad',
-    icon: 'car-outline',
+    icon: 'Car',
     description: 'Del vehículo con el que vas a trabajar',
   },
   {
     id: 'soat',
     documentType: 'soat',
     name: 'SOAT',
-    icon: 'shield-checkmark-outline',
+    icon: 'ShieldCheck',
     description: 'Seguro Obligatorio de Accidentes de Tránsito',
   },
   {
     id: 'tecnomecanica',
     documentType: 'tecnomecanica',
     name: 'Tecnomecánica',
-    icon: 'settings-outline',
+    icon: 'Settings',
     description: 'Revisión técnico-mecánica',
   },
   {
     id: 'antecedentes',
     documentType: 'antecedentes',
     name: 'Certificado de Antecedentes',
-    icon: 'checkmark-circle-outline',
+    icon: 'CircleCheck',
     description: 'En proceso de verificación',
   },
 ]
@@ -74,13 +74,13 @@ const getStatusInfo = (status: string) => {
     case 'verifying':
       return { label: 'En análisis...', color: COLORS.primary, icon: 'time', bgOpacity: '20' }
     case 'pending':
-      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'time-outline', bgOpacity: '20' }
+      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'Clock', bgOpacity: '20' }
     case 'rejected':
       return { label: 'Rechazado', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
     case 'expired':
       return { label: 'Vencido', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
     default:
-      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'time-outline', bgOpacity: '20' }
+      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'Clock', bgOpacity: '20' }
   }
 }
 

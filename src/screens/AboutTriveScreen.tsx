@@ -1,272 +1,168 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Image, Linking, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
+import { APP_VERSION_LABEL } from '../config/appInfo'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+
+const FEATURES = [
+  'Precios transparentes: el pasajero paga directamente al conductor',
+  'Conductores verificados con documentos revisados por el equipo Trive',
+  'Calificación y reseñas después de cada viaje',
+  'Chat integrado entre conductor y pasajero en cada trayecto',
+  'Billetera para gestionar el saldo de publicaciones',
+  'Programa de referidos para conductores',
+]
+
+const CONTACTS: { label: string; value: string; icon: IconName; color: string; url: string }[] = [
+  { label: 'Correo', value: 'soportetrive@gmail.com', icon: 'Mail', color: COLORS.primary, url: 'mailto:soportetrive@gmail.com' },
+  { label: 'WhatsApp', value: '+57 300 577 2967', icon: 'MessageCircle', color: COLORS.whatsapp, url: 'https://wa.me/573005772967' },
+  { label: 'Llamada', value: '+57 317 302 8628', icon: 'Phone', color: COLORS.accent, url: 'tel:+573173028628' },
+]
 
 export default function AboutTriveScreen() {
   const navigation = useNavigation()
 
   return (
-    <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backBtn}
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.8}
-          >
-            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Acerca de Trive</Text>
-          <View style={{ width: 44 }} />
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Acerca de Trive</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.hero}>
+          <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Text style={styles.version}>Versión {APP_VERSION_LABEL}</Text>
         </View>
 
-        {/* Logo Section */}
-        <View style={styles.logoSection}>
-          <Image source={require('../../assets/logo.png')} style={styles.logoImage} resizeMode="contain" />
-          <Text style={styles.appName}>Trive</Text>
-          <Text style={styles.version}>Versión 1.0.0</Text>
-        </View>
+        <Card title="¿Qué es Trive?">
+          <Text style={styles.body}>
+            Trive es una plataforma colombiana de viajes compartidos que conecta conductores y pasajeros para hacer los desplazamientos más convenientes y económicos. No somos una empresa de transporte: somos tecnología que ayuda a compartir el costo de un trayecto que ya ibas a hacer.
+          </Text>
+        </Card>
 
-        {/* About Card */}
-        <View style={styles.section}>
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>¿Qué es Trive?</Text>
-            <Text style={styles.cardText}>
-              Trive es una plataforma colombiana de viajes compartidos que conecta conductores y pasajeros para hacer los desplazamientos más convenientes, económicos y sostenibles. No somos una empresa de transporte: somos tecnología que facilita que personas compartan el costo de un trayecto que ya iban a realizar.
-            </Text>
-          </View>
+        <Card title="¿Cómo funciona?">
+          <Text style={styles.body}>
+            El conductor publica su ruta con origen, destino, hora y precio por puesto. El pasajero la encuentra, reserva y acuerda el pago directamente con el conductor (efectivo, Nequi, Daviplata o Bre-B). Por cada publicación, Trive cobra al conductor $2.000 como tarifa de intermediación.
+          </Text>
+        </Card>
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>¿Cómo funciona?</Text>
-            <Text style={styles.cardText}>
-              El conductor publica su ruta con origen, destino, hora y precio por puesto. El pasajero la encuentra, reserva y acuerda el pago directamente con el conductor (Nequi, Daviplata o efectivo). Trive cobra $2.000 al conductor por cada publicación como tarifa de intermediación tecnológica.
-            </Text>
-          </View>
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>¿Por qué elegir Trive?</Text>
-            <View style={styles.featureList}>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Precios transparentes: el pasajero paga directamente al conductor</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Conductores verificados con documentos revisados por el equipo Trive</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Sistema de calificación y reseñas tras cada viaje</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Chat integrado entre conductor y pasajero para cada trayecto</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Billetera virtual para gestionar el saldo de publicaciones</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Icon name="CircleCheck" size={20} color={COLORS.primary} />
-                <Text style={styles.featureText}>Programa de referidos: invita conductores y gana créditos</Text>
-              </View>
+        <Card title="¿Por qué Trive?">
+          {FEATURES.map((feature) => (
+            <View key={feature} style={styles.feature}>
+              <Icon name="CircleCheck" size={18} color={COLORS.primary} />
+              <Text style={styles.featureText}>{feature}</Text>
             </View>
-          </View>
+          ))}
+        </Card>
+
+        <Text style={styles.sectionTitle}>Contáctanos</Text>
+        <View style={styles.group}>
+          {CONTACTS.map((contact, index) => (
+            <View key={contact.label}>
+              {index > 0 && <View style={styles.divider} />}
+              <TouchableOpacity style={styles.contactRow} onPress={() => Linking.openURL(contact.url)} activeOpacity={0.75}>
+                <View style={[styles.contactIcon, { backgroundColor: contact.color + '18' }]}>
+                  <Icon name={contact.icon} size={18} color={contact.color} />
+                </View>
+                <View style={styles.contactText}>
+                  <Text style={styles.contactLabel}>{contact.label}</Text>
+                  <Text style={styles.contactValue}>{contact.value}</Text>
+                </View>
+                <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+            </View>
+          ))}
         </View>
 
-        {/* Contact Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contáctanos</Text>
-          <View style={styles.contactCard}>
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Icon name="Mail" size={24} color={COLORS.primary} />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Correo Electrónico</Text>
-                <Text style={styles.contactValue}>privacy@trive.co</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Icon name="Globe" size={24} color={COLORS.primary} />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Sitio Web</Text>
-                <Text style={styles.contactValue}>www.trive.com</Text>
-              </View>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.contactItem}>
-              <View style={styles.contactIcon}>
-                <Icon name="Phone" size={24} color={COLORS.primary} />
-              </View>
-              <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Teléfono</Text>
-                <Text style={styles.contactValue}>+57 300 577 2967</Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2026 Trive. Todos los derechos reservados.</Text>
-        </View>
+        <Text style={styles.footer}>© 2026 Trive. Todos los derechos reservados.</Text>
       </ScrollView>
     </SafeAreaView>
   )
 }
 
-const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>{title}</Text>
+      {children}
+    </View>
+  )
+}
 
-  // Header
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    paddingVertical: SPACING.md,
   },
   backBtn: {
-    padding: SPACING.sm,
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
-  },
-  title: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.textPrimary,
-  },
-
-  // Logo Section
-  logoSection: {
-    alignItems: 'center',
-    paddingVertical: SPACING.xxxl,
-    gap: SPACING.md,
-  },
-  logoImage: {
-    width: 200,
-    height: 200,
-  },
-  appName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  version: {
-    fontSize: 11,
-    color: COLORS.textTertiary,
-  },
-
-  // Sections
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.lg,
-    gap: SPACING.md,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-
-  // Cards
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...SHADOWS.sm,
-  },
-  cardTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.primary,
-    marginBottom: SPACING.md,
-  },
-  cardText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    lineHeight: 22,
-  },
-
-  // Feature List
-  featureList: {
-    gap: SPACING.md,
-    marginTop: SPACING.md,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.md,
-  },
-  featureText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    flex: 1,
-  },
-
-  // Contact
-  contactCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    overflow: 'hidden',
-    ...SHADOWS.sm,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-  },
-  contactIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  contactContent: {
-    flex: 1,
-    marginLeft: SPACING.lg,
-  },
-  contactLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  contactValue: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
 
-  // Footer
-  footer: {
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl, gap: SPACING.md },
+
+  hero: {
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderLight,
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primaryTint,
+    gap: SPACING.sm,
   },
-  footerText: {
+  logo: { width: 220, height: 100 },
+  version: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+
+  card: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  cardTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.primary, marginBottom: SPACING.xs },
+  body: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, lineHeight: 22 },
+  feature: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm, marginTop: SPACING.xs },
+  featureText: { ...TYPOGRAPHY.bodySmall, flex: 1, color: COLORS.textSecondary, lineHeight: 20 },
+
+  sectionTitle: {
     ...TYPOGRAPHY.label,
-    color: COLORS.textTertiary,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: SPACING.md,
   },
+  group: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+  },
+  contactRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.lg },
+  contactIcon: { width: 40, height: 40, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' },
+  contactText: { flex: 1 },
+  contactLabel: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+  contactValue: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  divider: { height: 1, backgroundColor: COLORS.borderLight, marginHorizontal: SPACING.lg },
+
+  footer: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, textAlign: 'center', marginTop: SPACING.md },
 })

@@ -3,7 +3,6 @@ import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert,
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { LinearGradient } from 'expo-linear-gradient'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
@@ -12,6 +11,7 @@ import { createReview } from '../services/reviews'
 import RatingModal from '../components/RatingModal'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 
 const HIDDEN_KEY = 'hidden_trip_history'
 
@@ -52,6 +52,13 @@ const STATUS_BG: Record<string, string> = {
   scheduled: COLORS.primaryTint,
   in_progress: COLORS.warningLight,
 }
+
+const FILTERS: { id: FilterType; label: string }[] = [
+  { id: 'all', label: 'Todos' },
+  { id: 'active', label: 'Activos' },
+  { id: 'completed', label: 'Completados' },
+  { id: 'cancelled', label: 'Cancelados' },
+]
 
 export default function TripHistoryScreen() {
   const navigation = useNavigation<any>()
@@ -145,7 +152,7 @@ export default function TripHistoryScreen() {
         .from('routes')
         .select('id, origin, destination, departure_time, status, price_per_seat')
         .eq('driver_id', driverId)
-        .in('status', ['completed', 'cancelled'])
+        .in('status', ['scheduled', 'in_progress', 'completed', 'cancelled'])
         .order('departure_time', { ascending: false })
 
       if (error || !routes) { setTrips([]); return }
@@ -271,13 +278,6 @@ export default function TripHistoryScreen() {
   const effectiveStatus = (trip: TripItem) =>
     trip.status === 'cancelled' ? 'cancelled' : trip.routeStatus
 
-  const FILTERS: { id: FilterType; label: string }[] = [
-    { id: 'all', label: 'Todos' },
-    { id: 'active', label: 'Activos' },
-    { id: 'completed', label: 'Completados' },
-    { id: 'cancelled', label: 'Cancelados' },
-  ]
-
   const renderItem = ({ item }: { item: TripItem }) => {
     const status = effectiveStatus(item)
     const accentColor = STATUS_COLOR[status] ?? COLORS.textSecondary
@@ -286,18 +286,11 @@ export default function TripHistoryScreen() {
 
     return (
       <View style={s.card}>
-        {/* Ícono de ruta */}
-        <LinearGradient
-          colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={s.routeIcon}
-        >
-          <Icon name="Navigation" size={18} color="#fff" />
-        </LinearGradient>
+        <View style={s.routeIcon}>
+          <Icon name="Navigation" size={18} color={COLORS.primary} />
+        </View>
 
-        {/* Contenido */}
         <View style={s.cardContent}>
-          {/* Ruta */}
           <View style={s.routeRow}>
             <View style={s.routePoints}>
               <View style={s.routePoint}>
@@ -315,7 +308,6 @@ export default function TripHistoryScreen() {
             </Text>
           </View>
 
-          {/* Meta info */}
           <View style={s.metaRow}>
             <Icon name={isDriver ? 'Users' : 'User'} size={12} color={COLORS.textTertiary} />
             <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
@@ -331,7 +323,6 @@ export default function TripHistoryScreen() {
             ) : null}
           </View>
 
-          {/* Fila inferior: status + acción */}
           <View style={s.bottomRow}>
             <View style={[s.statusChip, { backgroundColor: statusBg }]}>
               <View style={[s.statusDot, { backgroundColor: accentColor }]} />
@@ -341,15 +332,9 @@ export default function TripHistoryScreen() {
             </View>
 
             {!isDriver && canRate ? (
-              <TouchableOpacity onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
-                <LinearGradient
-                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={s.rateBtn}
-                >
-                  <Icon name="Star" size={12} color={COLORS.warning} />
-                  <Text style={s.rateBtnText}>Calificar conductor</Text>
-                </LinearGradient>
+              <TouchableOpacity style={s.rateBtn} onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
+                <Icon name="Star" size={12} color={COLORS.warning} />
+                <Text style={s.rateBtnText}>Calificar conductor</Text>
               </TouchableOpacity>
             ) : !isDriver && item.hasRated ? (
               <View style={s.ratedBadge}>
@@ -360,7 +345,6 @@ export default function TripHistoryScreen() {
           </View>
         </View>
 
-        {/* Eliminar */}
         <TouchableOpacity
           style={s.deleteBtn}
           onPress={() => hideTrip(item.id)}
@@ -372,26 +356,29 @@ export default function TripHistoryScreen() {
     )
   }
 
+  const emptyText = filter === 'all' ? 'Aún no tienes viajes registrados'
+    : filter === 'active' ? 'No tienes viajes activos'
+    : filter === 'completed' ? 'No tienes viajes completados'
+    : 'No tienes viajes cancelados'
+
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.surfaceAlt} />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-      {/* Header */}
       <View style={s.header}>
-        <TouchableOpacity style={s.headerIconBtn} onPress={() => navigation.goBack()}>
-          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
+        <TouchableOpacity style={s.headerBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={s.title}>{isDriver ? 'Historial de Rutas' : 'Historial de Viajes'}</Text>
+        <Text style={s.title}>{isDriver ? 'Mis rutas' : 'Historial de Viajes'}</Text>
         {filtered.length > 0 ? (
-          <TouchableOpacity style={s.deleteAllBtn} onPress={hideAll}>
+          <TouchableOpacity style={[s.headerBtn, s.headerBtnDanger]} onPress={hideAll} activeOpacity={0.7}>
             <Icon name="Trash2" size={16} color={COLORS.error} />
           </TouchableOpacity>
         ) : (
-          <View style={s.headerIconBtn} />
+          <View style={s.headerBtnPlaceholder} />
         )}
       </View>
 
-      {/* Filtros */}
       <View style={s.filters}>
         {FILTERS.map((f) => {
           const isActive = filter === f.id
@@ -399,21 +386,10 @@ export default function TripHistoryScreen() {
             <TouchableOpacity
               key={f.id}
               onPress={() => setFilter(f.id)}
-              style={s.filterWrap}
+              style={[s.filterChip, isActive && s.filterChipActive]}
+              activeOpacity={0.8}
             >
-              {isActive ? (
-                <LinearGradient
-                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={s.filterChip}
-                >
-                  <Text style={[s.filterText, s.filterTextActive]}>{f.label}</Text>
-                </LinearGradient>
-              ) : (
-                <View style={s.filterChip}>
-                  <Text style={s.filterText}>{f.label}</Text>
-                </View>
-              )}
+              <Text style={[s.filterText, isActive && s.filterTextActive]}>{f.label}</Text>
             </TouchableOpacity>
           )
         })}
@@ -426,19 +402,9 @@ export default function TripHistoryScreen() {
         </View>
       ) : filtered.length === 0 ? (
         <View style={s.empty}>
-          <LinearGradient
-            colors={[COLORS.primaryTint, COLORS.primaryTint]}
-            style={s.emptyIconWrap}
-          >
-            <Icon name="Receipt" size={32} color={COLORS.primaryLight} />
-          </LinearGradient>
+          <Illustration name="noData" width={170} />
           <Text style={s.emptyTitle}>Sin viajes</Text>
-          <Text style={s.emptyText}>
-            {filter === 'all' ? 'Aún no tienes viajes registrados'
-              : filter === 'active' ? 'No tienes viajes activos'
-              : filter === 'completed' ? 'No tienes viajes completados'
-              : 'No tienes viajes cancelados'}
-          </Text>
+          <Text style={s.emptyText}>{emptyText}</Text>
         </View>
       ) : (
         <FlatList
@@ -459,275 +425,154 @@ export default function TripHistoryScreen() {
           onSubmit={handleRatingSubmit}
         />
       )}
-
     </SafeAreaView>
   )
 }
 
 const s = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: COLORS.surfaceAlt,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
 
-  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surfaceAlt,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.primaryTint,
   },
-  headerIconBtn: {
-    width: 38, height: 38,
-    borderRadius: 12,
-    backgroundColor: COLORS.primaryTint,
+  headerBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  deleteAllBtn: {
-    width: 38, height: 38,
-    borderRadius: 12,
-    backgroundColor: COLORS.error + '12',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.error + '25',
-  },
+  headerBtnDanger: { backgroundColor: COLORS.errorLight },
+  headerBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 
-  // Filtros
   filters: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingBottom: SPACING.md,
     gap: SPACING.sm,
   },
-  filterWrap: {
-    borderRadius: RADIUS.full,
-    overflow: 'hidden',
-  },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: COLORS.primaryTint,
+    borderColor: COLORS.border,
   },
-  filterText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
+  filterChipActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
-  filterTextActive: {
-    color: '#fff',
-  },
+  filterText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary },
+  filterTextActive: { color: COLORS.white },
 
-  // Lista
   list: {
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
     paddingBottom: 100,
     gap: SPACING.md,
   },
 
-  // Card
   card: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: '#fff',
-    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
     padding: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: COLORS.primaryDark,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
     gap: SPACING.md,
   },
   routeIcon: {
-    width: 44, height: 44,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
   },
-  cardContent: {
-    flex: 1,
-    gap: 8,
-  },
+  cardContent: { flex: 1, gap: SPACING.sm },
 
-  // Ruta
   routeRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: SPACING.sm,
   },
-  routePoints: {
-    flex: 1,
-    gap: 3,
-  },
-  routePoint: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  dotOrigin: {
-    width: 7, height: 7,
-    borderRadius: 3.5,
-    backgroundColor: COLORS.primaryLight,
-    flexShrink: 0,
-  },
-  dotDest: {
-    width: 7, height: 7,
-    borderRadius: 3.5,
-    backgroundColor: COLORS.success,
-    flexShrink: 0,
-  },
-  routeLine: {
-    width: 2,
-    height: 8,
-    backgroundColor: COLORS.primaryTint,
-    marginLeft: 2.5,
-  },
-  routeText: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  price: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: COLORS.primary,
-    flexShrink: 0,
-  },
+  routePoints: { flex: 1, gap: 3 },
+  routePoint: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  dotOrigin: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.primaryLight, flexShrink: 0 },
+  dotDest: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.success, flexShrink: 0 },
+  routeLine: { width: 2, height: 8, backgroundColor: COLORS.primaryTint, marginLeft: 2.5 },
+  routeText: { ...TYPOGRAPHY.bodySmall, flex: 1, fontWeight: '700', color: COLORS.textPrimary },
+  price: { ...TYPOGRAPHY.bodySmall, fontWeight: '800', color: COLORS.primary, flexShrink: 0 },
 
-  // Meta
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 4,
-  },
-  metaText: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-  },
-  metaDot: {
-    width: 3, height: 3,
-    borderRadius: 1.5,
-    backgroundColor: COLORS.textTertiary,
-  },
+  metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
+  metaText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+  metaDot: { width: 3, height: 3, borderRadius: 1.5, backgroundColor: COLORS.textTertiary },
 
-  // Fila inferior
   bottomRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: SPACING.sm,
-    marginTop: 2,
   },
   statusChip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
   },
-  statusDot: {
-    width: 6, height: 6,
-    borderRadius: 3,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { ...TYPOGRAPHY.caption, fontWeight: '700' },
   rateBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 10,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 5,
     borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primary,
   },
-  rateBtnText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#fff',
-  },
+  rateBtnText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.white },
   ratedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.successLight,
   },
-  ratedText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.success,
-  },
+  ratedText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.success },
 
-  // Botón eliminar
   deleteBtn: {
-    width: 28, height: 28,
-    borderRadius: 8,
+    width: 30,
+    height: 30,
+    borderRadius: RADIUS.sm,
     backgroundColor: COLORS.surfaceAlt,
     justifyContent: 'center',
     alignItems: 'center',
     flexShrink: 0,
   },
 
-  // Estados
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: SPACING.md,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.md },
+  loadingText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, fontWeight: '500' },
   empty: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
-    gap: SPACING.md,
+    gap: SPACING.sm,
   },
-  emptyIconWrap: {
-    width: 72, height: 72,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
 })

@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 
@@ -26,7 +27,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Pasajeros',
     question: '¿Cómo busco un viaje?',
     answer:
-      'Ve a la sección "Buscar" en el menú principal. Ingresa tu origen y destino, fecha y hora. Verás múltiples opciones de viajes disponibles con conductores verificados.',
+      'Ve a la pestaña "Viajes". Ingresa tu origen y destino, fecha y hora. Verás las opciones de viajes disponibles con conductores verificados.',
   },
   {
     id: '3',
@@ -40,35 +41,35 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Pasajeros',
     question: '¿Cuáles son los métodos de pago?',
     answer:
-      'Los métodos de pago disponibles son Nequi, Daviplata y efectivo. El pago se realiza directamente entre pasajero y conductor; Trive no intermedia ni procesa cobros. Al reservar, coordina con el conductor la forma y el momento del pago.',
+      'Puedes pagar en efectivo o por transferencia (Nequi, Daviplata o Bre-B, usando la llave que te muestra el conductor). El pago se realiza directamente entre pasajero y conductor; Trive no intermedia ni procesa cobros. Tu preferencia se guarda en Perfil > Cómo pagas.',
   },
   {
     id: '5',
     category: 'Conductores',
     question: '¿Cómo me convierto en conductor?',
     answer:
-      'Ve a tu Perfil y haz clic en "Conviértete en Conductor". Completa los pasos de verificación con tus documentos. Una vez aprobado, podrás crear rutas.',
+      'En tu perfil toca "Cambiar a modo Conductor". Completa los pasos de verificación con tus documentos. Una vez aprobado, podrás publicar rutas.',
   },
   {
     id: '6',
     category: 'Conductores',
     question: '¿Cuáles son los requisitos para ser conductor?',
     answer:
-      'Debes ser mayor de 18 años, tener licencia de conducir válida, documento de identidad, vehículo en buen estado con seguro vigente, y historial limpio.',
+      'Debes ser mayor de 18 años, tener licencia de conducir vigente, cédula, SOAT vigente y un vehículo en buen estado.',
   },
   {
     id: '7',
     category: 'Conductores',
     question: '¿Cómo creo una ruta?',
     answer:
-      'En tu Panel de Conductor, haz clic en "Crear Nueva Ruta". Ingresa origen, destino, hora de salida/llegada, cantidad de asientos y precio por asiento. Publica y los pasajeros podrán hacer reservas.',
+      'En "Mi panel" toca el botón + y elige "Crear ruta". Ingresa origen, destino, hora de salida, cantidad de asientos y precio por asiento. Publica y los pasajeros podrán reservar.',
   },
   {
     id: '8',
     category: 'Conductores',
     question: '¿Cuánto dinero puedo ganar?',
     answer:
-      'Depende de tus rutas, la demanda y el precio que establezcas por asiento. Cada vez que publicas un viaje se descuentan $2.000 de tu billetera Trive (costo de publicación). El resto del dinero que recaudas de los pasajeros es 100% tuyo.',
+      'Depende de tus rutas, la demanda y el precio que establezcas por asiento. Cada vez que publicas un viaje se descuentan $2.000 de tu billetera Trive. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, esos $2.000 vuelven a tu saldo. Si ya tienes reservas, o si la ruta sale, no hay devolución. El dinero que cobras a los pasajeros lo recibes tú directamente.',
   },
   {
     id: '9',
@@ -89,14 +90,14 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Cuentas',
     question: '¿Cómo cambio mi información de perfil?',
     answer:
-      'Ve a tu Perfil, haz clic en "Editar Perfil" y realiza los cambios que necesites. Algunos datos como documento de identidad requieren reverificación.',
+      'Ve a tu Perfil, toca "Datos personales" y realiza los cambios que necesites. Algunos datos como el documento de identidad requieren reverificación.',
   },
   {
     id: '12',
     category: 'Cuentas',
     question: '¿Cómo elimino mi cuenta?',
     answer:
-      'Ve a Configuración > Privacidad > Eliminar Cuenta. Sigue el proceso de confirmación. Ten en cuenta que esto es irreversible y perderás acceso a tu historial.',
+      'Ve a Perfil > Privacidad y eliminar cuenta y sigue el proceso de confirmación. Ten en cuenta que esto es irreversible y perderás acceso a tu historial.',
   },
   {
     id: '13',
@@ -117,35 +118,35 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Seguridad',
     question: '¿Para qué sirve el botón SOS?',
     answer:
-      'El botón SOS aparece en la tarjeta de tu viaje activo. Al tocarlo, la app abre WhatsApp con un mensaje pre-llenado para tu contacto de emergencia, incluyendo tu ubicación GPS en tiempo real, nombre del conductor y datos del vehículo (color, marca, placa). Configura tu contacto de emergencia en Configuración > Seguridad.',
+      'El botón SOS aparece en la tarjeta de tu viaje activo. Al tocarlo, la app abre WhatsApp con un mensaje pre-llenado para tu contacto de emergencia, incluyendo tu ubicación GPS en tiempo real, nombre del conductor y datos del vehículo (color, marca, placa). Configura tu contacto de emergencia en Perfil > Configuración > Seguridad y privacidad.',
   },
   {
     id: '16',
     category: 'Aeropuerto',
     question: '¿Qué son los viajes al aeropuerto?',
     answer:
-      'Los viajes al aeropuerto son una modalidad especial de Trive donde un pasajero publica su solicitud de transporte hacia un aeropuerto colombiano (origen, destino, fecha/hora de vuelo, número de personas y precio ofrecido) y los conductores verificados pueden aceptarla. Es ideal para llegar puntual a tu vuelo con un conductor de confianza.',
+      'Los viajes al aeropuerto son una modalidad personalizada de Trive donde un pasajero publica su solicitud de transporte hacia un aeropuerto colombiano (origen, destino, fecha/hora de vuelo, número de personas y precio ofrecido) y los conductores verificados pueden aceptarla. Es ideal para llegar puntual a tu vuelo con un conductor de confianza.',
   },
   {
     id: '17',
     category: 'Aeropuerto',
     question: '¿Cómo publico una solicitud de viaje al aeropuerto?',
     answer:
-      'En la pantalla principal toca el banner "Viajes al Aeropuerto". Ingresa tu punto de origen, selecciona el aeropuerto de destino, elige la fecha y hora de salida, el número de personas y el precio que ofreces pagar. Toca "Publicar solicitud" y los conductores disponibles podrán verla y aceptarla. Recibirás una notificación cuando un conductor acepte tu viaje.',
+      'En la pantalla principal toca "¿Vas al aeropuerto? Solicita un viaje privado". Ingresa tu punto de origen, selecciona el aeropuerto de destino, elige la fecha y hora de salida, el número de personas y el precio que ofreces pagar. Toca "Publicar solicitud" y los conductores disponibles podrán verla y aceptarla. Recibirás una notificación cuando un conductor acepte tu viaje.',
   },
   {
     id: '18',
     category: 'Aeropuerto',
     question: '¿Cómo acepto una solicitud de aeropuerto como conductor?',
     answer:
-      'En la pantalla principal toca "Solicitudes de Aeropuerto". Verás todas las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar viaje" en la solicitud que te interese. Se descontarán $5.000 de tu billetera Trive como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y podrán coordinar los detalles del recorrido.',
+      'En tu inicio de conductor toca "Rutas personalizadas". Verás las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar" en la solicitud que te interese y confirma. Se descontarán $5.000 de tu billetera Trive como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y ambos podrán coordinar los detalles del recorrido.',
   },
   {
     id: '19',
     category: 'Aeropuerto',
     question: '¿Por qué se descuentan $5.000 al conductor en viajes de aeropuerto?',
     answer:
-      'Los $5.000 son el costo de intermediación tecnológica que Trive cobra al conductor al aceptar una solicitud de aeropuerto. Este valor es diferente a los $2.000 de las rutas regulares y no constituye una comisión sobre el precio del trayecto: el dinero que el pasajero paga al conductor es 100% de él. Asegúrate de tener saldo suficiente en tu billetera antes de aceptar.',
+      'Los $5.000 son el costo de intermediación tecnológica que Trive cobra al conductor al aceptar una solicitud de aeropuerto. Este valor es diferente a los $2.000 de las rutas regulares y no es una comisión sobre el precio del trayecto: lo que el pasajero paga es para el conductor. Si el pasajero cancela antes de que inicie el viaje, los $5.000 vuelven a tu saldo. Asegúrate de tener saldo suficiente antes de aceptar.',
   },
   {
     id: '20',
@@ -157,7 +158,6 @@ const FAQ_DATA: FAQItem[] = [
 ]
 
 export default function HelpScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<string>('Todos')
@@ -171,227 +171,159 @@ export default function HelpScreen() {
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Centro de Ayuda</Text>
-          <View style={{ width: 28 }} />
-        </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-        {/* Category Filters */}
-        <View style={styles.categoryContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-            {categories.map((category) => (
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Centro de ayuda</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll} contentContainerStyle={styles.chipRow}>
+          {categories.map((category) => {
+            const active = selectedCategory === category
+            return (
               <TouchableOpacity
                 key={category}
-                style={[styles.categoryBtn, selectedCategory === category && styles.categoryBtnActive]}
+                style={[styles.chip, active && styles.chipActive]}
                 onPress={() => setSelectedCategory(category)}
+                activeOpacity={0.85}
               >
-                <Text
-                  style={[styles.categoryBtnText, selectedCategory === category && styles.categoryBtnTextActive]}
-                >
-                  {category}
-                </Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{category}</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+            )
+          })}
+        </ScrollView>
 
-        {/* FAQ Items */}
-        <View style={styles.faqContainer}>
-          {filteredFAQ.map((item) => (
-            <View key={item.id}>
-              <TouchableOpacity
-                style={styles.faqQuestion}
-                onPress={() => toggleExpand(item.id)}
-                activeOpacity={0.7}
-              >
+        {filteredFAQ.map((item) => {
+          const open = expandedId === item.id
+          return (
+            <View key={item.id} style={[styles.faqCard, open && styles.faqCardOpen]}>
+              <TouchableOpacity style={styles.faqQuestion} onPress={() => toggleExpand(item.id)} activeOpacity={0.75}>
                 <View style={styles.questionContent}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryBadgeText}>{item.category}</Text>
-                  </View>
+                  <Text style={styles.categoryBadgeText}>{item.category.toUpperCase()}</Text>
                   <Text style={styles.questionText}>{item.question}</Text>
                 </View>
-                <Icon
-                  name={expandedId === item.id ? 'ChevronUp' : 'ChevronDown'}
-                  size={24}
-                  color={COLORS.primary}
-                />
+                <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={20} color={COLORS.primary} />
               </TouchableOpacity>
 
-              {expandedId === item.id && (
-                <View style={styles.faqAnswer}>
-                  <Text style={styles.answerText}>{item.answer}</Text>
-                </View>
+              {open && (
+                <Text style={styles.answerText}>{item.answer}</Text>
               )}
             </View>
-          ))}
-        </View>
+          )
+        })}
 
-        {/* Still Need Help */}
-        <View style={styles.helpBox}>
-          <Icon name="CircleHelp" size={40} color={COLORS.primary} />
+        <View style={styles.helpCard}>
+          <Illustration name="beginChat" width={150} />
           <Text style={styles.helpTitle}>¿Aún necesitas ayuda?</Text>
-          <Text style={styles.helpText}>Contáctanos en cualquier momento. Nuestro equipo está aquí para ti.</Text>
+          <Text style={styles.helpText}>Escríbenos desde Soporte y te respondemos lo antes posible.</Text>
           <TouchableOpacity
             style={styles.contactBtn}
             onPress={() => navigation.navigate('Support' as never)}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
           >
             <Text style={styles.contactBtnText}>Ir a Soporte</Text>
-            <Icon name="ArrowRight" size={18} color="white" />
+            <Icon name="ArrowRight" size={18} color={COLORS.white} />
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  title: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  categoryContainer: {
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-  },
-  categoryScroll: {
-    flexGrow: 0,
-  },
-  categoryBtn: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface,
-    marginRight: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  categoryBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  categoryBtnText: {
-    ...TYPOGRAPHY.bodySmall,
-    fontWeight: '500',
-    color: COLORS.textSecondary,
-  },
-  categoryBtnTextActive: {
-    color: 'white',
-  },
-  faqContainer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  faqQuestion: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    gap: SPACING.md,
-    ...SHADOWS.sm,
-  },
-  questionContent: {
-    flex: 1,
-    gap: SPACING.sm,
-  },
-  categoryBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.primary + '15',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
-  },
-  categoryBadgeText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary,
-    fontWeight: '600',
-    fontSize: 10,
-  },
-  questionText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-    lineHeight: 20,
-  },
-  faqAnswer: {
-    backgroundColor: COLORS.primary + '05',
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.primary,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    borderBottomLeftRadius: RADIUS.lg,
-    borderBottomRightRadius: RADIUS.lg,
-  },
-  answerText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    lineHeight: 24,
-  },
-  helpBox: {
-    alignItems: 'center',
-    backgroundColor: COLORS.primary + '08',
-    marginHorizontal: SPACING.lg,
-    marginVertical: SPACING.xl,
-    padding: SPACING.xl,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '20',
-  },
-  helpTitle: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 20,
-    color: COLORS.textPrimary,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-    textAlign: 'center',
-  },
-  helpText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-    lineHeight: 20,
-  },
-  contactBtn: {
-    backgroundColor: COLORS.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+
+  chipScroll: { flexGrow: 0, marginBottom: SPACING.md },
+  chipRow: { gap: SPACING.sm, paddingRight: SPACING.lg },
+  chip: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+  },
+  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+  chipTextActive: { color: COLORS.white, fontWeight: TYPOGRAPHY.weight.bold },
+
+  faqCard: {
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    overflow: 'hidden',
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
   },
-  contactBtnText: {
-    ...TYPOGRAPHY.body,
-    color: 'white',
-    fontWeight: '600',
+  faqCardOpen: { borderWidth: 1.5, borderColor: COLORS.primaryTint },
+  faqQuestion: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  questionContent: { flex: 1, gap: SPACING.xs },
+  categoryBadgeText: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.primary,
+    letterSpacing: 0.6,
   },
+  questionText: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  answerText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+  },
+
+  helpCard: {
+    alignItems: 'center',
+    marginTop: SPACING.xl,
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primaryTint,
+  },
+  helpTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.md },
+  helpText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.xs, marginBottom: SPACING.lg },
+  contactBtn: {
+    ...SHADOWS.xs,
+    shadowColor: COLORS.primary,
+    shadowOpacity: 0.3,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    alignSelf: 'stretch',
+    height: 52,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primary,
+  },
+  contactBtnText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.white },
 })

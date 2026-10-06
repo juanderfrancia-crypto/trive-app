@@ -1,16 +1,16 @@
 import IllustratedCard from '../components/illustrations/IllustratedCard'
-import Svg, { Circle, Path } from 'react-native-svg'
 import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar, Share } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import { APP_VERSION_LABEL } from '../config/appInfo'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../hooks/useAuth'
@@ -28,22 +28,9 @@ import Badge from '../components/Badge'
 
 // Campos que la app lee del perfil pero que useProfile aún no tipa.
 type ProfileExtras = {
-  referral_code?: string | null
   emergency_contact?: { name: string; phone: string } | null
 }
 
-// Silueta de dos personas para la tarjeta de invitación (mockup PerfilPasajero7).
-function InviteIllustration() {
-  return (
-    <Svg width={72} height={60} viewBox="0 0 72 60" style={{ marginBottom: SPACING.md }}>
-      <Circle cx="22" cy="20" r="9" fill={COLORS.primary} />
-      <Path d="M8 52 Q8 36 22 36 Q36 36 36 52Z" fill={COLORS.primary} />
-      <Circle cx="50" cy="20" r="9" fill={COLORS.textPrimary} />
-      <Path d="M36 52 Q36 36 50 36 Q64 36 64 52Z" fill={COLORS.textPrimary} />
-      <Path d="M30 20 Q36 6 42 20" fill="none" stroke={COLORS.primary} strokeWidth={2} strokeDasharray={[3, 3]} strokeLinecap="round" />
-    </Svg>
-  )
-}
 
 // Fila de menú con título, subtítulo y chevron.
 function MenuRow({ title, sub, onPress }: { title: string; sub: string; onPress: () => void }) {
@@ -72,6 +59,8 @@ export default function ProfileScreen() {
   const [newName, setNewName]             = useState('')
   const [savingName, setSavingName]       = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
+  const [avatarBroken, setAvatarBroken] = useState(false)
+  useEffect(() => { setAvatarBroken(false) }, [user?.avatar_url, profile?.avatar_url])
   const [uploadingVehiclePhoto, setUploadingVehiclePhoto] = useState(false)
   const [shouldLogout, setShouldLogout]   = useState(false)
   const [driverVehicle, setDriverVehicle] = useState<any>(null)
@@ -291,35 +280,36 @@ export default function ProfileScreen() {
   const rating     = (profile?.rating ?? 0).toFixed(1)
   const PassengerView = () => {
     const extras = profile as ProfileExtras | null
-    const referralCode = extras?.referral_code ?? null
     const emergencyContact = extras?.emergency_contact ?? null
     const tripsCount = passengerStats?.totalTrips ?? 0
     const porConfirmar = passengerBookings.filter((b) => b.bookingStatus === 'awaiting_confirmation').length
-
-    const handleShareReferral = () => {
-      if (!referralCode) return
-      Share.share({
-        message: `Únete a Trive como conductor con mi código ${referralCode}. Recibes $1.000 de regalo cuando completas tu primer viaje.`,
-      }).catch(() => {})
-    }
 
     return (
       <>
         <Text style={pv.title}>Mi perfil</Text>
 
         <View style={pv.profileRow}>
-          <TouchableOpacity style={pv.avatar} onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.85}>
-            {uploadingPhoto
-              ? <ActivityIndicator color={COLORS.primary} />
-              : avatarUri
-                ? <Image source={{ uri: avatarUri }} style={pv.avatarImg} />
-                : <Text style={pv.avatarInitials}>{initials}</Text>}
-          </TouchableOpacity>
+          <View style={pv.avatarWrap}>
+            <TouchableOpacity style={pv.avatar} onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.85} accessibilityLabel="Cambiar foto de perfil">
+              {uploadingPhoto
+                ? <ActivityIndicator color={COLORS.primary} />
+                : avatarUri && !avatarBroken
+                  ? <Image source={{ uri: avatarUri }} style={pv.avatarImg} onError={() => setAvatarBroken(true)} />
+                  : <Text style={pv.avatarInitials}>{initials}</Text>}
+            </TouchableOpacity>
+            <View style={pv.avatarBadge}>
+              <Icon name="Camera" size={12} color={COLORS.white} />
+            </View>
+          </View>
           <View style={pv.profileInfo}>
             <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
             <Text style={pv.meta}>
               Pasajero · ★ {(profile?.rating ?? 0).toFixed(1)} · {tripsCount} {tripsCount === 1 ? 'viaje' : 'viajes'}
             </Text>
+            <TouchableOpacity onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.7} style={pv.linkRow}>
+              <Icon name="ImagePlus" size={14} color={COLORS.primary} />
+              <Text style={pv.linkText}>Cambiar foto de perfil</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -333,23 +323,20 @@ export default function ProfileScreen() {
             : <View style={pv.pillWarn}><Text style={pv.pillWarnText}>Sin configurar</Text></View>}
         </TouchableOpacity>
 
-        <View style={pv.invite}>
-          <InviteIllustration />
-          <Text style={pv.inviteTitle}>Invita a un conductor</Text>
-          <Text style={pv.inviteSub}>Ganas $2.000 en tu billetera cuando tu conductor invitado completa su primer viaje.</Text>
-          <View style={pv.inviteRow}>
-            <View style={pv.codeBox}>
-              <Text style={pv.codeText}>{referralCode ?? '—'}</Text>
-            </View>
-            <TouchableOpacity
-              style={[pv.shareBtn, !referralCode && pv.shareBtnDisabled]}
-              onPress={handleShareReferral}
-              disabled={!referralCode}
-              activeOpacity={0.85}
-            >
-              <Text style={pv.shareText}>Compartir</Text>
-            </TouchableOpacity>
-          </View>
+        {/* Entrada para ser conductor: se conserva porque es la única forma de cambiar de modo. */}
+        <View style={s.section}>
+          <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
+            <IllustratedCard illustration="proudDriver" illustrationWidth={96} style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
+              <View style={pv.ctaOportunidad}>
+                <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
+              </View>
+              <Text style={pv.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
+              <Text style={pv.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
+              <View style={pv.ctaBtn}>
+                <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
+              </View>
+            </IllustratedCard>
+          </TouchableOpacity>
         </View>
 
         <Text style={pv.sectionLabel}>Mis viajes</Text>
@@ -367,31 +354,17 @@ export default function ProfileScreen() {
 
         <Text style={pv.sectionLabel}>Cuenta</Text>
         <View style={pv.group}>
+          <MenuRow title="Cómo pagas" sub="Efectivo o transferencia a tu conductor" onPress={() => navigation.navigate('PaymentMethods')} />
+          <View style={pv.rowDivider} />
           <MenuRow title="Datos personales" sub="Nombre, correo y teléfono" onPress={openEditName} />
           <View style={pv.rowDivider} />
           <MenuRow title="Privacidad y eliminar cuenta" sub="Tus datos y tu cuenta" onPress={() => navigation.navigate('Privacy')} />
         </View>
 
-        {/* Fuera del mockup: se conserva por ser la única entrada para ser conductor y para la ayuda. */}
         <View style={s.section}>
-          <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-            <IllustratedCard illustration="proudDriver" illustrationWidth={96} style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
-              <View style={pv.ctaOportunidad}>
-                <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
-              </View>
-              <Text style={pv.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
-              <Text style={pv.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
-              <View style={pv.ctaBtn}>
-                <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
-              </View>
-            </IllustratedCard>
-          </TouchableOpacity>
-        </View>
-
-        <View style={s.section}>
-          <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
+          <TouchableOpacity style={pv.group} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
             <View style={pv.helpRow}>
-              <View style={pv.helpIcon}><Icon name="Headset" size={20} color={COLORS.warningDark} /></View>
+              <View style={pv.helpIcon}><Icon name="Headset" size={20} color={COLORS.primary} /></View>
               <View style={pv.helpText}>
                 <Text style={pv.payName}>Centro de Ayuda</Text>
                 <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
@@ -402,7 +375,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={s.section}>
-          <TouchableOpacity style={s.menuCard} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
+          <TouchableOpacity style={pv.group} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
             <View style={pv.helpRow}>
               <View style={pv.settingsIcon}><Icon name="Settings" size={20} color={COLORS.primary} /></View>
               <View style={pv.helpText}>
@@ -414,7 +387,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={pv.footer}>TRIVE V1.0.0 • 2026</Text>
+        <Text style={pv.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
         <View style={{ height: SPACING.xxxl }} />
       </>
     )
@@ -583,21 +556,30 @@ const s = StyleSheet.create({
 
 // ── Passenger view styles ─────────────────────────────────────────────────────
 const pv = StyleSheet.create({
-  title: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5, marginTop: SPACING.md },
+  title: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, marginTop: SPACING.md },
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, marginTop: SPACING.lg },
+  avatarWrap: { position: 'relative' },
   avatar: {
     width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primaryTint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
   avatarImg: { width: 64, height: 64 },
   avatarInitials: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+  avatarBadge: {
+    position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12,
+    backgroundColor: COLORS.textPrimary, borderWidth: 2, borderColor: COLORS.white,
+    alignItems: 'center', justifyContent: 'center',
+  },
   profileInfo: { flex: 1 },
   name: { fontSize: 19, fontWeight: '800', color: COLORS.textPrimary },
   meta: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.sm },
+  linkText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
   card: {
+    ...SHADOWS.sm,
     marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md,
-    borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, padding: SPACING.lg,
+    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg,
   },
   cardText: { flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
@@ -607,27 +589,12 @@ const pv = StyleSheet.create({
   pillWarn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.warningLight },
   pillWarnText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
 
-  invite: { marginTop: SPACING.md, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint },
-  inviteTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },
-  inviteSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs, lineHeight: 19 },
-  inviteRow: { flexDirection: 'row', gap: SPACING.sm + 2, marginTop: SPACING.md },
-  codeBox: {
-    flex: 1, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.white,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  codeText: { fontSize: 15, fontWeight: '800', letterSpacing: 1.2, color: COLORS.textPrimary },
-  shareBtn: {
-    paddingHorizontal: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  shareBtnDisabled: { backgroundColor: COLORS.grayLight },
-  shareText: { fontSize: 14, fontWeight: '700', color: COLORS.white },
 
   sectionLabel: {
     marginTop: SPACING.xl, fontSize: 13, fontWeight: '700', color: COLORS.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
-  group: { marginTop: SPACING.sm + 2, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  group: { ...SHADOWS.sm, marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
   menuText: { flex: 1 },
   menuTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
@@ -648,12 +615,10 @@ const pv = StyleSheet.create({
   ctaBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primaryDark },
   helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
   helpIcon: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.warning, justifyContent: 'center', alignItems: 'center',
-    shadowColor: COLORS.warning, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 3,
+    width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
   },
   settingsIcon: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(18, 48, 184, 0.12)', justifyContent: 'center', alignItems: 'center',
-    shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.15, shadowRadius: 6, elevation: 2,
+    width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
   },
   helpText: { flex: 1 },
   payName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },

@@ -17,7 +17,6 @@ export default function RegisterScreen() {
   const { register, loading: authLoading, error: authError } = useAuth()
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -37,12 +36,6 @@ export default function RegisterScreen() {
       newErrors.email = 'El correo es requerido'
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       newErrors.email = 'Ingresa un correo válido'
-    }
-
-    if (!phone.trim()) {
-      newErrors.phone = 'El teléfono es requerido'
-    } else if (!/^\+?\d{10,}$/.test(phone.replace(/\s/g, ''))) {
-      newErrors.phone = 'Ingresa un teléfono válido'
     }
 
     if (!password) {
@@ -72,24 +65,15 @@ export default function RegisterScreen() {
 
     try {
       setIsSubmitting(true)
-      const data = await register(
-        email.trim(),
-        password,
-        name.trim(),
-        phone.trim()
-      )
+      const data = await register(email.trim(), password, name.trim())
 
       if (data?.user) {
-        // Guardar estado de verificación pendiente
         const { setPendingVerification } = useAppStore.getState()
-        setPendingVerification(email.trim(), name.trim(), phone.trim())
-        
-        // Navegar a pantalla de verificación de email
-        // @ts-ignore - Navigation params type
-        navigation.navigate('VerifyEmail' as never, {
-          email: email.trim(),
-          name: name.trim(),
-          phone: phone.trim(),
+        setPendingVerification(email.trim(), name.trim(), '')
+
+        navigation.navigate({
+          name: 'VerifyEmail',
+          params: { email: email.trim(), name: name.trim() },
         } as never)
       }
     } catch (err: any) {
@@ -159,19 +143,6 @@ export default function RegisterScreen() {
             />
           </View>
           {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-
-          <View style={[styles.inputContainer, errors.phone && styles.inputError]}>
-            <Icon name="Phone" size={20} color={errors.phone ? COLORS.error : COLORS.textSecondary} />
-            <TextInput
-              style={styles.input}
-              placeholder="Ej: +57 300 123 4567"
-              placeholderTextColor={COLORS.textSecondary}
-              keyboardType="phone-pad"
-              {...inputProps('phone', phone, setPhone)}
-              editable={!isSubmitting}
-            />
-          </View>
-          {errors.phone && <Text style={styles.errorText}>{errors.phone}</Text>}
 
           <View style={[styles.inputContainer, errors.password && styles.inputError]}>
             <Icon name="Lock" size={20} color={errors.password ? COLORS.error : COLORS.textSecondary} />

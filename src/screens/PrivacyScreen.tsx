@@ -1,17 +1,16 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform, Share } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform, Share, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import * as FileSystem from 'expo-file-system/legacy'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { exportUserData } from '../services/exportData'
 import { supabase } from '../services/supabase'
 import { useAppStore } from '../store/useAppStore'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
 
 export default function PrivacyScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const user        = useAppStore((s) => s.user)
   const setUser     = useAppStore((s) => s.setUser)
@@ -81,7 +80,7 @@ export default function PrivacyScreen() {
           onPress: () => {
             Alert.alert(
               'Confirmación final',
-              'Escribe ELIMINAR en el siguiente paso para confirmar.',
+              'Esta es tu última oportunidad. Al confirmar, tu cuenta se cierra de forma permanente.',
               [
                 { text: 'Cancelar', style: 'cancel' },
                 {
@@ -117,159 +116,141 @@ export default function PrivacyScreen() {
   }
 
   return (
-    <View style={[s.safe, { paddingTop: insets.top }]}>
-      <ScrollView style={s.scroll} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={s.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={s.title}>Privacidad</Text>
-          <View style={{ width: 28 }} />
-        </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-        {/* Tus Datos */}
-        <View style={s.section}>
-          <Text style={s.sectionTitle}>Tus Datos</Text>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Privacidad</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
 
-          <TouchableOpacity
-            style={s.card}
-            onPress={handleDownloadData}
-            activeOpacity={0.7}
-            disabled={isExporting}
-          >
-            <View style={s.cardRow}>
-              <View style={s.icon}>
-                <Icon name="Download" size={20} color={COLORS.primary} />
-              </View>
-              <View style={s.cardContent}>
-                <Text style={s.cardLabel}>Descargar mis datos</Text>
-                <Text style={s.cardDesc}>Obtén una copia de toda tu información</Text>
-              </View>
-              {isExporting
-                ? <ActivityIndicator size="small" color={COLORS.primary} />
-                : <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-              }
-            </View>
-          </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <Text style={styles.sectionTitle}>Tus datos</Text>
 
-          <TouchableOpacity
-            style={[s.card, s.dangerCard]}
-            onPress={handleDeleteAccount}
-            activeOpacity={0.7}
-            disabled={isDeleting}
-          >
-            <View style={s.cardRow}>
-              <View style={[s.icon, s.dangerIcon]}>
-                <Icon name="Trash2" size={20} color={COLORS.error} />
-              </View>
-              <View style={s.cardContent}>
-                <Text style={[s.cardLabel, { color: COLORS.error }]}>Eliminar cuenta</Text>
-                <Text style={[s.cardDesc, { color: COLORS.error + 'AA' }]}>
-                  Cancela reservas activas y cierra tu cuenta
-                </Text>
-              </View>
-              {isDeleting
-                ? <ActivityIndicator size="small" color={COLORS.error} />
-                : <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-              }
-            </View>
-          </TouchableOpacity>
-        </View>
+        <ActionCard
+          icon="Download"
+          title="Descargar mis datos"
+          sub="Obtén una copia de toda tu información"
+          onPress={handleDownloadData}
+          disabled={isExporting}
+          busy={isExporting}
+        />
 
-        {/* Info */}
-        <View style={s.infoBox}>
-          <Icon name="Info" size={16} color={COLORS.textTertiary} />
-          <Text style={s.infoText}>
-            Para solicitudes adicionales sobre tus datos contáctanos en soporte.
+        <Text style={styles.sectionTitle}>Zona de riesgo</Text>
+
+        <ActionCard
+          icon="Trash2"
+          title="Eliminar cuenta"
+          sub="Cancela reservas activas y cierra tu cuenta"
+          onPress={handleDeleteAccount}
+          disabled={isDeleting}
+          busy={isDeleting}
+          danger
+        />
+
+        <View style={styles.infoBox}>
+          <Icon name="Info" size={16} color={COLORS.primary} />
+          <Text style={styles.infoText}>
+            Para solicitudes adicionales sobre tus datos, escríbenos desde Soporte.
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 
-const s = StyleSheet.create({
+function ActionCard({ icon, title, sub, onPress, disabled, busy, danger }: {
+  icon: IconName
+  title: string
+  sub: string
+  onPress: () => void
+  disabled: boolean
+  busy: boolean
+  danger?: boolean
+}) {
+  const tint = danger ? COLORS.errorLight : COLORS.primaryTint
+  const accent = danger ? COLORS.error : COLORS.primary
+  return (
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75} disabled={disabled}>
+      <View style={[styles.cardIcon, { backgroundColor: tint }]}>
+        <Icon name={icon} size={20} color={accent} />
+      </View>
+      <View style={styles.cardText}>
+        <Text style={[styles.cardTitle, danger && { color: COLORS.error }]}>{title}</Text>
+        <Text style={styles.cardSub}>{sub}</Text>
+      </View>
+      {busy
+        ? <ActivityIndicator size="small" color={accent} />
+        : <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />}
+    </TouchableOpacity>
+  )
+}
+
+const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
 
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
+    paddingVertical: SPACING.md,
   },
-  title: { ...TYPOGRAPHY.h3, color: COLORS.textPrimary },
-
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-    fontSize: 12,
-    marginBottom: SPACING.md,
-  },
-
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    marginBottom: SPACING.md,
-    padding: SPACING.lg,
-    ...SHADOWS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-  },
-  dangerCard: {
-    borderColor: COLORS.error + '30',
-  },
-  cardRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.lg,
-  },
-  icon: {
-    width: 44, height: 44,
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  dangerIcon: {
-    backgroundColor: COLORS.error + '15',
-  },
-  cardContent: { flex: 1 },
-  cardLabel: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  cardDesc: {
-    ...TYPOGRAPHY.bodySmall,
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  sectionTitle: {
+    ...TYPOGRAPHY.label,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.sm,
   },
+
+  card: {
+    ...SHADOWS.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.white,
+  },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardText: { flex: 1 },
+  cardTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  cardSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
 
   infoBox: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.sm,
-    margin: SPACING.lg,
+    marginTop: SPACING.md,
     padding: SPACING.md,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryTint,
   },
-  infoText: {
-    flex: 1,
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textTertiary,
-    lineHeight: 18,
-  },
+  infoText: { ...TYPOGRAPHY.caption, flex: 1, color: COLORS.primaryDark, lineHeight: 18 },
 })

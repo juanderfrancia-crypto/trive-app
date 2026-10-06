@@ -1,7 +1,8 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Icon, { type IconName } from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { useState } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -11,145 +12,113 @@ interface Tutorial {
   title: string
   category: string
   duration: string
-  icon: string
+  icon: IconName
   description: string
   steps: string[]
-  expanded?: boolean
 }
 
-export default function LearningCenterScreen() {
-  const insets = useSafeAreaInsets()
-  const navigation = useNavigation()
-  const [tutorials, setTutorials] = useState<Tutorial[]>([
+const TUTORIALS: Tutorial[] = [
     {
       id: '1',
-      title: 'Cómo Registrarte en Trive',
+      title: 'Cómo crear tu cuenta',
       category: 'Inicio',
       duration: '5 min',
-      icon: 'person-add-outline',
+      icon: 'UserPlus',
       description: 'Aprende el proceso paso a paso para crear tu cuenta',
       steps: [
-        '1. Abre la aplicación y toca "Crear Cuenta"',
-        '2. Ingresa tu nombre completo, correo electrónico, número de teléfono y contraseña',
-        '3. Revisa tu bandeja de entrada y confirma tu correo con el enlace que recibirás',
-        '4. Una vez verificado el correo, inicia sesión con tus datos',
-        '5. ¡Listo! Ya puedes usar Trive como pasajero',
+        "1. Abre la app y escribe tu número de celular",
+        "2. Toca \"Enviar código\" y escribe el código de 6 dígitos que llega por SMS",
+        "3. Escribe tu nombre completo para terminar el registro",
+        "4. ¿Prefieres correo? En la pantalla de inicio toca \"Regístrate con tu correo\", confirma el código que te enviamos y luego verifica tu celular",
+        "5. ¡Listo! Ya puedes usar Trive"
       ],
-      expanded: false
     },
     {
       id: '2',
       title: 'Buscar y Reservar un Viaje',
       category: 'Pasajero',
       duration: '8 min',
-      icon: 'search-outline',
+      icon: 'Search',
       description: 'Guía completa para encontrar y reservar tu viaje ideal',
       steps: [
-        '1. En la pantalla principal, ingresa origen y destino',
-        '2. Selecciona la fecha y hora del viaje',
-        '3. Toca "Buscar Viajes"',
-        '4. Revisa los viajes disponibles con precio, duración y conductor',
-        '5. Elige tu viaje y toca "Reservar"',
-        '6. Selecciona el asiento que deseas ocupar',
-        '7. Acuerda el pago con el conductor (Nequi, Daviplata o efectivo) y coordina el punto de encuentro'
+        "1. En la pestaña Viajes, ingresa origen y destino",
+        "2. Selecciona la fecha y hora del viaje",
+        "3. Toca el botón de búsqueda y revisa los viajes disponibles con precio y conductor",
+        "4. Toca el viaje que te interese, elige tu asiento y confirma la reserva",
+        "5. Coordina el pago con el conductor: efectivo o transferencia (Nequi, Daviplata o Bre-B). Tu forma preferida se preselecciona; puedes cambiarla en Perfil > Cómo pagas",
+        "6. Acuerden el punto de encuentro por el chat del viaje"
       ],
-      expanded: false
     },
     {
       id: '3',
       title: 'Cómo Convertirse en Conductor',
       category: 'Conductor',
       duration: '10 min',
-      icon: 'car-outline',
+      icon: 'Car',
       description: 'Requisitos y pasos para comenzar a ganar dinero con Trive',
       steps: [
-        '1. Ve a tu Perfil y toca "Conviértete en Conductor"',
-        '2. Revisa los requisitos necesarios (mayor de 18 años, cédula, etc)',
-        '3. Confirma los términos y condiciones',
-        '4. Completa tu información de vehículo',
-        '5. Carga tu licencia y documentos requeridos',
-        '6. Espera a que se verifiquen tus documentos (24-48 horas)',
-        '7. ¡Comienza a crear viajes y ganar dinero!'
+        "1. En tu perfil, toca \"Cambiar a modo Conductor\"",
+        "2. Revisa los requisitos: ser mayor de 18 años, licencia de conducir vigente, cédula, SOAT y vehículo en buen estado",
+        "3. Si un conductor te invitó, ingresa su código de referido (es opcional)",
+        "4. Sube tus documentos y los datos de tu vehículo",
+        "5. Espera la verificación de tus documentos (24 a 48 horas)",
+        "6. Cuando estén aprobados, podrás publicar rutas"
       ],
-      expanded: false
     },
     {
       id: '4',
       title: 'Crear y Publicar un Viaje',
       category: 'Conductor',
       duration: '7 min',
-      icon: 'map-outline',
+      icon: 'Map',
       description: 'Cómo crear tu primer viaje como conductor',
       steps: [
-        '1. En el Panel del Conductor, toca "Crear Nuevo Viaje"',
-        '2. Ingresa el punto de partida y destino',
-        '3. Selecciona fecha y hora de salida',
-        '4. Establece el precio por pasajero',
-        '5. Selecciona el número de asientos disponibles',
-        '6. Añade notas adicionales si lo deseas (preferencias del viaje, etc)',
-        '7. Publica el viaje (se descuentan $2.000 de tu billetera automáticamente)',
-        '8. Espera a que se confirmen los pasajeros'
+        "1. Ve a \"Mi panel\" y toca el botón +",
+        "2. Elige \"Crear ruta\", o \"Rutas frecuentes\" si ya guardaste una plantilla",
+        "3. Ingresa origen, destino, fecha, hora de salida y precio por puesto",
+        "4. Indica los asientos disponibles y el vehículo",
+        "5. Publica la ruta: se descuentan $2.000 de tu billetera",
+        "6. Espera a que se reserven tus pasajeros y coordina con ellos"
       ],
-      expanded: false
     },
     {
       id: '5',
       title: 'Métodos de Pago Disponibles',
       category: 'Seguridad',
       duration: '4 min',
-      icon: 'cash-outline',
+      icon: 'Banknote',
       description: 'Conoce las formas de pago aceptadas en Trive',
       steps: [
-        '1. Los métodos de pago disponibles son: Nequi, Daviplata y efectivo',
-        '2. El método se acuerda directamente con el conductor al reservar',
-        '3. Nequi y Daviplata: el pasajero transfiere al número del conductor',
-        '4. Efectivo: se paga al inicio o al final del trayecto según acuerdo',
-        '5. Guarda el comprobante de transferencia como respaldo del pago',
-        '6. Ante cualquier duda sobre el pago, contacta a soporte Trive'
+        "1. Los medios de pago son efectivo, Nequi, Daviplata y Bre-B",
+        "2. Trive no cobra ni retiene el pago del viaje: lo pagas directo al conductor",
+        "3. En Nequi, Daviplata o Bre-B, paga a la llave que el conductor te muestra (número, cédula, correo o alias)",
+        "4. En efectivo, paga al llegar al destino o según lo acordado",
+        "5. Guarda el comprobante de la transferencia como respaldo",
+        "6. Puedes elegir tu forma de pago preferida en Perfil > Cómo pagas",
+        "7. Si tienes un problema con un pago, escríbele primero al conductor por el chat. Si no se resuelve, repórtalo en la app dentro de las 24 horas siguientes al viaje"
       ],
-      expanded: false
     },
     {
       id: '6',
       title: 'Sistema de Calificaciones y Reputación',
       category: 'Seguridad',
       duration: '7 min',
-      icon: 'star-outline',
+      icon: 'Star',
       description: 'Entiende cómo funcionan las calificaciones en Trive',
       steps: [
-        '1. Cada viaje puede ser calificado después de completarlo',
-        '2. Escala de 1-5 estrellas (5 es excelente)',
-        '3. Los conductores ven calificación promedio en su perfil',
-        '4. Los pasajeros pueden dejar comentarios escritos',
-        '5. Mantener una calificación ≥4.0 desbloquea el badge "Conductor Confiable"',
-        '6. Con ≥4.5 obtienes el badge "Conductor Excelente", visible en tu perfil',
-        '7. Sé puntual y respetuoso para mantener buena reputación en la comunidad'
+        "1. Cada viaje completado puede calificarse con 1 a 5 estrellas",
+        "2. Puedes dejar un comentario escrito",
+        "3. Los conductores ven su calificación promedio en su perfil",
+        "4. Según el promedio, el perfil muestra: Bueno y confiable (desde 4.0), Excelente (desde 4.5) y Premium (desde 4.7)",
+        "5. Sé puntual y respetuoso: las calificaciones de los demás son las que construyen tu reputación"
       ],
-      expanded: false
-    },
-    {
-      id: '7',
-      title: 'Rutas Favoritas',
-      category: 'Pasajero',
-      duration: '3 min',
-      icon: 'heart-outline',
-      description: 'Guarda rutas que usas frecuentemente para buscarlas más rápido',
-      steps: [
-        '1. En los resultados de búsqueda, toca el ícono ♡ en la esquina superior derecha de cualquier card',
-        '2. La ruta quedará guardada en tu lista de favoritos',
-        '3. Para ver tus favoritas, ve a Configuración > Mis Rutas Favoritas',
-        '4. Desde ahí toca "Buscar esta ruta" para buscar esa ruta directamente',
-        '5. Para eliminar una favorita, toca el ícono de papelera en la tarjeta',
-        '6. Las rutas favoritas se guardan en tu dispositivo y se sincronizan con tu cuenta'
-      ],
-      expanded: false
     },
     {
       id: '8',
       title: 'Chat durante el Viaje',
       category: 'Pasajero',
       duration: '4 min',
-      icon: 'chatbubble-outline',
+      icon: 'MessageCircle',
       description: 'Cómo comunicarte con el conductor o los pasajeros',
       steps: [
         '1. Una vez confirmada tu reserva, accede a la tarjeta del viaje',
@@ -159,35 +128,34 @@ export default function LearningCenterScreen() {
         '5. Recibirás una notificación en Alertas cuando llegue un mensaje nuevo',
         '6. Desde Alertas puedes responder mensajes directamente sin abrir el chat',
       ],
-      expanded: false
     },
     {
       id: '9',
       title: 'Billetera y Programa de Referidos',
       category: 'Conductor',
       duration: '6 min',
-      icon: 'wallet-outline',
+      icon: 'Wallet',
       description: 'Gestiona tu saldo y gana créditos invitando conductores',
       steps: [
-        '1. Ve a tu Perfil y toca "Billetera" para ver tu saldo actual',
-        '2. Cada publicación de ruta descuenta $2.000 automáticamente',
-        '3. Para recargar saldo, toca "Recargar" y elige el monto',
-        '4. Tu código de referido único está en Perfil > Referidos',
-        '5. Comparte tu código con otros conductores',
-        '6. Cuando el conductor referido publique su primer viaje, recibes $2.000 en tu billetera',
-        '7. El conductor nuevo obtiene $1.000 de descuento en esa primera publicación',
+        "1. En tu perfil de conductor, toca \"Ver billetera\" para ver tu saldo",
+        "2. Cada publicación de ruta descuenta $2.000",
+        "3. Para recargar, toca \"Recargar\" y elige el monto",
+        "4. Tu código de referido está en tu perfil, en \"Referidos\"",
+        "5. Compártelo con otros conductores",
+        "6. Cuando el conductor referido publique su primer viaje, recibes $2.000 en tu billetera",
+        "7. Él recibe $1.000 de descuento en esa primera publicación",
+        '8. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, los $2.000 vuelven a tu saldo. Con reservas, o si la ruta sale, no hay devolución'
       ],
-      expanded: false
     },
     {
       id: '10',
       title: 'Solicitar un Viaje al Aeropuerto',
       category: 'Pasajero',
       duration: '5 min',
-      icon: 'airplane-outline',
+      icon: 'Plane',
       description: 'Cómo publicar tu solicitud y que un conductor te lleve al aeropuerto',
       steps: [
-        '1. En la pantalla principal toca el banner "Viajes al Aeropuerto"',
+        '1. En la pantalla principal toca "¿Vas al aeropuerto? Solicita un viaje privado"',
         '2. Escribe tu punto de origen (dirección o barrio de salida)',
         '3. En el campo destino, escribe el nombre del aeropuerto o la ciudad; elige de la lista que aparece',
         '4. Ingresa la fecha de tu vuelo en formato DD/MM/AAAA',
@@ -198,445 +166,228 @@ export default function LearningCenterScreen() {
         '9. Toca "Publicar solicitud" — los conductores disponibles podrán verla',
         '10. Recibirás una notificación cuando un conductor acepte tu viaje',
       ],
-      expanded: false
     },
     {
       id: '11',
       title: 'Aceptar Solicitudes de Aeropuerto',
       category: 'Conductor',
       duration: '5 min',
-      icon: 'airplane-outline',
+      icon: 'Plane',
       description: 'Cómo ver y aceptar solicitudes de pasajeros que van al aeropuerto',
       steps: [
-        '1. En la pantalla principal toca el banner "Solicitudes de Aeropuerto"',
-        '2. Verás todas las solicitudes activas con origen, destino, fecha, hora y precio ofrecido',
-        '3. Revisa los detalles: número de personas, notas del pasajero y precio',
-        '4. Toca "Aceptar viaje" en la solicitud que te interese',
-        '5. Confirma en el diálogo — se descontarán $5.000 de tu billetera Trive',
-        '6. Si no tienes saldo suficiente, la app te llevará a la Billetera para recargar',
-        '7. Al aceptar, el pasajero recibirá una notificación con tu nombre',
-        '8. Coordina con el pasajero el punto exacto de encuentro y el método de pago',
+        "1. En tu inicio de conductor, toca \"Rutas personalizadas\"",
+        "2. Verás las solicitudes activas con origen, destino, fecha, hora y precio ofrecido",
+        "3. Revisa el número de personas, las notas y el precio",
+        "4. Toca \"Aceptar\" en la solicitud que te interese",
+        "5. Confirma: se descontarán $5.000 de tu billetera Trive",
+        "6. Si no tienes saldo suficiente, la solicitud no se acepta: recarga tu billetera y vuelve a intentarlo",
+        "7. El pasajero recibe una notificación de que aceptaste",
+        "8. Coordina con el pasajero el punto de encuentro y la forma de pago",
+        "9. Si el pasajero cancela antes del viaje, los $5.000 vuelven a tu saldo"
       ],
-      expanded: false
     },
-  ])
+      {
+      id: '12',
+      title: 'Guardar Rutas Favoritas',
+      category: 'Pasajero',
+      duration: '3 min',
+      icon: 'Heart',
+      description: 'Guarda las rutas que usas seguido para buscarlas más rápido',
+      steps: [
+        '1. En la pestaña Viajes, busca tu ruta y revisa los resultados',
+        '2. Toca el corazón de la tarjeta del viaje para guardarla. Tocarlo otra vez la quita',
+        '3. Para verlas, ve a Perfil > Configuración > Viajes > Rutas favoritas',
+        '4. Toca "Buscar esta ruta" para buscarla directamente',
+        '5. Para quitar una favorita, toca el ícono de papelera en su tarjeta',
+      ],
+    },
+  ]
 
-  const toggleTutorial = (id: string) => {
-    setTutorials(tutorials.map(t =>
-      t.id === id ? { ...t, expanded: !t.expanded } : t
-    ))
+const CATEGORIES = ['Todos', 'Inicio', 'Pasajero', 'Conductor', 'Seguridad']
+
+export default function LearningCenterScreen() {
+  const navigation = useNavigation()
+  const [selectedCategory, setSelectedCategory] = useState('Todos')
+  const [expandedIds, setExpandedIds] = useState<string[]>([])
+
+  const toggle = (id: string) => {
+    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  const categories = ['Todos', ...Array.from(new Set(tutorials.map(t => t.category)))]
-  const [selectedCategory, setSelectedCategory] = useState('Todos')
-
-  const filteredTutorials = selectedCategory === 'Todos'
-    ? tutorials
-    : tutorials.filter(t => t.category === selectedCategory)
+  const visible = selectedCategory === 'Todos'
+    ? TUTORIALS
+    : TUTORIALS.filter((t) => t.category === selectedCategory)
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Centro de Aprendizaje</Text>
-          <View style={{ width: 28 }} />
-        </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
-        {/* Welcome Section */}
-        <View style={styles.section}>
-          <View style={styles.welcomeBox}>
-            <Icon name="BookOpen" size={48} color={COLORS.primary} />
-            <Text style={styles.welcomeTitle}>Aprende a Usar Trive</Text>
-            <Text style={styles.welcomeText}>
-              Tutoriales paso a paso para sacar el máximo provecho de nuestros servicios
-            </Text>
-          </View>
-        </View>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Centro de aprendizaje</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
 
-        {/* Category Filter */}
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-            {categories.map((category) => (
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
+          {CATEGORIES.map((category) => {
+            const active = selectedCategory === category
+            return (
               <TouchableOpacity
                 key={category}
-                style={[
-                  styles.categoryPill,
-                  selectedCategory === category && styles.categoryPillActive
-                ]}
+                style={[styles.chip, active && styles.chipActive]}
                 onPress={() => setSelectedCategory(category)}
-                activeOpacity={0.7}
+                activeOpacity={0.85}
               >
-                <Text style={[
-                  styles.categoryPillText,
-                  selectedCategory === category && styles.categoryPillTextActive
-                ]}>
-                  {category}
-                </Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{category}</Text>
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
+            )
+          })}
+        </ScrollView>
 
-        {/* Tutorials List */}
-        <View style={styles.tutorialsSection}>
-          {filteredTutorials.map((tutorial) => (
-            <View key={tutorial.id} style={styles.tutorialContainer}>
-              <TouchableOpacity
-                style={styles.tutorialHeader}
-                onPress={() => toggleTutorial(tutorial.id)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.tutorialIconBox}>
-                  <Icon
-                    name={tutorial.icon as any}
-                    size={24}
-                    color={COLORS.primary}
-                  />
+        {visible.map((tutorial) => {
+          const open = expandedIds.includes(tutorial.id)
+          return (
+            <View key={tutorial.id} style={[styles.card, open && styles.cardOpen]}>
+              <TouchableOpacity style={styles.cardTop} onPress={() => toggle(tutorial.id)} activeOpacity={0.75}>
+                <View style={styles.tile}>
+                  <Icon name={tutorial.icon} size={20} color={COLORS.primary} />
                 </View>
-                
-                <View style={styles.tutorialInfo}>
-                  <Text style={styles.tutorialTitle}>{tutorial.title}</Text>
-                  <View style={styles.tutorialMeta}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryBadgeText}>{tutorial.category}</Text>
-                    </View>
-                    <Text style={styles.tutorialDuration}>⏱ {tutorial.duration}</Text>
-                  </View>
-                  <Text style={styles.tutorialDescription}>{tutorial.description}</Text>
+                <View style={styles.cardText}>
+                  <Text style={styles.meta}>{tutorial.category.toUpperCase()} · {tutorial.duration}</Text>
+                  <Text style={styles.cardTitle}>{tutorial.title}</Text>
+                  <Text style={styles.cardDesc}>{tutorial.description}</Text>
                 </View>
-
-                <Icon
-                  name={tutorial.expanded ? 'ChevronUp' : 'ChevronDown'}
-                  size={20}
-                  color={COLORS.textTertiary}
-                />
+                <Icon name={open ? 'ChevronUp' : 'ChevronDown'} size={20} color={COLORS.primary} />
               </TouchableOpacity>
 
-              {tutorial.expanded && (
-                <View style={styles.tutorialContent}>
-                  <View style={styles.stepsContainer}>
-                    {tutorial.steps.map((step, index) => (
-                      <View key={index} style={styles.stepItem}>
-                        <View style={styles.stepNumber}>
-                          <Text style={styles.stepNumberText}>{index + 1}</Text>
-                        </View>
-                        <Text style={styles.stepText}>{step}</Text>
+              {open && (
+                <View style={styles.steps}>
+                  {tutorial.steps.map((step, index) => (
+                    <View key={index} style={styles.step}>
+                      <View style={styles.stepNumber}>
+                        <Text style={styles.stepNumberText}>{index + 1}</Text>
                       </View>
-                    ))}
-                  </View>
-
-                  <View style={styles.completedBox}>
-                    <Icon name="CircleCheck" size={20} color={COLORS.success} />
-                    <Text style={styles.completedText}>¿Dudas? Contacta a soporte</Text>
-                  </View>
+                      <Text style={styles.stepText}>{step.replace(/^\d+\.\s*/, '')}</Text>
+                    </View>
+                  ))}
                 </View>
               )}
             </View>
-          ))}
-        </View>
+          )
+        })}
 
-        {/* Tips Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>💡 Consejos Útiles</Text>
-          
-          <View style={styles.tipCard}>
-            <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Siempre verifica el perfil del conductor/pasajero antes de aceptar un viaje</Text>
-          </View>
-
-          <View style={styles.tipCard}>
-            <Icon name="Star" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Califica honestamente los viajes para ayudar a la comunidad de Trive</Text>
-          </View>
-
-          <View style={styles.tipCard}>
-            <Icon name="Banknote" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Como conductor, recuerda que publicar cada viaje descuenta $2.000 de tu billetera Trive. Mantén saldo suficiente para publicar rutas sin interrupciones</Text>
-          </View>
-
-          <View style={styles.tipCard}>
-            <Icon name="CircleAlert" size={20} color={COLORS.error} />
-            <Text style={styles.tipText}>Configura tu contacto de emergencia en Configuración {'>'} Seguridad. El botón SOS en tu viaje activo enviará tu ubicación GPS en tiempo real junto con los datos del conductor por WhatsApp</Text>
-          </View>
-
-          <View style={styles.tipCard}>
-            <Icon name="Plane" size={20} color={COLORS.primary} />
-            <Text style={styles.tipText}>Para viajes al aeropuerto, publica tu solicitud con al menos 2-3 horas de anticipación para que un conductor pueda aceptarla. Como conductor, verifica tu saldo antes de aceptar: se descuentan $5.000 automáticamente</Text>
-          </View>
-        </View>
-
-        {/* CTA Section */}
-        <View style={styles.ctaSection}>
-          <View style={styles.ctaBox}>
-            <Text style={styles.ctaTitle}>¿Aún tienes preguntas?</Text>
-            <Text style={styles.ctaText}>Consulta nuestras Preguntas Frecuentes o contacta directamente con soporte</Text>
-            <TouchableOpacity
-              style={styles.ctaButton}
-              onPress={() => navigation.navigate('Help' as never)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.ctaButtonText}>Ir a Preguntas Frecuentes</Text>
-              <Icon name="ArrowRight" size={16} color={COLORS.background} />
-            </TouchableOpacity>
-          </View>
+        <View style={styles.helpCard}>
+          <Illustration name="personalFile" width={140} />
+          <Text style={styles.helpTitle}>¿Te quedó alguna duda?</Text>
+          <Text style={styles.helpText}>Revisa las preguntas frecuentes o escríbenos desde Soporte.</Text>
+          <TouchableOpacity style={styles.helpBtn} onPress={() => navigation.navigate('Help' as never)} activeOpacity={0.85}>
+            <Text style={styles.helpBtnText}>Ir a preguntas frecuentes</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
+  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  chipRow: { gap: SPACING.sm, paddingRight: SPACING.lg, marginBottom: SPACING.lg },
+  chip: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  title: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  welcomeBox: {
-    alignItems: 'center',
-    backgroundColor: COLORS.primary + '08',
-    borderRadius: RADIUS.lg,
-    paddingVertical: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
-  },
-  welcomeTitle: {
-    ...TYPOGRAPHY.h3,
-    marginTop: SPACING.md,
-    marginBottom: SPACING.sm,
-    textAlign: 'center',
-  },
-  welcomeText: {
-    ...TYPOGRAPHY.body,
-    textAlign: 'center',
-    color: COLORS.textSecondary,
-  },
-  filterSection: {
-    paddingVertical: SPACING.lg,
-  },
-  categoryScroll: {
-    paddingHorizontal: SPACING.lg,
-  },
-  categoryPill: {
-    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.surface,
-    marginRight: SPACING.sm,
-    borderWidth: 1,
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
     borderColor: COLORS.border,
   },
-  categoryPillActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  categoryPillText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  categoryPillTextActive: {
-    color: COLORS.background,
-  },
-  tutorialsSection: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  tutorialContainer: {
-    backgroundColor: COLORS.surface,
+  chipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+  chipTextActive: { color: COLORS.white, fontWeight: TYPOGRAPHY.weight.bold },
+
+  card: {
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
-    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     overflow: 'hidden',
-    ...SHADOWS.sm,
-  },
-  tutorialHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-  },
-  tutorialIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '12',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.lg,
-  },
-  tutorialInfo: {
-    flex: 1,
-  },
-  tutorialTitle: {
-    ...TYPOGRAPHY.h4,
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  tutorialMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  categoryBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: RADIUS.sm,
-    marginRight: SPACING.sm,
-  },
-  categoryBadgeText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.background,
-    fontWeight: '600',
-    fontSize: 11,
-  },
-  tutorialDuration: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textTertiary,
-    fontSize: 12,
-  },
-  tutorialDescription: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  tutorialContent: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    backgroundColor: COLORS.background,
-  },
-  stepsContainer: {
-    marginBottom: SPACING.lg,
-  },
-  stepItem: {
-    flexDirection: 'row',
+    padding: SPACING.lg,
     marginBottom: SPACING.md,
-    alignItems: 'flex-start',
   },
-  stepNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
+  cardOpen: { borderWidth: 1.5, borderColor: COLORS.primaryTint },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  tile: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
     alignItems: 'center',
-    marginRight: SPACING.md,
+    justifyContent: 'center',
+  },
+  cardText: { flex: 1, gap: 2 },
+  meta: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary, letterSpacing: 0.5 },
+  cardTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  cardDesc: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+
+  steps: {
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.borderLight,
+    gap: SPACING.md,
+  },
+  step: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md },
+  stepNumber: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
     flexShrink: 0,
   },
-  stepNumberText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '700',
-    color: COLORS.background,
-    fontSize: 14,
-  },
-  stepText: {
-    ...TYPOGRAPHY.body,
-    flex: 1,
-    color: COLORS.textPrimary,
-    lineHeight: 20,
-    paddingTop: 4,
-  },
-  completedBox: {
-    flexDirection: 'row',
+  stepNumberText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  stepText: { ...TYPOGRAPHY.labelMedium, flex: 1, color: COLORS.textSecondary, paddingTop: 2, lineHeight: 20 },
+
+  helpCard: {
     alignItems: 'center',
-    backgroundColor: COLORS.success + '12',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
+    padding: SPACING.xl,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primaryTint,
   },
-  completedText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.success,
-    marginLeft: SPACING.sm,
-    fontWeight: '500',
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: SPACING.md,
-  },
-  tipCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: COLORS.surface,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.md,
-    ...SHADOWS.sm,
-  },
-  tipText: {
-    ...TYPOGRAPHY.body,
-    marginLeft: SPACING.md,
-    flex: 1,
-    lineHeight: 20,
-  },
-  ctaSection: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-  },
-  ctaBox: {
+  helpTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.md },
+  helpText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginTop: SPACING.xs, marginBottom: SPACING.lg },
+  helpBtn: {
+    alignSelf: 'stretch',
+    height: 50,
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
     alignItems: 'center',
-    ...SHADOWS.md,
+    justifyContent: 'center',
   },
-  ctaTitle: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.background,
-    marginBottom: SPACING.sm,
-  },
-  ctaText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.background,
-    opacity: 0.9,
-    textAlign: 'center',
-    marginBottom: SPACING.lg,
-  },
-  ctaButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.background,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-  },
-  ctaButtonText: {
-    ...TYPOGRAPHY.body,
-    fontWeight: '600',
-    color: COLORS.primary,
-    marginRight: SPACING.sm,
-  },
+  helpBtnText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.white },
 })

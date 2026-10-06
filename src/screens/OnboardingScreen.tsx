@@ -1,17 +1,17 @@
 import React, { useRef, useState } from 'react'
-import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image, ImageSourcePropType } from 'react-native'
+import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import Icon from '../components/Icon'
+import Illustration, { type IllustrationName } from '../components/illustrations/Illustration'
 
-const { width, height } = Dimensions.get('window')
-const HERO_H = Math.round(height * 0.64)
+const { width } = Dimensions.get('window')
 
 type Slide = {
   id: string
-  image?: ImageSourcePropType
+  illustration: IllustrationName
   eyebrow: string
   title: string
   description: string
@@ -20,27 +20,24 @@ type Slide = {
 const SLIDES: Slide[] = [
   {
     id: '1',
-    image: require('../../assets/mocks/onboarding-1.png'),
+    illustration: 'routePlanning',
     eyebrow: 'MOVILIDAD INTERMUNICIPAL',
-    title: 'Viaja cuando\nquieras',
-    description:
-      'Conecta con conductores verificados y reserva tu cupo en segundos. Sin filas, sin intermediarios.',
+    title: 'Viaja cuando quieras',
+    description: 'Encuentra cupo en la ruta que necesitas y reserva en segundos, sin filas ni intermediarios.',
   },
   {
     id: '2',
-    image: require('../../assets/mocks/onboarding-2.png'),
-    eyebrow: 'SEGURIDAD GARANTIZADA',
-    title: 'Conductores\nverificados',
-    description:
-      'Verificación de identidad, antecedentes y vehículo en cada conductor que se une a Trive.',
+    illustration: 'personalFile',
+    eyebrow: 'CONDUCTORES VERIFICADOS',
+    title: 'Viaja con confianza',
+    description: 'Revisamos los documentos y el vehículo de cada conductor antes de que pueda publicar una ruta.',
   },
   {
     id: '3',
-    image: require('../../assets/mocks/onboarding-3.png'),
-    eyebrow: 'RESERVA DIGITAL',
-    title: 'En minutos...',
-    description:
-      'Busca tu ruta, reserva tu cupo y listo. Todo desde tu celular',
+    illustration: 'mobileEncryption',
+    eyebrow: 'TODO DESDE TU CELULAR',
+    title: 'Reserva en minutos',
+    description: 'Busca tu ruta, reserva tu cupo y sigue el estado de tu viaje desde un solo lugar.',
   },
 ]
 
@@ -69,255 +66,127 @@ export default function OnboardingScreen({ onComplete }: Props) {
   }
 
   return (
-    <SafeAreaView style={styles.root} edges={['left', 'right', 'bottom']}>
-      <StatusBar barStyle="light-content" translucent />
+    <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
 
-      {/* ── Hero: imagen a pantalla completa ─────────────────── */}
-      <View style={styles.heroArea}>
-        <FlatList
-          ref={listRef}
-          data={SLIDES}
-          keyExtractor={(s) => s.id}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onMomentumEnd}
-          style={{ flex: 1 }}
-          renderItem={({ item }) => (
-            <View style={styles.slideVisual}>
-              <Image
-                source={item.image!}
-                style={styles.slideImage}
-                resizeMode="cover"
-              />
-              {/* Fade suave hacia la tarjeta blanca */}
-              <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.05)', 'rgba(255,255,255,0.75)', COLORS.white]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={styles.imageFade}
-              />
-            </View>
-          )}
-        />
-
-        {/* Scrim oscuro para que los íconos de la barra sean visibles */}
-        <LinearGradient
-          colors={['rgba(0,0,0,0.52)', 'transparent']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.topScrim, { height: insets.top + 44 }]}
-        />
-
-        {/* Header flotante sobre la imagen */}
-        <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
-          <Text style={styles.brand}>TRIVE</Text>
-          {!isLast && (
-            <TouchableOpacity onPress={onComplete} style={styles.skipBtn} activeOpacity={0.7}>
-              <Text style={styles.skipText}>Saltar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={[styles.topBar, { paddingTop: insets.top > 0 ? SPACING.sm : SPACING.md }]}>
+        <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
+        {!isLast ? (
+          <TouchableOpacity onPress={onComplete} style={styles.skipBtn} activeOpacity={0.7}>
+            <Text style={styles.skipText}>Saltar</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.skipPlaceholder} />
+        )}
       </View>
 
-      {/* ── Tarjeta de texto blanca ─────────────────────────── */}
-      <View style={styles.textCard}>
+      <FlatList
+        ref={listRef}
+        data={SLIDES}
+        keyExtractor={(s) => s.id}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={onMomentumEnd}
+        style={styles.pager}
+        renderItem={({ item }) => (
+          <View style={styles.slide}>
+            <View style={styles.illustrationCard}>
+              <Illustration name={item.illustration} width={Math.min(width - 96, 260)} />
+            </View>
+          </View>
+        )}
+      />
+
+      <View style={styles.textBlock}>
         <Text style={styles.eyebrow}>{slide.eyebrow}</Text>
         <Text style={styles.title}>{slide.title}</Text>
         <Text style={styles.description}>{slide.description}</Text>
+      </View>
 
-        {/* Barra de progreso segmentada */}
-        <View style={styles.progressRow}>
+      <View style={styles.footer}>
+        <View style={styles.dots}>
           {SLIDES.map((_, idx) => (
             <View
               key={idx}
-              style={[
-                styles.progressSeg,
-                { backgroundColor: idx <= currentIndex ? COLORS.primary : COLORS.border },
-              ]}
+              style={[styles.dot, idx === currentIndex ? styles.dotActive : styles.dotInactive]}
             />
           ))}
         </View>
 
-        {/* CTA con gradiente */}
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={handleNext}
-          activeOpacity={0.88}
-        >
+        <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.88}>
           <LinearGradient
             colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.btnGradient}
           >
-            <Text style={styles.btnText}>
-              {isLast ? 'Comenzar ahora' : 'Continuar'}
-            </Text>
-            {!isLast && <Icon name="ArrowRight" size={18} color="#fff" />}
+            <Text style={styles.btnText}>{isLast ? 'Comenzar' : 'Continuar'}</Text>
+            <Icon name={isLast ? 'CircleCheck' : 'ArrowRight'} size={18} color={COLORS.white} />
           </LinearGradient>
         </TouchableOpacity>
-
-        <Text style={styles.stepLabel}>
-          {String(currentIndex + 1).padStart(2, '0')} / {String(SLIDES.length).padStart(2, '0')}
-        </Text>
       </View>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-  },
+  root: { flex: 1, backgroundColor: COLORS.white },
 
-  // ── Hero área ───────────────────────────────────────────────
-  heroArea: {
-    height: HERO_H,
-    overflow: 'hidden',
-  },
-  slideVisual: {
-    width,
-    height: HERO_H,
-  },
-  slideImage: {
-    width,
-    height: HERO_H,
-  },
-  illustrationContainer: {
-    width,
-    height: HERO_H,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-  },
-  imageFade: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: HERO_H * 0.38,
-  },
-  topScrim: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 5,
-  },
-
-  // Header flotante
-  header: {
+  topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingBottom: 12,
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 10,
+    paddingHorizontal: SPACING.xl,
+    paddingBottom: SPACING.sm,
   },
-  brand: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: COLORS.white,
-    letterSpacing: 3,
-    textShadowColor: 'rgba(0,0,0,0.35)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
+  logo: { width: 124, height: 56 },
   skipBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.22)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
   },
-  skipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.white,
-    letterSpacing: 0.2,
+  skipText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.primary },
+  skipPlaceholder: { width: 64, height: 32 },
+
+  pager: { flexGrow: 0, height: 380 },
+  slide: { width, height: 380, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl },
+  illustrationCard: {
+    width: '100%',
+    height: 320,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
-  // ── Tarjeta blanca ──────────────────────────────────────────
-  textCard: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    paddingHorizontal: 28,
-    paddingTop: 4,
-    paddingBottom: 12,
-    justifyContent: 'space-between',
-  },
-  eyebrow: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 2.5,
-    color: COLORS.primary,
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 32,
-    lineHeight: 36,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.8,
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 15,
-    lineHeight: 24,
-    color: COLORS.textSecondary,
-    fontWeight: '400',
-    flex: 1,
-  },
+  textBlock: { paddingHorizontal: SPACING.xxl, paddingTop: SPACING.md, flex: 1 },
+  eyebrow: { ...TYPOGRAPHY.labelSmall, fontWeight: '700', letterSpacing: 1.6, color: COLORS.primary, marginBottom: SPACING.sm },
+  title: { ...TYPOGRAPHY.h1, color: COLORS.textPrimary, marginBottom: SPACING.md },
+  description: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, lineHeight: 24 },
 
-  progressRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 16,
-    marginBottom: 14,
-  },
-  progressSeg: {
-    flex: 1,
-    height: 3,
-    borderRadius: 99,
-  },
+  footer: { paddingHorizontal: SPACING.xxl, paddingBottom: SPACING.lg, gap: SPACING.lg },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: SPACING.sm },
+  dot: { height: 8, borderRadius: 4 },
+  dotActive: { width: 24, backgroundColor: COLORS.primary },
+  dotInactive: { width: 8, backgroundColor: COLORS.border },
 
   btn: {
-    borderRadius: 14,
+    borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    marginBottom: 12,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
     elevation: 6,
   },
   btnGradient: {
-    height: 56,
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: SPACING.sm,
   },
-  btnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: COLORS.white,
-    letterSpacing: 0.2,
-  },
-
-  stepLabel: {
-    textAlign: 'center',
-    fontSize: 11,
-    fontWeight: '600',
-    color: COLORS.border,
-    letterSpacing: 1.5,
-    paddingBottom: 4,
-  },
+  btnText: { ...TYPOGRAPHY.button, color: COLORS.white, fontWeight: '800' },
 })

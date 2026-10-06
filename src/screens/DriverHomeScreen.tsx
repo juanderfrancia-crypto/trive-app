@@ -10,6 +10,8 @@ import { useAppStore } from '../store/useAppStore'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../services/supabase'
 import { useDriverPayments } from './payments/useDriverPayments'
+import PublishSheet from '../components/driver/PublishSheet'
+import { useCreateRouteGate } from '../hooks/useCreateRouteGate'
 
 const getGreeting = () => {
   const h = new Date().getHours()
@@ -22,6 +24,7 @@ export default function DriverHomeScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
   const { profile } = useProfile(user?.id)
+  const { goToCreateRoute } = useCreateRouteGate(user?.id)
   const [pendingAirportCount, setPendingAirportCount] = useState(0)
   const [showPublishMenu, setShowPublishMenu] = useState(false)
   const { payments: pendingPayments, reload: reloadPayments } = useDriverPayments(user?.id)
@@ -40,11 +43,6 @@ export default function DriverHomeScreen() {
 
   const firstName = user?.name?.split(' ')[0] ?? 'Conductor'
   const balance = (user?.balance ?? 0).toLocaleString('es-CO')
-
-  const goTo = (screen: string) => {
-    setShowPublishMenu(false)
-    setTimeout(() => navigation.navigate(screen as never), 150)
-  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -108,7 +106,7 @@ export default function DriverHomeScreen() {
             <Icon name="Plane" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Viajes especiales</Text>
+            <Text style={styles.cardTitle}>Rutas personalizadas</Text>
             <Text style={styles.cardSub}>
               {pendingAirportCount > 0 ? `${pendingAirportCount} solicitudes esperando respuesta` : 'Sin solicitudes pendientes'}
             </Text>
@@ -161,37 +159,12 @@ export default function DriverHomeScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      {showPublishMenu && (
-        <View style={styles.overlay}>
-          <TouchableOpacity style={styles.overlayTap} activeOpacity={1} onPress={() => setShowPublishMenu(false)} />
-          <View style={styles.sheet}>
-            <View style={styles.handle} />
-            <Text style={styles.sheetTitle}>¿Qué quieres hacer?</Text>
-
-            <TouchableOpacity style={styles.sheetItem} onPress={() => goTo('DriverRegister')} activeOpacity={0.8}>
-              <View style={styles.sheetIcon}>
-                <Icon name="CirclePlus" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.sheetText}>
-                <Text style={styles.sheetItemTitle}>Crear ruta</Text>
-                <Text style={styles.sheetItemSub}>Publica un viaje nuevo ahora</Text>
-              </View>
-              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.sheetItem} onPress={() => goTo('RecurringRoutes')} activeOpacity={0.8}>
-              <View style={styles.sheetIcon}>
-                <Icon name="Repeat" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.sheetText}>
-                <Text style={styles.sheetItemTitle}>Plantillas de ruta</Text>
-                <Text style={styles.sheetItemSub}>Publica tus rutas habituales rápido</Text>
-              </View>
-              <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+      <PublishSheet
+        visible={showPublishMenu}
+        onClose={() => setShowPublishMenu(false)}
+        onCreateRoute={goToCreateRoute}
+        onRecurringRoutes={() => navigation.navigate('RecurringRoutes' as never)}
+      />
     </SafeAreaView>
   )
 }
@@ -254,17 +227,4 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 11, fontWeight: '800', color: COLORS.white },
 
-  overlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(15,26,46,0.35)', justifyContent: 'flex-end' },
-  overlayTap: { flex: 1 },
-  sheet: {
-    backgroundColor: COLORS.white, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
-    padding: SPACING.xl, paddingBottom: SPACING.xxxl,
-  },
-  handle: { alignSelf: 'center', width: 40, height: 4, borderRadius: 2, backgroundColor: COLORS.border, marginBottom: SPACING.lg },
-  sheetTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginBottom: SPACING.md },
-  sheetItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingVertical: SPACING.md },
-  sheetIcon: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, alignItems: 'center', justifyContent: 'center' },
-  sheetText: { flex: 1 },
-  sheetItemTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  sheetItemSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
 })

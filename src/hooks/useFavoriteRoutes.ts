@@ -6,7 +6,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../services/supabase';
-import { Route } from './useRoutes';
 
 const FAVORITES_KEY = 'trive_favorite_routes';
 
@@ -16,7 +15,6 @@ interface FavoriteRoute {
   saved_at: string;
   origin: string;
   destination: string;
-  route_data?: Route;
 }
 
 export const useFavoriteRoutes = (userId?: string) => {
@@ -70,7 +68,7 @@ export const useFavoriteRoutes = (userId?: string) => {
    * Add route to favorites
    */
   const addFavorite = useCallback(
-    async (route: Route) => {
+    async (route: Pick<FavoriteRoute, 'origin' | 'destination'> & { id: string }) => {
       if (!userId) {
         console.warn('User ID required to add favorite');
         return false;
@@ -83,7 +81,6 @@ export const useFavoriteRoutes = (userId?: string) => {
           saved_at: new Date().toISOString(),
           origin: route.origin,
           destination: route.destination,
-          route_data: route,
         };
 
         // Guardar localmente

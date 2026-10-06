@@ -1,643 +1,184 @@
 import { useEffect, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
-import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../services/supabase'
-import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme'
-import type { Database } from '../types/database.types'
+import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
+import { getPaymentPreference, setPaymentPreference, type PaymentPreference } from '../services/passengerPaymentPreference'
+import { useAppStore } from '../store/useAppStore'
+import { showSuccess, showError } from '../utils/showError'
 
-const PAYMENT_METHOD_TYPES = ['credit_card', 'debit_card', 'bank_account', 'digital_wallet'] as const
-type PaymentMethodType = (typeof PAYMENT_METHOD_TYPES)[number]
-
-interface PaymentMethod {
-  id: string
-  user_id: string
-  type: PaymentMethodType
-  label: string
-  last_four: string
-  is_default: boolean
-  created_at: string | null
-}
-
-type PaymentMethodRow = Database['public']['Tables']['payment_methods']['Row']
-
-const isPaymentMethodType = (value: string): value is PaymentMethodType =>
-  (PAYMENT_METHOD_TYPES as readonly string[]).includes(value)
-
-// Filas de la base: `type` es texto libre y `is_default` puede ser null.
-// Un tipo desconocido se muestra como debit_card (misma etiqueta que ya usa la pantalla).
-const toPaymentMethod = (row: PaymentMethodRow): PaymentMethod => ({
-  id: row.id,
-  user_id: row.user_id,
-  type: isPaymentMethodType(row.type) ? row.type : 'debit_card',
-  label: row.label,
-  last_four: row.last_four,
-  is_default: row.is_default ?? false,
-  created_at: row.created_at,
-})
+const OPTIONS: { value: PaymentPreference; title: string; sub: string; icon: IconName }[] = [
+  {
+    value: 'cash',
+    title: 'Efectivo',
+    sub: 'Pagas en efectivo al conductor al llegar al destino.',
+    icon: 'Banknote',
+  },
+  {
+    value: 'transfer',
+    title: 'Transferencia',
+    sub: 'Pagas por Nequi, Daviplata o Bre-B con la llave que te muestra el conductor.',
+    icon: 'Smartphone',
+  },
+]
 
 export default function PaymentMethodsScreen() {
-  const { user } = useAuth()
   const navigation = useNavigation()
-  const [methods, setMethods] = useState<PaymentMethod[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [cardNumber, setCardNumber] = useState('')
-  const [cardName, setCardName] = useState('')
-  const [cardExpiry, setCardExpiry] = useState('')
-  const [cardCVV, setCardCVV] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [paymentType, setPaymentType] = useState<'credit_card' | 'debit_card' | 'bank_account' | 'digital_wallet'>('credit_card')
-  const [loadedOnce, setLoadedOnce] = useState(false)
+  const userId = useAppStore((s) => s.user?.id)
+  const [selected, setSelected] = useState<PaymentPreference>('cash')
 
   useEffect(() => {
-    // Solo cargar una vez cuando tengamos user.id
-    if (user?.id && !loadedOnce) {
-      loadPaymentMethods()
-    }
-  }, [user?.id, loadedOnce])
+    if (userId) getPaymentPreference(userId).then(setSelected)
+  }, [userId])
 
-  const loadPaymentMethods = async () => {
-    if (!user?.id || loadedOnce) return
-
+  const choose = async (value: PaymentPreference) => {
+    if (!userId || value === selected) return
+    const previous = selected
+    setSelected(value)
     try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('Error loading payment methods:', error)
-        // No mostrar alert aquí, solo setear métodos vacío si es primer intento
-        setMethods([])
-      } else {
-        setMethods((data || []).map(toPaymentMethod))
-      }
-      
-      setLoadedOnce(true)
-    } catch (err) {
-      console.error('Error loading payment methods:', err)
-      setMethods([])
-      setLoadedOnce(true)
-    } finally {
-      setLoading(false)
+      await setPaymentPreference(userId, value)
+      showSuccess('Preferencia guardada para tus próximas reservas')
+    } catch {
+      setSelected(previous)
+      showError('No pudimos guardar tu preferencia. Intenta de nuevo.')
     }
-  }
-
-  const validateCardNumber = (number: string) => {
-    const cleaned = number.replace(/\D/g, '')
-    return cleaned.length >= 13 && cleaned.length <= 19
-  }
-
-  const getCardType = (number: string) => {
-    const cleaned = number.replace(/\D/g, '')
-    if (/^4/.test(cleaned)) return 'Visa'
-    if (/^5[1-5]/.test(cleaned)) return 'Mastercard'
-    if (/^3[47]/.test(cleaned)) return 'American Express'
-    return 'Tarjeta'
-  }
-
-  const formatCardNumber = (text: string) => {
-    const cleaned = text.replace(/\D/g, '')
-    return cleaned.replace(/(\d{4})(?=\d)/g, '$1 ')
-  }
-
-  const handleSave = async () => {
-    if (paymentType === 'credit_card' || paymentType === 'debit_card') {
-      if (!cardNumber.trim() || !cardName.trim() || !cardExpiry.trim() || !cardCVV.trim()) {
-        Alert.alert('Error', 'Por favor completa todos los campos')
-        return
-      }
-
-      if (!validateCardNumber(cardNumber)) {
-        Alert.alert('Error', 'Número de tarjeta inválido')
-        return
-      }
-    }
-
-    if (!user?.id) return
-
-    try {
-      setSaving(true)
-      const lastFour = cardNumber.replace(/\D/g, '').slice(-4)
-
-      const { data, error } = await supabase.from('payment_methods').insert({
-        user_id: user.id,
-        type: paymentType,
-        label: cardName,
-        last_four: lastFour,
-        is_default: methods.length === 0,
-      }).select().single()
-
-      if (error) throw error
-
-      // Actualizar estado local inmediatamente (no llamar loadPaymentMethods)
-      setMethods([data as PaymentMethod, ...methods])
-
-      // Reset form
-      setCardNumber('')
-      setCardName('')
-      setCardExpiry('')
-      setCardCVV('')
-      setPaymentType('credit_card')
-      setShowForm(false)
-
-      Alert.alert('Éxito', 'Método de pago agregado')
-    } catch (err) {
-      console.error('Error saving payment method:', err)
-      Alert.alert('Error', 'No se pudo guardar el método de pago')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const setAsDefault = async (methodId: string) => {
-    if (!user?.id) return
-
-    try {
-      // Remover default de todos
-      await supabase
-        .from('payment_methods')
-        .update({ is_default: false })
-        .eq('user_id', user.id)
-
-      // Establecer como default
-      await supabase
-        .from('payment_methods')
-        .update({ is_default: true })
-        .eq('id', methodId)
-
-      // Actualizar estado local inmediatamente (no llamar loadPaymentMethods)
-      setMethods(
-        methods.map((m) => ({
-          ...m,
-          is_default: m.id === methodId,
-        }))
-      )
-
-      Alert.alert('Éxito', 'Método de pago establecido como predeterminado')
-    } catch (err) {
-      Alert.alert('Error', 'No se pudo actualizar')
-    }
-  }
-
-  const handleDelete = (methodId: string) => {
-    Alert.alert('Eliminar método de pago', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await supabase
-              .from('payment_methods')
-              .delete()
-              .eq('id', methodId)
-              .eq('user_id', user?.id ?? '')
-
-            // Actualizar estado local inmediatamente (no llamar loadPaymentMethods)
-            setMethods(methods.filter((m) => m.id !== methodId))
-            Alert.alert('Éxito', 'Método de pago eliminado')
-          } catch (err) {
-            Alert.alert('Error', 'No se pudo eliminar')
-          }
-        },
-      },
-    ])
-  }
-
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: COLORS.background,
-    },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: SPACING.lg,
-      borderBottomWidth: 1,
-      borderBottomColor: COLORS.border,
-      backgroundColor: COLORS.surface,
-    },
-    title: {
-      fontSize: TYPOGRAPHY.size.lg,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-      flex: 1,
-      textAlign: 'center',
-    },
-    addBtn: {
-      backgroundColor: COLORS.primary,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: SPACING.xs,
-    },
-    addBtnText: {
-      color: COLORS.textInverse,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    listContainer: {
-      padding: SPACING.md,
-    },
-    methodCard: {
-      backgroundColor: COLORS.surface,
-      borderRadius: 12,
-      padding: SPACING.md,
-      marginBottom: SPACING.md,
-      borderLeftWidth: 4,
-      borderLeftColor: COLORS.primary,
-    },
-    methodHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginBottom: SPACING.sm,
-    },
-    methodLabel: {
-      fontSize: TYPOGRAPHY.size.sm,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.primary,
-      flex: 1,
-    },
-    defaultBadge: {
-      backgroundColor: COLORS.success + '20',
-      paddingHorizontal: SPACING.sm,
-      paddingVertical: SPACING.xs,
-      borderRadius: 8,
-    },
-    badgeText: {
-      fontSize: 10,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.success,
-    },
-    methodInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: SPACING.sm,
-      marginBottom: SPACING.sm,
-    },
-    methodType: {
-      fontSize: TYPOGRAPHY.size.sm,
-      color: COLORS.textSecondary,
-      flex: 1,
-    },
-    lastFour: {
-      fontSize: TYPOGRAPHY.size.sm,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-    },
-    actions: {
-      flexDirection: 'row',
-      gap: SPACING.sm,
-      marginTop: SPACING.md,
-      paddingTop: SPACING.md,
-      borderTopWidth: 1,
-      borderTopColor: COLORS.border,
-    },
-    actionBtn: {
-      flex: 1,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      borderRadius: 8,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: SPACING.xs,
-    },
-    defaultBtn: {
-      backgroundColor: COLORS.success + '20',
-    },
-    deleteBtn: {
-      backgroundColor: COLORS.error + '20',
-    },
-    actionBtnText: {
-      fontSize: TYPOGRAPHY.size.xs,
-      fontWeight: TYPOGRAPHY.weight.bold,
-    },
-    defaultBtnText: {
-      color: COLORS.success,
-    },
-    deleteBtnText: {
-      color: COLORS.error,
-    },
-    form: {
-      backgroundColor: COLORS.surface,
-      padding: SPACING.lg,
-      margin: SPACING.md,
-      borderRadius: 12,
-      marginBottom: SPACING.lg,
-    },
-    formTitle: {
-      fontSize: TYPOGRAPHY.size.md,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-      marginBottom: SPACING.md,
-    },
-    typeSelector: {
-      flexDirection: 'row',
-      gap: SPACING.sm,
-      marginBottom: SPACING.md,
-    },
-    typeOption: {
-      flex: 1,
-      paddingVertical: SPACING.sm,
-      paddingHorizontal: SPACING.md,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: COLORS.border,
-      alignItems: 'center',
-    },
-    typeOptionActive: {
-      backgroundColor: COLORS.primary,
-      borderColor: COLORS.primary,
-    },
-    typeOptionText: {
-      fontSize: TYPOGRAPHY.size.xs,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      color: COLORS.textPrimary,
-    },
-    typeOptionTextActive: {
-      color: COLORS.textInverse,
-    },
-    input: {
-      borderWidth: 1,
-      borderColor: COLORS.border,
-      borderRadius: 8,
-      paddingHorizontal: SPACING.md,
-      paddingVertical: SPACING.sm,
-      marginBottom: SPACING.md,
-      backgroundColor: COLORS.background,
-      color: COLORS.textPrimary,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    row: {
-      flexDirection: 'row',
-      gap: SPACING.md,
-    },
-    buttonGroup: {
-      flexDirection: 'row',
-      gap: SPACING.md,
-    },
-    saveBtn: {
-      flex: 1,
-      backgroundColor: COLORS.primary,
-      paddingVertical: SPACING.md,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    saveBtnText: {
-      color: COLORS.textInverse,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    cancelBtn: {
-      flex: 1,
-      backgroundColor: COLORS.border,
-      paddingVertical: SPACING.md,
-      borderRadius: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    cancelBtnText: {
-      color: COLORS.textPrimary,
-      fontWeight: TYPOGRAPHY.weight.bold,
-      fontSize: TYPOGRAPHY.size.sm,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: SPACING.lg,
-    },
-    emptyIcon: {
-      fontSize: 64,
-      marginBottom: SPACING.md,
-    },
-    emptyText: {
-      fontSize: TYPOGRAPHY.size.md,
-      color: COLORS.textSecondary,
-      textAlign: 'center',
-    },
-    infoBox: {
-      backgroundColor: COLORS.primary + '10',
-      borderLeftWidth: 4,
-      borderLeftColor: COLORS.primary,
-      paddingHorizontal: SPACING.md,
-      paddingVertical: SPACING.md,
-      borderRadius: 8,
-      marginBottom: SPACING.md,
-    },
-    infoText: {
-      fontSize: TYPOGRAPHY.size.xs,
-      color: COLORS.primary,
-      fontWeight: TYPOGRAPHY.weight.semibold,
-    },
-  })
-
-  if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      </SafeAreaView>
-    )
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.title}>💳 Métodos de Pago</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            setCardNumber('')
-            setCardName('')
-            setCardExpiry('')
-            setCardCVV('')
-            setPaymentType('credit_card')
-            setShowForm(!showForm)
-          }}
-        >
-          <Icon name="CirclePlus" size={20} color={COLORS.textInverse} />
-          <Text style={styles.addBtnText}>
-            {showForm ? 'Cancelar' : 'Agregar tarjeta'}
-          </Text>
-        </TouchableOpacity>
+        <Text style={styles.title}>Cómo pagas</Text>
+        <View style={styles.backBtnPlaceholder} />
       </View>
 
-      {showForm && (
-        <View style={styles.form}>
-          <Text style={styles.formTitle}>Nueva tarjeta</Text>
+      <View style={styles.notice}>
+        <Icon name="Wallet" size={18} color={COLORS.primary} />
+        <Text style={styles.noticeText}>
+          El pago de tu viaje va directo al conductor. Trive no cobra ni retiene tu pago.
+        </Text>
+      </View>
 
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>
-              🔒 Tus datos de pago están encriptados y seguros
-            </Text>
-          </View>
+      <Text style={styles.sectionLabel}>Preferencia para tus reservas</Text>
 
-          <Text style={{ ...TYPOGRAPHY.label, marginBottom: SPACING.sm }}>Tipo de tarjeta</Text>
-          <View style={styles.typeSelector}>
-            {[
-              { label: 'Crédito', value: 'credit_card' as const },
-              { label: 'Débito', value: 'debit_card' as const },
-            ].map((type) => (
-              <TouchableOpacity
-                key={type.value}
-                style={[styles.typeOption, paymentType === type.value && styles.typeOptionActive]}
-                onPress={() => setPaymentType(type.value)}
-              >
-                <Text
-                  style={[
-                    styles.typeOptionText,
-                    paymentType === type.value && styles.typeOptionTextActive,
-                  ]}
-                >
-                  {type.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre titular"
-            placeholderTextColor={COLORS.textTertiary}
-            value={cardName}
-            onChangeText={setCardName}
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Número de tarjeta"
-            placeholderTextColor={COLORS.textTertiary}
-            value={formatCardNumber(cardNumber)}
-            onChangeText={(text) => setCardNumber(text.replace(/\D/g, ''))}
-            keyboardType="numeric"
-            maxLength={19}
-          />
-
-          <View style={styles.row}>
-            <TextInput
-              style={[styles.input, { flex: 1 }]}
-              placeholder="MM/YY"
-              placeholderTextColor={COLORS.textTertiary}
-              value={cardExpiry}
-              onChangeText={setCardExpiry}
-              keyboardType="numeric"
-              maxLength={5}
-            />
-
-            <TextInput
-              style={[styles.input, { flex: 0.8 }]}
-              placeholder="CVV"
-              placeholderTextColor={COLORS.textTertiary}
-              value={cardCVV}
-              onChangeText={setCardCVV}
-              keyboardType="numeric"
-              maxLength={4}
-              secureTextEntry
-            />
-          </View>
-
-          <View style={styles.buttonGroup}>
+      <View style={styles.list}>
+        {OPTIONS.map((option) => {
+          const isSelected = selected === option.value
+          return (
             <TouchableOpacity
-              style={styles.cancelBtn}
-              onPress={() => {
-                setShowForm(false)
-              }}
+              key={option.value}
+              style={[styles.option, isSelected && styles.optionSelected]}
+              onPress={() => choose(option.value)}
+              activeOpacity={0.85}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: isSelected }}
             >
-              <Text style={styles.cancelBtnText}>Cancelar</Text>
+              <View style={[styles.optionIcon, isSelected && styles.optionIconSelected]}>
+                <Icon name={option.icon} size={20} color={isSelected ? COLORS.white : COLORS.primary} />
+              </View>
+              <View style={styles.optionText}>
+                <Text style={styles.optionTitle}>{option.title}</Text>
+                <Text style={styles.optionSub}>{option.sub}</Text>
+              </View>
+              <Icon
+                name={isSelected ? 'CircleCheck' : 'Circle'}
+                size={22}
+                color={isSelected ? COLORS.primary : COLORS.textTertiary}
+              />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.saveBtn}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color={COLORS.textInverse} />
-              ) : (
-                <Text style={styles.saveBtnText}>Agregar</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
+          )
+        })}
+      </View>
 
-      {methods.length > 0 ? (
-        <FlatList
-          data={methods}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          renderItem={({ item }) => (
-            <View style={styles.methodCard}>
-              <View style={styles.methodHeader}>
-                <Text style={styles.methodLabel}>{item.label}</Text>
-                {item.is_default && (
-                  <View style={styles.defaultBadge}>
-                    <Text style={styles.badgeText}>PREDETERMINADA</Text>
-                  </View>
-                )}
-              </View>
-
-              <View style={styles.methodInfo}>
-                <Icon name="CreditCard" size={16} color={COLORS.primary} />
-                <Text style={styles.methodType}>
-                  {item.type === 'credit_card' ? 'Tarjeta de Crédito' : 'Tarjeta de Débito'}
-                </Text>
-                <Text style={styles.lastFour}>•••• {item.last_four}</Text>
-              </View>
-
-              <View style={styles.actions}>
-                {!item.is_default && (
-                  <TouchableOpacity
-                    style={[styles.actionBtn, styles.defaultBtn]}
-                    onPress={() => setAsDefault(item.id)}
-                  >
-                    <Icon name="CircleCheck" size={16} color={COLORS.success} />
-                    <Text style={[styles.actionBtnText, styles.defaultBtnText]}>
-                      Predeterminada
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  style={[styles.actionBtn, styles.deleteBtn]}
-                  onPress={() => handleDelete(item.id)}
-                >
-                  <Icon name="Trash2" size={16} color={COLORS.error} />
-                  <Text style={[styles.actionBtnText, styles.deleteBtnText]}>
-                    Eliminar
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
-        />
-      ) : (
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyIcon}>💳</Text>
-          <Text style={styles.emptyText}>
-            No tienes métodos de pago{'\n'}
-            Agrega una tarjeta para comenzar
-          </Text>
-        </View>
-      )}
+      <Text style={styles.footnote}>
+        Puedes cambiar tu forma de pago en cada reserva. Esta preferencia solo se usa para preseleccionarla.
+      </Text>
     </SafeAreaView>
   )
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  notice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.primaryTint,
+  },
+  noticeText: { ...TYPOGRAPHY.labelMedium, flex: 1, color: COLORS.primaryDark },
+
+  sectionLabel: {
+    ...TYPOGRAPHY.label,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.sm,
+    marginHorizontal: SPACING.lg,
+  },
+
+  list: { marginHorizontal: SPACING.lg, gap: SPACING.md },
+  option: {
+    ...SHADOWS.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1.5,
+    borderColor: COLORS.white,
+    backgroundColor: COLORS.white,
+  },
+  optionSelected: { borderColor: COLORS.primary },
+  optionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  optionIconSelected: { backgroundColor: COLORS.primary },
+  optionText: { flex: 1 },
+  optionTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary },
+  optionSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
+
+  footnote: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
+    marginHorizontal: SPACING.xl,
+    marginTop: SPACING.lg,
+    textAlign: 'center',
+  },
+})

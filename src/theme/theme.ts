@@ -11,6 +11,7 @@ export const COLORS = {
 
   // Secundarios - Azul Cálido/Celeste
   accent: '#2E7DC0', // Azul cálido para acentos y complementos
+  whatsapp: '#25D366', // Color de marca de WhatsApp
   accentLight: '#5A9FD4', // Azul muy claro para backgrounds
   accentDark: '#1E5FA0', // Azul oscuro alternativo
 
@@ -172,6 +173,7 @@ export const TYPOGRAPHY = {
     medium: '500' as any,
     semibold: '600' as any,
     bold: '700' as any,
+    extrabold: '800' as const,
   },
   bold: {
     fontWeight: '700' as const,

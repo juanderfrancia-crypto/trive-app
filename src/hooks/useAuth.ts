@@ -369,21 +369,19 @@ export const useAuth = () => {
     email: string,
     password: string,
     name: string,
-    phone: string,
     referredBy?: string
   ) => {
     try {
       setError(null);
       setLoading(true);
 
-      // Create auth user - Supabase automáticamente envía email de verificación
+      // El teléfono no se recibe aquí: se verifica por OTP después (VerifyPhone).
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
-            phone,
           },
         },
       });
@@ -397,7 +395,6 @@ export const useAuth = () => {
           id: authData.user.id,
           name,
           email,
-          phone,
           role: 'passenger',
         }
         if (referredBy?.trim()) {

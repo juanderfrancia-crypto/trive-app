@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Icon, { type IconName } from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { supabase } from '../services/supabase'
@@ -18,7 +19,6 @@ interface Activity {
 }
 
 export default function RecentActivityScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
   const { user } = useAuth()
   const [activities, setActivities] = useState<Activity[]>([])
@@ -44,7 +44,7 @@ export default function RecentActivityScreen() {
         .limit(50)
 
       if (error) throw error
-      
+
       setActivities(
         data?.map((item: any) => ({
           id: item.id,
@@ -77,18 +77,18 @@ export default function RecentActivityScreen() {
     if (diffMins < 60) return `Hace ${diffMins} minuto${diffMins > 1 ? 's' : ''}`
     if (diffHours < 24) return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`
     if (diffDays < 7) return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`
-    
+
     return date.toLocaleDateString('es-ES', { month: 'short', day: 'numeric' })
   }
 
-  const getActivityIcon = (action: string) => {
-    if (action.includes('Inicio de sesión')) return 'log-in-outline'
-    if (action.includes('Contraseña')) return 'lock-closed-outline'
-    if (action.includes('fallido')) return 'alert-outline'
-    if (action.includes('Correo')) return 'mail-outline'
-    if (action.includes('Perfil')) return 'person-outline'
-    if (action.includes('Documentos')) return 'document-outline'
-    return 'notifications-outline'
+  const getActivityIcon = (action: string): IconName => {
+    if (action.includes('Inicio de sesión')) return 'LogIn'
+    if (action.includes('Contraseña')) return 'Lock'
+    if (action.includes('fallido')) return 'TriangleAlert'
+    if (action.includes('Correo')) return 'Mail'
+    if (action.includes('Perfil')) return 'User'
+    if (action.includes('Documentos')) return 'FileText'
+    return 'Bell'
   }
 
   const getActivityColor = (status: 'exitoso' | 'fallido') => {
@@ -96,215 +96,133 @@ export default function RecentActivityScreen() {
   }
 
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Actividad Reciente</Text>
-          <View style={{ width: 28 }} />
-        </View>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Actividad reciente</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         {loading ? (
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: SPACING.xxxl }}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-          </View>
+          <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
         ) : activities.length > 0 ? (
           <>
-            <View style={styles.section}>
-              <Text style={styles.sectionSubtitle}>
-                {activities.length} actividad{activities.length > 1 ? 'es' : ''} registrada{activities.length > 1 ? 's' : ''}
-              </Text>
+            <Text style={styles.sectionSubtitle}>
+              {activities.length} actividad{activities.length > 1 ? 'es' : ''} registrada{activities.length > 1 ? 's' : ''}
+            </Text>
 
-              {activities.map((activity, index) => (
+            {activities.map((activity) => {
+              const color = getActivityColor(activity.status)
+              return (
                 <View key={activity.id} style={styles.activityCard}>
-                  <View style={styles.cardContent}>
-                    <View
-                      style={[
-                        styles.iconContainer,
-                        { backgroundColor: getActivityColor(activity.status) + '15' },
-                      ]}
-                    >
-                      <Icon
-                        name={getActivityIcon(activity.action) as any}
-                        size={20}
-                        color={getActivityColor(activity.status)}
-                      />
-                    </View>
+                  <View style={[styles.iconContainer, { backgroundColor: color + '15' }]}>
+                    <Icon name={getActivityIcon(activity.action)} size={20} color={color} />
+                  </View>
 
-                    <View style={styles.activityInfo}>
-                      <Text style={styles.actionText}>{activity.action}</Text>
-                      <Text style={styles.deviceText}>{activity.device}</Text>
-                      <View style={styles.locationRow}>
-                        <Icon name="MapPin" size={14} color={COLORS.textTertiary} />
-                        <Text style={styles.locationText}>{activity.location}</Text>
-                      </View>
-                    </View>
-
-                    <View style={styles.rightContent}>
-                      <View
-                        style={[
-                          styles.statusBadge,
-                          { backgroundColor: getActivityColor(activity.status) + '20' },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.statusText,
-                            { color: getActivityColor(activity.status) },
-                          ]}
-                        >
-                          {activity.status === 'exitoso' ? '✓' : '!'}
-                        </Text>
-                      </View>
-                      <Text style={styles.timeText}>{formatTime(activity.created_at)}</Text>
+                  <View style={styles.activityInfo}>
+                    <Text style={styles.actionText}>{activity.action}</Text>
+                    <Text style={styles.deviceText}>{activity.device}</Text>
+                    <View style={styles.locationRow}>
+                      <Icon name="MapPin" size={14} color={COLORS.textTertiary} />
+                      <Text style={styles.locationText}>{activity.location}</Text>
                     </View>
                   </View>
 
-                  {index !== activities.length - 1 && <View style={styles.divider} />}
+                  <View style={styles.rightContent}>
+                    <Icon name={activity.status === 'exitoso' ? 'CircleCheck' : 'CircleX'} size={18} color={color} />
+                    <Text style={styles.timeText}>{formatTime(activity.created_at)}</Text>
+                  </View>
                 </View>
-              ))}
-            </View>
+              )
+            })}
 
             <View style={styles.securityNote}>
-              <Icon name="Info" size={20} color={COLORS.primary} />
+              <Icon name="Info" size={18} color={COLORS.primary} />
               <Text style={styles.noteText}>
-                Si ve actividad inusual, cambie su contraseña inmediatamente
+                Si ves actividad inusual, cambia tu contraseña de inmediato.
               </Text>
             </View>
           </>
         ) : (
-          <View style={styles.emptyContainer}>
-            <Icon name="CircleCheck" size={64} color={COLORS.primary} style={{ marginBottom: SPACING.md }} />
-            <Text style={styles.emptyText}>No hay actividad registrada</Text>
+          <View style={styles.empty}>
+            <Illustration name="noData" width={170} />
+            <Text style={styles.emptyTitle}>Sin actividad registrada</Text>
+            <Text style={styles.emptyText}>Aquí verás los inicios de sesión y cambios de tu cuenta.</Text>
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  },
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
-  sectionSubtitle: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.lg,
-  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  loader: { marginTop: SPACING.xxl },
+  sectionSubtitle: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginBottom: SPACING.md },
+
   activityCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    marginBottom: SPACING.md,
     ...SHADOWS.sm,
-  },
-  cardContent: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
     gap: SPACING.md,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.white,
   },
   iconContainer: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
   },
-  activityInfo: {
-    flex: 1,
-    gap: SPACING.xs,
-  },
-  actionText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
-    fontWeight: '600',
-  },
-  deviceText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  locationText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textTertiary,
-  },
-  rightContent: {
-    alignItems: 'flex-end',
-    gap: SPACING.xs,
-  },
-  statusBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: RADIUS.md,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusText: {
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  timeText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: COLORS.borderLight,
-    marginHorizontal: SPACING.lg,
-  },
+  activityInfo: { flex: 1, gap: 2 },
+  actionText: { ...TYPOGRAPHY.bodyMedium, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.bold },
+  deviceText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
+  locationText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
+  rightContent: { alignItems: 'flex-end', gap: SPACING.xs },
+  timeText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+
   securityNote: {
     flexDirection: 'row',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    backgroundColor: COLORS.primary + '10',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
     borderRadius: RADIUS.lg,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
+    backgroundColor: COLORS.primaryTint,
   },
-  noteText: {
-    flex: 1,
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: SPACING.xxxl,
-  },
-  emptyText: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textSecondary,
-  },
+  noteText: { ...TYPOGRAPHY.caption, flex: 1, color: COLORS.primaryDark, lineHeight: 18 },
+
+  empty: { alignItems: 'center', gap: SPACING.sm, marginTop: SPACING.xl },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
 })

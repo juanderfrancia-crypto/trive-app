@@ -1,36 +1,35 @@
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, FlatList } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
-import { useLayoutEffect, useState } from 'react'
+import { useState } from 'react'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
 import { useCancellationHistory } from '../hooks/useCancellationHistory'
 import { formatCOP } from '../utils/currency'
 
-interface CancellationRecord {
-  id: string
-  route_id: string
-  cancelled_at: string
-  cancellation_reason: string
-  refund_amount: number
-  refund_percentage: number
-  origin: string
-  destination: string
+type RefundFilter = 'all' | 'full' | 'partial' | 'none'
+
+const FILTERS: { value: RefundFilter; label: string }[] = [
+  { value: 'all', label: 'Todas' },
+  { value: 'full', label: 'Reembolso total' },
+  { value: 'partial', label: 'Parcial' },
+  { value: 'none', label: 'Sin reembolso' },
+]
+
+const refundColor = (percentage: number) => {
+  if (percentage === 100) return COLORS.success
+  if (percentage > 0) return COLORS.warningDark
+  return COLORS.error
 }
 
 export default function CancellationHistoryScreen() {
   const navigation = useNavigation()
   const { user: authUser } = useAuth()
   const { history, stats, loading } = useCancellationHistory(authUser?.id)
-  const [filterType, setFilterType] = useState<'all' | 'full' | 'partial' | 'none'>('all')
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerShown: false,
-    })
-  }, [navigation])
+  const [filterType, setFilterType] = useState<RefundFilter>('all')
 
   const filteredHistory = history.filter((item) => {
     if (filterType === 'all') return true
@@ -40,295 +39,173 @@ export default function CancellationHistoryScreen() {
     return true
   })
 
-  const getRefundBadgeColor = (percentage: number) => {
-    if (percentage === 100) return COLORS.success
-    if (percentage > 0) return COLORS.warning
-    return COLORS.error
-  }
-
-  const renderCancellationCard = ({ item }: { item: CancellationRecord }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={styles.routeInfo}>
-          <Text style={styles.origin}>{item.origin}</Text>
-          <Icon name="ArrowRight" size={16} color={COLORS.textTertiary} />
-          <Text style={styles.destination}>{item.destination}</Text>
-        </View>
-        <View
-          style={[
-            styles.refundBadge,
-            { backgroundColor: getRefundBadgeColor(item.refund_percentage) + '20' },
-          ]}
-        >
-          <Text style={[styles.refundText, { color: getRefundBadgeColor(item.refund_percentage) }]}>
-            {item.refund_percentage}%
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.reason}>{item.cancellation_reason}</Text>
-
-      <View style={styles.cardFooter}>
-        <View style={styles.dateContainer}>
-          <Icon name="Calendar" size={14} color={COLORS.textSecondary} />
-          <Text style={styles.date}>
-            {new Date(item.cancelled_at).toLocaleDateString('es-CO')}
-          </Text>
-        </View>
-        <Text style={styles.refundAmount}>{formatCOP(item.refund_amount)}</Text>
-      </View>
-    </View>
-  )
-
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Header */}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="ChevronLeft" size={24} color={COLORS.primary} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Historial de Cancelaciones</Text>
+        <Text style={styles.title}>Cancelaciones</Text>
+        <View style={styles.backBtnPlaceholder} />
       </View>
 
-      {/* Empty State */}
-      {history.length === 0 && !loading && (
-        <View style={styles.emptyContainer}>
-          <Icon name="CircleCheck" size={64} color={COLORS.success} />
+      {loading && <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />}
+
+      {!loading && history.length === 0 && (
+        <View style={styles.empty}>
+          <Illustration name="noData" width={170} />
           <Text style={styles.emptyTitle}>Sin cancelaciones</Text>
-          <Text style={styles.emptyText}>¡Excelente! No has cancelado viajes</Text>
+          <Text style={styles.emptyText}>Aquí verás tus cancelaciones y los reembolsos asociados.</Text>
         </View>
       )}
 
-      {/* Loading */}
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-        </View>
-      )}
-
-      {/* Stats & History */}
       {!loading && history.length > 0 && (
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {/* Stats Cards */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Total Cancelado</Text>
-              <Text style={styles.statValue}>{stats?.total_cancellations || 0}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Reembolsado</Text>
-              <Text style={styles.statValue}>{formatCOP(stats?.total_refunded || 0)}</Text>
-            </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statLabel}>Promedio</Text>
-              <Text style={styles.statValue}>{formatCOP(stats?.average_refund || 0)}</Text>
-            </View>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+          <View style={styles.statsRow}>
+            <StatCard label="Cancelaciones" value={String(stats?.total_cancellations || 0)} />
+            <StatCard label="Reembolsado" value={formatCOP(stats?.total_refunded || 0)} />
+            <StatCard label="Promedio" value={formatCOP(stats?.average_refund || 0)} />
           </View>
 
-          {/* Filter Buttons */}
-          <View style={styles.filterContainer}>
-            {(['all', 'full', 'partial', 'none'] as const).map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.filterBtn, filterType === type && styles.filterBtnActive]}
-                onPress={() => setFilterType(type)}
-              >
-                <Text
-                  style={[
-                    styles.filterBtnText,
-                    filterType === type && styles.filterBtnTextActive,
-                  ]}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            {FILTERS.map((filter) => {
+              const active = filterType === filter.value
+              return (
+                <TouchableOpacity
+                  key={filter.value}
+                  style={[styles.filter, active && styles.filterActive]}
+                  onPress={() => setFilterType(filter.value)}
+                  activeOpacity={0.85}
                 >
-                  {type === 'all' && 'Todas'}
-                  {type === 'full' && '100%'}
-                  {type === 'partial' && 'Parcial'}
-                  {type === 'none' && 'Sin refund'}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+                  <Text style={[styles.filterText, active && styles.filterTextActive]}>{filter.label}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </ScrollView>
 
-          {/* History List */}
-          <View style={styles.listContainer}>
-            <FlatList
-              data={filteredHistory}
-              renderItem={renderCancellationCard}
-              keyExtractor={(item) => item.id}
-              scrollEnabled={false}
-            />
-          </View>
+          {filteredHistory.map((item) => {
+            const color = refundColor(item.refund_percentage)
+            return (
+              <View key={item.id} style={styles.card}>
+                <View style={styles.cardTop}>
+                  <View style={styles.routeText}>
+                    <Text style={styles.origin} numberOfLines={1}>{item.origin}</Text>
+                    <Icon name="ArrowRight" size={14} color={COLORS.textTertiary} />
+                    <Text style={styles.destination} numberOfLines={1}>{item.destination}</Text>
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: color + '18' }]}>
+                    <Text style={[styles.badgeText, { color }]}>{item.refund_percentage}%</Text>
+                  </View>
+                </View>
+
+                {!!item.cancellation_reason && <Text style={styles.reason}>{item.cancellation_reason}</Text>}
+
+                <View style={styles.cardFooter}>
+                  <View style={styles.dateRow}>
+                    <Icon name="Calendar" size={14} color={COLORS.textTertiary} />
+                    <Text style={styles.date}>{new Date(item.cancelled_at).toLocaleDateString('es-CO')}</Text>
+                  </View>
+                  <Text style={styles.amount}>{formatCOP(item.refund_amount)}</Text>
+                </View>
+              </View>
+            )
+          })}
         </ScrollView>
       )}
     </SafeAreaView>
   )
 }
 
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.statCard}>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statValue}>{value}</Text>
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceHover,
   },
-  headerTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.textPrimary,
-    marginLeft: SPACING.md,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.textPrimary,
-    marginTop: SPACING.md,
-  },
-  emptyText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.xl,
-  },
-  loadingContainer: {
-    flex: 1,
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.lg,
-    gap: SPACING.md,
-  },
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  loader: { marginTop: SPACING.xxl },
+  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl, gap: SPACING.sm },
+  emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.sm },
+  emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  statsRow: { flexDirection: 'row', gap: SPACING.sm, marginBottom: SPACING.lg },
   statCard: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    alignItems: 'center',
     ...SHADOWS.sm,
-  },
-  statLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  statValue: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.primary,
-  },
-  filterContainer: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.md,
-    gap: SPACING.sm,
-  },
-  filterBtn: {
     flex: 1,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceHover,
-    alignItems: 'center',
-  },
-  filterBtnActive: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
-  },
-  filterBtnText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textSecondary,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-  },
-  filterBtnTextActive: {
-    color: COLORS.textInverse,
-  },
-  listContainer: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xl,
-  },
-  card: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
     padding: SPACING.md,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 4,
-    borderLeftColor: COLORS.error,
-    ...SHADOWS.sm,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  routeInfo: {
-    flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
   },
-  origin: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textPrimary,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    flex: 1,
+  statLabel: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, textAlign: 'center' },
+  statValue: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.primary, textAlign: 'center' },
+
+  filterRow: { gap: SPACING.sm, paddingBottom: SPACING.lg },
+  filter: {
+    paddingHorizontal: SPACING.lg,
+    height: 38,
+    justifyContent: 'center',
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
   },
-  destination: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textPrimary,
-    fontWeight: TYPOGRAPHY.weight.semibold,
-    flex: 1,
+  filterActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  filterText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
+  filterTextActive: { color: COLORS.white },
+
+  card: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
   },
-  refundBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-  },
-  refundText: {
-    fontSize: TYPOGRAPHY.size.xs,
-    fontWeight: TYPOGRAPHY.weight.bold,
-  },
-  reason: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
-    fontStyle: 'italic',
-  },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm },
+  routeText: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  origin: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, flexShrink: 1 },
+  destination: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, flexShrink: 1 },
+  badge: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.sm },
+  badgeText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.extrabold },
+  reason: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, fontStyle: 'italic' },
   cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: SPACING.sm,
     borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceHover,
+    borderTopColor: COLORS.borderLight,
   },
-  dateContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  date: {
-    fontSize: TYPOGRAPHY.size.xs,
-    color: COLORS.textSecondary,
-  },
-  refundAmount: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.error,
-  },
+  dateRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  date: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+  amount: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
 })

@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import TabNavigator from './TabNavigator'
 import LoginPhoneScreen from '../screens/LoginPhoneScreen'
-import LoginEmailScreen from '../screens/LoginEmailScreen'
+import VerifyPhoneScreen from '../screens/VerifyPhoneScreen'
 import RegisterScreen from '../screens/RegisterScreen'
 import VerifyEmailScreen from '../screens/VerifyEmailScreen'
 import SeatSelectionScreen from '../screens/SeatSelectionScreen'
@@ -38,7 +38,6 @@ import TermsOfServiceScreen from '../screens/TermsOfServiceScreen'
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen'
 import SupportScreen from '../screens/SupportScreen'
 import HelpScreen from '../screens/HelpScreen'
-import LanguageScreen from '../screens/LanguageScreen'
 import LearningCenterScreen from '../screens/LearningCenterScreen'
 import BugReportScreen from '../screens/BugReportScreen'
 import AvailableRidesScreen from '../screens/AvailableRidesScreen'
@@ -130,7 +129,6 @@ export default function AppNavigator() {
   ) : !isUserAuthenticated ? (
     <>
       <Stack.Screen name="Login" component={LoginPhoneScreen} />
-      <Stack.Screen name="LoginEmail" component={LoginEmailScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ headerShown: false }} />
@@ -186,7 +184,6 @@ export default function AppNavigator() {
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
       <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen name="Language" component={LanguageScreen} />
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="LearningCenter" component={LearningCenterScreen} />
       <Stack.Screen name="BugReport" component={BugReportScreen} />
@@ -199,9 +196,15 @@ export default function AppNavigator() {
     </>
   ) : null
 
+  const needsPhoneVerification = isUserAuthenticated && !session?.user?.phone
+
   return (
     <NavigationContainer>
-      {isUserAuthenticated ? (
+      {needsPhoneVerification ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="VerifyPhone" component={VerifyPhoneScreen} />
+        </Stack.Navigator>
+      ) : isUserAuthenticated ? (
         <NotificationsProvider userId={session?.user?.id}>
           <Stack.Navigator screenOptions={{ headerShown: false }}>{authStack}</Stack.Navigator>
         </NotificationsProvider>

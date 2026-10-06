@@ -38,7 +38,7 @@ const STATUS_INFO: Record<string, { label: string; color: string; icon: string }
   verified: { label: 'Verificado',  color: COLORS.success,   icon: 'checkmark-circle' },
   rejected: { label: 'Rechazado',   color: COLORS.error,     icon: 'close-circle' },
   expired:  { label: 'Vencido',     color: COLORS.error,     icon: 'alert-circle' },
-  verifying:{ label: 'Pendiente',   color: COLORS.warning,   icon: 'time-outline' },
+  verifying:{ label: 'Pendiente',   color: COLORS.warning,   icon: 'Clock' },
 }
 
 const isPdf = (doc: DocumentWithDriver) =>

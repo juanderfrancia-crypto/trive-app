@@ -5,6 +5,7 @@ import Icon, { type IconName } from '../../components/Icon'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import { getExpiryStatus, DOCUMENT_LABELS } from '../../utils/documentHelpers'
 import Illustration from '../../components/illustrations/Illustration'
+import { APP_VERSION_LABEL } from '../../config/appInfo'
 
 const REQUIRED_DOCS = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica', 'antecedentes']
 
@@ -198,9 +199,9 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
 
       <Text style={styles.section}>Mi trabajo</Text>
       <View style={styles.list}>
-        <ListRow icon="Banknote" title="Ganancias del mes" value={`$${p.monthEarnings.toLocaleString('es-CO')}`} onPress={p.onOpenEarnings} />
-        <ListRow icon="Route" title="Mis rutas" value={`${p.recentRoutes.length}`} onPress={p.onOpenTrips} />
-        <ListRow icon="Gauge" title="Panel del conductor" onPress={p.onOpenPanel} />
+        <ListRow icon="TrendingUp" title="Ganancias del mes" value={`$${p.monthEarnings.toLocaleString('es-CO')}`} onPress={p.onOpenEarnings} />
+        <ListRow icon="Route" title="Mis rutas" subtitle="Rutas programadas, en curso y completadas" value={`${p.recentRoutes.length}`} onPress={p.onOpenTrips} />
+        <ListRow icon="LayoutDashboard" title="Mi panel" subtitle="Reservas, pasajeros y estado de tus rutas" onPress={p.onOpenPanel} />
       </View>
 
       <Text style={styles.section}>Cuenta</Text>
@@ -212,7 +213,7 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
         <ListRow icon="LogOut" title="Cerrar sesión" danger onPress={p.onLogout} />
       </View>
 
-      <Text style={styles.footer}>Trive · versión 1.0.0</Text>
+      <Text style={styles.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
     </ScrollView>
   )
 }

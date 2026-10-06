@@ -57,7 +57,7 @@ export default function AirportHubScreen() {
   const subtitle = showHistory
     ? 'Viajes completados'
     : isDriver
-      ? 'Viajes especiales que te piden'
+      ? 'Rutas personalizadas que te piden'
       : 'Viajes privados al aeropuerto'
 
   return (

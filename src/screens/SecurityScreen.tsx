@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
-import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Icon from '../components/Icon'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -15,9 +15,7 @@ import {
 } from '../services/biometricAuth'
 
 export default function SecurityScreen() {
-  const insets = useSafeAreaInsets()
   const navigation = useNavigation()
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
   const [biometricEnabled, setBiometricEnabled] = useState(false)
   const [biometricAvailable, setBiometricAvailable] = useState(true)
 
@@ -36,20 +34,6 @@ export default function SecurityScreen() {
 
     loadBiometricState()
   }, [])
-
-  const handleChangePassword = () => {
-    navigation.navigate('ChangePassword' as never)
-  }
-
-  const handle2FA = () => {
-    setTwoFactorEnabled(!twoFactorEnabled)
-    Alert.alert(
-      'Autenticación de Dos Factores',
-      twoFactorEnabled
-        ? 'Autenticación de dos factores desactivada'
-        : 'Autenticación de dos factores activada. Recibirás un código cada vez que inicies sesión.'
-    )
-  }
 
   const handleBiometric = async () => {
     if (biometricEnabled) {
@@ -87,297 +71,192 @@ export default function SecurityScreen() {
     }
   }
 
-  const handleSessionHistory = () => {
-    navigation.navigate('SessionHistory' as never)
-  }
-
-  const handleRecoveryAccount = () => {
-    navigation.navigate('RecoveryAccount' as never)
-  }
-
-  const handleRecentActivity = () => {
-    navigation.navigate('RecentActivity' as never)
-  }
-
-  const handleBlockAccount = () => {
-    Alert.alert(
-      'Bloquear Cuenta',
-      '¿Estás seguro de que deseas bloquear tu cuenta temporalmente? No podrás acceder hasta desbloquearlo.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Bloquear',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert('Cuenta Bloqueada', 'Tu cuenta ha sido bloqueada temporalmente.')
-          },
-        },
-      ]
-    )
-  }
-
   return (
-    <View style={[styles.safeContainer, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Seguridad</Text>
-          <View style={{ width: 28 }} />
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Seguridad</Text>
+        <View style={styles.backBtnPlaceholder} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
+        <View style={styles.hero}>
+          <Illustration name="mobileEncryption" width={170} />
         </View>
-        <View style={{ alignItems: 'center' }}>
-          <Illustration name="mobileEncryption" width={180} />
-        </View>
 
-        {/* 1. Cambiar Contraseña */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Acceso</Text>
-
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleChangePassword}
-            >
-              <View style={styles.menuIcon}>
-                <Icon name="Lock" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Cambiar Contraseña</Text>
-                <Text style={styles.menuSubtext}>Actualiza tu contraseña regularmente</Text>
-              </View>
-              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* 2. Verificación de Dos Factores */}
-          <View style={styles.menuCard}>
-            <View style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <Icon name="ShieldCheck" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Autenticación de Dos Factores</Text>
-                <Text style={styles.menuSubtext}>Protección adicional en tu cuenta</Text>
-              </View>
-              <Switch
-                value={twoFactorEnabled}
-                onValueChange={handle2FA}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
-                thumbColor={twoFactorEnabled ? COLORS.primary : COLORS.textTertiary}
-              />
-            </View>
-          </View>
-
-          {/* Biometric Authentication */}
-          <View style={styles.menuCard}>
-            <View style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <Icon name="Fingerprint" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Autenticación Biométrica</Text>
-                <Text style={styles.menuSubtext}>Huella digital o reconocimiento facial</Text>
-              </View>
+        <Section title="Acceso">
+          <Row
+            icon="Lock"
+            title="Cambiar contraseña"
+            sub="Actualiza tu contraseña"
+            onPress={() => navigation.navigate('ChangePassword' as never)}
+          />
+          <Divider />
+          <Row
+            icon="Mail"
+            title="Recuperar contraseña"
+            sub="Te enviamos un enlace a tu correo"
+            onPress={() => navigation.navigate('RecoveryAccount' as never)}
+          />
+          <Divider />
+          <Row
+            icon="Fingerprint"
+            title="Acceso biométrico"
+            sub="Huella digital o reconocimiento facial"
+            trailing={
               <Switch
                 value={biometricEnabled}
                 onValueChange={handleBiometric}
                 disabled={!biometricAvailable}
-                trackColor={{ false: COLORS.borderLight, true: COLORS.primary + '50' }}
+                trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
                 thumbColor={biometricEnabled ? COLORS.primary : COLORS.textTertiary}
               />
-            </View>
-          </View>
-        </View>
+            }
+          />
+        </Section>
 
-        {/* 3. Historial de Sesiones */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sesiones</Text>
+        <Section title="Sesiones">
+          <Row
+            icon="Smartphone"
+            title="Dispositivos conectados"
+            sub="Sesiones activas en tu cuenta"
+            onPress={() => navigation.navigate('SessionHistory' as never)}
+          />
+        </Section>
 
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleSessionHistory}
-            >
-              <View style={styles.menuIcon}>
-                <Icon name="Smartphone" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Dispositivos Conectados</Text>
-                <Text style={styles.menuSubtext}>Ver sesiones activas</Text>
-              </View>
-              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
+        <Section title="Monitoreo">
+          <Row
+            icon="Clock"
+            title="Actividad reciente"
+            sub="Últimos inicios de sesión y cambios"
+            onPress={() => navigation.navigate('RecentActivity' as never)}
+          />
+        </Section>
 
-        {/* 4. Recuperación de Cuenta */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Recuperación</Text>
-
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleRecoveryAccount}
-            >
-              <View style={styles.menuIcon}>
-                <Icon name="Mail" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Correo de Recuperación</Text>
-                <Text style={styles.menuSubtext}>para recuperar tu cuenta</Text>
-              </View>
-              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 5. Actividad Reciente */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Monitoreo</Text>
-
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={styles.menuItem}
-              onPress={handleRecentActivity}
-            >
-              <View style={styles.menuIcon}>
-                <Icon name="Clock" size={20} color={COLORS.primary} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={styles.menuText}>Actividad Reciente</Text>
-                <Text style={styles.menuSubtext}>Últimos inicios de sesión</Text>
-              </View>
-              <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 6. Bloqueo Temporal */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Cuenta</Text>
-
-          <View style={styles.menuCard}>
-            <TouchableOpacity
-              style={[styles.menuItem, styles.dangerItem]}
-              onPress={handleBlockAccount}
-            >
-              <View style={[styles.menuIcon, styles.dangerIcon]}>
-                <Icon name="LockOpen" size={20} color={COLORS.error} />
-              </View>
-              <View style={styles.menuContent}>
-                <Text style={[styles.menuText, styles.dangerText]}>Bloquear Cuenta</Text>
-                <Text style={[styles.menuSubtext, styles.dangerSubtext]}>Deshabilitar acceso temporal</Text>
-              </View>
-              <Icon name="ChevronRight" size={20} color={COLORS.error} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Si experimentas actividad sospechosa, cambia tu contraseña inmediatamente
-          </Text>
-        </View>
+        <Text style={styles.footer}>
+          Si notas actividad sospechosa, cambia tu contraseña de inmediato.
+        </Text>
       </ScrollView>
+    </SafeAreaView>
+  )
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.group}>{children}</View>
     </View>
   )
 }
 
+function Row({ icon, title, sub, onPress, trailing }: {
+  icon: IconName
+  title: string
+  sub: string
+  onPress?: () => void
+  trailing?: React.ReactNode
+}) {
+  const content = (
+    <>
+      <View style={styles.rowIcon}>
+        <Icon name={icon} size={20} color={COLORS.primary} />
+      </View>
+      <View style={styles.rowText}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowSub}>{sub}</Text>
+      </View>
+      {trailing ?? <Icon name="ChevronRight" size={18} color={COLORS.textTertiary} />}
+    </>
+  )
+
+  if (!onPress) return <View style={styles.row}>{content}</View>
+  return (
+    <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
+      {content}
+    </TouchableOpacity>
+  )
+}
+
+function Divider() {
+  return <View style={styles.divider} />
+}
+
 const styles = StyleSheet.create({
-  safeContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  
-  // Header
+  safe: { flex: 1, backgroundColor: COLORS.background },
+
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  title: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.textPrimary,
-  },
-
-  // Sections
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.md,
-  },
-
-  // Menu Card
-  menuCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    overflow: 'hidden',
-    marginBottom: SPACING.md,
-    ...SHADOWS.md,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.lg,
-  },
-  menuIcon: {
-    width: 44,
-    height: 44,
+  backBtn: {
+    ...SHADOWS.xs,
+    width: 40,
+    height: 40,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  menuContent: {
-    flex: 1,
+  backBtnPlaceholder: { width: 40, height: 40 },
+  title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+
+  content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
+  hero: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 200,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.primaryTint,
+    marginBottom: SPACING.md,
   },
-  menuText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    fontWeight: '500',
-    marginBottom: SPACING.xs,
-  },
-  menuSubtext: {
-    ...TYPOGRAPHY.bodySmall,
+
+  section: { marginTop: SPACING.lg },
+  sectionTitle: {
+    ...TYPOGRAPHY.label,
+    fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
+    marginBottom: SPACING.sm,
   },
-
-  // Danger State
-  dangerItem: {
-    backgroundColor: COLORS.error + '05',
+  group: {
+    ...SHADOWS.sm,
+    backgroundColor: COLORS.white,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
   },
-  dangerIcon: {
-    backgroundColor: COLORS.error + '15',
-  },
-  dangerText: {
-    color: COLORS.error,
-  },
-  dangerSubtext: {
-    color: COLORS.error + 'CC',
-  },
-
-  // Footer
-  footer: {
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    marginBottom: SPACING.xl,
+    paddingVertical: SPACING.md,
   },
-  footerText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.textSecondary,
+  rowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowText: { flex: 1 },
+  rowTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  rowSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
+  divider: { height: 1, backgroundColor: COLORS.borderLight, marginHorizontal: SPACING.lg },
+
+  footer: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
     textAlign: 'center',
+    marginTop: SPACING.xl,
   },
 })

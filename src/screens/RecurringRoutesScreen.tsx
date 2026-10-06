@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import Icon from '../components/Icon'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
+import Illustration from '../components/illustrations/Illustration'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -18,7 +19,7 @@ import {
   toLocalISO,
 } from './driver/PublishRouteFlow'
 
-const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Car' | 'Bus'> = {
+const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
   auto: 'Car',
   taxi: 'Car',
   busetica: 'Bus',
@@ -260,9 +261,7 @@ export default function RecurringRoutesScreen() {
       <ScrollView style={styles.flex} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {templates.length === 0 ? (
           <View style={styles.emptyWrap}>
-            <View style={styles.emptyIcon}>
-              <Icon name="Repeat" size={28} color={COLORS.primary} />
-            </View>
+            <Illustration name="schedule" width={170} />
             <Text style={styles.emptyTitle}>Sin rutas frecuentes</Text>
             <Text style={styles.emptySub}>Guarda tus rutas habituales y publícalas en un toque.</Text>
             <TouchableOpacity
@@ -279,7 +278,7 @@ export default function RecurringRoutesScreen() {
               <View style={styles.cardHeader}>
                 <View style={styles.cardIcon}>
                   <Icon
-                    name={TYPE_ICON[tpl.vehicle_type as VehicleTypeId] ?? 'car-outline'}
+                    name={TYPE_ICON[tpl.vehicle_type as VehicleTypeId] ?? 'Car'}
                     size={20}
                     color={COLORS.primary}
                   />
@@ -469,7 +468,7 @@ function FormField({ label, placeholder, value, onChangeText, keyboardType }: {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.white },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   center: { justifyContent: 'center', alignItems: 'center' },
   flex: { flex: 1 },
   scrollContent: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.xxl, paddingTop: SPACING.sm, gap: SPACING.md },
@@ -494,11 +493,7 @@ const styles = StyleSheet.create({
   costPill: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full, backgroundColor: COLORS.white },
   costPillText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.textSecondary },
 
-  emptyWrap: { alignItems: 'center', paddingTop: SPACING.xxxl, gap: SPACING.sm },
-  emptyIcon: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center', marginBottom: SPACING.sm,
-  },
+  emptyWrap: { alignItems: 'center', paddingTop: SPACING.xl, gap: SPACING.sm },
   emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '700' },
   emptySub: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center', marginBottom: SPACING.md },
 
