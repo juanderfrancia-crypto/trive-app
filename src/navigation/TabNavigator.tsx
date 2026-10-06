@@ -70,18 +70,17 @@ export default function TabNavigator() {
           }
 
           return (
-            <TabIcon name={iconName} size={size} focused={focused} color={focused ? COLORS.primary : color} />
+            <TabIcon name={iconName} size={size} focused={focused} color={focused ? COLORS.primary : COLORS.white} />
           )
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textSecondary,
+        tabBarActiveTintColor: COLORS.white,
+        tabBarInactiveTintColor: COLORS.white,
         tabBarContainerStyle: {
           backgroundColor: COLORS.white,
           borderTopWidth: 0,
         },
         tabBarBackground: () => (
           <View style={styles.barBackground}>
-            <View style={styles.barShadow} />
             <View style={styles.barSurface} />
           </View>
         ),
@@ -95,8 +94,8 @@ export default function TabNavigator() {
           borderRadius: RADIUS.xl,
           borderWidth: 1,
           borderTopWidth: 1,
-          borderColor: COLORS.border,
-          backgroundColor: COLORS.white,
+          borderColor: COLORS.white,
+          backgroundColor: COLORS.primary,
           elevation: 0,
           shadowOpacity: 0,
         },
@@ -105,8 +104,8 @@ export default function TabNavigator() {
           backgroundColor: COLORS.surface,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: '500',
+          fontSize: 11,
+          fontWeight: '600',
           marginTop: SPACING.xs - 2,
         },
         headerShown: false,
@@ -141,21 +140,12 @@ const styles = StyleSheet.create({
   barBackground: {
     flex: 1,
   },
-  barShadow: {
-    position: 'absolute',
-    top: SPACING.sm,
-    left: SPACING.md,
-    right: SPACING.md,
-    bottom: -SPACING.sm,
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.shadowBlue,
-  },
   barSurface: {
     flex: 1,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
+    borderColor: COLORS.white,
+    backgroundColor: COLORS.primary,
   },
   iconBox: {
     width: 56,
@@ -168,6 +158,6 @@ const styles = StyleSheet.create({
     width: 56,
     height: 32,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryTint,
+    backgroundColor: COLORS.white,
   },
 })
