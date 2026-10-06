@@ -12,12 +12,12 @@ export interface TravelPreferences {
   preferred_times?: string[]; // ["06:00", "07:00", etc]
   preferred_routes?: string[]; // ["Cali->Bogota", etc]
   avoid_routes?: string[];
-  smoking_allowed?: boolean;
-  music_preference?: 'none' | 'quiet' | 'moderate' | 'loud';
-  ac_preference?: 'cold' | 'cool' | 'normal' | 'warm';
-  luggage_restriction?: 'strict' | 'moderate' | 'flexible';
-  notifications_enabled?: boolean;
-  price_alert_threshold?: number;
+  smoking_allowed?: boolean | null;
+  music_preference?: string | null;
+  ac_preference?: string | null;
+  luggage_restriction?: string | null;
+  notifications_enabled?: boolean | null;
+  price_alert_threshold?: number | null;
 }
 
 export interface TripPreferences {
