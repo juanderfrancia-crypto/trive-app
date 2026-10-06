@@ -185,8 +185,8 @@ export default function WalletScreen() {
             <View style={s.infoText}>
               <Text style={s.infoTitle}>Comisión por viaje publicado</Text>
               <Text style={s.infoSub}>
-                Se descuentan $2.000 de tu saldo cada vez que publicas un viaje.
-                El saldo no se devuelve si el viaje no tiene pasajeros.
+                Se descuentan $2.000 de tu saldo cada vez que publicas una ruta.
+                Si cancelas antes de pulsar "Salir" y la ruta no tiene reservas confirmadas, se devuelven a tu saldo.
               </Text>
             </View>
           </View>

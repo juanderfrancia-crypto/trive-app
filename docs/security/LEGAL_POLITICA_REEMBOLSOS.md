@@ -15,11 +15,22 @@ Por eso los reembolsos de Trive son siempre sobre estas comisiones. Lo que el pa
 
 ## 2. Reembolsos de la tarifa de publicación ($2.000)
 
+El ancla de todas las reglas es el momento en que el conductor pulsa **"Salir"**. Antes de ese momento puede cancelar; después, no. Las salidas son de minutos: un carro puede publicarse y salir en pocos minutos, así que no se usan plazos de horas.
+
 | Caso | Resultado |
 |---|---|
-| El conductor cancela la ruta antes de la salida | 100% al saldo del conductor, automático |
-| La ruta se ejecuta | Sin reembolso |
 | Error de la app al publicar (cobro duplicado) | 100% al saldo, automático |
+| Cancela antes de "Salir", **sin reservas confirmadas** | 100% al saldo, automático. Límite de 3 devoluciones automáticas por conductor al día |
+| Cancela antes de "Salir", **con reservas confirmadas** | Sin reembolso. Los pasajeros quedan liberados y avisados |
+| Pulsa "Salir" | Sin reembolso. Se cierran reservas y cancelación |
+| Pasa la hora de salida sin pulsar "Salir" | Sin reembolso. La ruta se cierra sola y se avisa a los pasajeros reservados |
+| Emergencia documentada (accidente, salud, fuerza mayor) | Un administrador revisa el caso y puede aprobar el reembolso, con motivo registrado |
+
+Por qué estas reglas: la devolución automática solo aplica cuando nadie resulta afectado; no se puede recuperar el cobro atrayendo pasajeros y cancelando después; y no se puede reclamar devolución por no pulsar "Salir".
+
+Trive no controla cómo se opera el viaje fuera de la app ni garantiza la ocupación del vehículo. Los pasajeros que el conductor recoja fuera de la app no reservaron por Trive y no están cubiertos por esta política.
+
+**Estado de implementación:** la migración `20261008130000_route_fee_refunds.sql` implementa estas reglas, pero debe aplicarse y probarse con cuentas de prueba antes de salir a producción. El cierre automático de rutas vencidas requiere activar la extensión pg_cron en Supabase.
 
 ## 3. Reembolsos de la comisión de aceptación ($5.000)
 
@@ -43,7 +54,14 @@ Como Trive no retiene dinero, la app ayuda a resolverlo así:
 
 Trive no garantiza devoluciones de dinero entregado directamente entre usuarios. Sí garantiza que cualquier comisión cobrada por error se devuelve.
 
-## 5. Principios
+## 5. Saldo y cierre de cuenta
+
+- El saldo es de uso exclusivo dentro de Trive. No es retirable, no es transferible y no se convierte en efectivo.
+- Las recargas no son reembolsables.
+- Al cerrar la cuenta, el saldo que quede no se devuelve. Las únicas devoluciones son las de los casos de error de la app de las secciones 2 y 3, que se acreditan al saldo.
+- Los términos de uso (sección 7 y 8A) describen estas reglas.
+
+## 6. Principios
 
 - **Automático cuando es error nuestro.** Si la app falla, el saldo se devuelve sin que el usuario pida nada.
 - **Sin créditos extra.** No se regalan montos adicionales; el reembolso es el monto cobrado.

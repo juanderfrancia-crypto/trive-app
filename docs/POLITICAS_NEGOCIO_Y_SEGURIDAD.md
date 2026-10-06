@@ -14,7 +14,9 @@ Decisiones confirmadas por el dueño. Son reglas que el código debe cumplir.
 - **Pago anticipado:** el conductor recarga su billetera. Ninguna acción que cuesta dinero se ejecuta sin saldo suficiente.
 - **El saldo nunca puede ser negativo.** Se garantiza en la base de datos, no solo en la app.
 - **No hay límite de viajes por conductor.** Cada viaje se cobra; el volumen no se restringe.
-- **Recarga manual** por ahora: el conductor transfiere y un admin acredita el saldo. Wompi se integra solo cuando se decida cobrar en línea.
+- **Recarga en línea** desde el botón "Recargar" de la billetera, por Wompi (Nequi, PSE, tarjeta o Bancolombia). Un admin puede acreditar recargas manualmente con comprobante (`admin_credit_balance`).
+- **El saldo no es retirable, no es transferible y no es reembolsable.** Las recargas tampoco se devuelven.
+- **Cierre de cuenta:** el saldo que quede al cerrar la cuenta no se devuelve. Hoy `anonymize_account` no registra ese saldo en el libro; queda guardado en el perfil bloqueado. Pendiente: registrar un movimiento `account_closed` para que quede trazable.
 
 ## 2. Reembolsos
 
@@ -26,10 +28,15 @@ El detalle completo está en `docs/security/LEGAL_POLITICA_REEMBOLSOS.md`. Resum
 | $5.000 (aceptación) | El conductor cancela | Sin reembolso |
 | $5.000 (aceptación) | El viaje se ejecuta | Sin reembolso |
 | $5.000 (aceptación) | Emergencia real del conductor (ej. accidente) | Un admin puede aprobar el reembolso, con motivo registrado |
-| $2.000 (publicación) | El conductor cancela la ruta antes de la salida | Reembolso completo al saldo, automático |
+| $2.000 (publicación) | Cancela antes de "Salir", sin reservas confirmadas | Reembolso automático (máximo 3 al día por conductor) |
+| $2.000 (publicación) | Cancela antes de "Salir", con reservas confirmadas | Sin reembolso |
+| $2.000 (publicación) | Pulsa "Salir", o pasa la hora sin salir | Sin reembolso |
+| $2.000 (publicación) | Error de la app | Reembolso automático |
 | Ambas | Error de la app (cobro duplicado, reserva no confirmada) | Reembolso completo, automático |
 
 Todo movimiento queda en el libro contable (`wallet_transactions`).
+
+Los términos de uso (sección 8) describen estas mismas reglas.
 
 ## 3. Confirmación del viaje
 
@@ -44,15 +51,17 @@ Todo movimiento queda en el libro contable (`wallet_transactions`).
 Para **conducir** (publicar rutas, aceptar solicitudes, hacer ofertas y chatear de negociación) hay que cumplir requisitos:
 
 - Cuenta con rol de conductor.
-- Documentos aprobados por un admin: **cédula, licencia de conducción, tarjeta de propiedad, SOAT, revisión técnico-mecánica y certificado de antecedentes**, todos vigentes.
-- El certificado de antecedentes se exige por seguridad de los pasajeros. Se trata con las mismas reglas que la cédula: almacenamiento privado, acceso solo para verificación, y consentimiento explícito según la Ley 1581 de 2012. Su plazo de conservación lo define el abogado.
+- Cédula registrada y conductor aprobado por Trive.
+- Al menos un **vehículo activo y verificado**.
+- Documentos revisados por un admin: licencia, tarjeta de propiedad, SOAT y revisión técnico-mecánica. Esta revisión es manual; `puede_conducir` no la verifica automáticamente.
+- Certificado de antecedentes: **pendiente**. Se planea exigirlo, con almacenamiento privado y consentimiento según la Ley 1581 de 2012, pero hoy no es requisito del sistema.
 - Cuenta activa, sin suspensiones.
 
 El **pasajero** solo necesita su número de teléfono para registrarse. No requiere documentos.
 
 Esta regla se implementa en **una sola función del servidor** (`puede_conducir`), que usan todas las acciones de conductor.
 
-**Cédula única:** cada cédula pertenece a una sola cuenta de conductor.
+**Cédula única:** cada cédula pertenece a una sola cuenta de conductor. Pendiente de verificar en la base de datos.
 
 **Vencimiento de documentos:** un conductor con documentos vencidos no puede conducir hasta renovarlos. La función `check-document-expiry` controla esto.
 
@@ -76,7 +85,7 @@ Esta regla se implementa en **una sola función del servidor** (`puede_conducir`
 - **Ningún cobro depende del cliente.** Cada acción que cuesta dinero se ejecuta en el servidor, cobra y registra en el libro en la misma transacción.
 - **Ninguna escritura que cuesta dinero se hace directo desde la app.** Se cierran los accesos directos a rutas, aceptación de solicitudes, chat y saldo.
 - **Monitoreo sin bloqueo automático.** Se detectan patrones sospechosos (pares conductor-pasajero repetidos, viajes sin confirmación, calificaciones recíprocas, cancelaciones después de aceptar) y se envían a revisión humana. No se restringe el volumen de viajes.
-- **Bono de referido:** se paga solo después de que el nuevo conductor complete y se confirme su primer viaje, y con cédula única por cuenta.
+- **Bono de referido:** se paga solo cuando el nuevo conductor tiene su primera reserva completada y confirmada: $2.000 al referidor y $1.000 de crédito al conductor nuevo (`publish` del bono en `confirm_booking_completion`, migración `20261003170000`).
 - **Fraude comprobado** implica suspensión de la cuenta, según los términos de uso.
 
 ## 7. Flujo de negociación (estilo InDriver)

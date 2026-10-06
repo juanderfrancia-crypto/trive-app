@@ -1,8 +1,8 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
 
 export default function TermsOfServiceScreen() {
@@ -22,8 +22,11 @@ export default function TermsOfServiceScreen() {
           <View style={{ width: 28 }} />
         </View>
 
-        <Text style={s.company}>Trive Technologies SAS</Text>
-        <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
+        <View style={s.brandBlock}>
+          <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
+          <Text style={s.company}>Trive Technologies SAS</Text>
+          <Text style={s.date}>Última actualización: 6 de octubre de 2026</Text>
+        </View>
 
         <Section title="1. Aceptación de los términos">
           Al descargar, instalar o utilizar la aplicación Trive, declaras haber leído, entendido y aceptado estos Términos de Uso en su totalidad. Si no estás de acuerdo con alguno de estos términos, debes abstenerte de utilizar la Plataforma.
@@ -31,7 +34,8 @@ export default function TermsOfServiceScreen() {
 
         <Section title="2. Naturaleza del servicio">
           Trive Technologies SAS opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
-          Trive no es una empresa de transporte público, privado colectivo ni individual, ni presta servicios de taxi o similares. Los trayectos publicados corresponden a viajes que los conductores ya tienen planeado realizar, en los cuales ofrecen puestos disponibles a otros usuarios para compartir gastos de desplazamiento.
+          Trive no es una empresa de transporte público, privado colectivo ni individual, ni presta servicios de taxi o similares. Las rutas publicadas corresponden a viajes que los conductores ya tienen planeado realizar, en los cuales ofrecen puestos disponibles a otros usuarios para compartir gastos de desplazamiento.{'\n\n'}
+          Los viajes especiales (aeropuerto o particulares) son solicitudes de trayecto publicadas por pasajeros y aceptadas por conductores. Trive no fija el precio de estos trayectos, no participa en su ejecución y no es parte del acuerdo entre pasajero y conductor.
         </Section>
 
         <Section title="3. Requisitos para el uso">
@@ -52,9 +56,10 @@ export default function TermsOfServiceScreen() {
           • Ser propietarios del vehículo o contar con autorización expresa para conducirlo.{'\n'}
           • Mantener documentos del vehículo al día: SOAT y revisión técnico-mecánica vigentes.{'\n'}
           • Publicar únicamente trayectos que efectivamente vayan a realizar.{'\n'}
+          • Ser aprobado por Trive, que verifica la identidad del conductor y el estado de su vehículo antes de habilitarle la publicación. Trive puede retirar esta habilitación si los documentos vencen o si el conductor incumple estos términos.{'\n'}
           • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación de ruta descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
           • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.{'\n\n'}
-          <B>Viajes al aeropuerto:</B> los conductores también pueden aceptar solicitudes de viaje al aeropuerto publicadas por pasajeros. Al aceptar una solicitud de aeropuerto, se descuentan automáticamente $5.000 de la billetera del conductor (costo de intermediación para esta modalidad). Si el saldo es insuficiente, el conductor no podrá aceptar la solicitud hasta recargar su billetera. Una vez aceptado, el conductor y el pasajero acuerdan el pago del trayecto directamente, tal como en las rutas regulares.
+          <B>Viajes especiales:</B> los conductores aprobados pueden aceptar solicitudes de viaje al aeropuerto o particulares publicadas por pasajeros. Al aceptar una solicitud, o una oferta de precio sobre ella, se descuentan automáticamente $5.000 de la billetera del conductor como costo de uso de la Plataforma para esta modalidad. Si el saldo es insuficiente, el conductor no podrá aceptar hasta recargar su billetera. El precio del trayecto lo acuerdan directamente pasajero y conductor.
         </Section>
 
         <Section title="6. Pasajeros">
@@ -66,15 +71,27 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="7. Tarifas y pagos">
-          Las tarifas publicadas representan la contribución del pasajero a los gastos del trayecto. El pago se acuerda y realiza directamente entre conductor y pasajero mediante los métodos que ellos acuerden (Nequi, Daviplata, efectivo u otros). Trive no intermedia ni procesa dichos pagos.{'\n\n'}
-          <B>Rutas regulares:</B> la publicación de cada trayecto tiene un costo fijo de $2.000 que se descuenta automáticamente del saldo de la billetera virtual del conductor en Trive.{'\n\n'}
-          <B>Viajes al aeropuerto:</B> cuando un conductor acepta una solicitud de viaje al aeropuerto publicada por un pasajero, se descuentan $5.000 de la billetera del conductor. Este monto cubre el servicio de intermediación para esta modalidad y no constituye comisión sobre el precio acordado del trayecto. El pasajero publica el precio que ofrece pagar y el conductor decide libremente si acepta.{'\n\n'}
-          En ambas modalidades, el saldo de la billetera puede recargarse a través de los métodos habilitados en la Plataforma.{'\n\n'}
-          <B>Programa de referidos:</B> los conductores cuentan con un código personal de referido. Cuando un conductor nuevo se registra usando ese código y publica su primer trayecto, el conductor referidor recibe un crédito de $2.000 en su billetera y el conductor nuevo obtiene un descuento de $1.000 en esa primera publicación. Este beneficio aplica una sola vez por conductor nuevo.
+          El precio de cada ruta lo fija el conductor y el pago se acuerda y realiza directamente entre conductor y pasajero (efectivo, Nequi, Daviplata u otros). Trive no intermedia ni retiene ese dinero, y no garantiza devoluciones de pagos hechos entre usuarios.{'\n\n'}
+          <B>Saldo de la billetera:</B> Trive cobra únicamente los $2.000 por publicar una ruta y los $5.000 por aceptar un viaje especial. Ambos se descuentan del saldo del conductor. El saldo se recarga mediante los medios de pago habilitados en la aplicación.{'\n\n'}
+          El saldo es de uso exclusivo dentro de Trive. <B>No es retirable, no se transfiere a terceros y no se convierte en dinero en efectivo.</B> Las recargas no son reembolsables. Esta regla aplica también si la cuenta se cierra: el saldo que quede se pierde al cierre, salvo los casos de error de la aplicación descritos en la sección 8.{'\n\n'}
+          <B>Referidos:</B> cuando un conductor nuevo se registra con el código de otro conductor y completa y confirma su primera reserva, el conductor que refirió recibe $2.000 de crédito en su saldo y el conductor nuevo recibe $1.000 de crédito. Este beneficio aplica una sola vez por conductor nuevo y se otorga solo si Trive confirma la reserva.
         </Section>
 
-        <Section title="8. Cancelaciones">
-          Conductores y pasajeros pueden cancelar una reserva antes del inicio del trayecto. Las cancelaciones reiteradas sin justificación podrán dar lugar a restricciones en el uso de la Plataforma. Trive no garantiza reembolsos en caso de cancelación por parte del conductor, sin perjuicio de los derechos reconocidos a los consumidores por la Ley 1480 de 2011.
+        <Section title="8. Cancelaciones y reembolsos">
+          <B>Publicación de ruta ($2.000):</B>{'\n'}
+          • Se devuelven automáticamente al saldo si el conductor cancela antes de pulsar "Salir" y la ruta no tiene reservas confirmadas. Máximo tres devoluciones automáticas por conductor al día.{'\n'}
+          • No se devuelven si hay reservas confirmadas, si el conductor pulsa "Salir", o si pasa la hora de salida sin que el conductor pulse "Salir". En ese caso la ruta se cierra y los pasajeros reservados son avisados.{'\n'}
+          • Se devuelven si hubo un error de la aplicación, como un cobro duplicado.{'\n\n'}
+          <B>Viaje especial aceptado ($5.000):</B>{'\n'}
+          • Si el pasajero cancela antes del inicio del viaje, los $5.000 se devuelven al saldo del conductor.{'\n'}
+          • Si el conductor cancela, o el viaje se realiza, no hay devolución.{'\n'}
+          • Si hubo un error de la aplicación, se devuelve el monto cobrado.{'\n\n'}
+          En casos de emergencia documentada, Trive puede revisar y aprobar una devolución adicional, dejando constancia del motivo.{'\n\n'}
+          Conductores y pasajeros pueden cancelar antes del inicio del trayecto. Trive puede limitar o suspender el uso de la Plataforma por cancelaciones reiteradas. Estas reglas no limitan los derechos reconocidos a los consumidores por la Ley 1480 de 2011.
+        </Section>
+
+        <Section title="8A. Cierre de cuenta">
+          Puedes cerrar tu cuenta desde Configuración, en Seguridad y privacidad. Al cerrarla, tus datos personales se eliminan o anonimizan, tus reservas y rutas pendientes se cancelan y el acceso queda bloqueado. Los registros de movimientos del saldo se conservan por obligación legal y contable, sin datos personales. El saldo que tengas al cerrar la cuenta no se devuelve, por lo que te recomendamos usarlo antes de cerrarla.
         </Section>
 
         <Section title="9. Conducta prohibida">
@@ -91,7 +108,8 @@ export default function TermsOfServiceScreen() {
           • Accidentes, daños o lesiones ocurridos durante los trayectos.{'\n'}
           • Incumplimientos entre usuarios.{'\n'}
           • Pérdida de objetos durante el trayecto.{'\n'}
-          • Cancelaciones de última hora por parte de conductores o pasajeros.{'\n\n'}
+          • Cancelaciones de última hora por parte de conductores o pasajeros.{'\n'}
+          • Acuerdos de recogida, precio, pago o cualquier otro arreglo hecho fuera de la Plataforma. Trive no controla lo que ocurre fuera de la aplicación y no garantiza la ocupación de los vehículos.{'\n\n'}
           Lo anterior sin perjuicio de los derechos irrenunciables de los consumidores reconocidos en la Ley 1480 de 2011.
         </Section>
 
@@ -144,80 +162,65 @@ const s = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.white,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
+  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 
+  brandBlock: { alignItems: 'center', marginTop: SPACING.sm, marginBottom: SPACING.xl },
+  logo: { width: 160, height: 72 },
   company: {
-    fontSize: 13,
-    fontWeight: '700',
+    ...TYPOGRAPHY.labelMedium,
     color: COLORS.primary,
-    textAlign: 'center',
-    marginTop: SPACING.xl,
-    marginBottom: 4,
-    letterSpacing: 0.3,
+    fontWeight: '700',
+    marginTop: SPACING.sm,
   },
   date: {
-    fontSize: 12,
+    ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-    fontStyle: 'italic',
+    marginTop: 2,
   },
 
   section: {
+    ...SHADOWS.sm,
     marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
     padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
   },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '800',
+    ...TYPOGRAPHY.labelMedium,
     color: COLORS.primary,
+    fontWeight: '800',
     marginBottom: SPACING.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   sectionBody: {
-    fontSize: 14,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.textPrimary,
     lineHeight: 22,
-    letterSpacing: 0.2,
   },
 
   contactBox: {
+    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.sm,
-    backgroundColor: COLORS.primary + '08',
+    backgroundColor: COLORS.primaryTint,
     padding: SPACING.lg,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '20',
+    borderRadius: RADIUS.lg,
   },
   contactLabel: {
-    fontSize: 11,
+    ...TYPOGRAPHY.caption,
     fontWeight: '700',
     color: COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
     marginBottom: 2,
   },
   contactValue: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: '700',
     color: COLORS.primary,
   },
 })
