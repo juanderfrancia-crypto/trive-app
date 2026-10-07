@@ -5,7 +5,6 @@ import type { AvailableRide } from '../../hooks/useAvailableRides'
 
 const SALIDAS_MOSTRADAS = 2
 const FETCH_CAP = 20
-const ACTIVE_BOOKING_STATUSES = ['pending', 'confirmed', 'awaiting_confirmation']
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -30,25 +29,15 @@ const getTodayBoundsBogota = async (): Promise<{ start: string; end: string }> =
 const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 // Primeras salidas de hoy con cupos libres, filtradas por el municipio de origen si lo hay,
-// sin repetir rutas que el pasajero ya reservó.
-export const useTodayDepartures = (municipality: string | null, userId?: string | null) => {
+// sin repetir rutas que el pasajero ya reservó (la lista de reservas activas se recibe de
+// afuera para no repetir la misma consulta que ya hace usePassengerBookings).
+export const useTodayDepartures = (municipality: string | null, excludedRouteIds: string[] = []) => {
   const [rides, setRides] = useState<AvailableRide[]>([])
   const [hasMore, setHasMore] = useState(false)
+  const excludedKey = excludedRouteIds.join(',')
 
   const load = useCallback(async () => {
     const { start, end } = await getTodayBoundsBogota()
-
-    let excludedRouteIds: string[] = []
-    if (userId) {
-      const { data: activeBookings } = await supabase
-        .from('bookings')
-        .select('route_id')
-        .eq('passenger_id', userId)
-        .in('booking_status', ACTIVE_BOOKING_STATUSES)
-      excludedRouteIds = (activeBookings ?? [])
-        .map((b) => b.route_id)
-        .filter((id): id is string => !!id)
-    }
 
     let consulta = supabase
       .from('available_rides')
@@ -80,7 +69,8 @@ export const useTodayDepartures = (municipality: string | null, userId?: string 
 
     setRides(result.slice(0, SALIDAS_MOSTRADAS))
     setHasMore(result.length > SALIDAS_MOSTRADAS)
-  }, [municipality, userId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [municipality, excludedKey])
 
   useFocusEffect(useCallback(() => { load() }, [load]))
 

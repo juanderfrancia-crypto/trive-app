@@ -74,10 +74,8 @@ export function getNotificationRoute(
 
     case 'trip_completed':
     case 'trip_rated':
-      return {
-        screenName: 'CompletedTrips',
-        params: requestId ? { requestId } : {},
-      }
+      // Las rutas personalizadas completadas viven en el historial del hub de Solicitudes.
+      return { screenName: 'Main', params: { screen: 'Requests' } }
 
     case 'booking':
       if (requestId) {

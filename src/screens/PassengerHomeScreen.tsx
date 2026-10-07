@@ -43,7 +43,8 @@ export default function PassengerHomeScreen() {
   const { trip: upcomingTrip, loading: tripLoading } = useUpcomingTrip(user?.id)
   const { routes: recentRoutes } = useRecentRoutes(user?.id)
   const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
-  const { rides: salidasHoy, reload: reloadDepartures, hasMore: masSalidasHoy } = useTodayDepartures(preferredMunicipality, user?.id)
+  const bookedRouteIds = bookings.map((b) => b.routeId)
+  const { rides: salidasHoy, reload: reloadDepartures, hasMore: masSalidasHoy } = useTodayDepartures(preferredMunicipality, bookedRouteIds)
   const [refreshing, setRefreshing] = useState(false)
 
   const handleRefresh = async () => {

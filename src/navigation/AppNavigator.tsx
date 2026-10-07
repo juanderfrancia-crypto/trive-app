@@ -61,7 +61,6 @@ import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
 import ReferralScreen from '../screens/ReferralScreen'
 import CreateAirportRequestScreen from '../screens/CreateAirportRequestScreen'
 import AirportRequestDetailsScreen from '../screens/AirportRequestDetailsScreen'
-import CompletedTripsScreen from '../screens/CompletedTripsScreen'
 import PassengerPaymentScreen from '../screens/payments/PassengerPaymentScreen'
 import DriverPaymentsScreen from '../screens/payments/DriverPaymentsScreen'
 import { useAppStore } from '../store/useAppStore'
@@ -192,7 +191,6 @@ export default function AppNavigator() {
       <Stack.Screen name="BugReport" component={BugReportScreen} />
       <Stack.Screen name="AirportRequest" component={CreateAirportRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AirportRequestDetails" component={AirportRequestDetailsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="CompletedTrips" component={CompletedTripsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PassengerPayment" component={PassengerPaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverPayments" component={DriverPaymentsScreen} options={{ headerShown: false }} />
     </>

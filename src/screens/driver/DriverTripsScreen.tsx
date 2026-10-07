@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -114,122 +114,127 @@ export default function DriverTripsScreen() {
     ])
   }
 
+  const renderCard = ({ item: route }: { item: Route }) => {
+    const active = route.bookings.filter((b) => ACTIVE_BOOKING.includes(b.booking_status))
+    const total = active.length * route.price_per_seat
+    const badge = STATUS_LABEL[route.status]
+    const busy = busyRouteId === route.id
+    return (
+      <View style={[styles.card, route.status === 'in_progress' && styles.cardLive]}>
+        <View style={styles.cardTop}>
+          <Text style={styles.when}>{formatWhen(route.departure_time)}</Text>
+          <View style={[styles.pill, { backgroundColor: badge.bg }]}>
+            <Text style={[styles.pillText, { color: badge.color }]}>{badge.label}</Text>
+          </View>
+        </View>
+        <Text style={styles.route} numberOfLines={1}>{route.origin} → {route.destination}</Text>
+        <View style={styles.metaRow}>
+          <Text style={styles.meta}>{active.length} de {route.total_seats} cupos reservados</Text>
+          <Text style={styles.amount}>${total.toLocaleString('es-CO')}</Text>
+        </View>
+
+        {active.length > 0 && (
+          <View style={styles.passengers}>
+            {active.map((b) => (
+              <View key={b.id} style={styles.passengerRow}>
+                <View style={styles.avatar}><Text style={styles.avatarText}>{initialsOf(b.passenger?.name)}</Text></View>
+                <Text style={styles.passengerName} numberOfLines={1}>{b.passenger?.name ?? 'Pasajero'}</Text>
+                <Text style={styles.passengerMeta}>
+                  Asiento {b.seat_number} · {PAYMENT_LABEL[b.payment_method ?? 'cash'] ?? 'Efectivo'}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {route.status === 'scheduled' && (
+          <TouchableOpacity
+            style={[styles.primaryBtn, busy && styles.btnBusy]}
+            disabled={busy}
+            onPress={() => confirmChange(route, 'in_progress', 'Iniciar viaje', '¿Empezó el recorrido?')}
+            activeOpacity={0.85}
+          >
+            {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Iniciar viaje</Text>}
+          </TouchableOpacity>
+        )}
+
+        {route.status === 'in_progress' && (
+          <View style={styles.actionsRow}>
+            <TouchableOpacity
+              style={[styles.primaryBtn, { flex: 1 }, busy && styles.btnBusy]}
+              disabled={busy}
+              onPress={() => confirmChange(route, 'completed', 'Completar viaje', 'Los pasajeros confirmarán su llegada después.')}
+              activeOpacity={0.85}
+            >
+              {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Completar viaje</Text>}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {route.status === 'scheduled' && (
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            disabled={busy}
+            onPress={() => confirmChange(route, 'cancelled', 'Cancelar viaje', 'Se cancelará la ruta para los pasajeros reservados.')}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryBtnText}>Cancelar viaje</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    )
+  }
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Mis viajes</Text>
-        <Text style={styles.subtitle}>Tus rutas publicadas</Text>
-        <View style={styles.segmented}>
-          {TABS.map((t) => (
-            <TouchableOpacity
-              key={t.key}
-              style={[styles.segment, tab === t.key && styles.segmentActive]}
-              onPress={() => setTab(t.key)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>{t.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
-
-      <ScrollView
+      <FlatList
+        data={loading ? [] : visible}
+        keyExtractor={(route) => route.id}
+        renderItem={renderCard}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRoutes() }} tintColor={COLORS.primary} />}
-      >
-        {loading ? (
-          <View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View>
-        ) : visible.length === 0 ? (
-          <View style={styles.empty}>
-            <Illustration name={tab === 'scheduled' ? 'schedule' : 'noData'} width={160} />
-            <Text style={styles.emptyTitle}>
-              {tab === 'live' ? 'No tienes viajes en curso' : tab === 'scheduled' ? 'No tienes viajes programados' : 'Aún no tienes historial'}
-            </Text>
-            <Text style={styles.emptyText}>
-              {tab === 'scheduled' ? 'Publica una ruta desde Inicio para empezar.' : 'Aquí aparecerán tus viajes cuando avances.'}
-            </Text>
+        ListHeaderComponent={
+          <View style={styles.header}>
+            <Text style={styles.title}>Mis viajes</Text>
+            <Text style={styles.subtitle}>Tus rutas publicadas</Text>
+            <View style={styles.segmented}>
+              {TABS.map((t) => (
+                <TouchableOpacity
+                  key={t.key}
+                  style={[styles.segment, tab === t.key && styles.segmentActive]}
+                  onPress={() => setTab(t.key)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>{t.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        ) : (
-          visible.map((route) => {
-            const active = route.bookings.filter((b) => ACTIVE_BOOKING.includes(b.booking_status))
-            const total = active.length * route.price_per_seat
-            const badge = STATUS_LABEL[route.status]
-            const busy = busyRouteId === route.id
-            return (
-              <View key={route.id} style={[styles.card, route.status === 'in_progress' && styles.cardLive]}>
-                <View style={styles.cardTop}>
-                  <Text style={styles.when}>{formatWhen(route.departure_time)}</Text>
-                  <View style={[styles.pill, { backgroundColor: badge.bg }]}>
-                    <Text style={[styles.pillText, { color: badge.color }]}>{badge.label}</Text>
-                  </View>
-                </View>
-                <Text style={styles.route} numberOfLines={1}>{route.origin} → {route.destination}</Text>
-                <View style={styles.metaRow}>
-                  <Text style={styles.meta}>{active.length} de {route.total_seats} cupos reservados</Text>
-                  <Text style={styles.amount}>${total.toLocaleString('es-CO')}</Text>
-                </View>
-
-                {active.length > 0 && (
-                  <View style={styles.passengers}>
-                    {active.map((b) => (
-                      <View key={b.id} style={styles.passengerRow}>
-                        <View style={styles.avatar}><Text style={styles.avatarText}>{initialsOf(b.passenger?.name)}</Text></View>
-                        <Text style={styles.passengerName} numberOfLines={1}>{b.passenger?.name ?? 'Pasajero'}</Text>
-                        <Text style={styles.passengerMeta}>
-                          Asiento {b.seat_number} · {PAYMENT_LABEL[b.payment_method ?? 'cash'] ?? 'Efectivo'}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-
-                {route.status === 'scheduled' && (
-                  <TouchableOpacity
-                    style={[styles.primaryBtn, busy && styles.btnBusy]}
-                    disabled={busy}
-                    onPress={() => confirmChange(route, 'in_progress', 'Iniciar viaje', '¿Empezó el recorrido?')}
-                    activeOpacity={0.85}
-                  >
-                    {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Iniciar viaje</Text>}
-                  </TouchableOpacity>
-                )}
-
-                {route.status === 'in_progress' && (
-                  <View style={styles.actionsRow}>
-                    <TouchableOpacity
-                      style={[styles.primaryBtn, { flex: 1 }, busy && styles.btnBusy]}
-                      disabled={busy}
-                      onPress={() => confirmChange(route, 'completed', 'Completar viaje', 'Los pasajeros confirmarán su llegada después.')}
-                      activeOpacity={0.85}
-                    >
-                      {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryBtnText}>Completar viaje</Text>}
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                {route.status === 'scheduled' && (
-                  <TouchableOpacity
-                    style={styles.secondaryBtn}
-                    disabled={busy}
-                    onPress={() => confirmChange(route, 'cancelled', 'Cancelar viaje', 'Se cancelará la ruta para los pasajeros reservados.')}
-                    activeOpacity={0.8}
-                  >
-                    <Text style={styles.secondaryBtnText}>Cancelar viaje</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            )
-          })
-        )}
-      </ScrollView>
+        }
+        ListEmptyComponent={
+          loading ? (
+            <View style={styles.center}><ActivityIndicator color={COLORS.primary} /></View>
+          ) : (
+            <View style={styles.empty}>
+              <Illustration name={tab === 'scheduled' ? 'schedule' : 'noData'} width={160} />
+              <Text style={styles.emptyTitle}>
+                {tab === 'live' ? 'No tienes viajes en curso' : tab === 'scheduled' ? 'No tienes viajes programados' : 'Aún no tienes historial'}
+              </Text>
+              <Text style={styles.emptyText}>
+                {tab === 'scheduled' ? 'Publica una ruta desde Inicio para empezar.' : 'Aquí aparecerán tus viajes cuando avances.'}
+              </Text>
+            </View>
+          )
+        }
+      />
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: SPACING.lg, paddingTop: SPACING.md },
+  header: {},
   title: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5 },
   subtitle: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, marginTop: 2 },
   segmented: { flexDirection: 'row', backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.lg, padding: SPACING.xs, marginTop: SPACING.lg },

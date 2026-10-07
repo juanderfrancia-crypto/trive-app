@@ -6,6 +6,7 @@ export type PassengerBookingStatus = 'pending' | 'confirmed' | 'awaiting_confirm
 
 export interface PassengerBooking {
   bookingId: string
+  routeId: string
   bookingStatus: PassengerBookingStatus
   seatNumber: number
   origin: string
@@ -43,6 +44,7 @@ export const usePassengerBookings = (passengerId?: string) => {
         .filter((b) => b.routes && (b.booking_status === 'awaiting_confirmation' || !['completed', 'cancelled'].includes(b.routes.status)))
         .map((b) => ({
           bookingId: b.id,
+          routeId: b.routes.id,
           bookingStatus: b.booking_status,
           seatNumber: b.seat_number,
           origin: b.routes.origin,
