@@ -408,7 +408,15 @@ const styles = StyleSheet.create({
   seatTaken: { backgroundColor: COLORS.border },
   status: { fontSize: 12, fontWeight: '700' },
   priceCol: { alignItems: 'flex-end' },
-  price: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, lineHeight: 26 },
+  price: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    lineHeight: 26,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
   safe: { flex: 1, backgroundColor: COLORS.background },
 
   header: {

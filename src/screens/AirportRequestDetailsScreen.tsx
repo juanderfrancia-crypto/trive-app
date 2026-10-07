@@ -372,7 +372,14 @@ const styles = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerHero: { flex: 1, gap: 2 },
-  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  headerTitle: {
+    ...TYPOGRAPHY.h4,
+    color: COLORS.textPrimary,
+    fontWeight: TYPOGRAPHY.weight.extrabold,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
+  },
   headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
@@ -393,7 +400,14 @@ const styles = StyleSheet.create({
   priceContent: { padding: SPACING.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md },
   priceInfo: { flex: 1, gap: 2 },
   priceLabel: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
-  priceValue: { ...TYPOGRAPHY.h1, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.primary },
+  priceValue: {
+    ...TYPOGRAPHY.h1,
+    fontWeight: TYPOGRAPHY.weight.extrabold,
+    color: COLORS.primary,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
   priceHint: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
   priceEditBtn: {
     flexDirection: 'row',

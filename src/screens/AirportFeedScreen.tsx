@@ -646,7 +646,14 @@ const s = StyleSheet.create({
   },
   backBtn: { width: 40, height: 40, justifyContent: 'center' },
   headerHero: { flex: 1, gap: 2 },
-  headerTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold },
+  headerTitle: {
+    ...TYPOGRAPHY.h4,
+    color: COLORS.textPrimary,
+    fontWeight: TYPOGRAPHY.weight.extrabold,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 5,
+  },
   headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
   // Commission strip

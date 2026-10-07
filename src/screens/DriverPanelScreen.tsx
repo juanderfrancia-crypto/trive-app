@@ -919,6 +919,9 @@ const styles = StyleSheet.create({
   title: {
     ...TYPOGRAPHY.h3,
     color: '#fff',
+    textShadowColor: 'rgba(8, 45, 102, 0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
   },
   subtitle: {
     fontSize: 13,

@@ -107,6 +107,9 @@ export default function TabNavigator() {
           fontSize: 11,
           fontWeight: '600',
           marginTop: SPACING.xs - 2,
+          textShadowColor: 'rgba(18, 48, 184, 0.25)',
+          textShadowOffset: { width: 0, height: 1 },
+          textShadowRadius: 3,
         },
         headerShown: false,
       })}
@@ -159,5 +162,10 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.white,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
 })

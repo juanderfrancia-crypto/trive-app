@@ -216,6 +216,9 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.weight.extrabold,
     color: COLORS.textPrimary,
     marginTop: SPACING.sm,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
   },
   description: {
     ...TYPOGRAPHY.body,
