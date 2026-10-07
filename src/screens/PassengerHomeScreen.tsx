@@ -372,14 +372,33 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-  name: { fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.5, marginTop: 2 },
+  name: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.5,
+    marginTop: 2,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
   avatar: {
     width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.primaryTint,
     alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
 
-  headline: { fontSize: 36, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.8, marginTop: SPACING.xl, lineHeight: 42 },
+  headline: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+    letterSpacing: -0.8,
+    marginTop: SPACING.xl,
+    lineHeight: 42,
+    textShadowColor: COLORS.shadowBlue,
+    textShadowOffset: { width: 0, height: 3 },
+    textShadowRadius: 8,
+  },
 
   searchCardWrap: { marginTop: SPACING.lg },
   searchCardContent: { padding: SPACING.lg },
