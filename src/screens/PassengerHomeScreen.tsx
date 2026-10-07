@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import DepthCard from '../components/DepthCard'
 import Svg, { Circle, Ellipse, Path } from 'react-native-svg'
+import { LinearGradient } from 'expo-linear-gradient'
 import * as Location from 'expo-location'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -42,7 +43,7 @@ export default function PassengerHomeScreen() {
   const { trip: upcomingTrip, loading: tripLoading } = useUpcomingTrip(user?.id)
   const { routes: recentRoutes } = useRecentRoutes(user?.id)
   const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
-  const { rides: salidasHoy, reload: reloadDepartures } = useTodayDepartures(preferredMunicipality)
+  const { rides: salidasHoy, reload: reloadDepartures, hasMore: masSalidasHoy } = useTodayDepartures(preferredMunicipality, user?.id)
   const [refreshing, setRefreshing] = useState(false)
 
   const handleRefresh = async () => {
@@ -349,6 +350,12 @@ export default function PassengerHomeScreen() {
                 <View style={styles.rideTime}>
                   <Text style={styles.rideHour}>{hora.hora}</Text>
                   <Text style={styles.ridePeriod}>{hora.periodo}</Text>
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.rideTimeShadow}
+                  />
                 </View>
                 <View style={styles.rideMiddle}>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
@@ -360,6 +367,12 @@ export default function PassengerHomeScreen() {
               </TouchableOpacity>
             )
           })}
+          {masSalidasHoy && (
+            <TouchableOpacity style={styles.moreRidesRow} onPress={handleAvailableRidesPress} activeOpacity={0.75}>
+              <Text style={styles.moreRidesText}>Hay más rutas saliendo hoy</Text>
+              <Icon name="ChevronRight" size={14} color={COLORS.primary} />
+            </TouchableOpacity>
+          )}
         </View>
 
         <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
@@ -475,27 +488,32 @@ const styles = StyleSheet.create({
   sectionLink: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
   ridesList: { marginTop: SPACING.sm + 2, gap: SPACING.sm + 2 },
   rideRow: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
+    flexDirection: 'row', alignItems: 'stretch',
     borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.textPrimary,
+    overflow: 'hidden',
   },
   rideTime: {
-    minWidth: 56,
-    alignSelf: 'stretch',
+    minWidth: 72,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLORS.textPrimary,
-    borderRadius: RADIUS.md,
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
   },
+  rideTimeShadow: { position: 'absolute', top: 0, right: -10, bottom: 0, width: 10 },
   rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.white },
   ridePeriod: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
-  rideMiddle: { flex: 1 },
+  rideMiddle: { flex: 1, justifyContent: 'center', paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  ridePrice: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
+  ridePrice: {
+    fontSize: 16, fontWeight: '800', color: COLORS.primary,
+    alignSelf: 'center', paddingRight: SPACING.lg,
+  },
   ridesEmpty: { paddingVertical: SPACING.lg, alignItems: 'center' },
   ridesEmptyText: { fontSize: 13, color: COLORS.textSecondary },
+  moreRidesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: SPACING.sm },
+  moreRidesText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
   airportLink: { marginTop: SPACING.lg },
   airportText: { fontSize: 13, color: COLORS.textSecondary },
