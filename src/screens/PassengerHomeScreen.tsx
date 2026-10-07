@@ -163,10 +163,9 @@ export default function PassengerHomeScreen() {
               const fullPhone = digits.length === 10 ? `57${digits}` : digits
               const waUrl = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(message)}`
 
-              const canOpen = await Linking.canOpenURL(waUrl)
-              if (canOpen) {
+              try {
                 await Linking.openURL(waUrl)
-              } else {
+              } catch {
                 Alert.alert('WhatsApp no disponible', 'Instala WhatsApp para usar esta función.')
               }
             } catch {
@@ -479,9 +478,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md,
     borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.textPrimary,
   },
-  rideTime: { minWidth: 56, alignItems: 'center' },
-  rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.textPrimary },
-  ridePeriod: { fontSize: 11, fontWeight: '600', color: COLORS.textSecondary },
+  rideTime: {
+    minWidth: 56,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.textPrimary,
+    borderRadius: RADIUS.md,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+  },
+  rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.white },
+  ridePeriod: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
   rideMiddle: { flex: 1 },
   rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },

@@ -48,7 +48,9 @@ export default function AirportHubScreen() {
 
   const handlePrimaryAction = () => {
     if (isDriver) {
-      navigation.navigate('AirportFeed')
+      // "Nuevas" ya es el primer tab del conductor; solo asegura que se vea.
+      setShowHistory(false)
+      setActiveTab(0)
     } else {
       navigation.navigate('AirportRequest')
     }

@@ -99,7 +99,7 @@ export default function DriverHomeScreen() {
 
         <TouchableOpacity
           style={styles.card}
-          onPress={() => navigation.navigate('AirportFeed' as never)}
+          onPress={() => navigation.navigate('Main' as never, { screen: 'Requests' } as never)}
           activeOpacity={0.85}
         >
           <View style={styles.cardIcon}>

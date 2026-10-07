@@ -59,8 +59,7 @@ import ActiveChatsScreen from '../screens/ActiveChatsScreen'
 import ReviewsScreen from '../screens/ReviewsScreen'
 import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
 import ReferralScreen from '../screens/ReferralScreen'
-import AirportRequestScreen from '../screens/AirportRequestScreen'
-import AirportFeedScreen from '../screens/AirportFeedScreen'
+import CreateAirportRequestScreen from '../screens/CreateAirportRequestScreen'
 import AirportRequestDetailsScreen from '../screens/AirportRequestDetailsScreen'
 import CompletedTripsScreen from '../screens/CompletedTripsScreen'
 import PassengerPaymentScreen from '../screens/payments/PassengerPaymentScreen'
@@ -191,9 +190,8 @@ export default function AppNavigator() {
       <Stack.Screen name="Help" component={HelpScreen} />
       <Stack.Screen name="LearningCenter" component={LearningCenterScreen} />
       <Stack.Screen name="BugReport" component={BugReportScreen} />
-      <Stack.Screen name="AirportRequest" component={AirportRequestScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AirportRequest" component={CreateAirportRequestScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AirportRequestDetails" component={AirportRequestDetailsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AirportFeed" component={AirportFeedScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CompletedTrips" component={CompletedTripsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PassengerPayment" component={PassengerPaymentScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverPayments" component={DriverPaymentsScreen} options={{ headerShown: false }} />

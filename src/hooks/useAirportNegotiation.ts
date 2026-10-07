@@ -89,6 +89,16 @@ export const useAirportNegotiation = () => {
     channelsRef.current.clear()
   }, [])
 
+  // Reemplaza el canal anterior con la misma clave para no acumular
+  // suscripciones duplicadas cada vez que una pantalla vuelve a cargar datos.
+  const replaceChannel = useCallback((key: string, channel: RealtimeChannel) => {
+    const existing = channelsRef.current.get(key)
+    if (existing) {
+      supabase.removeChannel(existing)
+    }
+    channelsRef.current.set(key, channel)
+  }, [])
+
   useEffect(() => {
     return () => cleanupChannels()
   }, [cleanupChannels])
@@ -209,7 +219,7 @@ export const useAirportNegotiation = () => {
         )
         .subscribe()
 
-      channelsRef.current.set(`passenger_requests_${passengerId}`, channel)
+      replaceChannel(`passenger_requests_${passengerId}`, channel)
       return result
     } catch (err: any) {
       const message = err.message || 'Error al cargar solicitudes'
@@ -292,7 +302,7 @@ export const useAirportNegotiation = () => {
         )
         .subscribe()
 
-      channelsRef.current.set(`driver_active_trips_${driverId}`, channel)
+      replaceChannel(`driver_active_trips_${driverId}`, channel)
       return result
     } catch (err: any) {
       const message = err.message || 'Error al cargar viajes activos'
@@ -378,7 +388,7 @@ export const useAirportNegotiation = () => {
         )
         .subscribe()
 
-      channelsRef.current.set(`passenger_active_trips_${passengerId}`, channel)
+      replaceChannel(`passenger_active_trips_${passengerId}`, channel)
       return result
     } catch (err: any) {
       const message = err.message || 'Error al cargar viajes activos'
@@ -445,7 +455,7 @@ export const useAirportNegotiation = () => {
         )
         .subscribe()
 
-      channelsRef.current.set('driver_feed_pending', channel)
+      replaceChannel('driver_feed_pending', channel)
       return result
     } catch (err: any) {
       const message = err.message || 'Error al cargar feed'
@@ -524,7 +534,7 @@ export const useAirportNegotiation = () => {
         )
         .subscribe()
 
-      channelsRef.current.set(`request_offers_${requestId}`, channel)
+      replaceChannel(`request_offers_${requestId}`, channel)
       return result
     } catch (err: any) {
       const message = err.message || 'Error al cargar ofertas'
@@ -1087,7 +1097,7 @@ export const useAirportNegotiation = () => {
       },
     })
 
-    channelsRef.current.set(`trip_ratings_${requestId}`, channel)
+    replaceChannel(`trip_ratings_${requestId}`, channel)
     return channel
   }, [])
 

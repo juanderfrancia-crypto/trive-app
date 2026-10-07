@@ -557,10 +557,10 @@ const pv = StyleSheet.create({
   profileRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, marginTop: SPACING.lg },
   avatarWrap: { position: 'relative' },
   avatar: {
-    width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primaryTint,
+    width: 68, height: 68, borderRadius: 34, backgroundColor: COLORS.primaryTint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
-  avatarImg: { width: 64, height: 64 },
+  avatarImg: { width: 68, height: 68 },
   avatarInitials: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
   avatarBadge: {
     position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12,

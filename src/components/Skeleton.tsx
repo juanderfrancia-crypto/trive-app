@@ -2,7 +2,6 @@ import { COLORS } from '../theme/theme'
 import React, { useEffect, useRef } from 'react'
 import { View, Animated, Easing, StyleSheet, Dimensions } from 'react-native'
 import { SPACING, RADIUS } from '../theme/theme'
-import DepthCard from './DepthCard'
 
 const { width: SCREEN_W } = Dimensions.get('window')
 const CARD_W = SCREEN_W - SPACING.lg * 2
@@ -63,46 +62,6 @@ export function SkeletonRouteCard() {
         </View>
       </View>
     </View>
-  )
-}
-
-// Matches AirportFeedScreen cards (DepthCard, avatar, ruta con pines, chips, botones)
-export function SkeletonAirportCard() {
-  const opacity = useShimmer()
-  return (
-    <DepthCard style={sk.cardWrap} contentStyle={sk.depthContent}>
-      <View style={sk.cardTop}>
-        <Animated.View style={[sk.avatarCircle, { opacity }]} />
-        <View style={{ flex: 1, gap: 6 }}>
-          <Animated.View style={[sk.barGray, { width: '50%', height: 14, opacity }]} />
-          <Animated.View style={[sk.barGray, { width: '38%', height: 11, opacity }]} />
-        </View>
-        <Animated.View style={[sk.barGray, { width: 64, height: 18, opacity }]} />
-      </View>
-
-      <View style={sk.routeBoxV2}>
-        <View style={sk.routeLineV2}>
-          <Animated.View style={[sk.dotV2, { opacity }]} />
-          <View style={sk.lineSegmentV2} />
-          <Animated.View style={[sk.dotV2, { opacity }]} />
-        </View>
-        <View style={{ flex: 1, gap: 8 }}>
-          <Animated.View style={[sk.barGray, { width: '75%', height: 13, opacity }]} />
-          <Animated.View style={[sk.barGray, { width: '60%', height: 13, opacity }]} />
-        </View>
-        <Animated.View style={[sk.barGray, { width: 86, height: 22, borderRadius: RADIUS.full, opacity }]} />
-      </View>
-
-      <View style={sk.chipsRow}>
-        <Animated.View style={[sk.chip, { opacity }]} />
-        <Animated.View style={[sk.chip, { width: 120, opacity }]} />
-      </View>
-
-      <View style={sk.buttonRowV2}>
-        <Animated.View style={[sk.btnHalf, { opacity }]} />
-        <Animated.View style={[sk.btnHalf, { opacity }]} />
-      </View>
-    </DepthCard>
   )
 }
 
@@ -250,20 +209,7 @@ const sk = StyleSheet.create({
     flexShrink: 0,
   },
 
-  // ── Airport card (DepthCard) ─────────────────────────────────────────────
-  cardWrap: { marginBottom: SPACING.md },
-  depthContent: { padding: SPACING.lg, gap: SPACING.md },
   barGray: { borderRadius: 6, backgroundColor: GRAY },
-  cardTop: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  avatarCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: GRAY },
-  routeBoxV2: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  routeLineV2: { alignItems: 'center', gap: 3 },
-  dotV2: { width: 10, height: 10, borderRadius: 5, backgroundColor: GRAY },
-  lineSegmentV2: { width: 1.5, height: 18, backgroundColor: GRAY },
-  chipsRow: { flexDirection: 'row', gap: SPACING.sm },
-  chip: { width: 90, height: 28, borderRadius: RADIUS.sm, backgroundColor: GRAY },
-  buttonRowV2: { flexDirection: 'row', gap: SPACING.sm },
-  btnHalf: { flex: 1, height: 46, borderRadius: RADIUS.md, backgroundColor: GRAY },
 
   // ── Ride ticket card ──────────────────────────────────────────────────────
   ticketSk: {

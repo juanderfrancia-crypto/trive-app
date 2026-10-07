@@ -13,6 +13,7 @@ import ProfileScreen from '../screens/ProfileScreen'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
+import { useRequestsBadgeCount } from '../hooks/useRequestsBadge'
 
 const Tab = createBottomTabNavigator()
 
@@ -43,12 +44,21 @@ function TripsTab() {
 
 export default function TabNavigator() {
   const notificationUnreadCount = useAppStore((s) => s.notificationUnreadCount)
+  const userId = useAppStore((s) => s.user?.id)
   const insets = useSafeAreaInsets()
   const alertsBadge =
     notificationUnreadCount > 0
       ? notificationUnreadCount > 99
         ? '99+'
         : notificationUnreadCount
+      : undefined
+
+  const requestsUnreadCount = useRequestsBadgeCount(userId)
+  const requestsBadge =
+    requestsUnreadCount > 0
+      ? requestsUnreadCount > 99
+        ? '99+'
+        : requestsUnreadCount
       : undefined
 
   return (
@@ -62,7 +72,7 @@ export default function TabNavigator() {
           } else if (route.name === 'Search') {
             iconName = 'Car'
           } else if (route.name === 'Requests') {
-            iconName = 'ClipboardList'
+            iconName = 'Send'
           } else if (route.name === 'Alerts') {
             iconName = 'Bell'
           } else if (route.name === 'Profile') {
@@ -70,11 +80,11 @@ export default function TabNavigator() {
           }
 
           return (
-            <TabIcon name={iconName} size={size} focused={focused} color={COLORS.primary} />
+            <TabIcon name={iconName} size={size} focused={focused} color={COLORS.textPrimary} />
           )
         },
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.primary,
+        tabBarActiveTintColor: COLORS.textPrimary,
+        tabBarInactiveTintColor: COLORS.textPrimary,
         tabBarContainerStyle: {
           backgroundColor: COLORS.white,
           borderTopWidth: 0,
@@ -107,7 +117,7 @@ export default function TabNavigator() {
           fontSize: 11,
           fontWeight: '600',
           marginTop: SPACING.xs - 2,
-          textShadowColor: 'rgba(18, 48, 184, 0.25)',
+          textShadowColor: 'rgba(15, 26, 46, 0.25)',
           textShadowOffset: { width: 0, height: 1 },
           textShadowRadius: 3,
         },
@@ -116,7 +126,23 @@ export default function TabNavigator() {
     >
       <Tab.Screen name="Home"    component={HomeScreen}          options={{ title: 'Inicio' }} />
       <Tab.Screen name="Search"  component={TripsTab}           options={{ title: 'Viajes' }} />
-      <Tab.Screen name="Requests" component={AirportHubScreen}   options={{ title: 'Solicitudes' }} />
+      <Tab.Screen
+        name="Requests"
+        component={AirportHubScreen}
+        options={{
+          title: 'Solicitudes',
+          tabBarBadge: requestsBadge,
+          tabBarBadgeStyle: {
+            backgroundColor: COLORS.error,
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: '700',
+            minWidth: 18,
+            maxHeight: 18,
+            lineHeight: 16,
+          },
+        }}
+      />
       <Tab.Screen
         name="Alerts"
         component={NotificationsScreen}

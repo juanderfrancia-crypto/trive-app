@@ -53,10 +53,7 @@ export function getNotificationRoute(
 
   if (airportActiveTypes.has(notification.type)) {
     if (isDriver) {
-      return {
-        screenName: 'AirportFeed',
-        params: requestId ? { requestId } : {},
-      }
+      return { screenName: 'Main', params: { screen: 'Requests' } }
     }
     if (requestId) {
       return {
