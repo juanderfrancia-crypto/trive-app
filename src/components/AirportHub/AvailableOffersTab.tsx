@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
-import { SkeletonList } from '../SkeletonLoader'
+import { SkeletonCardList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../../utils/showError'
@@ -184,7 +184,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   return (
     <View style={styles.container}>
       {loading && availableRequests.length === 0 ? (
-        <SkeletonList count={4} />
+        <SkeletonCardList variant="offer" count={4} />
       ) : (
         <FlatList
           data={availableRequests}

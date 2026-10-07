@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
-import { SkeletonList } from '../SkeletonLoader'
+import { SkeletonCardList } from '../SkeletonLoader'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
 import Icon from '../Icon'
@@ -136,7 +136,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
   return (
     <View style={styles.container}>
       {loading && trips.length === 0 ? (
-        <SkeletonList count={3} />
+        <SkeletonCardList variant="history" count={3} />
       ) : (
         <FlatList
           data={trips}

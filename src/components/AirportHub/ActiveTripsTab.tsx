@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
-import { SkeletonList } from '../SkeletonLoader'
+import { SkeletonCardList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { TripDetailsModal } from '../TripDetailsModal'
 import { supabase } from '../../services/supabase'
@@ -158,7 +158,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
   return (
     <View style={styles.container}>
       {loading && trips.length === 0 ? (
-        <SkeletonList count={3} />
+        <SkeletonCardList variant="trip" count={3} />
       ) : (
         <FlatList
           data={trips}

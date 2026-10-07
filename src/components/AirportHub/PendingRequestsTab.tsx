@@ -5,7 +5,7 @@ import Icon from '../Icon'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
-import { SkeletonList } from '../SkeletonLoader'
+import { SkeletonCardList } from '../SkeletonLoader'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
@@ -126,7 +126,7 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
       )}
 
       {loading && pendingRequests.length === 0 ? (
-        <SkeletonList count={4} />
+        <SkeletonCardList variant="request" count={4} />
       ) : (
         <FlatList
           data={pendingRequests}

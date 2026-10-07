@@ -5,7 +5,7 @@ import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
-import { SkeletonList } from '../SkeletonLoader'
+import { SkeletonCardList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
@@ -216,7 +216,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
   return (
     <View style={styles.container}>
       {loading && chats.length === 0 ? (
-        <SkeletonList count={3} />
+        <SkeletonCardList variant="chat" count={3} />
       ) : (
         <FlatList
           data={chats}
