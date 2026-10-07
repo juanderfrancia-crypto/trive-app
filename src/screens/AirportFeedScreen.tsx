@@ -12,6 +12,15 @@ import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
 import Illustration, { IllustrationName } from '../components/illustrations/Illustration'
+import { VEHICLE_TYPES, type VehicleTypeId } from './driver/PublishRouteFlow'
+
+const VEHICLE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
+  auto: 'Car',
+  busetica: 'Bus',
+  buseta: 'Bus',
+}
+
+const vehicleName = (id?: string | null) => VEHICLE_TYPES.find((v) => v.id === id)?.name ?? 'Auto'
 
 export default function AirportFeedScreen() {
   const navigation = useNavigation()
@@ -218,6 +227,10 @@ export default function AirportFeedScreen() {
           <View style={s.chip}>
             <Icon name="Users" size={13} color={COLORS.textSecondary} />
             <Text style={s.chipText}>{item.passengers} {item.passengers === 1 ? 'persona' : 'personas'}</Text>
+          </View>
+          <View style={s.chip}>
+            <Icon name={VEHICLE_ICON[(item.vehicle_type as VehicleTypeId) ?? 'auto']} size={13} color={COLORS.textSecondary} />
+            <Text style={s.chipText}>{vehicleName(item.vehicle_type)}</Text>
           </View>
           {!!item.notes && (
             <View style={[s.chip, s.chipFlex]}>

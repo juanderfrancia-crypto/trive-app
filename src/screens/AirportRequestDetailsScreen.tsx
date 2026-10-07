@@ -9,6 +9,9 @@ import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
+import { VEHICLE_TYPES } from './driver/PublishRouteFlow'
+
+const vehicleName = (id?: string | null) => VEHICLE_TYPES.find((v) => v.id === id)?.name ?? 'Auto'
 import Illustration from '../components/illustrations/Illustration'
 
 export default function AirportRequestDetailsScreen() {
@@ -193,7 +196,13 @@ export default function AirportRequestDetailsScreen() {
           <View style={styles.metaRow}>
             <View style={styles.metaCell}>
               <Text style={styles.routeLabel}>PASAJEROS</Text>
-              <Text style={styles.metaValue}>{request.passengers}</Text>
+              <Text style={styles.metaValue}>
+                {request.passengers === 1 ? 'Solo 1 (exclusivo)' : `Grupo de ${request.passengers}`}
+              </Text>
+            </View>
+            <View style={styles.metaCell}>
+              <Text style={styles.routeLabel}>VEHÍCULO</Text>
+              <Text style={styles.metaValue}>{vehicleName(request.vehicle_type)}</Text>
             </View>
             <View style={styles.metaCell}>
               <Text style={styles.routeLabel}>SALIDA</Text>
@@ -393,7 +402,7 @@ const styles = StyleSheet.create({
   routeTexts: { flex: 1 },
   routeLabel: { ...TYPOGRAPHY.labelSmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textTertiary, letterSpacing: 1 },
   routeValue: { ...TYPOGRAPHY.body, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textPrimary, marginTop: 2 },
-  metaRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  metaRow: { flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', rowGap: SPACING.md },
   metaCell: { gap: 4 },
   metaValue: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
 

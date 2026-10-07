@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native'
+import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -8,6 +9,7 @@ import DepthCard from '../components/DepthCard'
 import Icon from '../components/Icon'
 import Illustration, { type IllustrationName } from '../components/illustrations/Illustration'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
+import { VEHICLE_TYPES, type VehicleTypeId } from './driver/PublishRouteFlow'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { useAppStore } from '../store/useAppStore'
 import { showSuccess, showError } from '../utils/showError'
@@ -47,11 +49,6 @@ const COLOMBIA_AIRPORTS: Airport[] = [
   { name: 'Aeropuerto Juan H. White',                 city: 'Barrancabermeja',     iata: 'EJA' },
 ]
 
-const PRICE_RANGES = [
-  { label: 'Municipios Valle del Cauca → Cali', range: '$60.000 – $120.000' },
-  { label: 'Cali centro → Aeropuerto', range: '$30.000 – $60.000' },
-]
-
 type Tab = 'create' | 'my_requests' | 'active_trips' | 'completed_trips'
 
 const TABS: { key: Tab; label: string; icon: 'Plus' | 'List' | 'Car' | 'CheckCheck' }[] = [
@@ -61,15 +58,47 @@ const TABS: { key: Tab; label: string; icon: 'Plus' | 'List' | 'Car' | 'CheckChe
   { key: 'completed_trips', label: 'Completados', icon: 'CheckCheck' },
 ]
 
-const todayStr = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+type Meridiem = 'AM' | 'PM'
+
+const formatHHMM = (texto: string): string => {
+  const digitos = texto.replace(/\D/g, '').slice(0, 4)
+  return digitos.length > 2 ? `${digitos.slice(0, 2)}:${digitos.slice(2)}` : digitos
 }
 
-const defaultTimeStr = () => {
+const to12h = (hours24: number): { time: string; meridiem: Meridiem } => {
+  const meridiem: Meridiem = hours24 >= 12 ? 'PM' : 'AM'
+  const h12 = hours24 % 12 || 12
+  return { time: String(h12).padStart(2, '0'), meridiem }
+}
+
+const defaultDepartureParts = () => {
   const d = new Date()
   d.setHours(d.getHours() + 2, 0, 0, 0)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const { time, meridiem } = to12h(d.getHours())
+  return { time: `${time}:${String(d.getMinutes()).padStart(2, '0')}`, meridiem }
+}
+
+const parseTime12 = (texto: string, meridiem: Meridiem): { hours: number; minutes: number } | null => {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(texto.trim())
+  if (!m) return null
+  const h12 = Number(m[1])
+  const minutes = Number(m[2])
+  if (h12 < 1 || h12 > 12 || minutes > 59) return null
+  let hours = h12 % 12
+  if (meridiem === 'PM') hours += 12
+  return { hours, minutes }
+}
+
+const formatDateDisplay = (date: Date) =>
+  date.toLocaleDateString('es-CO', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+
+const normalizeText = (text: string): string =>
+  text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+
+const VEHICLE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
+  auto: 'Car',
+  busetica: 'Bus',
+  buseta: 'Bus',
 }
 
 function RouteRows({ from, to }: { from: string; to: string }) {
@@ -100,11 +129,15 @@ export default function AirportRequestScreen() {
   const [selectedAirport, setSelectedAirport] = useState<Airport | null>(null)
   const [customDestination, setCustomDestination] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
+  const [vehicleType, setVehicleType] = useState<VehicleTypeId>('auto')
   const [passengers, setPassengers] = useState(1)
   const [offeredPrice, setOfferedPrice] = useState('')
   const [notes, setNotes] = useState('')
-  const [dateStr, setDateStr] = useState(todayStr())
-  const [timeStr, setTimeStr] = useState(defaultTimeStr())
+  const [departureDate, setDepartureDate] = useState(() => new Date())
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const initialTime = React.useMemo(defaultDepartureParts, [])
+  const [timeStr, setTimeStr] = useState(initialTime.time)
+  const [meridiem, setMeridiem] = useState<Meridiem>(initialTime.meridiem)
   const [loading, setLoading] = useState(false)
 
   const activeRequests = requests.filter(r => r.passenger_id === user?.id && r.status === 'pending')
@@ -115,11 +148,14 @@ export default function AirportRequestScreen() {
   const [chatRequest, setChatRequest] = useState<any>(null)
 
   const filteredAirports = airportQuery.length >= 2
-    ? COLOMBIA_AIRPORTS.filter(a =>
-        a.name.toLowerCase().includes(airportQuery.toLowerCase()) ||
-        a.city.toLowerCase().includes(airportQuery.toLowerCase()) ||
-        a.iata.toLowerCase().includes(airportQuery.toLowerCase())
-      ).slice(0, 6)
+    ? (() => {
+        const q = normalizeText(airportQuery)
+        return COLOMBIA_AIRPORTS.filter(a =>
+          normalizeText(a.name).includes(q) ||
+          normalizeText(a.city).includes(q) ||
+          normalizeText(a.iata).includes(q)
+        ).slice(0, 6)
+      })()
     : []
 
   const selectAirport = (airport: Airport) => {
@@ -134,8 +170,22 @@ export default function AirportRequestScreen() {
     setShowDropdown(false)
   }
 
+  const maxPassengers = VEHICLE_TYPES.find((v) => v.id === vehicleType)?.maxSeats ?? 4
+
   const adjustPassengers = (delta: number) =>
-    setPassengers(prev => Math.min(8, Math.max(1, prev + delta)))
+    setPassengers(prev => Math.min(maxPassengers, Math.max(1, prev + delta)))
+
+  const handleVehicleChange = (id: VehicleTypeId) => {
+    setVehicleType(id)
+    const max = VEHICLE_TYPES.find((v) => v.id === id)?.maxSeats ?? 4
+    setPassengers((prev) => Math.min(prev, max))
+  }
+
+  const onChangeDate = (event: DateTimePickerEvent, selected?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false)
+    if (event.type === 'dismissed' || !selected) return
+    setDepartureDate(selected)
+  }
 
   useFocusEffect(
     React.useCallback(() => {
@@ -170,10 +220,15 @@ export default function AirportRequestScreen() {
       destination = customDestination.trim()
     }
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) { showError('Fecha en formato AAAA-MM-DD (ej: 2026-06-15)'); return }
-    if (!/^\d{2}:\d{2}$/.test(timeStr)) { showError('Hora en formato HH:MM (ej: 06:30)'); return }
-    const departure = new Date(`${dateStr}T${timeStr}:00`)
-    if (isNaN(departure.getTime())) { showError('Fecha u hora inválida'); return }
+    const time = parseTime12(timeStr, meridiem)
+    if (!time) { showError('Hora en formato HH:MM (ej: 06:30)'); return }
+    const departure = new Date(
+      departureDate.getFullYear(),
+      departureDate.getMonth(),
+      departureDate.getDate(),
+      time.hours,
+      time.minutes
+    )
     if (departure <= new Date()) { showError('La fecha y hora deben ser en el futuro'); return }
     const price = parseInt(offeredPrice.replace(/\D/g, ''), 10)
     if (!price || price <= 0) { showError('Ingresa un precio válido'); return }
@@ -186,6 +241,7 @@ export default function AirportRequestScreen() {
         destination,
         departure_time: departure.toISOString(),
         passengers,
+        vehicle_type: vehicleType,
         offered_price: price,
         trip_type: tripType,
         notes: notes.trim() || undefined,
@@ -198,8 +254,11 @@ export default function AirportRequestScreen() {
       setOfferedPrice('')
       setNotes('')
       setPassengers(1)
-      setDateStr(todayStr())
-      setTimeStr(defaultTimeStr())
+      setVehicleType('auto')
+      setDepartureDate(new Date())
+      const reset = defaultDepartureParts()
+      setTimeStr(reset.time)
+      setMeridiem(reset.meridiem)
       setActiveTab('my_requests')
     } catch (err: any) {
       showError(err.message || 'Error al publicar solicitud')
@@ -313,7 +372,7 @@ export default function AirportRequestScreen() {
                   <Icon name="CircleDot" size={16} color={COLORS.primary} />
                   <TextInput
                     style={s.input}
-                    placeholder="Ej: Palmira, Buga, Cali..."
+                    placeholder="Dirección, barrio o punto de salida"
                     placeholderTextColor={COLORS.textTertiary}
                     value={origin}
                     onChangeText={setOrigin}
@@ -397,39 +456,116 @@ export default function AirportRequestScreen() {
               )}
 
               <View style={s.field}>
-                <Text style={s.label}>Fecha y hora de salida</Text>
-                <View style={s.dateRow}>
-                  <View style={[s.inputRow, s.dateInput]}>
-                    <Icon name="Calendar" size={15} color={COLORS.primary} />
+                <Text style={s.label}>Fecha de salida</Text>
+                <TouchableOpacity
+                  style={s.inputRow}
+                  onPress={() => {
+                    setShowDropdown(false)
+                    setShowDatePicker(true)
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Icon name="Calendar" size={16} color={COLORS.primary} />
+                  <Text style={s.input}>{formatDateDisplay(departureDate)}</Text>
+                  <Icon name="ChevronDown" size={16} color={COLORS.textTertiary} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={s.field}>
+                <Text style={s.label}>Hora de salida</Text>
+                <View style={s.timeRow}>
+                  <View style={[s.inputRow, s.flex1]}>
+                    <Icon name="Clock" size={16} color={COLORS.primary} />
                     <TextInput
                       style={s.input}
-                      placeholder="AAAA-MM-DD"
-                      placeholderTextColor={COLORS.textTertiary}
-                      value={dateStr}
-                      onChangeText={setDateStr}
-                      keyboardType="numeric"
-                      maxLength={10}
-                      onFocus={() => setShowDropdown(false)}
-                    />
-                  </View>
-                  <View style={[s.inputRow, s.timeInput]}>
-                    <Icon name="Clock" size={15} color={COLORS.primary} />
-                    <TextInput
-                      style={s.input}
-                      placeholder="HH:MM"
+                      placeholder="07:00"
                       placeholderTextColor={COLORS.textTertiary}
                       value={timeStr}
-                      onChangeText={setTimeStr}
-                      keyboardType="numeric"
+                      onChangeText={(t) => setTimeStr(formatHHMM(t))}
+                      keyboardType="number-pad"
                       maxLength={5}
                       onFocus={() => setShowDropdown(false)}
                     />
                   </View>
+                  <View style={s.meridiemGroup}>
+                    <TouchableOpacity
+                      style={[s.meridiemBtn, meridiem === 'AM' && s.meridiemBtnActive]}
+                      onPress={() => setMeridiem('AM')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[s.meridiemText, meridiem === 'AM' && s.meridiemTextActive]}>AM</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[s.meridiemBtn, meridiem === 'PM' && s.meridiemBtnActive]}
+                      onPress={() => setMeridiem('PM')}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[s.meridiemText, meridiem === 'PM' && s.meridiemTextActive]}>PM</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+
+              {showDatePicker && Platform.OS === 'android' && (
+                <DateTimePicker
+                  value={departureDate}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={onChangeDate}
+                />
+              )}
+
+              {Platform.OS === 'ios' && (
+                <Modal visible={showDatePicker} transparent animationType="slide" onRequestClose={() => setShowDatePicker(false)}>
+                  <View style={s.pickerOverlay}>
+                    <View style={s.pickerSheet}>
+                      <View style={s.pickerHeader}>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={s.pickerCancel}>Cancelar</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setShowDatePicker(false)}>
+                          <Text style={s.pickerDone}>Listo</Text>
+                        </TouchableOpacity>
+                      </View>
+                      <DateTimePicker
+                        value={departureDate}
+                        mode="date"
+                        display="inline"
+                        minimumDate={new Date()}
+                        onChange={onChangeDate}
+                        locale="es-CO"
+                        accentColor={COLORS.primary}
+                        themeVariant="light"
+                      />
+                    </View>
+                  </View>
+                </Modal>
+              )}
+
+              <View style={s.field}>
+                <Text style={s.label}>¿Qué vehículo necesitas?</Text>
+                <View style={s.vehicleRow}>
+                  {VEHICLE_TYPES.map((v) => {
+                    const active = vehicleType === v.id
+                    return (
+                      <TouchableOpacity
+                        key={v.id}
+                        style={[s.vehicleChip, active && s.vehicleChipActive]}
+                        onPress={() => handleVehicleChange(v.id)}
+                        activeOpacity={0.8}
+                      >
+                        <Icon name={VEHICLE_ICON[v.id]} size={18} color={active ? COLORS.white : COLORS.primary} />
+                        <Text style={[s.vehicleChipText, active && s.vehicleChipTextActive]}>{v.name}</Text>
+                        <Text style={[s.vehicleChipSub, active && s.vehicleChipTextActive]}>Hasta {v.maxSeats}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
                 </View>
               </View>
 
               <View style={s.field}>
-                <Text style={s.label}>Pasajeros</Text>
+                <Text style={s.label}>¿Viajas solo o con tu grupo?</Text>
                 <View style={s.counterRow}>
                   <TouchableOpacity
                     style={[s.counterBtn, passengers <= 1 && s.counterBtnDisabled]}
@@ -440,14 +576,20 @@ export default function AirportRequestScreen() {
                   </TouchableOpacity>
                   <Text style={s.counterValue}>{passengers}</Text>
                   <TouchableOpacity
-                    style={[s.counterBtn, passengers >= 8 && s.counterBtnDisabled]}
+                    style={[s.counterBtn, passengers >= maxPassengers && s.counterBtnDisabled]}
                     onPress={() => adjustPassengers(1)}
-                    disabled={passengers >= 8}
+                    disabled={passengers >= maxPassengers}
                   >
-                    <Icon name="Plus" size={18} color={passengers >= 8 ? COLORS.textTertiary : COLORS.primary} />
+                    <Icon name="Plus" size={18} color={passengers >= maxPassengers ? COLORS.textTertiary : COLORS.primary} />
                   </TouchableOpacity>
                   <Text style={s.counterLabel}>{passengers === 1 ? '1 persona' : `${passengers} personas`}</Text>
                 </View>
+                <Text style={s.groupHint}>
+                  {passengers === 1
+                    ? 'Viajas solo: el precio es exclusivo para ti.'
+                    : `Viajan juntos: el precio cubre a las ${passengers} personas de tu grupo.`}
+                  {' '}Hasta {maxPassengers} con este vehículo.
+                </Text>
               </View>
 
               <View style={s.field}>
@@ -464,21 +606,16 @@ export default function AirportRequestScreen() {
                     onFocus={() => setShowDropdown(false)}
                   />
                 </View>
-                <View style={s.ranges}>
-                  {PRICE_RANGES.map((r) => (
-                    <View key={r.label} style={s.rangeRow}>
-                      <View style={s.rangeDot} />
-                      <Text style={s.rangeText}>{r.label}: <Text style={s.rangeValue}>{r.range}</Text></Text>
-                    </View>
-                  ))}
-                </View>
+                <Text style={s.priceHint}>
+                  Tú propones el precio. El conductor puede aceptarlo o proponerte otro antes de confirmar.
+                </Text>
               </View>
 
               <View style={[s.field, s.fieldLast]}>
                 <Text style={s.label}>Notas (opcional)</Text>
                 <TextInput
                   style={s.notesInput}
-                  placeholder="Ej: Vuelo a las 8am, salgo a las 5am..."
+                  placeholder="Ej: número de vuelo, equipaje grande, mascota, punto de referencia..."
                   placeholderTextColor={COLORS.textTertiary}
                   value={notes}
                   onChangeText={setNotes}
@@ -825,9 +962,59 @@ const s = StyleSheet.create({
   },
   dropdownEmptyText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
 
-  dateRow: { flexDirection: 'row', gap: SPACING.sm },
-  dateInput: { flex: 3 },
-  timeInput: { flex: 2 },
+  flex1: { flex: 1 },
+  timeRow: { flexDirection: 'row', gap: SPACING.sm },
+  meridiemGroup: {
+    flexDirection: 'row',
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  meridiemBtn: {
+    width: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.white,
+  },
+  meridiemBtnActive: { backgroundColor: COLORS.primary },
+  meridiemText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+  meridiemTextActive: { color: COLORS.white },
+
+  pickerOverlay: { flex: 1, backgroundColor: 'rgba(15, 26, 46, 0.4)', justifyContent: 'flex-end' },
+  pickerSheet: {
+    backgroundColor: COLORS.white,
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    paddingBottom: SPACING.xl,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  pickerCancel: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
+  pickerDone: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
+
+  vehicleRow: { flexDirection: 'row', gap: SPACING.sm },
+  vehicleChip: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  vehicleChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  vehicleChipText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary, marginTop: 2 },
+  vehicleChipTextActive: { color: COLORS.white },
+  vehicleChipSub: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, fontSize: 10 },
 
   counterRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   counterBtn: {
@@ -848,12 +1035,9 @@ const s = StyleSheet.create({
     fontWeight: TYPOGRAPHY.weight.extrabold,
   },
   counterLabel: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, marginLeft: SPACING.xs },
+  groupHint: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginTop: 6 },
 
-  ranges: { gap: 6 },
-  rangeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  rangeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: COLORS.primary },
-  rangeText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
-  rangeValue: { fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
+  priceHint: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
 
   notesInput: {
     ...TYPOGRAPHY.body,

@@ -231,6 +231,7 @@ export type Database = {
           status: string
           trip_notes: string | null
           trip_type: string | null
+          vehicle_type: string
         }
         Insert: {
           accepted_at?: string | null
@@ -252,6 +253,7 @@ export type Database = {
           status?: string
           trip_notes?: string | null
           trip_type?: string | null
+          vehicle_type?: string
         }
         Update: {
           accepted_at?: string | null
@@ -273,6 +275,7 @@ export type Database = {
           status?: string
           trip_notes?: string | null
           trip_type?: string | null
+          vehicle_type?: string
         }
         Relationships: [
           {

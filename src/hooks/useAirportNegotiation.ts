@@ -18,6 +18,7 @@ export interface AirportRequest {
   destination: string
   departure_time: string
   passengers: number
+  vehicle_type: 'auto' | 'busetica' | 'buseta'
   initial_price: number
   offered_price: number
   status: 'pending' | 'accepted' | 'completed' | 'cancelled'
@@ -65,6 +66,7 @@ export interface CreateAirportRequestData {
   destination?: string
   departure_time: string
   passengers: number
+  vehicle_type: 'auto' | 'busetica' | 'buseta'
   offered_price: number
   trip_type: 'airport' | 'city_destination' | 'custom'
   notes?: string
@@ -104,6 +106,7 @@ export const useAirportNegotiation = () => {
           destination: data.destination ?? 'Destino',
           departure_time: data.departure_time,
           passengers: data.passengers,
+          vehicle_type: data.vehicle_type,
           initial_price: data.offered_price,
           offered_price: data.offered_price,
           trip_type: data.trip_type,

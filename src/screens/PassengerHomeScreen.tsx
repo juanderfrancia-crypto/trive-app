@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -187,6 +187,7 @@ export default function PassengerHomeScreen() {
   const canSearch = !!origin.trim() && !!destination.trim()
   const firstName = user?.name?.split(' ')[0] ?? 'Usuario'
   const initials = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+  const [avatarBroken, setAvatarBroken] = useState(false)
   const confirmarHoy = reservaPorConfirmar ? formatDia(reservaPorConfirmar.departureTime) === 'Hoy' : false
 
   return (
@@ -201,9 +202,22 @@ export default function PassengerHomeScreen() {
             <Text style={styles.greeting}>{getGreeting()}</Text>
             <Text style={styles.name}>{firstName}</Text>
           </View>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{initials}</Text>
-          </View>
+          <TouchableOpacity
+            style={styles.avatar}
+            onPress={() => navigation.navigate('Profile' as never)}
+            activeOpacity={0.75}
+            accessibilityLabel="Ir a mi perfil"
+          >
+            {user?.avatar_url && !avatarBroken ? (
+              <Image
+                source={{ uri: user.avatar_url }}
+                style={styles.avatarImg}
+                onError={() => setAvatarBroken(true)}
+              />
+            ) : (
+              <Text style={styles.avatarText}>{initials}</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={{ alignItems: 'center' }}>
@@ -383,9 +397,10 @@ const styles = StyleSheet.create({
     textShadowRadius: 6,
   },
   avatar: {
-    width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center',
+    width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
   },
+  avatarImg: { width: 44, height: 44 },
   avatarText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
 
   headline: {

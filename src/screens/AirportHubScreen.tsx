@@ -58,7 +58,7 @@ export default function AirportHubScreen() {
     ? 'Viajes completados'
     : isDriver
       ? 'Rutas personalizadas que te piden'
-      : 'Viajes privados al aeropuerto'
+      : 'Pide una ruta personalizada a tu destino'
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

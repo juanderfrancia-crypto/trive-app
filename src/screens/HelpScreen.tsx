@@ -132,7 +132,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Aeropuerto',
     question: '¿Cómo publico una solicitud de viaje al aeropuerto?',
     answer:
-      'En la pantalla principal toca "¿Vas al aeropuerto? Solicita un viaje privado". Ingresa tu punto de origen, selecciona el aeropuerto de destino, elige la fecha y hora de salida, el número de personas y el precio que ofreces pagar. Toca "Publicar solicitud" y los conductores disponibles podrán verla y aceptarla. Recibirás una notificación cuando un conductor acepte tu viaje.',
+      'En la pantalla principal toca "¿Vas a otro lugar? Publica una ruta personalizada". Ingresa tu punto de origen, selecciona el aeropuerto de destino (o describe tu destino), elige la fecha y hora de salida, el número de personas y el precio que ofreces pagar. Toca "Publicar solicitud" y los conductores disponibles podrán verla y aceptarla. Recibirás una notificación cuando un conductor acepte tu viaje.',
   },
   {
     id: '18',

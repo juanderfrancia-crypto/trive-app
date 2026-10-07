@@ -155,7 +155,7 @@ const TUTORIALS: Tutorial[] = [
       icon: 'Plane',
       description: 'Cómo publicar tu solicitud y que un conductor te lleve al aeropuerto',
       steps: [
-        '1. En la pantalla principal toca "¿Vas al aeropuerto? Solicita un viaje privado"',
+        '1. En la pantalla principal toca "¿Vas a otro lugar? Publica una ruta personalizada"',
         '2. Escribe tu punto de origen (dirección o barrio de salida)',
         '3. En el campo destino, escribe el nombre del aeropuerto o la ciudad; elige de la lista que aparece',
         '4. Ingresa la fecha de tu vuelo en formato DD/MM/AAAA',

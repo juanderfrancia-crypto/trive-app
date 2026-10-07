@@ -21,8 +21,8 @@ function formatTimeInput(text: string): string {
 
 export const VEHICLE_TYPES: { id: VehicleTypeId; name: string; maxSeats: number }[] = [
   { id: 'auto', name: 'Auto', maxSeats: 4 },
-  { id: 'busetica', name: 'Minivan', maxSeats: 15 },
-  { id: 'buseta', name: 'Buseta', maxSeats: 70 },
+  { id: 'busetica', name: 'Minivan', maxSeats: 18 },
+  { id: 'buseta', name: 'Bus', maxSeats: 55 },
 ]
 
 const PAYMENT_METHODS: { id: PaymentMethodId; name: string }[] = [

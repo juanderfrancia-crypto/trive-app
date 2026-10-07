@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
 import Icon from '../Icon'
+import Illustration from '../illustrations/Illustration'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
@@ -77,7 +78,7 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
           {request.origin} → {request.destination}
         </Text>
         <Text style={styles.meta}>
-          {request.passengers} {request.passengers === 1 ? 'pasajero' : 'pasajeros'} · Oferta inicial{' '}
+          {request.passengers === 1 ? 'Solo tú' : `Grupo de ${request.passengers}`} · Oferta inicial{' '}
           {formatPrice(request.offered_price)}
         </Text>
       </TouchableOpacity>
@@ -94,12 +95,10 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
 
   const renderEmpty = () => (
     <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconBg}>
-        <Icon name="FileText" size={48} color={COLORS.primary} />
-      </View>
+      <Illustration name="postOnline" width={170} />
       <Text style={styles.emptyTitle}>Sin solicitudes activas</Text>
       <Text style={styles.emptySubtitle}>
-        Publica un viaje al aeropuerto o a cualquier destino para que los conductores te encuentren
+        Publica a dónde quieres ir y los conductores te harán ofertas
       </Text>
       <TouchableOpacity style={styles.createBtn} onPress={openCreate} activeOpacity={0.85}>
         <Icon name="CirclePlus" size={20} color={COLORS.white} />
@@ -235,15 +234,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
-  },
-  emptyIconBg: {
-    width: 80,
-    height: 80,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
   },
   emptyTitle: {
     fontSize: TYPOGRAPHY.size.base,

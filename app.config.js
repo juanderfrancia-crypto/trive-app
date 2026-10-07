@@ -10,6 +10,7 @@ module.exports = ({ config }) => {
       'expo-secure-store',
       '@react-native-firebase/app',
       '@react-native-firebase/crashlytics',
+      '@react-native-community/datetimepicker',
     ],
   };
 };
