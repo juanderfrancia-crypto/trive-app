@@ -144,14 +144,16 @@ export default function ProfileScreen() {
   isDriverRef.current = isDriver
 
   useFocusEffect(useCallback(() => {
-    if (isDriverRef.current && user?.id) {
+    if (!user?.id) return
+    fetchProfile(user.id)
+    if (isDriverRef.current) {
       loadEarnings()
       loadDriverData()
     } else {
       refetchStats()
       refetchPassengerBookings()
     }
-  }, [user?.id, loadEarnings, loadDriverData, refetchStats, refetchPassengerBookings]))
+  }, [user?.id, fetchProfile, loadEarnings, loadDriverData, refetchStats, refetchPassengerBookings]))
 
   // ── Logout ─────────────────────────────────────────────────────────────────
   useEffect(() => {

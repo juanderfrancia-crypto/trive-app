@@ -21,9 +21,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.white,
   },
+  // Mismo ancho que "imageWidth" del splash nativo (app.json), para que no se note
+  // el cambio de tamaño cuando el splash nativo entrega el control a esta pantalla.
   logo: {
-    width: '70%',
-    height: '40%',
+    width: 220,
+    height: 220 * (385 / 1300),
   },
   spinner: {
     position: 'absolute',
