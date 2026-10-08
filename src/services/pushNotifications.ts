@@ -12,6 +12,11 @@ try {
   // expo-notifications not available on this platform
 }
 
+// Nombre del canal de Android para las notificaciones de Trive. Debe coincidir con el
+// "channelId" que manda la función send-push, para que el ícono y el color de marca
+// se apliquen (si no se crea un canal propio, Android usa uno genérico).
+export const ANDROID_NOTIFICATION_CHANNEL_ID = 'default'
+
 export const configureNotificationHandler = () => {
   if (!isPushNotificationsAvailable || !Notifications) return
 
@@ -24,6 +29,16 @@ export const configureNotificationHandler = () => {
       }),
     })
   } catch (_e) {}
+
+  if (Platform.OS === 'android') {
+    Notifications.setNotificationChannelAsync(ANDROID_NOTIFICATION_CHANNEL_ID, {
+      name: 'Trive',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#1230B8',
+      sound: 'default',
+    }).catch(() => {})
+  }
 }
 
 export const getPushNotificationToken = async (): Promise<string | null> => {
@@ -156,6 +171,7 @@ export const sendPushNotificationToUser = async (
       data: data || {},
       badge: 1,
       priority: 'high',
+      channelId: ANDROID_NOTIFICATION_CHANNEL_ID,
     }
 
     const response = await fetch('https://exp.host/--/api/v2/push/send', {

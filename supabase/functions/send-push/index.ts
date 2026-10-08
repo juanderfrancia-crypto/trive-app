@@ -54,6 +54,8 @@ Deno.serve(async (req) => {
       body: record.message ?? '',
       data: record.data ?? {},
       sound: 'default',
+      priority: 'high',
+      channelId: 'default',
     }]),
   })
 

@@ -66,6 +66,7 @@ import DriverPaymentsScreen from '../screens/payments/DriverPaymentsScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import { NotificationsProvider } from '../context/NotificationsContext'
+import { configureNotificationHandler } from '../services/pushNotifications'
 
 const Stack = createNativeStackNavigator()
 
@@ -77,6 +78,12 @@ export default function AppNavigator() {
   const pendingVerificationEmail = useAppStore((state) => state.pendingVerificationEmail)
   const setHasSeenOnboarding = useAppStore((state) => state.setHasSeenOnboarding)
   const setPendingVerification = useAppStore((state) => state.setPendingVerification)
+
+  // Handler de primer plano + canal de notificaciones de Android, antes de que
+  // llegue cualquier push (se registraba la función pero nunca se llamaba).
+  useEffect(() => {
+    configureNotificationHandler()
+  }, [])
 
   // Restaurar estado persistido de AsyncStorage
   useEffect(() => {
