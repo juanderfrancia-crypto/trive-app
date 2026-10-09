@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -14,6 +14,7 @@ import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
 
 const ROUTE_COMMISSION = 2000
 const TX_PAGE_SIZE = 15
+const RECHARGE_MIN = 10000
 
 const AMOUNTS = [
   { label: '$10.000', value: 10000 },
@@ -81,6 +82,8 @@ export default function WalletScreen() {
   const [hasMoreTx, setHasMoreTx] = useState(false)
   const [loadingMoreTx, setLoadingMoreTx] = useState(false)
   const [selectedAmount, setSelectedAmount] = useState<number>(10000)
+  const [showCustomAmount, setShowCustomAmount] = useState(false)
+  const [customAmount, setCustomAmount] = useState('')
   const [loadingBalance, setLoadingBalance] = useState(false)
   const [paying, setPaying]           = useState(false)
   const [verifying, setVerifying]     = useState(false)
@@ -165,12 +168,19 @@ export default function WalletScreen() {
     await loadData()
   }
 
+  const customAmountValue = parseInt(customAmount.replace(/\D/g, ''), 10) || 0
+  const effectiveAmount = showCustomAmount ? customAmountValue : selectedAmount
+
   const handleRecharge = async () => {
     if (!user?.id) return
+    if (effectiveAmount < RECHARGE_MIN) {
+      Alert.alert('Monto muy bajo', `La recarga mínima es $${RECHARGE_MIN.toLocaleString('es-CO')}.`)
+      return
+    }
     setPaying(true)
     try {
       const { data, error } = await supabase.functions.invoke('create-wompi-transaction', {
-        body: { amount: selectedAmount },
+        body: { amount: effectiveAmount },
       })
       if (error || !data?.checkoutUrl) {
         throw new Error(error?.message ?? 'No se pudo iniciar el pago')
@@ -264,31 +274,59 @@ export default function WalletScreen() {
           <Text style={s.sectionLabel}>RECARGAR SALDO</Text>
           <View style={s.rechargeCard}>
             <Text style={s.rechargeTitle}>Selecciona un monto</Text>
+            <Text style={s.rechargeMin}>Recarga mínima: ${RECHARGE_MIN.toLocaleString('es-CO')}</Text>
             <View style={s.amountsGrid}>
               {AMOUNTS.map((a) => (
                 <TouchableOpacity
                   key={a.value}
-                  style={[s.amountChip, selectedAmount === a.value && s.amountChipActive]}
-                  onPress={() => setSelectedAmount(a.value)}
+                  style={[s.amountChip, !showCustomAmount && selectedAmount === a.value && s.amountChipActive]}
+                  onPress={() => { setSelectedAmount(a.value); setShowCustomAmount(false) }}
                   activeOpacity={0.7}
                 >
-                  <Text style={[s.amountChipText, selectedAmount === a.value && s.amountChipTextActive]}>
+                  <Text style={[s.amountChipText, !showCustomAmount && selectedAmount === a.value && s.amountChipTextActive]}>
                     {a.label}
                   </Text>
-                  {selectedAmount === a.value && (
+                  {!showCustomAmount && selectedAmount === a.value && (
                     <Text style={s.amountChipSub}>
                       {Math.floor(a.value / ROUTE_COMMISSION)} viaje{Math.floor(a.value / ROUTE_COMMISSION) !== 1 ? 's' : ''}
                     </Text>
                   )}
                 </TouchableOpacity>
               ))}
+              <TouchableOpacity
+                style={[s.amountChip, showCustomAmount && s.amountChipActive]}
+                onPress={() => setShowCustomAmount(true)}
+                activeOpacity={0.7}
+              >
+                <Text style={[s.amountChipText, showCustomAmount && s.amountChipTextActive]}>Otro monto</Text>
+              </TouchableOpacity>
             </View>
 
+            {showCustomAmount && (
+              <View>
+                <View style={s.customAmountRow}>
+                  <Text style={s.customAmountPrefix}>$</Text>
+                  <TextInput
+                    style={s.customAmountInput}
+                    value={customAmount}
+                    onChangeText={(t) => setCustomAmount(t.replace(/\D/g, ''))}
+                    keyboardType="numeric"
+                    placeholder="Ej: 15.000"
+                    placeholderTextColor={COLORS.textTertiary}
+                    autoFocus
+                  />
+                </View>
+                {customAmountValue > 0 && customAmountValue < RECHARGE_MIN && (
+                  <Text style={s.customAmountError}>El mínimo es ${RECHARGE_MIN.toLocaleString('es-CO')}</Text>
+                )}
+              </View>
+            )}
+
             <TouchableOpacity
-              style={[s.rechargeBtn, (paying || verifying) && s.rechargeBtnDisabled]}
+              style={[s.rechargeBtn, (paying || verifying || effectiveAmount < RECHARGE_MIN) && s.rechargeBtnDisabled]}
               onPress={handleRecharge}
               activeOpacity={0.85}
-              disabled={paying || verifying}
+              disabled={paying || verifying || effectiveAmount < RECHARGE_MIN}
             >
               {paying || verifying ? (
                 <>
@@ -301,7 +339,7 @@ export default function WalletScreen() {
                 <>
                   <Icon name="CirclePlus" size={20} color="#fff" />
                   <Text style={s.rechargeBtnText}>
-                    Recargar ${selectedAmount.toLocaleString('es-CO')}
+                    Recargar{effectiveAmount > 0 ? ` $${effectiveAmount.toLocaleString('es-CO')}` : ''}
                   </Text>
                 </>
               )}
@@ -460,6 +498,7 @@ const s = StyleSheet.create({
     padding: SPACING.lg, gap: SPACING.lg,
   },
   rechargeTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  rechargeMin: { fontSize: 12, color: COLORS.textTertiary, marginTop: -SPACING.sm },
   amountsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm },
   amountChip: {
     flex: 1, minWidth: '45%', paddingVertical: SPACING.md, paddingHorizontal: SPACING.sm,
@@ -470,6 +509,14 @@ const s = StyleSheet.create({
   amountChipText: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary },
   amountChipTextActive: { color: COLORS.primary },
   amountChipSub: { fontSize: 11, color: COLORS.primary, marginTop: 2 },
+  customAmountRow: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
+    borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+  },
+  customAmountPrefix: { fontSize: 18, fontWeight: '700', color: COLORS.textSecondary },
+  customAmountInput: { flex: 1, fontSize: 18, fontWeight: '700', color: COLORS.textPrimary, paddingVertical: SPACING.md },
+  customAmountError: { fontSize: 12, color: COLORS.error, marginTop: SPACING.xs },
   rechargeBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
     backgroundColor: COLORS.primary, borderRadius: RADIUS.md, paddingVertical: 14,
