@@ -66,6 +66,18 @@ serve(async (req) => {
         console.error('Error incrementing balance:', rpcError.message)
         return new Response('Balance update failed', { status: 500 })
       }
+
+      // El pago se confirma de forma asíncrona (a veces después de que el usuario
+      // ya cerró el navegador), así que sin esto nadie se entera de que su saldo
+      // ya se acreditó. Mismo mensaje que usa admin_credit_balance para recargas manuales.
+      const montoFormateado = record.amount.toLocaleString('es-CO')
+      await supabase.rpc('notify_user', {
+        p_user: record.user_id,
+        p_type: 'trip_update',
+        p_title: 'Recarga acreditada',
+        p_message: `Tu saldo Trive se actualizó con $${montoFormateado}.`,
+        p_data: {},
+      })
     }
 
     return new Response('ok', { status: 200 })
