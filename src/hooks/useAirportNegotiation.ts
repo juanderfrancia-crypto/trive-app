@@ -400,10 +400,40 @@ export const useAirportNegotiation = () => {
   }, [])
 
   // ─── Cargar feed para conductor ────────────────────────────────────
+  // Solo se muestran solicitudes donde el origen o el destino coincide con el
+  // municipio del conductor (el mismo que usa "Mi municipio" en Configuración):
+  // a un conductor de Puerto Tejada no le sirve de nada ver una solicitud que
+  // es enteramente dentro de Medellín, porque es imposible que la atienda. Un
+  // viaje Bogotá → Puerto Tejada sí debe verlo, porque un extremo coincide.
+  // Si el conductor no ha configurado su municipio, no se filtra nada (como antes).
   const loadDriverFeed = useCallback(async (): Promise<AirportRequest[]> => {
     try {
       setError(null)
       setLoading(true)
+
+      const { data: authData } = await supabase.auth.getUser()
+      const driverId = authData?.user?.id ?? null
+
+      let municipality: string | null = null
+      let dismissedIds = new Set<string>()
+      if (driverId) {
+        const [{ data: profileRow }, { data: dismissals }] = await Promise.all([
+          supabase.from('profiles').select('preferred_municipality').eq('id', driverId).maybeSingle(),
+          supabase.from('airport_request_dismissals').select('request_id').eq('driver_id', driverId),
+        ])
+        municipality = profileRow?.preferred_municipality ?? null
+        dismissedIds = new Set((dismissals ?? []).map((d) => d.request_id))
+      }
+
+      const municipalityPattern = municipality
+        ? new RegExp(`\\b${municipality.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+        : null
+
+      const matchesFeed = (r: AirportRequest) => {
+        if (dismissedIds.has(r.id)) return false
+        if (!municipalityPattern) return true
+        return municipalityPattern.test(r.origin) || municipalityPattern.test(r.destination)
+      }
 
       const { data, error: fetchError } = await supabase
         .from('airport_requests')
@@ -413,7 +443,7 @@ export const useAirportNegotiation = () => {
 
       if (fetchError) throw fetchError
 
-      const result = (data || []) as AirportRequest[]
+      const result = ((data || []) as AirportRequest[]).filter(matchesFeed)
 
       // Enrich with passenger info
       if (result.length > 0) {
@@ -447,6 +477,7 @@ export const useAirportNegotiation = () => {
                 prev.map(r => r.id === payload.new.id ? { ...r, ...payload.new } : r)
               )
             } else if (payload.eventType === 'INSERT') {
+              if (!matchesFeed(payload.new as AirportRequest)) return
               setRequests(prev => [payload.new as AirportRequest, ...prev])
             } else if (payload.eventType === 'DELETE') {
               setRequests(prev => prev.filter(r => r.id !== payload.old.id))
@@ -465,6 +496,24 @@ export const useAirportNegotiation = () => {
       setLoading(false)
     }
   }, [])
+
+  // ─── Descartar una solicitud del feed propio ("No me interesa") ─────
+  // Solo la oculta para este conductor; sigue disponible para los demás.
+  const dismissRequest = async (requestId: string, driverId: string): Promise<void> => {
+    try {
+      const { error: insertError } = await supabase
+        .from('airport_request_dismissals')
+        .insert({ driver_id: driverId, request_id: requestId })
+
+      if (insertError && insertError.code !== '23505') throw insertError
+
+      setRequests(prev => prev.filter(r => r.id !== requestId))
+    } catch (err: any) {
+      const message = err.message || 'No se pudo descartar la solicitud'
+      setError(message)
+      throw err
+    }
+  }
 
   // ─── Rechazar una oferta (la solicitud sigue visible para otros conductores) ───
   const rejectOffer = async (offerId: string): Promise<void> => {
@@ -1110,6 +1159,7 @@ export const useAirportNegotiation = () => {
     loadPassengerRequests,
     loadPassengerActiveTrips,
     loadDriverFeed,
+    dismissRequest,
     loadDriverActiveTrips,
     loadOffersForRequest,
     loadSingleRequest,

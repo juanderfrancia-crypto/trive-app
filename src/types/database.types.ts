@@ -210,6 +210,32 @@ export type Database = {
           },
         ]
       }
+      airport_request_dismissals: {
+        Row: {
+          created_at: string
+          driver_id: string
+          request_id: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          request_id: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          request_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "airport_request_dismissals_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "airport_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       airport_requests: {
         Row: {
           accepted_at: string | null

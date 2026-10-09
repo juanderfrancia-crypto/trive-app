@@ -3,6 +3,7 @@ import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator,
 import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
+import Icon from '../Icon'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
@@ -20,6 +21,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     loadDriverFeed,
     createOffer,
     acceptRequestDirect,
+    dismissRequest,
   } = useAirportNegotiation()
 
   const [refreshing, setRefreshing] = useState(false)
@@ -100,14 +102,48 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     )
   }
 
+  const handleDismiss = (item: AirportRequest) => {
+    if (!user?.id) return
+    Alert.alert(
+      'No me interesa',
+      'Se deja de mostrar en tu lista. Otros conductores la seguirán viendo.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Descartar',
+          onPress: async () => {
+            try {
+              setProcessing(item.id)
+              await dismissRequest(item.id, user.id)
+            } catch (err: any) {
+              showError(err.message || 'No se pudo descartar la solicitud')
+            } finally {
+              setProcessing(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const renderOfferItem = ({ item }: { item: AirportRequest }) => {
     const isProcessing = processing === item.id
     return (
       <View style={styles.card}>
         <View style={styles.cardTop}>
           <Text style={styles.when}>{formatDeparture(item.departure_time)}</Text>
-          <View style={styles.newPill}>
-            <Text style={styles.newPillText}>Nueva</Text>
+          <View style={styles.cardTopRight}>
+            <View style={styles.newPill}>
+              <Text style={styles.newPillText}>Nueva</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => handleDismiss(item)}
+              disabled={!!processing}
+              hitSlop={8}
+              accessibilityLabel="No me interesa"
+            >
+              <Icon name="X" size={16} color={COLORS.textTertiary} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -274,6 +310,11 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.textSecondary,
+  },
+  cardTopRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   newPill: {
     backgroundColor: COLORS.warningLight,
