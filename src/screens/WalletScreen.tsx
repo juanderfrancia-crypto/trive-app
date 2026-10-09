@@ -9,10 +9,11 @@ import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
 import { supabase } from '../services/supabase'
-import Icon from '../components/Icon'
+import Icon, { type IconName } from '../components/Icon'
 import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
 
 const ROUTE_COMMISSION = 2000
+const TX_PAGE_SIZE = 15
 
 const AMOUNTS = [
   { label: '$5.000',  value: 5000 },
@@ -33,12 +34,40 @@ interface WalletTx {
 const WALLET_LABELS: Record<string, string> = {
   recharge: 'Recarga',
   route_fee: 'Publicación de ruta',
+  route_fee_refund: 'Devolución de publicación',
   airport_fee: 'Viaje de aeropuerto aceptado',
   airport_refund: 'Reembolso de viaje de aeropuerto',
   referral_bonus: 'Bono por referido',
   referral_discount: 'Descuento de bienvenida',
   admin_credit: 'Ajuste a favor',
   admin_debit: 'Ajuste en contra',
+}
+
+// Ícono y color por tipo de movimiento, en vez de solo "recarga vs todo lo demás".
+const WALLET_ICONS: Record<string, { icon: IconName; color: string }> = {
+  recharge: { icon: 'ArrowDown', color: COLORS.success },
+  route_fee: { icon: 'Car', color: COLORS.error },
+  route_fee_refund: { icon: 'RefreshCw', color: COLORS.success },
+  airport_fee: { icon: 'Plane', color: COLORS.error },
+  airport_refund: { icon: 'RefreshCw', color: COLORS.success },
+  referral_bonus: { icon: 'Gift', color: COLORS.success },
+  referral_discount: { icon: 'Gift', color: COLORS.success },
+  admin_credit: { icon: 'Plus', color: COLORS.success },
+  admin_debit: { icon: 'Minus', color: COLORS.error },
+}
+
+// "Hoy", "Ayer" o el mes (con año si ya no es el actual), para agrupar el historial
+// igual que las apps de billetera: nada de una lista plana sin fin.
+function txGroupLabel(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000)
+  if (diffDays === 0) return 'Hoy'
+  if (diffDays === 1) return 'Ayer'
+  const sameYear = d.getFullYear() === now.getFullYear()
+  const label = d.toLocaleDateString('es-CO', { month: 'long', year: sameYear ? undefined : 'numeric' })
+  return label.charAt(0).toUpperCase() + label.slice(1)
 }
 
 export default function WalletScreen() {
@@ -49,6 +78,8 @@ export default function WalletScreen() {
   const [balance, setBalance]         = useState<number>(user?.balance ?? 0)
   const [driverStats, setDriverStats] = useState({ rating: 0, trips: 0, reviews: 0 })
   const [transactions, setTransactions] = useState<WalletTx[]>([])
+  const [hasMoreTx, setHasMoreTx] = useState(false)
+  const [loadingMoreTx, setLoadingMoreTx] = useState(false)
   const [selectedAmount, setSelectedAmount] = useState<number>(10000)
   const [loadingBalance, setLoadingBalance] = useState(false)
   const [paying, setPaying]           = useState(false)
@@ -64,7 +95,7 @@ export default function WalletScreen() {
           .select('id, amount, type, status, created_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false })
-          .limit(20),
+          .range(0, TX_PAGE_SIZE),
         supabase.from('routes')
           .select('id', { count: 'exact', head: true })
           .eq('driver_id', user.id)
@@ -83,11 +114,35 @@ export default function WalletScreen() {
         setBalance(newBalance)
         setUser({ ...user, balance: newBalance })
       }
-      if (txRes.data) setTransactions(txRes.data as WalletTx[])
+      if (txRes.data) {
+        const page = txRes.data as WalletTx[]
+        setHasMoreTx(page.length > TX_PAGE_SIZE)
+        setTransactions(page.slice(0, TX_PAGE_SIZE))
+      }
     } finally {
       setLoadingBalance(false)
     }
   }, [user?.id])
+
+  const loadMoreTransactions = async () => {
+    if (!user?.id || loadingMoreTx) return
+    setLoadingMoreTx(true)
+    try {
+      const from = transactions.length
+      const { data } = await supabase
+        .from('wallet_transactions')
+        .select('id, amount, type, status, created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(from, from + TX_PAGE_SIZE)
+
+      const page = (data as WalletTx[]) ?? []
+      setHasMoreTx(page.length > TX_PAGE_SIZE)
+      setTransactions((prev) => [...prev, ...page.slice(0, TX_PAGE_SIZE)])
+    } finally {
+      setLoadingMoreTx(false)
+    }
+  }
 
   useFocusEffect(useCallback(() => { loadData() }, [loadData]))
 
@@ -267,35 +322,56 @@ export default function WalletScreen() {
             </View>
           ) : (
             <View style={s.txList}>
-              {transactions.map((tx) => (
-                <View key={tx.id} style={s.txRow}>
-                  <View style={[s.txIcon, { backgroundColor: tx.type === 'recharge' ? `${COLORS.success}15` : `${COLORS.error}12` }]}>
-                    <Icon
-                      name={tx.type === 'recharge' ? 'ArrowDown' : 'Car'}
-                      size={18}
-                      color={tx.type === 'recharge' ? COLORS.success : COLORS.error}
-                    />
-                  </View>
-                  <View style={s.txInfo}>
-                    <Text style={s.txLabel}>
-                      {WALLET_LABELS[tx.type] ?? 'Movimiento'}
-                    </Text>
-                    <Text style={s.txDate}>
-                      {new Date(tx.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' })}
-                    </Text>
-                  </View>
-                  <View style={s.txRight}>
-                    <Text style={[s.txAmount, { color: tx.amount >= 0 ? COLORS.success : COLORS.error }]}>
-                      {tx.amount >= 0 ? '+' : '-'}${Math.abs(tx.amount).toLocaleString('es-CO')}
-                    </Text>
-                    <View style={[s.txStatus, { backgroundColor: statusColor(tx.status) + '20' }]}>
-                      <Text style={[s.txStatusText, { color: statusColor(tx.status) }]}>
-                        {statusLabel(tx.status)}
-                      </Text>
+              {transactions.map((tx, i) => {
+                const group = txGroupLabel(tx.created_at)
+                const showHeader = i === 0 || txGroupLabel(transactions[i - 1].created_at) !== group
+                const iconInfo = WALLET_ICONS[tx.type] ?? { icon: 'Receipt' as IconName, color: COLORS.textSecondary }
+                return (
+                  <View key={tx.id}>
+                    {showHeader && (
+                      <Text style={[s.txGroupHeader, i === 0 && s.txGroupHeaderFirst]}>{group}</Text>
+                    )}
+                    <View style={s.txRow}>
+                      <View style={[s.txIcon, { backgroundColor: `${iconInfo.color}15` }]}>
+                        <Icon name={iconInfo.icon} size={18} color={iconInfo.color} />
+                      </View>
+                      <View style={s.txInfo}>
+                        <Text style={s.txLabel}>
+                          {WALLET_LABELS[tx.type] ?? 'Movimiento'}
+                        </Text>
+                        <Text style={s.txDate}>
+                          {new Date(tx.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' })}
+                        </Text>
+                      </View>
+                      <View style={s.txRight}>
+                        <Text style={[s.txAmount, { color: tx.amount >= 0 ? COLORS.success : COLORS.error }]}>
+                          {tx.amount >= 0 ? '+' : '-'}${Math.abs(tx.amount).toLocaleString('es-CO')}
+                        </Text>
+                        <View style={[s.txStatus, { backgroundColor: statusColor(tx.status) + '20' }]}>
+                          <Text style={[s.txStatusText, { color: statusColor(tx.status) }]}>
+                            {statusLabel(tx.status)}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
-                </View>
-              ))}
+                )
+              })}
+
+              {hasMoreTx && (
+                <TouchableOpacity
+                  style={s.loadMoreBtn}
+                  onPress={loadMoreTransactions}
+                  disabled={loadingMoreTx}
+                  activeOpacity={0.75}
+                >
+                  {loadingMoreTx ? (
+                    <ActivityIndicator color={COLORS.primary} size="small" />
+                  ) : (
+                    <Text style={s.loadMoreText}>Ver más movimientos</Text>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -420,6 +496,14 @@ const s = StyleSheet.create({
   txAmount: { fontSize: 15, fontWeight: '700' },
   txStatus: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: RADIUS.full },
   txStatusText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
+  txGroupHeader: {
+    fontSize: 12, fontWeight: '700', color: COLORS.textTertiary, textTransform: 'uppercase', letterSpacing: 0.5,
+    paddingHorizontal: SPACING.lg, paddingTop: SPACING.md, paddingBottom: SPACING.xs,
+    backgroundColor: COLORS.surfaceAlt,
+  },
+  txGroupHeaderFirst: { paddingTop: SPACING.sm },
+  loadMoreBtn: { alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.md },
+  loadMoreText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
   // Empty
   emptyCard: {
