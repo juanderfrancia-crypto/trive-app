@@ -24,7 +24,7 @@ serve(async (req) => {
     if (authError || !user) throw new Error('Unauthorized')
 
     const { amount } = await req.json()
-    if (!amount || amount < 1000) throw new Error('Monto mínimo: $1.000')
+    if (!amount || amount < 10000) throw new Error('Monto mínimo: $10.000')
 
     const publicKey       = Deno.env.get('WOMPI_PUBLIC_KEY')!
     const integritySecret = Deno.env.get('WOMPI_INTEGRITY_SECRET')!

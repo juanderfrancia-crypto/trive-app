@@ -16,10 +16,10 @@ const ROUTE_COMMISSION = 2000
 const TX_PAGE_SIZE = 15
 
 const AMOUNTS = [
-  { label: '$5.000',  value: 5000 },
   { label: '$10.000', value: 10000 },
   { label: '$20.000', value: 20000 },
   { label: '$50.000', value: 50000 },
+  { label: '$100.000', value: 100000 },
 ]
 
 interface WalletTx {
