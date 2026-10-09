@@ -113,7 +113,7 @@ export default function DriverHomeScreen() {
           </View>
           <View style={styles.primaryCtaText}>
             <Text style={styles.primaryCtaTitle}>Publicar ruta</Text>
-            <Text style={styles.primaryCtaSub}>Vende cupos para hoy o para después</Text>
+            <Text style={styles.primaryCtaSub}>Publica cupos para hoy o para después</Text>
           </View>
           <Icon name="ChevronRight" size={18} color={COLORS.white} />
         </TouchableOpacity>
