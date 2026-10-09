@@ -23,6 +23,7 @@ const getGreeting = () => {
 export default function DriverHomeScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
+  const setViewingAsPassenger = useAppStore((s) => s.setViewingAsPassenger)
   const { profile } = useProfile(user?.id)
   const { goToCreateRoute } = useCreateRouteGate(user?.id)
   const [pendingAirportCount, setPendingAirportCount] = useState(0)
@@ -57,6 +58,14 @@ export default function DriverHomeScreen() {
             <Text style={styles.modeText}>Conductor</Text>
           </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.switchModeLink}
+          onPress={() => setViewingAsPassenger(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.switchModeLinkText}>Usar como pasajero</Text>
+        </TouchableOpacity>
 
         <View style={{ alignItems: 'center' }}>
           <Illustration name="proudDriver" width={200} />
@@ -181,6 +190,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full,
   },
   modeText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  switchModeLink: { alignSelf: 'flex-end', marginTop: SPACING.xs },
+  switchModeLinkText: { fontSize: 13, fontWeight: '600', color: COLORS.accent, textDecorationLine: 'underline' },
 
   walletCard: { ...SHADOWS.md, shadowColor: COLORS.primary, shadowOpacity: 0.28, marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary },
   walletLabel: { fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85 },

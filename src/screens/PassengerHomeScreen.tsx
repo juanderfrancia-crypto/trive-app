@@ -34,6 +34,8 @@ export default function PassengerHomeScreen() {
   const user = useAppStore((s) => s.user)
   const setSearchParams = useAppStore((s) => s.setSearchParams)
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
+  const viewingAsPassenger = useAppStore((s) => s.viewingAsPassenger)
+  const setViewingAsPassenger = useAppStore((s) => s.setViewingAsPassenger)
 
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
@@ -198,6 +200,17 @@ export default function PassengerHomeScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />}
       >
+        {viewingAsPassenger && (
+          <TouchableOpacity
+            style={styles.modeBanner}
+            onPress={() => setViewingAsPassenger(false)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.modeBannerText}>Viendo como pasajero</Text>
+            <Text style={styles.modeBannerAction}>Volver a conductor</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
@@ -396,6 +409,14 @@ export default function PassengerHomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   content: { paddingHorizontal: SPACING.xl, paddingTop: SPACING.md, paddingBottom: SPACING.xxxl },
+
+  modeBanner: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, marginBottom: SPACING.md,
+  },
+  modeBannerText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+  modeBannerAction: { fontSize: 13, fontWeight: '700', color: COLORS.primary, textDecorationLine: 'underline' },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },

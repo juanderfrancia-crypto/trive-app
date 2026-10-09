@@ -36,6 +36,9 @@ interface AppState {
   pendingVerificationName?: string
   pendingVerificationPhone?: string
   searchParams?: { origin: string; destination: string }
+  // Vista temporal: un conductor viendo la app como pasajero, sin cambiar profiles.role.
+  // Nunca se persiste — vuelve a modo conductor sola al cerrar sesión o reabrir la app.
+  viewingAsPassenger: boolean
 
   setUser: (user: AppUser | null) => void
   setAuthUser: (user: User | null) => void
@@ -49,6 +52,7 @@ interface AppState {
   setPendingVerification: (email: string, name: string, phone: string) => void
   clearPendingVerification: () => void
   setSearchParams: (origin: string, destination: string) => void
+  setViewingAsPassenger: (viewingAsPassenger: boolean) => void
   logout: () => void
 }
 
@@ -111,6 +115,7 @@ export const useAppStore = create<AppState>()(
       pendingVerificationName: undefined,
       pendingVerificationPhone: undefined,
       searchParams: undefined,
+      viewingAsPassenger: false,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setAuthUser: (authUser) => set({ authUser }),
@@ -122,6 +127,7 @@ export const useAppStore = create<AppState>()(
       setHasSeenOnboarding: (hasSeenOnboarding) => set({ hasSeenOnboarding }),
       setNotificationUnreadCount: (notificationUnreadCount) => set({ notificationUnreadCount }),
       setSearchParams: (origin: string, destination: string) => set({ searchParams: { origin, destination } }),
+      setViewingAsPassenger: (viewingAsPassenger) => set({ viewingAsPassenger }),
       setPendingVerification: (email: string, name: string, phone: string) => {
         // Guardar en SecureStore cifrado, no en AsyncStorage
         savePendingVerificationSecure(email, name, phone)
@@ -154,6 +160,7 @@ export const useAppStore = create<AppState>()(
           pendingVerificationName: undefined,
           pendingVerificationPhone: undefined,
           hasSeenOnboarding: true,
+          viewingAsPassenger: false,
         })
       },
     }),

@@ -24,7 +24,9 @@ type TabDef = {
 export default function AirportHubScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
-  const isDriver = isDriverRole(user)
+  const viewingAsPassenger = useAppStore((s) => s.viewingAsPassenger)
+  // viewingAsPassenger: ver docs/MODO_CONDUCTOR_PASAJERO.md.
+  const isDriver = isDriverRole(user) && !viewingAsPassenger
   const [activeTab, setActiveTab] = useState(0)
   const [showHistory, setShowHistory] = useState(false)
 

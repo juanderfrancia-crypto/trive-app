@@ -56,7 +56,7 @@ Digitaliza al **despachador**: la persona que, cuando un carro se llena, llama a
 - **Conductor:** se registra, sube documentos (cédula, licencia, SOAT) y un admin los verifica. Publica rutas con hora y precio por cupo. Puede aceptar solicitudes de aeropuerto.
 - **Pasajero:** busca "Cupos Hoy" y reserva asiento. Si no encuentra, crea una solicitud de viaje particular o al aeropuerto; los conductores hacen ofertas y se negocia por chat.
 - **Seguridad:** botón SOS que abre WhatsApp con la ubicación para un contacto de emergencia.
-- **Un mismo usuario** puede cambiar entre modo conductor y modo pasajero.
+- **Un conductor puede ver la app como pasajero** desde un enlace en su Inicio, sin que cambie su rol real ni su saldo — es una vista temporal de sesión, no un cambio de cuenta. Detalle y la opción más completa (modo persistente) pendiente de construir si hace falta: `docs/MODO_CONDUCTOR_PASAJERO.md`.
 
 ## 3. Infraestructura
 

@@ -38,7 +38,8 @@ function TabIcon({ name, color, size, focused }: { name: IconName; color: string
 }
 
 function TripsTab() {
-  const isDriver = useAppStore((s) => isDriverRole(s.user))
+  // viewingAsPassenger: ver docs/MODO_CONDUCTOR_PASAJERO.md.
+  const isDriver = useAppStore((s) => isDriverRole(s.user) && !s.viewingAsPassenger)
   return isDriver ? <DriverTripsScreen /> : <PassengerTripsScreen />
 }
 
