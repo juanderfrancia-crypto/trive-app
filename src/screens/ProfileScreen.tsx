@@ -2,7 +2,8 @@ import IllustratedCard from '../components/illustrations/IllustratedCard'
 import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, KeyboardAvoidingView, Platform, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, StatusBar } from 'react-native'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -465,7 +466,7 @@ export default function ProfileScreen() {
 
       {/* Modal editar nombre */}
       <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingScreen>
           <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
           <View style={nm.sheet}>
             <Text style={nm.title}>Editar nombre</Text>
@@ -494,7 +495,7 @@ export default function ProfileScreen() {
               </LinearGradient>
             </View>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingScreen>
       </Modal>
 
       {/* Acceso admin — solo aparece si user.is_admin === true */}

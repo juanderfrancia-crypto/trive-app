@@ -17,6 +17,7 @@ import { supabase } from '../services/supabase'
 import { showSuccess, showError } from '../utils/showError'
 import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Municipality } from '../data/colombiaMunicipalities'
 import { usePassengerBookings, confirmPassengerTrip } from './passenger/usePassengerBookings'
 import { useTodayDepartures } from './passenger/useTodayDepartures'
@@ -195,9 +196,11 @@ export default function PassengerHomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingScreen>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />}
       >
         {viewingAsPassenger && (
@@ -395,6 +398,7 @@ export default function PassengerHomeScreen() {
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingScreen>
 
       <MunicipalityPickerModal
         visible={showMunicipalityPicker}

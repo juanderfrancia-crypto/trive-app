@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'
+import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { TripMessageList } from './TripMessageList'
 import { QuickMessageInput } from './QuickMessageInput'
@@ -79,11 +80,7 @@ export const TripMessagesModal = React.memo(
           <View style={styles.divider} />
 
           {/* Messages List */}
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.messagesContainer}
-            keyboardVerticalOffset={100}
-          >
+          <KeyboardAvoidingScreen style={styles.messagesContainer} extraOffset={100}>
             {loading ? (
               <View style={styles.centerContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -106,7 +103,6 @@ export const TripMessagesModal = React.memo(
                 <Text style={styles.errorBannerText}>{sendError}</Text>
               </View>
             )}
-          </KeyboardAvoidingView>
 
           {/* Input */}
           <QuickMessageInput
@@ -114,6 +110,7 @@ export const TripMessagesModal = React.memo(
             disabled={sending || !!error}
             placeholder="Escribe un mensaje..."
           />
+          </KeyboardAvoidingScreen>
         </SafeAreaView>
       </Modal>
     )

@@ -3,6 +3,7 @@ import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndi
 import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
+import KeyboardAvoidingScreen from '../../components/KeyboardAvoidingScreen'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
 import { useRoutes, PublishRoutePayload, Route } from '../../hooks/useRoutes'
@@ -694,6 +695,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + SPACING.sm, paddingBottom: insets.bottom }]}>
+      <KeyboardAvoidingScreen>
       {step < 3 && (
         <TouchableOpacity
           style={styles.backBtn}
@@ -727,6 +729,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
       </ScrollView>
 
       <View style={styles.footer}>{renderFooter()}</View>
+      </KeyboardAvoidingScreen>
     </View>
   )
 }

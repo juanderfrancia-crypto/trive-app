@@ -1,6 +1,6 @@
 import { PROFILE_COLUMNS, getMyPhone } from '../services/profileColumns'
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native'
@@ -10,6 +10,7 @@ import { useAppStore } from '../store/useAppStore'
 import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 type RootParamList = {
   VerifyEmail: {
@@ -142,11 +143,8 @@ export default function VerifyEmailScreen() {
         style={styles.gradientBg}
       />
 
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity
@@ -261,7 +259,7 @@ export default function VerifyEmailScreen() {
             </View>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </View>
   )
 }

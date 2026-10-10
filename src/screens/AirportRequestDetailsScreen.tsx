@@ -9,6 +9,7 @@ import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { VEHICLE_TYPES } from './driver/PublishRouteFlow'
 
 const vehicleName = (id?: string | null) => VEHICLE_TYPES.find((v) => v.id === id)?.name ?? 'Auto'
@@ -325,6 +326,7 @@ export default function AirportRequestDetailsScreen() {
       )}
 
       <Modal visible={showPriceModal} animationType="slide" transparent onRequestClose={() => setShowPriceModal(false)}>
+        <KeyboardAvoidingScreen>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -363,6 +365,7 @@ export default function AirportRequestDetailsScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
     </SafeAreaView>
   )

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, StatusBar } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 interface SavedAddress {
   id: string
@@ -211,7 +212,9 @@ export default function SavedAddressesScreen() {
         </TouchableOpacity>
       </View>
 
+      <KeyboardAvoidingScreen>
       {showForm && (
+        <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
           <Text style={styles.formTitle}>{editingId ? 'Editar dirección' : 'Nueva dirección'}</Text>
 
@@ -265,7 +268,9 @@ export default function SavedAddressesScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        </ScrollView>
       )}
+      </KeyboardAvoidingScreen>
 
       {addresses.length > 0 ? (
         <FlatList

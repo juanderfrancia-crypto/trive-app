@@ -9,6 +9,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 export default function RecoveryAccountScreen() {
   const navigation = useNavigation()
@@ -47,6 +48,7 @@ export default function RecoveryAccountScreen() {
         <View style={styles.backBtnPlaceholder} />
       </View>
 
+      <KeyboardAvoidingScreen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.illustrationCard}>
           <Illustration name="mobileEncryption" width={200} />
@@ -107,6 +109,7 @@ export default function RecoveryAccountScreen() {
           </>
         )}
       </ScrollView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

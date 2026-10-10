@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, TextInput, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -77,11 +78,8 @@ export default function ChangePasswordScreen() {
 
   return (
     <View style={[styles.safeContainer, { paddingTop: insets.top }]}> 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.header}>
             <TouchableOpacity onPress={() => navigation.goBack()}>
               <Icon name="ChevronLeft" size={28} color={COLORS.textPrimary} />
@@ -166,7 +164,7 @@ export default function ChangePasswordScreen() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </View>
   )
 }

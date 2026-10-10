@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
 import { showError } from '../utils/showError'
@@ -79,6 +80,7 @@ export default function VerifyPhoneScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
+      <KeyboardAvoidingScreen>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
 
@@ -159,6 +161,7 @@ export default function VerifyPhoneScreen() {
           <Text style={styles.logoutText}>Usar otra cuenta</Text>
         </TouchableOpacity>
       </ScrollView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

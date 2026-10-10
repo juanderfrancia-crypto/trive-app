@@ -4,6 +4,7 @@ import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Icon from '../Icon'
+import KeyboardAvoidingScreen from '../KeyboardAvoidingScreen'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
@@ -247,6 +248,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
       )}
 
       <Modal visible={showProposalModal} transparent animationType="slide" onRequestClose={() => setShowProposalModal(false)}>
+        <KeyboardAvoidingScreen>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Proponer precio</Text>
@@ -281,6 +283,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
     </View>
   )

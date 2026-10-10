@@ -1,8 +1,9 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon, { type IconName as IconNameType } from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -485,10 +486,7 @@ export default function NotificationsScreen() {
         onRequestClose={() => setDetailNotif(null)}
       >
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setDetailNotif(null)}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ width: '100%' }}
-          >
+          <KeyboardAvoidingScreen fill={false} style={{ width: '100%' }}>
           <TouchableOpacity activeOpacity={1} style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]} onPress={() => {}}>
             <View style={styles.modalHandle} />
 
@@ -644,7 +642,7 @@ export default function NotificationsScreen() {
               </View>
             )}
           </TouchableOpacity>
-          </KeyboardAvoidingView>
+          </KeyboardAvoidingScreen>
         </TouchableOpacity>
       </Modal>
 

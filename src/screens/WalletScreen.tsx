@@ -11,6 +11,7 @@ import { isDriverRole } from '../utils/userRole'
 import { supabase } from '../services/supabase'
 import Icon, { type IconName } from '../components/Icon'
 import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 const ROUTE_COMMISSION = 2000
 const TX_PAGE_SIZE = 15
@@ -214,7 +215,8 @@ export default function WalletScreen() {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen>
+      <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         <View style={{ alignItems: 'center' }}>
           <Illustration name="addingFunds" width={170} />
@@ -415,6 +417,7 @@ export default function WalletScreen() {
         </View>
 
       </ScrollView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

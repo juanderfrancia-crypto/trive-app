@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform, Modal } from 'react-native'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import DepthCard from '../components/DepthCard'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { VEHICLE_TYPES, type VehicleTypeId } from './driver/PublishRouteFlow'
 import { useAppStore } from '../store/useAppStore'
@@ -219,7 +220,7 @@ export default function CreateAirportRequestScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={s.flex}>
+      <KeyboardAvoidingScreen style={s.flex}>
         <View style={s.segmented}>
           <TouchableOpacity
             style={[s.segment, tripType === 'airport' && s.segmentActive]}
@@ -526,7 +527,7 @@ export default function CreateAirportRequestScreen() {
 
           <Text style={s.disclaimer}>Al publicar, los conductores verificados podrán ver tu solicitud.</Text>
         </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

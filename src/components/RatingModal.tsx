@@ -4,6 +4,7 @@ import { Text } from './AppText'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from './Icon'
+import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 
 interface RatingModalProps {
   visible: boolean
@@ -62,6 +63,7 @@ export default function RatingModal({
   return (
     <>
       <Modal visible={visible} transparent animationType="fade">
+        <KeyboardAvoidingScreen>
         <View style={styles.overlay}>
           <View style={styles.modalContainer}>
             {/* Header */}
@@ -206,6 +208,7 @@ export default function RatingModal({
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
 
     </>

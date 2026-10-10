@@ -17,6 +17,7 @@ import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import { Municipality } from '../data/colombiaMunicipalities'
 import Icon, { type IconName } from '../components/Icon'
 import { APP_VERSION_LABEL } from '../config/appInfo'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
@@ -209,6 +210,7 @@ export default function SettingsScreen() {
       />
 
       <Modal visible={sosModalVisible} transparent animationType="fade" onRequestClose={() => setSosModalVisible(false)}>
+        <KeyboardAvoidingScreen>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
@@ -245,6 +247,7 @@ export default function SettingsScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
     </SafeAreaView>
   )

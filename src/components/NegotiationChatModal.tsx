@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from 'react-native'
 import { Text } from './AppText';
 import { useNegotiationChat } from '../hooks/useNegotiationChat';
 import { useAppStore } from '../store/useAppStore';
 import { COLORS, SPACING } from '../theme/theme';
 import Icon from './Icon'
+import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 
 interface NegotiationChatModalProps {
   visible: boolean;
@@ -93,10 +94,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
+      <KeyboardAvoidingScreen>
         {/* Header */}
         <View style={s.header}>
           <TouchableOpacity onPress={onClose}>
@@ -206,7 +204,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
             )}
           </>
         )}
-      </KeyboardAvoidingView>
+      </KeyboardAvoidingScreen>
     </Modal>
   );
 };

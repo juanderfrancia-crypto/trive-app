@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as WebBrowser from 'expo-web-browser'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import {
   getPendingDocumentsForVerification,
   getProcessedDocumentsForAdmin,
@@ -548,6 +549,7 @@ export default function AdminDocumentsScreen() {
 
       {/* ── Modal: Fecha de vencimiento ── */}
       <Modal visible={showExpiryModal} transparent animationType="fade">
+        <KeyboardAvoidingScreen>
         <View style={s.overlay}>
           <View style={[s.sheet, SHADOWS.lg]}>
             <Text style={s.sheetTitle}>Fecha de Vencimiento</Text>
@@ -583,10 +585,12 @@ export default function AdminDocumentsScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
 
       {/* ── Modal: Razón de rechazo ── */}
       <Modal visible={showRejectModal} transparent animationType="fade">
+        <KeyboardAvoidingScreen>
         <View style={s.overlay}>
           <View style={[s.sheet, SHADOWS.lg]}>
             <Text style={s.sheetTitle}>Razón del Rechazo</Text>
@@ -619,6 +623,7 @@ export default function AdminDocumentsScreen() {
             </View>
           </View>
         </View>
+        </KeyboardAvoidingScreen>
       </Modal>
 
     </SafeAreaView>

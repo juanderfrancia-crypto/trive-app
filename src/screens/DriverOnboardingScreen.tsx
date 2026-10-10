@@ -4,6 +4,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndi
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
@@ -76,7 +77,8 @@ export default function DriverOnboardingScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen>
+      <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* ── Hero ── */}
         <IllustratedCard illustration="proudDriver" illustrationWidth={110} style={[s.hero, { borderRadius: RADIUS.xl }]}>
@@ -191,6 +193,7 @@ export default function DriverOnboardingScreen() {
           </LinearGradient>
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

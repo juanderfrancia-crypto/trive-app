@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, ActivityIndicator, Modal } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -8,6 +8,7 @@ import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 type MethodType = 'nequi' | 'daviplata' | 'bre_b'
 
@@ -195,7 +196,7 @@ export default function DriverPaymentMethodsScreen() {
       </ScrollView>
 
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <KeyboardAvoidingScreen>
           <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setShowForm(false)} />
           <View style={s.sheet}>
             <View style={s.sheetHeader}>
@@ -258,7 +259,7 @@ export default function DriverPaymentMethodsScreen() {
               {saving ? <ActivityIndicator color={COLORS.white} /> : <Text style={s.saveBtnText}>Guardar</Text>}
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingScreen>
       </Modal>
     </SafeAreaView>
   )

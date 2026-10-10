@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -10,6 +10,7 @@ import DepthCard from '../components/DepthCard'
 import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
 import {
@@ -344,7 +345,7 @@ export default function RecurringRoutesScreen() {
 
       {/* ── Modal crear/editar plantilla ── */}
       <Modal visible={showCreate} animationType="slide" transparent onRequestClose={() => setShowCreate(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalOverlay}>
+        <KeyboardAvoidingScreen style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
             <View style={styles.modalHeader}>
@@ -381,7 +382,7 @@ export default function RecurringRoutesScreen() {
               <View style={{ height: SPACING.xxl }} />
             </ScrollView>
           </View>
-        </KeyboardAvoidingView>
+        </KeyboardAvoidingScreen>
       </Modal>
 
       {/* ── Modal publicar desde plantilla ── */}

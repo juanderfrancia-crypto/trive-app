@@ -3,6 +3,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Text
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -352,7 +353,8 @@ export default function BookingScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <OfflineBanner />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} disabled={loading} accessibilityLabel="Volver">
             <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
@@ -506,6 +508,7 @@ export default function BookingScreen() {
           )}
         </TouchableOpacity>
       </View>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }

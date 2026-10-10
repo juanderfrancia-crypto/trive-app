@@ -2,6 +2,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Linki
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useNavigation } from '@react-navigation/native'
 import { useState } from 'react'
 import * as Device from 'expo-device'
@@ -130,6 +131,7 @@ Correo de contacto: ${report.email}
         <View style={styles.backBtnPlaceholder} />
       </View>
 
+      <KeyboardAvoidingScreen>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.welcome}>
           <View style={styles.welcomeIcon}>
@@ -226,6 +228,7 @@ Correo de contacto: ${report.email}
           </Text>
         </View>
       </ScrollView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }
