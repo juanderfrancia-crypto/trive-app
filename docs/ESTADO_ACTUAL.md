@@ -1,41 +1,39 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-03.
+Última actualización: 2026-10-10.
 
 ---
 
-## 0. Dónde quedamos (bitácora, 2026-10-03)
+## 0. Dónde quedamos (bitácora, 2026-10-10)
 
-**Hecho y verificado:**
-- Respaldo de la base antes de la fase 2 (fuera del repositorio, `respaldo_antes_fase2.sql`).
-- Las 9 migraciones de seguridad aplicadas en producción (2a a 2h), todas con "Success".
-- Verificación posterior: 12 funciones clave existen; sin lectura pública de `profiles` ni `bookings`.
-- Funciones Edge desplegadas: `delete-account` y `send-push`.
-- Secreto `WEBHOOK_SECRET` creado y webhook de notificaciones creado.
-- Cierre automático de viajes a 24 h programado con pg_cron (cada 15 min).
-- Trabajo antiguo `update_completed_bookings_job` desactivado: marcaba reservas como completadas sin confirmación.
-- Bucket `driver-documents` privado, y políticas de dueño aplicadas. Verificado: sin cuenta no se listan documentos.
-- ID de proyecto EAS unificado (`17d0b706-…`) y autoIncrement en producción.
-- APK de preview compilado e instalado en el teléfono. Abre y funciona.
-- Pruebas offline de la base: 72/72.
+**Hecho y verificado (resumen desde el 2026-10-03; detalle completo en el historial de git de la rama `seguridad/fase-2`, todo commiteado y pusheado):**
+- Las 9 migraciones de seguridad de la fase 2 (2a–2h) aplicadas en producción, más las migraciones posteriores: índices de rendimiento, vehículo/pasajeros en solicitudes personalizadas, `airport_request_dismissals`. Base de datos verificada: sin lectura pública de `profiles` ni `bookings`, 12 funciones clave existen.
+- Flujo de "rutas personalizadas" (aeropuerto/destino) unificado en un solo hub, sin pantallas duplicadas, con filtro por municipio y un "No me interesa" para el conductor.
+- Notificaciones push corregidas de punta a punta (prioridad, handler, canal Android) — ver `docs/` y memoria `project_notificaciones_push` para el detalle técnico.
+- Modo "ver como pasajero" para conductores (vista de sesión, sin tocar `profiles.role`) — ver `docs/MODO_CONDUCTOR_PASAJERO.md`.
+- Inicio del conductor rediseñado, Billetera con historial agrupado y paginado, recarga mínima de $10.000 con monto libre, `wompi-webhook` ahora notifica al aprobar un pago.
+- Manejo de teclado unificado en 27 pantallas/componentes de toda la app (antes el teclado tapaba el campo en 18 de ellas, y otras 12 usaban un patrón inconsistente y más lento en Android).
+- Dos fugas de canales de Realtime corregidas (`useRequestsBadge`, `useNegotiationChat`) que podían tumbar la app al recargar en desarrollo.
+- APK de preview compilado e instalado varias veces durante las sesiones. **El build más reciente que incluye todo lo de esta lista es anterior a los últimos commits** — falta un build nuevo antes de probar en teléfono.
+- Pruebas offline de la base: 72/72 (última corrida registrada el 2026-10-03; no se ha vuelto a correr desde los cambios de esquema más recientes).
 
 **Pendiente, en este orden:**
-1. **Rotar secretos expuestos en el chat (pendiente, posponido por decisión del dueño):**
-   - Hecho: contraseña de la base reseteada; `WEBHOOK_SECRET` cambiado.
-   - Pendiente: la clave `service_role` sigue escrita dentro del trabajo `check-document-expiry-daily`. Pasos: (A) regenerar la clave service_role en Settings → API Keys; (B) redesplegar `delete-account` y `send-push`; (C) guardar la clave nueva en Vault con `vault.create_secret`; (D) reprogramar el trabajo leyendo la clave de `vault.decrypted_secrets`; (E) verificar que `cron.job.command` no contiene `eyJ`. Detalle completo en la conversación del 2026-10-03 y en `docs/PRUEBAS_Y_DESPLIEGUE.md` (sección de configuración).
-2. **Prueba del conductor en el teléfono** (paso 27): registro, cédula, documentos, vehículo en revisión.
-3. **Aprobar conductor y vehículo** desde el SQL Editor o el admin de la app, para que pueda publicar.
-4. **Prueba del pasajero y de los flujos** (secciones 6 del procedimiento de despliegue).
-5. **Proveedor de SMS para OTP:** decidir entre Firebase Phone Auth (usado solo para el código, Supabase sigue siendo la fuente de cuentas) o un proveedor SMS pagado para Twilio. Firebase requiere implementar una función de verificación de prueba y configurar la consola de Firebase con las huellas SHA del keystore.
-6. **Bucket `audio-messages`** sigue público. Los audios de viaje deben ser privados.
-7. **Build de producción** y configuración de Play Console, solo después de las pruebas.
-8. **Revisión legal** de las páginas de privacidad y eliminación, y plazos de conservación de documentos.
+1. **Build nuevo + instalación limpia en los dos teléfonos** (desinstalar del todo antes de poner el próximo APK, para que el permiso de notificaciones se pida de verdad). Confirmar ícono de Trive correcto y notificaciones a tiempo.
+2. **Rotar secretos expuestos en el chat** (pendiente desde hace varias sesiones, pospuesto por decisión del dueño):
+   - Hecho: contraseña de la base reseteada; `WEBHOOK_SECRET` cambiado una vez (y vuelto a exponer después al consultar el trigger — rotarlo de nuevo).
+   - Pendiente: la clave `service_role` sigue escrita dentro del trabajo `check-document-expiry-daily`. Pasos: (A) regenerar la clave service_role en Settings → API Keys; (B) redesplegar `delete-account` y `send-push`; (C) guardar la clave nueva en Vault con `vault.create_secret`; (D) reprogramar el trabajo leyendo la clave de `vault.decrypted_secrets`; (E) verificar que `cron.job.command` no contiene `eyJ`. Detalle completo en `docs/PRUEBAS_Y_DESPLIEGUE.md` (sección de configuración).
+3. **Prueba de punta a punta conductor + pasajero** del flujo de rutas normales (no solo personalizadas), ya con todo lo de esta lista.
+4. **Proveedor de SMS para OTP:** decidir entre Firebase Phone Auth o un proveedor SMS pagado para Twilio.
+5. **Bucket `audio-messages`** sigue público. Los audios de viaje deben ser privados.
+6. **Build de producción** y configuración de Play Console, solo después de las pruebas.
+7. **Revisión legal** de las páginas de privacidad y eliminación, y plazos de conservación de documentos.
 
 **Decisiones abiertas:**
 - Limpiar o conservar los datos de prueba antes de la prueba cerrada (los conductores de prueba con rutas aparecen en la búsqueda).
 - Plazo de conservación de documentos de conductor.
 - Back-office web: diseñado en `docs/BACKOFFICE.md`, no iniciado.
+- Confirmado (no es una decisión abierta, ya resuelta): Trive se queda como app nativa, sin versión PWA/híbrida de reemplazo — el código lo permitiría (Expo soporta salida web) pero las notificaciones push, la ubicación en segundo plano y la cámara son más débiles en navegador. Hoy la app solo está configurada para Android: no hay perfil de build ni `bundleIdentifier` de iOS en `eas.json`/`app.json`.
 
 ## 1. Qué es Trive
 
