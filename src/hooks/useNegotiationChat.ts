@@ -150,6 +150,13 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
     loadMessages();
     loadThreadState();
 
+    const topic = `realtime:negotiation_${requestId}_${driverId}`
+    // Defensa contra un canal del mismo nombre sin limpiar de un montaje
+    // anterior (p. ej. Fast Refresh): si queda uno, quitarlo antes de crear
+    // otro — si no, el .on() de abajo revienta con "callbacks ... after subscribe()".
+    const stale = supabase.getChannels().find((c) => c.topic === topic)
+    if (stale) supabase.removeChannel(stale)
+
     const subscription = supabase
       .channel(`negotiation_${requestId}_${driverId}`)
       .on(
@@ -169,7 +176,7 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
       .subscribe();
 
     return () => {
-      subscription.unsubscribe();
+      supabase.removeChannel(subscription);
     };
   }, [requestId, driverId, loadMessages, loadThreadState]);
 

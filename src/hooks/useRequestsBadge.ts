@@ -27,6 +27,14 @@ export function useRequestsBadgeCount(userId?: string) {
     load()
     if (!userId) return
 
+    const topic = `realtime:requests_badge_${userId}`
+    // Defensa contra un canal del mismo nombre que haya quedado de un montaje
+    // anterior sin limpiar (p. ej. Fast Refresh en desarrollo): si ya existe,
+    // quitarlo antes de crear otro — si no, el .on() de abajo revienta con
+    // "cannot add `postgres_changes` callbacks ... after `subscribe()`".
+    const stale = supabase.getChannels().find((c) => c.topic === topic)
+    if (stale) supabase.removeChannel(stale)
+
     const channel = supabase
       .channel(`requests_badge_${userId}`)
       .on(

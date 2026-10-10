@@ -8,6 +8,7 @@ import * as DocumentPicker from 'expo-document-picker'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
+import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { uploadDriverDocument, getDriverDocuments, type DriverDocument } from '../services/driverDocuments'
 import { DOCUMENTS_WITHOUT_EXPIRY } from '../utils/documentHelpers'
 import { useCallback } from 'react'
@@ -120,6 +121,14 @@ export default function DriverDocumentsScreen() {
       })
 
     loadDocuments()
+
+    // Defensa contra canales del mismo nombre sin limpiar de un montaje anterior
+    // (p. ej. Fast Refresh): si quedan, quitarlos antes de crear otros — si no,
+    // el .on() de abajo revienta con "callbacks ... after subscribe()".
+    const staleDocs = supabase.getChannels().find((c) => c.topic === `realtime:driver_documents:${authUser.id}`)
+    if (staleDocs) supabase.removeChannel(staleDocs)
+    const staleProfile = supabase.getChannels().find((c) => c.topic === `realtime:profiles:${authUser.id}`)
+    if (staleProfile) supabase.removeChannel(staleProfile)
 
     // Subscribe to real-time changes in driver_documents
     const docSubscription = supabase.channel(`driver_documents:${authUser.id}`)
@@ -451,7 +460,8 @@ export default function DriverDocumentsScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingScreen>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={{ alignItems: 'center' }}>
           <Illustration name="personalFile" width={170} />
         </View>
@@ -683,6 +693,7 @@ export default function DriverDocumentsScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      </KeyboardAvoidingScreen>
     </SafeAreaView>
   )
 }
