@@ -500,11 +500,11 @@ BEGIN
     p.name::text,
     d.national_id::text,
     COUNT(*) FILTER (WHERE dd.status = 'verified')::integer,
-    6,
-    MIN(dd.uploaded_at),
+    6::integer,
+    MIN(dd.uploaded_at)::timestamptz,
     c.claimed_by,
     cp.name::text,
-    c.claimed_at
+    c.claimed_at::timestamptz
   FROM public.driver_documents dd
   JOIN public.profiles p ON p.id = dd.driver_id
   LEFT JOIN public.drivers d ON d.id = p.id
