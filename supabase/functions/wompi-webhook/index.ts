@@ -14,15 +14,26 @@ serve(async (req) => {
     const tx = data.transaction
     const eventsSecret = Deno.env.get('WOMPI_EVENTS_SECRET')!
 
-    // Verificar firma: SHA256(tx.id + tx.status + tx.amount_in_cents + eventsSecret)
-    const raw = `${tx.id}${tx.status}${tx.amount_in_cents}${eventsSecret}`
+    // Firma real de Wompi: SHA256(valores de signature.properties, en ese orden,
+    // concatenados + timestamp del evento + secreto de eventos). El orden de las
+    // propiedades lo manda Wompi en cada evento, no es fijo.
+    const properties: string[] = signature?.properties ?? []
+    const timestamp = body.timestamp
+
+    const resolvePath = (path: string) =>
+      path
+        .split('.')
+        .reduce((acc: unknown, key: string) => (acc as Record<string, unknown>)?.[key], data)
+
+    const concatenated = properties.map((p) => resolvePath(p)).join('')
+    const raw = `${concatenated}${timestamp}${eventsSecret}`
     const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))
     const computed = Array.from(new Uint8Array(hash))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('')
 
     if (computed !== signature?.checksum) {
-      console.error('Wompi signature mismatch')
+      console.error('Wompi signature mismatch', { properties, timestamp })
       return new Response('Invalid signature', { status: 401 })
     }
 
