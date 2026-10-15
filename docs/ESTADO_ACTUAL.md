@@ -1,9 +1,35 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-14.
+Última actualización: 2026-10-15.
 
 ---
+
+## -1. Auditoría de lanzamiento a Play Store (2026-10-15)
+
+Se pidió dejar la app lista para subir a Google Play. Antes de tocar nada se verificó cada punto de la sección 6 (Problemas abiertos) contra el código y la base real — varios ya estaban resueltos sin que este documento se actualizara:
+
+**Ya resueltos (el documento decía lo contrario):**
+- P2 (seguridad de datos): `profiles` y `bookings` ya NO son de lectura pública — verificado contra producción, políticas RLS correctas (`can_view_profile()`, lectura solo del dueño/conductor/staff).
+- P3 (`projectId` inconsistente): ya coincide en `app.json` y `pushNotifications.ts` (`17d0b706-d74a-4ddd-8633-b9d0fb6de764`).
+- P5 (referidos): `increment_balance` ya no existe en ningún lado, no es una dependencia rota.
+- P6 (calificaciones): `reviews.ts` ya usa el RPC `rate_booking`, no escribe directo.
+- P7 (`autoIncrement`): ya está en `eas.json`.
+- P8 (duplicación): `src/theme/colors.ts` ya no existe; las 3 pantallas de aeropuerto cumplen roles distintos (listado/detalle/creación), no son duplicadas.
+- P9 (calidad): 32 `console.log` reales (no 119), no es bloqueador para publicar.
+
+**Hallazgos nuevos, corregidos hoy:**
+- **Nombre de paquete con error de tipeo**: `com.traive.triveapp` → corregido a `com.trivesoft.app` en `app.json` (decisión del dueño). Esto es irreversible una vez publicado en Play Store, por eso se corrigió antes del primer build de producción. **Pendiente**: `google-services.json` local y el secreto `GOOGLE_SERVICES_JSON` en EAS siguen apuntando al paquete viejo — hay que registrar un nuevo Android app en Firebase (proyecto `trive-5759c`) con el paquete `com.trivesoft.app`, descargar el `google-services.json` nuevo, reemplazar el archivo local y actualizar el secreto de EAS (`eas secret:create --name GOOGLE_SERVICES_JSON --type file`) antes del próximo build — si no, las notificaciones push (FCM) no van a funcionar con el nuevo paquete.
+- **Assets de Play Store generados**: `assets/store/feature-graphic.png` (1024×500) y `assets/store/icon-512.png` (ícono de alta resolución sin el relleno blanco que tenía `assets/icon.png` — ese archivo se deja intacto porque también es el `foregroundImage` del ícono adaptativo de Android, que sí necesita ese margen de seguridad).
+- **Página pública de eliminación de cuenta**: no existía (Google Play la exige, accesible sin la app instalada). Creada en `trive-web` (`/eliminar-cuenta`), con las dos vías (desde la app, o formulario web que reusa `send-contact-message`) y el detalle de qué se borra vs. qué se conserva anonimizado, basado en `anonymize_account()` (migración `20261003190000`).
+- **Capturas de pantalla desactualizadas**: `assets/screenshots/` son mockups de mayo que no se parecen a la app actual (compara con la pantalla de inicio real, muy distinta). Hacen falta capturas reales nuevas antes de armar la ficha de Play Store — pendiente de que el dueño las tome desde su teléfono.
+- **Limpieza menor pendiente de aprobación**: `anon` tenía permisos de escritura (UPDATE/DELETE/TRUNCATE) sobre `profiles` que no son explotables (RLS los bloquea igual) pero no deberían estar ahí — el sistema bloqueó la escritura automática por ser una modificación de permisos en producción; falta que el dueño apruebe el `REVOKE` o lo ejecute él mismo.
+
+**Pendiente para terminar de dejarla lista:**
+1. Nuevo `google-services.json` desde Firebase + actualizar secreto en EAS.
+2. Capturas de pantalla reales nuevas (el dueño las toma desde su teléfono).
+3. `REVOKE` de los permisos sobrantes de `anon` en `profiles` (aprobación pendiente).
+4. Build de producción nuevo con el paquete corregido, e instalación limpia para probar.
 
 ## 0. Dónde quedamos (bitácora, 2026-10-14)
 
