@@ -13,20 +13,6 @@
     "fontWeight": 12,
     "iconoIonicons": 0
   },
-  "src/screens/AdminDocumentsScreen.tsx": {
-    "total": 27,
-    "color": 11,
-    "fontSize": 6,
-    "fontWeight": 10,
-    "iconoIonicons": 0
-  },
-  "src/screens/AirportFeedScreen.tsx": {
-    "total": 73,
-    "color": 31,
-    "fontSize": 22,
-    "fontWeight": 20,
-    "iconoIonicons": 0
-  },
   "src/screens/AirportHubScreen.tsx": {
     "total": 7,
     "color": 0,
@@ -35,17 +21,10 @@
     "iconoIonicons": 0
   },
   "src/screens/AirportRequestDetailsScreen.tsx": {
-    "total": 65,
-    "color": 11,
-    "fontSize": 28,
-    "fontWeight": 26,
-    "iconoIonicons": 0
-  },
-  "src/screens/AirportRequestScreen.tsx": {
-    "total": 83,
-    "color": 25,
-    "fontSize": 33,
-    "fontWeight": 25,
+    "total": 1,
+    "color": 1,
+    "fontSize": 0,
+    "fontWeight": 0,
     "iconoIonicons": 0
   },
   "src/screens/AvailableRidesScreen.tsx": {
@@ -69,11 +48,11 @@
     "fontWeight": 1,
     "iconoIonicons": 0
   },
-  "src/screens/CompletedTripsScreen.tsx": {
-    "total": 45,
-    "color": 21,
-    "fontSize": 14,
-    "fontWeight": 10,
+  "src/screens/CreateAirportRequestScreen.tsx": {
+    "total": 2,
+    "color": 1,
+    "fontSize": 1,
+    "fontWeight": 0,
     "iconoIonicons": 0
   },
   "src/screens/driver/DriverTripsScreen.tsx": {
@@ -105,10 +84,10 @@
     "iconoIonicons": 0
   },
   "src/screens/DriverHomeScreen.tsx": {
-    "total": 22,
-    "color": 0,
-    "fontSize": 13,
-    "fontWeight": 9,
+    "total": 39,
+    "color": 3,
+    "fontSize": 21,
+    "fontWeight": 15,
     "iconoIonicons": 0
   },
   "src/screens/DriverOnboardingScreen.tsx": {
@@ -119,8 +98,8 @@
     "iconoIonicons": 0
   },
   "src/screens/DriverPanelScreen.tsx": {
-    "total": 81,
-    "color": 24,
+    "total": 82,
+    "color": 25,
     "fontSize": 28,
     "fontWeight": 29,
     "iconoIonicons": 0
@@ -154,17 +133,17 @@
     "iconoIonicons": 0
   },
   "src/screens/OnboardingScreen.tsx": {
-    "total": 3,
+    "total": 1,
     "color": 0,
     "fontSize": 0,
-    "fontWeight": 3,
+    "fontWeight": 1,
     "iconoIonicons": 0
   },
   "src/screens/PassengerHomeScreen.tsx": {
-    "total": 46,
-    "color": 0,
-    "fontSize": 25,
-    "fontWeight": 21,
+    "total": 55,
+    "color": 3,
+    "fontSize": 28,
+    "fontWeight": 24,
     "iconoIonicons": 0
   },
   "src/screens/payments/DriverPaymentsScreen.tsx": {
@@ -175,10 +154,10 @@
     "iconoIonicons": 0
   },
   "src/screens/payments/PassengerPaymentScreen.tsx": {
-    "total": 28,
+    "total": 26,
     "color": 0,
-    "fontSize": 17,
-    "fontWeight": 11,
+    "fontSize": 16,
+    "fontWeight": 10,
     "iconoIonicons": 0
   },
   "src/screens/PrivacyPolicyScreen.tsx": {
@@ -217,10 +196,10 @@
     "iconoIonicons": 0
   },
   "src/screens/RecurringRoutesScreen.tsx": {
-    "total": 10,
+    "total": 9,
     "color": 0,
     "fontSize": 0,
-    "fontWeight": 10,
+    "fontWeight": 9,
     "iconoIonicons": 0
   },
   "src/screens/ReferralScreen.tsx": {
@@ -294,8 +273,8 @@
     "iconoIonicons": 0
   },
   "src/screens/TripStatusScreen.tsx": {
-    "total": 47,
-    "color": 25,
+    "total": 46,
+    "color": 24,
     "fontSize": 3,
     "fontWeight": 19,
     "iconoIonicons": 0
@@ -322,17 +301,10 @@
     "iconoIonicons": 0
   },
   "src/screens/WalletScreen.tsx": {
-    "total": 48,
-    "color": 12,
-    "fontSize": 21,
-    "fontWeight": 15,
-    "iconoIonicons": 0
-  },
-  "src/components/AdminMenuButton.tsx": {
-    "total": 7,
-    "color": 3,
-    "fontSize": 2,
-    "fontWeight": 2,
+    "total": 59,
+    "color": 13,
+    "fontSize": 27,
+    "fontWeight": 19,
     "iconoIonicons": 0
   },
   "src/components/AirportHub/ActiveChatsTab.tsx": {
@@ -405,6 +377,13 @@
     "fontWeight": 2,
     "iconoIonicons": 0
   },
+  "src/components/illustrations/onboarding/onboardingIllustrations.ts": {
+    "total": 105,
+    "color": 105,
+    "fontSize": 0,
+    "fontWeight": 0,
+    "iconoIonicons": 0
+  },
   "src/components/LoadingIndicator.tsx": {
     "total": 1,
     "color": 1,
@@ -462,8 +441,8 @@
     "iconoIonicons": 0
   },
   "src/components/Skeleton.tsx": {
-    "total": 3,
-    "color": 3,
+    "total": 1,
+    "color": 1,
     "fontSize": 0,
     "fontWeight": 0,
     "iconoIonicons": 0

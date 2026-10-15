@@ -1,11 +1,85 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-10.
+Última actualización: 2026-10-14.
 
 ---
 
-## 0. Dónde quedamos (bitácora, 2026-10-10)
+## 0. Dónde quedamos (bitácora, 2026-10-14)
+
+**Back-office web construido (repo nuevo y separado `trive-backoffice`, no estaba en este repo):**
+- V1: cargos de empleado (`staff_roles`, reemplaza el booleano único `profiles.is_admin` para las pantallas nuevas sin quitarlo del todo todavía), login con MFA nativo de Supabase, cola de verificación de conductores/vehículos con reclamo exclusivo, recargas de saldo, bitácora de auditoría real (se corrigieron dos huecos: el log de documentos dependía de un insert sin `await` del cliente, y el de vehículos no existía).
+- Métricas y reportes: viajes completados, ingresos, conductores verificados, expedientes pendientes, gráfica de 14 días y rutas más frecuentes.
+- Atención al cliente: tickets de soporte reales (reemplazan el `mailto:` de `BugReportScreen`) y resolución de disputas de viaje (reservas en `booking_status = 'disputed'` no tenían ningún camino de salida antes de esto).
+- Libro contable: lectura filtrable de todos los movimientos de `wallet_transactions` (tipo, estado, usuario, fecha), más allá del formulario simple de Recargas.
+- **Se retiró la administración de la app móvil pública**: se borraron `AdminDocumentsScreen.tsx` y `AdminMenuButton.tsx`, y las funciones del cliente que solo ellos usaban en `driverDocuments.ts`. Ningún RPC perdió autorización (seguían protegidos del lado del servidor); solo se quitó la puerta de entrada desde el APK.
+- Todo commiteado y pusheado a `seguridad/fase-2` en este repo, y a `main` en `trive-backoffice`.
+
+**Pendiente de este trabajo:** nada bloqueante — el back-office queda operativo para que el dueño lo use ya. Falta, cuando el dueño decida, dar de alta más empleados (hoy es manual, un insert en `staff_roles`) y evaluar si se separa la cuenta de prueba `admin1@trive.com` del uso real de back-office.
+
+## 0.0 Rediseño enterprise + procesos nuevos del back-office (2026-10-14, misma sesión)
+
+Después de V1, se le pidió explícitamente un rediseño "enterprise" (marca, sombra, profundidad, copywriting, logo, login, página de inicio) y luego una lista completa de procesos/UI faltantes, construida de más a menos compleja:
+
+**Visual:** logo e ícono reales de la app integrados (sin el PNG pixelado del wordmark — se reconstruyó como texto + CSS), colores de marca reales (`#1230B8` de `theme.ts`, no un azul genérico de Tailwind) como tokens de Tailwind, tipografía Plus Jakarta Sans, sombra consistente en todas las tarjetas/tablas/modales, página de Login partida (panel de marca + formulario) y página de **Inicio** nueva (antes redirigía directo a Verificación) con accesos en vivo por cargo. **Modo oscuro completo** vía variables CSS semánticas (`bg-surface`, `text-text-primary`, etc. — cambian solas bajo `.dark`, sin tocar cada componente), con switch en la sidebar y persistencia en el navegador; incluye un token aparte (`brand-ink`) para que el azul de marca como texto siga pasando el contraste AA sobre fondo oscuro sin aclarar los botones.
+
+**Procesos nuevos:**
+- **Gestión de empleados** (`/empleados`, solo administrador general): crear la cuenta requiere el Admin API de Supabase (`service_role`), así que vive en una Edge Function nueva (`invite-employee`) — el back-office nunca tiene esa clave. Como el proyecto no tiene SMTP propio (ver `docs/features/EMAIL_RATE_LIMIT_SOLUTION.md`), no se manda correo de invitación: se genera una contraseña temporal que se muestra una sola vez para compartir por otro medio. Asignar/quitar cargos a un empleado que ya existe sí es un RPC normal.
+- **Moderación de cuentas** (`/moderacion`, cargo `operaciones`): no existía ninguna forma de suspender a un conductor/pasajero que incumpliera las políticas. Nueva Edge Function `moderate-account` (usa `auth.admin.updateUserById` con `ban_duration`, mismo mecanismo que ya usaba `delete-account`) + columna `profiles.account_status`.
+- **Débito manual de saldo**: `admin_debit_balance` (el tipo `admin_debit` ya existía en el CHECK de `wallet_transactions` pero nadie lo usaba). Recargas ahora tiene un selector Recargar/Debitar.
+- **Badges en vivo** en la sidebar (tickets y disputas abiertas) vía Supabase Realtime — requirió agregar política de RLS de lectura para el cargo correspondiente (antes todo pasaba por RPCs, sin SELECT directo) y sumar `support_tickets` a la publicación de realtime (`bookings` ya estaba).
+- **Sidebar responsive** con menú hamburguesa en pantallas angostas (antes no colapsaba).
+- **Filtros en Bitácora** (tipo de acción, empleado, rango de fechas — antes solo mostraba las últimas 200 sin forma de buscar).
+- **Confirmación en acciones destructivas**: "Aprobar" documento/vehículo en el expediente ahora pide un segundo clic ("¿Confirmar?") en vez de ejecutar de inmediato.
+- Unificado el azul de las gráficas de Métricas con el azul institucional (antes usaba un azul de dataviz distinto, `#2a78d6`).
+
+**Migraciones nuevas:** `20261014160000_gestion_empleados.sql`, `20261014170000_moderacion_cuentas.sql`, `20261014180000_realtime_staff_badges.sql`, `20261014190000_debito_manual.sql`. **Edge Functions nuevas:** `invite-employee`, `moderate-account`.
+
+**Pendiente de este bloque:** ninguno de los puntos originales de la lista quedó sin hacer. Separar `admin1@trive.com` sigue siendo la única acción que falta y que solo puede tomar el dueño.
+
+## 0.0.1 Finanzas de la empresa (2026-10-14, misma sesión)
+
+El dueño preguntó si el back-office ya cubre toda la operación de Trive comparado con BlaBlaCar/Uber/InDrive. Se le aclaró que el modelo de Trive es de mercado de rutas publicadas (como BlaBlaCar), no de despacho bajo demanda (Uber/InDrive) — por eso cosas como GPS en vivo, precio dinámico o nómina de conductores no aplican. De ahí salió un hueco real: el Libro Contable (`wallet_transactions`) solo rastrea saldo *interno* de usuarios, no la contabilidad real de la empresa (caja, cuentas bancarias, gastos fijos, rentabilidad).
+
+Se construyó **Finanzas** (`/finanzas`, cargo `contabilidad`), completamente independiente y manual:
+- **Cuentas** (`finance_accounts`): banco, caja menor, ahorros u otra — cada una con su saldo calculado a partir de sus movimientos (no un campo mutable).
+- **Categorías** (`finance_categories`): 10 precargadas (3 de ingreso: comisión de rutas, aporte de socios, otros ingresos; 7 de gasto: arriendo, salarios, servicios, impuestos apartados, viáticos, infraestructura, otros) + se pueden crear nuevas libremente desde el formulario (híbrido, decisión explícita del dueño).
+- **Movimientos** (`finance_movements`): ingreso o gasto, ligado a una cuenta y una categoría, con fecha (puede ser retroactiva), descripción y quién lo registró. Se puede borrar (con confirmación de doble clic) si fue un error.
+- **Resumen/rentabilidad** (`get_finance_summary`): ingresos, gastos, neto y desglose por categoría de un período.
+- Todo registra en la bitácora (`finance_income_added`, `finance_expense_added`, `finance_movement_deleted`).
+
+Migración: `20261014200000_finanzas_empresa.sql`. Sin Edge Function nueva (no necesita el Admin API, son RPCs normales).
+
+**Hallazgo aparte, confirmado al investigar la pregunta:** no existe absolutamente nada de facturación electrónica DIAN en el repo — ni factura, ni CUFE, ni resolución. El dueño confirmó que no hace falta todavía porque ni siquiera están en producción real. Queda anotado para cuando sí lo estén (es una decisión para resolver con contador/abogado, no una tarea de código).
+
+## 0.0.2 Insights y alertas accionables en Inicio (2026-10-15, misma sesión)
+
+El dueño pidió mejorar la UX con KPIs e insights de lo que pasa en la plataforma. Antes de construir nada se investigaron los datos reales para no mostrar ruido como si fuera señal — y se encontró que la "tasa de cancelación de rutas" (109 de 128 históricas, 10/10 en los últimos 30 días) es casi toda de las cuentas de prueba de 6 meses de desarrollo, no uso real: se descartó explícitamente ese KPI por ahora.
+
+Se agregó, en la página de **Inicio**:
+- **"Esto necesita tu atención"**: alertas accionables (no números sueltos) que solo aparecen si hay algo real pendiente, cada una con link directo a la pantalla donde se resuelve — `get_staff_alerts()`, gateado por cargo: expedientes esperando más de 5 días (`verificacion`), tickets sin respuesta hace más de 24h (`atencion_cliente`), disputas sin resolver hace más de 2 días (`operaciones`).
+
+## 0.0.3 Siete pendientes del back-office, de más a menos complejo (2026-10-15, misma sesión)
+
+Se preguntó qué le faltaba al software web aparte de lo ya conocido. Se identificaron 7 huecos y el dueño pidió construirlos todos, en orden de mayor a menor complejidad:
+
+1. **Conciliación Libro Contable ↔ Finanzas** (`get_reconciliation_status`, migración `20261015110000`): compara el total de comisiones de rutas que debieron generarse (`wallet_transactions`) contra lo efectivamente registrado como ingreso en Finanzas. Si hay una diferencia pendiente, aparece un aviso en `/finanzas` con un botón "Registrar este ingreso" que precarga el formulario de movimiento — no es conciliación transacción por transacción, es un agregado (decisión deliberada para no requerir un flujo de match manual).
+2. **Pruebas automatizadas**: primera suite de tests del proyecto — `Vitest` instalado, `src/lib/format.ts` y `src/lib/csv.ts` extraídos de código duplicado (6 copias de `money()`/`initialsOf()` entre pantallas) con 14 tests unitarios. Además, suite SQL no destructiva en `triveupp-main` (`supabase/tests/finance_regression.sql`, `BEGIN;...ROLLBACK;`) con 4 validaciones de integridad (saldo de cuentas, rango de retención, conciliación no nula, categorías del sistema completas) — segura de correr contra producción en cualquier momento.
+3. **Monitoreo de errores propio** (sin cuenta de terceros): tabla `frontend_error_logs` + RPCs (migración `20261015120000`), captura global (`window.onerror`, `unhandledrejection`) más un `ErrorBoundary` de React, con deduplicación de 5 segundos por mensaje repetido. Pantalla nueva `/errores` (solo `administrador_general`) para revisar y limpiar el registro.
+4. **Expiración de sesión por inactividad**: 30 minutos sin actividad del mouse/teclado/touch cierra la sesión automáticamente (`useIdleLogout`), solo activo cuando ya se pasó el MFA.
+5. **Exportar a CSV**: botón en Bitácora y en Libro Contable para bajar lo filtrado en pantalla, con BOM UTF-8 para que Excel no dañe las tildes.
+6. **Gastos recurrentes (plantillas)**: `finance_recurring_templates` (migración `20261015130000`) — guardan cuenta/categoría/monto/tipo de un gasto que se repite (arriendo, salarios), un botón "Usar" precarga el formulario de movimiento con la fecha de hoy; no hay automatización, cada uso sigue siendo un movimiento real y explícito.
+7. **Editar un movimiento de Finanzas**: antes solo se podía borrar y volver a crear. `update_finance_movement` (migración `20261015140000`) permite cambiar cuenta/categoría/monto/descripción/fecha, pero **no el tipo** (ingreso↔gasto) — si se necesita cambiar eso, se borra y se crea de nuevo. Queda en la bitácora (`finance_movement_edited`).
+
+Migraciones: `20261015110000_conciliacion_finanzas.sql`, `20261015120000_monitoreo_errores.sql`, `20261015130000_gastos_recurrentes.sql`, `20261015140000_editar_movimiento_finanzas.sql`. Sin Edge Functions nuevas. `npm run build` y `npm run test` (14 tests) pasando en `trive-backoffice`.
+
+**Pendiente de este bloque:** ninguno de los 7 puntos quedó sin hacer.
+- **"Cómo va el negocio"**: 3 KPIs nuevos — rentabilidad del mes (cruza Finanzas con Inicio por primera vez), retención de pasajeros (% que ya reservó más de una vez — real: 90% sobre una base de 10 pasajeros, muestra pequeña pero honesta), documentos aprobados/rechazados del mes.
+- `get_dashboard_metrics` (Métricas) se extendió con `docs_approved`, `docs_rejected` y `passenger_retention` — mismo cargo `analitica` que ya tenía, sin romper nada de lo existente.
+
+Migración: `20261015100000_insights_inicio.sql`. Sin Edge Function.
+
+## 0.1 Dónde quedamos (bitácora, 2026-10-10)
 
 **Hecho y verificado (resumen desde el 2026-10-03; detalle completo en el historial de git de la rama `seguridad/fase-2`, todo commiteado y pusheado):**
 - Las 9 migraciones de seguridad de la fase 2 (2a–2h) aplicadas en producción, más las migraciones posteriores: índices de rendimiento, vehículo/pasajeros en solicitudes personalizadas, `airport_request_dismissals`. Base de datos verificada: sin lectura pública de `profiles` ni `bookings`, 12 funciones clave existen.
@@ -20,19 +94,22 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 **Pendiente, en este orden:**
 1. **Build nuevo + instalación limpia en los dos teléfonos** (desinstalar del todo antes de poner el próximo APK, para que el permiso de notificaciones se pida de verdad). Confirmar ícono de Trive correcto y notificaciones a tiempo.
-2. **Rotar secretos expuestos en el chat** (pendiente desde hace varias sesiones, pospuesto por decisión del dueño):
-   - Hecho: contraseña de la base reseteada; `WEBHOOK_SECRET` cambiado una vez (y vuelto a exponer después al consultar el trigger — rotarlo de nuevo).
-   - Pendiente: la clave `service_role` sigue escrita dentro del trabajo `check-document-expiry-daily`. Pasos: (A) regenerar la clave service_role en Settings → API Keys; (B) redesplegar `delete-account` y `send-push`; (C) guardar la clave nueva en Vault con `vault.create_secret`; (D) reprogramar el trabajo leyendo la clave de `vault.decrypted_secrets`; (E) verificar que `cron.job.command` no contiene `eyJ`. Detalle completo en `docs/PRUEBAS_Y_DESPLIEGUE.md` (sección de configuración).
+2. **Rotar secretos expuestos en el chat** — **hecho 2026-10-14**:
+   - `WEBHOOK_SECRET` rotado (valor nuevo) y movido a Supabase Vault; el trigger `push-notificaciones` ya no llama a `supabase_functions.http_request` con el secreto como argumento literal — ahora ejecuta una función propia (`public.trigger_push_notification()`) que lo lee de `vault.decrypted_secrets` en cada ejecución. Probado de punta a punta insertando una notificación real: `net._http_response` devolvió `200 {"ok":true}`.
+   - El JWT de `service_role` que estaba expuesto en texto plano en **dos lugares** (el cron `check-document-expiry-daily` y el trigger `on_trip_message_insert` → función `notify-message`) se quitó de los dos: ninguna de esas funciones usa el header `Authorization` para nada (cada una arma su propio cliente con `SUPABASE_SERVICE_ROLE_KEY` desde su propio entorno), así que el header solo necesitaba un JWT válido del proyecto para pasar la verificación del gateway — se reemplazó por la clave **anon** (pública, sin riesgo si se expone). Probado con `curl` antes de aplicar: ambas funciones responden 200/400 (lógica propia), nunca 401.
+   - Verificado con una búsqueda completa sobre `pg_trigger`/`cron.job`: no queda ningún JWT de `service_role` en ninguna definición.
+   - **Pendiente, opcional**: regenerar la clave `service_role` del proyecto en el dashboard (Settings → API Keys) sigue siendo buena práctica porque su valor se vio en el chat en una sesión anterior — pero ya no es urgente, porque no queda ningún lugar en el código o la base que dependa de ese valor específico (las Edge Functions leen `SUPABASE_SERVICE_ROLE_KEY` del entorno que Supabase les inyecta automáticamente, no de un secreto que haya que sincronizar a mano).
+   - **Hallazgo corregido 2026-10-14**: `notify-message` (avisos de chat de viaje) no tenía ningún chequeo de secreto compartido como sí tiene `send-push` — cualquiera con la clave anon (pública) podía invocarla directo con un payload armado a mano y disparar una notificación push falsa a un usuario arbitrario, suplantando a Trive (vector de phishing/spam). Se le agregó el mismo chequeo `x-webhook-secret` (reusa el secreto ya guardado en Vault), se redesplegó con `--no-verify-jwt`, y el trigger `on_trip_message_insert` ahora pasa por `public.trigger_trip_message_notification()` (lee el secreto de Vault, igual que el de push-notificaciones). Probado: sin secreto da `401`; con el secreto correcto, `400`/`200` según el caso; probado de punta a punta insertando un mensaje real entre dos cuentas de prueba (`net._http_response` devolvió `200`).
 3. **Prueba de punta a punta conductor + pasajero** del flujo de rutas normales (no solo personalizadas), ya con todo lo de esta lista.
 4. **Proveedor de SMS para OTP:** decidir entre Firebase Phone Auth o un proveedor SMS pagado para Twilio.
-5. **Bucket `audio-messages`** sigue público. Los audios de viaje deben ser privados.
+5. ~~Bucket `audio-messages` sigue público.~~ **Hecho 2026-10-14**: bucket pasado a privado (`storage.buckets.public = false`). No había código en la app usando este bucket (la función de notas de voz en el chat nunca se conectó a la interfaz, aunque las columnas `negotiation_messages.audio_url`/`audio_duration`/`is_audio_listened` sí existen desde hace meses, con 3 archivos de prueba ya guardados). Se decidió con el dueño no construir esa función por ahora: el chat de texto ya cubre la negociación, y audio suma moderación/privacidad sin aportar mucho en esta etapa. Si se retoma algún día, debe usar URLs firmadas (como `driver-documents`), nunca acceso público.
 6. **Build de producción** y configuración de Play Console, solo después de las pruebas.
 7. **Revisión legal** de las páginas de privacidad y eliminación, y plazos de conservación de documentos.
 
 **Decisiones abiertas:**
 - Limpiar o conservar los datos de prueba antes de la prueba cerrada (los conductores de prueba con rutas aparecen en la búsqueda).
 - Plazo de conservación de documentos de conductor.
-- Back-office web: diseñado en `docs/BACKOFFICE.md`, no iniciado.
+- Back-office web: V1 + métricas + atención al cliente + libro contable construidos y en uso (repo `trive-backoffice`); ver bitácora 2026-10-14 arriba. Queda para después: dar de alta empleados desde la propia web (hoy es manual) e inteligencia de negocio (descartada por ahora, prematura).
 - Confirmado (no es una decisión abierta, ya resuelta): Trive se queda como app nativa, sin versión PWA/híbrida de reemplazo — el código lo permitiría (Expo soporta salida web) pero las notificaciones push, la ubicación en segundo plano y la cámara son más débiles en navegador. Hoy la app solo está configurada para Android: no hay perfil de build ni `bundleIdentifier` de iOS en `eas.json`/`app.json`.
 
 ## 1. Qué es Trive
