@@ -78,7 +78,7 @@ export type Database = {
       admin_actions: {
         Row: {
           action: string | null
-          admin_id: string
+          admin_id: string | null
           created_at: string | null
           details: Json | null
           document_id: string | null
@@ -88,7 +88,7 @@ export type Database = {
         }
         Insert: {
           action?: string | null
-          admin_id: string
+          admin_id?: string | null
           created_at?: string | null
           details?: Json | null
           document_id?: string | null
@@ -98,7 +98,7 @@ export type Database = {
         }
         Update: {
           action?: string | null
-          admin_id?: string
+          admin_id?: string | null
           created_at?: string | null
           details?: Json | null
           document_id?: string | null
@@ -798,6 +798,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           uploaded_at?: string | null
+          vehicle_id?: string | null
           verified_at?: string | null
         }
         Relationships: [
@@ -826,6 +827,88 @@ export type Database = {
             foreignKeyName: "driver_documents_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_file_claims: {
+        Row: {
+          claimed_at: string
+          claimed_by: string
+          driver_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          claimed_by: string
+          driver_id: string
+        }
+        Update: {
+          claimed_at?: string
+          claimed_by?: string
+          driver_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_file_claims_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "driver_file_claims_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1577,7 +1660,6 @@ export type Database = {
           driver_verified_at: string | null
           email: string | null
           emergency_contact: Json | null
-          preferred_payment_method: string | null
           id: string
           is_admin: boolean | null
           is_driver: boolean | null
@@ -1590,6 +1672,7 @@ export type Database = {
           notification_preferences: Json | null
           phone: string | null
           preferred_municipality: string | null
+          preferred_payment_method: string | null
           profile_photo_url: string | null
           push_token: string | null
           rating: number | null
@@ -1610,7 +1693,6 @@ export type Database = {
           driver_verified_at?: string | null
           email?: string | null
           emergency_contact?: Json | null
-          preferred_payment_method?: string | null
           id: string
           is_admin?: boolean | null
           is_driver?: boolean | null
@@ -1623,6 +1705,7 @@ export type Database = {
           notification_preferences?: Json | null
           phone?: string | null
           preferred_municipality?: string | null
+          preferred_payment_method?: string | null
           profile_photo_url?: string | null
           push_token?: string | null
           rating?: number | null
@@ -1643,7 +1726,6 @@ export type Database = {
           driver_verified_at?: string | null
           email?: string | null
           emergency_contact?: Json | null
-          preferred_payment_method?: string | null
           id?: string
           is_admin?: boolean | null
           is_driver?: boolean | null
@@ -1656,6 +1738,7 @@ export type Database = {
           notification_preferences?: Json | null
           phone?: string | null
           preferred_municipality?: string | null
+          preferred_payment_method?: string | null
           profile_photo_url?: string | null
           push_token?: string | null
           rating?: number | null
@@ -1846,45 +1929,45 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
-          pickup_point: string | null
-          route_via: string | null
-          dropoff_point: string | null
           destination: string
           driver_id: string
+          dropoff_point: string | null
           id: string
           name: string
           origin: string
+          pickup_point: string | null
           price_per_seat: number
+          route_via: string | null
           total_seats: number
           vehicle_type: string
         }
         Insert: {
           created_at?: string
           description?: string | null
-          pickup_point?: string | null
-          route_via?: string | null
-          dropoff_point?: string | null
           destination: string
           driver_id: string
+          dropoff_point?: string | null
           id?: string
           name: string
           origin: string
+          pickup_point?: string | null
           price_per_seat: number
+          route_via?: string | null
           total_seats: number
           vehicle_type?: string
         }
         Update: {
           created_at?: string
           description?: string | null
-          pickup_point?: string | null
-          route_via?: string | null
-          dropoff_point?: string | null
           destination?: string
           driver_id?: string
+          dropoff_point?: string | null
           id?: string
           name?: string
           origin?: string
+          pickup_point?: string | null
           price_per_seat?: number
+          route_via?: string | null
           total_seats?: number
           vehicle_type?: string
         }
@@ -1928,11 +2011,13 @@ export type Database = {
           description: string | null
           destination: string
           driver_id: string
+          dropoff_point: string | null
           id: string
           origin: string
           pickup_point: string | null
           pickup_point_custom: boolean | null
           price_per_seat: number
+          route_via: string | null
           status: string | null
           total_seats: number
           updated_at: string | null
@@ -1953,11 +2038,13 @@ export type Database = {
           description?: string | null
           destination: string
           driver_id: string
+          dropoff_point?: string | null
           id?: string
           origin: string
           pickup_point?: string | null
           pickup_point_custom?: boolean | null
           price_per_seat: number
+          route_via?: string | null
           status?: string | null
           total_seats?: number
           updated_at?: string | null
@@ -1978,11 +2065,13 @@ export type Database = {
           description?: string | null
           destination?: string
           driver_id?: string
+          dropoff_point?: string | null
           id?: string
           origin?: string
           pickup_point?: string | null
           pickup_point_custom?: boolean | null
           price_per_seat?: number
+          route_via?: string | null
           status?: string | null
           total_seats?: number
           updated_at?: string | null
@@ -2068,6 +2157,121 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      staff_roles: {
+        Row: {
+          created_at: string
+          employee_id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: string
+          role: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "staff_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "staff_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "staff_roles_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_tickets: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          device_info: Json | null
+          id: string
+          response: string | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          device_info?: Json | null
+          id?: string
+          response?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          device_info?: Json | null
+          id?: string
+          response?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       travel_preferences: {
         Row: {
@@ -2618,12 +2822,18 @@ export type Database = {
       }
       vehicles: {
         Row: {
+          checklist_completed_at: string | null
+          checklist_completed_by: string | null
           color: string
           created_at: string
           driver_id: string
           id: string
           is_active: boolean
           make: string
+          owner_authorization_expires: string | null
+          owner_authorization_path: string | null
+          owner_id_number: string | null
+          owner_name: string | null
           photo_url: string | null
           plate: string
           rejection_reason: string | null
@@ -2633,12 +2843,19 @@ export type Database = {
           year: number
         }
         Insert: {
+          checklist_completed_at?: string | null
+          checklist_completed_by?: string | null
           color: string
           created_at?: string
           driver_id: string
           id?: string
           is_active?: boolean
           make: string
+          owner_authorization_expires?: string | null
+          owner_authorization_path?: string | null
+          owner_id_number?: string | null
+          owner_name?: string | null
+          photo_url?: string | null
           plate: string
           rejection_reason?: string | null
           status?: string
@@ -2647,12 +2864,18 @@ export type Database = {
           year: number
         }
         Update: {
+          checklist_completed_at?: string | null
+          checklist_completed_by?: string | null
           color?: string
           created_at?: string
           driver_id?: string
           id?: string
           is_active?: boolean
           make?: string
+          owner_authorization_expires?: string | null
+          owner_authorization_path?: string | null
+          owner_id_number?: string | null
+          owner_name?: string | null
           photo_url?: string | null
           plate?: string
           rejection_reason?: string | null
@@ -2662,6 +2885,34 @@ export type Database = {
           year?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicles_checklist_completed_by_fkey"
+            columns: ["checklist_completed_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "vehicles_checklist_completed_by_fkey"
+            columns: ["checklist_completed_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_checklist_completed_by_fkey"
+            columns: ["checklist_completed_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_checklist_completed_by_fkey"
+            columns: ["checklist_completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicles_driver_id_fkey"
             columns: ["driver_id"]
@@ -2719,6 +2970,7 @@ export type Database = {
           amount?: number
           created_at?: string
           id?: string
+          route_id?: string | null
           status?: string
           type?: string
           user_id?: string
@@ -2726,6 +2978,20 @@ export type Database = {
           wompi_transaction_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_transactions_route_id_fkey"
+            columns: ["route_id"]
+            isOneToOne: false
+            referencedRelation: "routes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "wallet_transactions_user_id_fkey"
             columns: ["user_id"]
@@ -2772,9 +3038,12 @@ export type Database = {
           driver_rating: number | null
           driver_review_count: number | null
           driver_user_id: string | null
+          dropoff_point: string | null
           id: string | null
           origin: string | null
+          pickup_point: string | null
           price_per_seat: number | null
+          route_via: string | null
           seats_available_count: number | null
           status: string | null
           total_seats: number | null
@@ -2938,6 +3207,14 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      activate_vehicle_if_ready: {
+        Args: { p_vehicle_id: string }
+        Returns: boolean
+      }
+      admin_complete_vehicle_checklist: {
+        Args: { p_vehicle_id: string }
+        Returns: boolean
+      }
       admin_credit_balance: {
         Args: { p_amount: number; p_note: string; p_user_id: string }
         Returns: number
@@ -2948,8 +3225,11 @@ export type Database = {
         Returns: boolean
       }
       approve_vehicle: { Args: { p_vehicle_id: string }; Returns: undefined }
-      set_vehicle_photo: { Args: { p_vehicle_id: string; p_url: string }; Returns: undefined }
       auto_confirm_expired_trips: { Args: never; Returns: number }
+      can_trip_chat: {
+        Args: { p_other_user: string; p_route_id: string }
+        Returns: boolean
+      }
       can_view_profile: { Args: { p_target: string }; Returns: boolean }
       cancel_airport_request: {
         Args: { p_request_id: string }
@@ -2972,7 +3252,9 @@ export type Database = {
           total_seats: number
         }[]
       }
+      claim_driver_file: { Args: { p_driver_id: string }; Returns: boolean }
       cleanup_old_trip_messages: { Args: never; Returns: undefined }
+      close_expired_routes: { Args: never; Returns: number }
       complete_booking_internal: {
         Args: { p_booking_id: string }
         Returns: undefined
@@ -2985,6 +3267,15 @@ export type Database = {
         Args: { v_amount?: number; v_offer_id: string }
         Returns: string
       }
+      create_support_ticket: {
+        Args: {
+          p_category: string
+          p_description: string
+          p_device_info?: Json
+          p_title: string
+        }
+        Returns: string
+      }
       delete_conversation_messages: {
         Args: { other_user_id: string; user_id: string }
         Returns: undefined
@@ -2993,6 +3284,7 @@ export type Database = {
         Args: { p_booking_id: string; p_reason?: string }
         Returns: undefined
       }
+      driver_cancel_route: { Args: { p_route_id: string }; Returns: Json }
       driver_confirm_payment: {
         Args: { p_received: boolean; p_reservation_code: string }
         Returns: Json
@@ -3000,10 +3292,6 @@ export type Database = {
       driver_set_route_status: {
         Args: { p_route_id: string; p_status: string }
         Returns: undefined
-      }
-      driver_cancel_route: {
-        Args: { p_route_id: string }
-        Returns: Json
       }
       finalize_bookings_atomic: {
         Args: { p_booking_ids: string[]; p_payment_method?: string }
@@ -3016,6 +3304,20 @@ export type Database = {
       }
       generate_reservation_code: { Args: never; Returns: string }
       get_counterpart_phone: { Args: { p_user: string }; Returns: string }
+      get_dashboard_metrics: { Args: { p_range?: string }; Returns: Json }
+      get_disputed_bookings: {
+        Args: never
+        Returns: {
+          booking_id: string
+          departure_time: string
+          driver_name: string
+          passenger_name: string
+          price_per_seat: number
+          route_destination: string
+          route_origin: string
+          updated_at: string
+        }[]
+      }
       get_driver_earnings: {
         Args: { p_driver_id: string }
         Returns: {
@@ -3024,6 +3326,41 @@ export type Database = {
           this_month_earnings: number
           total_bookings: number
           total_earnings: number
+        }[]
+      }
+      get_driver_vehicle_for_admin: {
+        Args: { p_driver_id: string }
+        Returns: {
+          checklist_completed_at: string
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          make: string
+          owner_authorization_expires: string
+          owner_authorization_path: string
+          owner_id_number: string
+          owner_name: string
+          photo_url: string
+          plate: string
+          rejection_reason: string
+          status: string
+          verified_at: string
+          year: number
+        }[]
+      }
+      get_driver_verification_queue: {
+        Args: never
+        Returns: {
+          claimed_at: string
+          claimed_by: string
+          claimed_by_name: string
+          documents_total: number
+          documents_verified: number
+          driver_id: string
+          driver_name: string
+          national_id: string
+          oldest_pending_at: string
         }[]
       }
       get_my_phone: { Args: never; Returns: string }
@@ -3067,6 +3404,21 @@ export type Database = {
           verified_at: string
         }[]
       }
+      get_resolved_disputes: {
+        Args: never
+        Returns: {
+          booking_id: string
+          departure_time: string
+          driver_name: string
+          note: string
+          passenger_name: string
+          price_per_seat: number
+          resolution: string
+          resolved_at: string
+          route_destination: string
+          route_origin: string
+        }[]
+      }
       get_route_passenger_phones: {
         Args: { p_route_id: string }
         Returns: {
@@ -3074,16 +3426,34 @@ export type Database = {
           phone: string
         }[]
       }
+      get_support_tickets: {
+        Args: { p_status?: string }
+        Returns: {
+          category: string
+          created_at: string
+          description: string
+          device_info: Json
+          id: string
+          response: string
+          status: string
+          title: string
+          updated_at: string
+          user_email: string
+          user_name: string
+        }[]
+      }
       has_accepted_trip_between: {
         Args: { p_a: string; p_b: string }
         Returns: boolean
       }
+      has_staff_role: { Args: { p_role: string }; Returns: boolean }
       increment_wallet_balance: {
         Args: { p_amount: number; p_user_id: string }
         Returns: undefined
       }
       is_admin_user: { Args: never; Returns: boolean }
       is_membership_active: { Args: { user_id: string }; Returns: boolean }
+      is_staff: { Args: never; Returns: boolean }
       mark_chat_thread_read: {
         Args: { p_driver_id: string; p_request_id: string }
         Returns: number
@@ -3127,11 +3497,13 @@ export type Database = {
           description: string | null
           destination: string
           driver_id: string
+          dropoff_point: string | null
           id: string
           origin: string
           pickup_point: string | null
           pickup_point_custom: boolean | null
           price_per_seat: number
+          route_via: string | null
           status: string | null
           total_seats: number
           updated_at: string | null
@@ -3173,12 +3545,19 @@ export type Database = {
           p_year: number
         }
         Returns: {
+          checklist_completed_at: string | null
+          checklist_completed_by: string | null
           color: string
           created_at: string
           driver_id: string
           id: string
           is_active: boolean
           make: string
+          owner_authorization_expires: string | null
+          owner_authorization_path: string | null
+          owner_id_number: string | null
+          owner_name: string | null
+          photo_url: string | null
           plate: string
           rejection_reason: string | null
           status: string
@@ -3202,6 +3581,7 @@ export type Database = {
         Args: { p_reason: string; p_vehicle_id: string }
         Returns: undefined
       }
+      release_driver_file: { Args: { p_driver_id: string }; Returns: undefined }
       release_vehicle: { Args: { p_vehicle_id: string }; Returns: undefined }
       repeated_driver_passenger_pairs: {
         Args: { p_min_trips?: number }
@@ -3250,7 +3630,21 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      resolve_dispute: {
+        Args: { p_booking_id: string; p_note?: string; p_resolution: string }
+        Returns: undefined
+      }
       route_occupied_seats: { Args: { p_route_id: string }; Returns: number[] }
+      search_profiles_for_admin: {
+        Args: { p_query: string }
+        Returns: {
+          balance: number
+          email: string
+          id: string
+          name: string
+          role: string
+        }[]
+      }
       send_chat_message: {
         Args: {
           p_driver_id: string
@@ -3272,12 +3666,25 @@ export type Database = {
         Args: { p_national_id: string }
         Returns: undefined
       }
+      set_vehicle_photo: {
+        Args: { p_url: string; p_vehicle_id: string }
+        Returns: undefined
+      }
       start_trip: { Args: { v_request_id: string }; Returns: undefined }
+      sync_driver_verified: { Args: { p_uid: string }; Returns: undefined }
       update_airport_request_price: {
         Args: { new_price: number; request_id: string }
         Returns: undefined
       }
       update_completed_bookings: { Args: never; Returns: undefined }
+      update_support_ticket: {
+        Args: { p_response?: string; p_status: string; p_ticket_id: string }
+        Returns: undefined
+      }
+      vehicle_documents_ready: {
+        Args: { p_vehicle_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

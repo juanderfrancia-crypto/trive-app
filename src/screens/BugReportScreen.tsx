@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, Linking, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -8,6 +8,7 @@ import { useState } from 'react'
 import * as Device from 'expo-device'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { APP_VERSION_LABEL } from '../config/appInfo'
+import { supabase } from '../services/supabase'
 
 type BugCategory = 'crash' | 'visual' | 'network' | 'performance' | 'other'
 
@@ -15,7 +16,6 @@ interface BugReport {
   title: string
   category: BugCategory
   description: string
-  email: string
 }
 
 const CATEGORIES: { id: BugCategory; label: string; icon: IconName }[] = [
@@ -39,7 +39,6 @@ export default function BugReportScreen() {
     title: '',
     category: 'other',
     description: '',
-    email: '',
   })
   const [loading, setLoading] = useState(false)
 
@@ -55,61 +54,35 @@ export default function BugReportScreen() {
       return
     }
 
-    if (!report.email.trim()) {
-      Alert.alert('Error', 'Por favor ingresa tu correo electrónico')
-      return
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(report.email)) {
-      Alert.alert('Error', 'Por favor ingresa un correo electrónico válido')
-      return
-    }
-
     setLoading(true)
 
     try {
-      const categoryLabel = CATEGORIES.find((c) => c.id === report.category)?.label
+      const deviceInfo = {
+        model: Device.modelName || 'Unknown',
+        os: `${Device.osName || 'Unknown'} ${Device.osVersion || 'Unknown'}`,
+        appVersion: APP_VERSION_LABEL,
+      }
 
-      // Create bug report email
-      const deviceInfo = `
-Dispositivo: ${Device.modelName || 'Unknown'}
-SO: ${Device.osName || 'Unknown'} ${Device.osVersion || 'Unknown'}
-App Version: ${APP_VERSION_LABEL}
-Categoría: ${categoryLabel}`
+      const { error } = await supabase.rpc('create_support_ticket', {
+        p_title: report.title.trim(),
+        p_category: report.category,
+        p_description: report.description.trim(),
+        p_device_info: deviceInfo,
+      })
 
-      const emailBody = `Reporte de Bug
-========================================
-Título: ${report.title}
-Categoría: ${categoryLabel}
+      if (error) throw error
 
-Descripción:
-${report.description}
-
-${deviceInfo}
-
-Correo de contacto: ${report.email}
-========================================`
-
-      const mailtoLink = `mailto:soportetrive@gmail.com?subject=Reporte de Bug: ${encodeURIComponent(report.title)}&body=${encodeURIComponent(emailBody)}`
-
-      await Linking.openURL(mailtoLink)
-
-      // Show success message
-      setTimeout(() => {
-        setLoading(false)
-        Alert.alert(
-          'Revisa tu correo',
-          'Se abrió tu app de correo con el reporte listo. Envíalo para que nuestro equipo lo revise. ¡Gracias por ayudarnos a mejorar!',
-          [
-            {
-              text: 'OK',
-              onPress: () => navigation.goBack(),
-            },
-          ]
-        )
-      }, 500)
+      setLoading(false)
+      Alert.alert(
+        'Reporte enviado',
+        'Recibimos tu reporte y nuestro equipo lo va a revisar. ¡Gracias por ayudarnos a mejorar!',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      )
     } catch (error) {
       setLoading(false)
       Alert.alert(
@@ -183,19 +156,6 @@ Correo de contacto: ${report.email}
           />
         </Field>
 
-        <Field label="Tu correo electrónico *" hint="Para contactarte con la solución.">
-          <TextInput
-            style={styles.input}
-            placeholder="tu@correo.com"
-            placeholderTextColor={COLORS.textTertiary}
-            value={report.email}
-            onChangeText={(text) => setReport({ ...report, email: text })}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            maxLength={100}
-          />
-        </Field>
-
         <View style={styles.tipsCard}>
           <View style={styles.tipsHeader}>
             <Icon name="Lightbulb" size={18} color={COLORS.primary} />
@@ -224,7 +184,7 @@ Correo de contacto: ${report.email}
         <View style={styles.infoBox}>
           <Icon name="Info" size={16} color={COLORS.primary} />
           <Text style={styles.infoText}>
-            Tu correo no se comparte públicamente. Solo lo usaremos para responderte.
+            Tu reporte queda ligado a tu cuenta, así que no necesitas dejar un correo aparte.
           </Text>
         </View>
       </ScrollView>
