@@ -33,23 +33,66 @@ serve(async (req) => {
     const escapeHtml = (s: string) =>
       s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 
+    const html = `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
+            <tr>
+              <td style="background-color:#1230B8;padding:24px 32px;">
+                <span style="color:#ffffff;font-size:20px;font-weight:800;letter-spacing:-0.02em;">Trive</span>
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="background-color:#eef1fb;padding:20px;">
+                <img src="https://trivesoft.com/illustrations/chatting.svg" width="160" alt="" style="display:block;width:160px;max-width:60%;height:auto;" />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 32px 8px 32px;">
+                <p style="margin:0 0 20px 0;font-size:13px;font-weight:700;color:#1230B8;text-transform:uppercase;letter-spacing:0.04em;">Nuevo mensaje de contacto</p>
+
+                <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#8a93a6;text-transform:uppercase;letter-spacing:0.03em;">Nombre</p>
+                <p style="margin:0 0 16px 0;font-size:15px;color:#101828;">${escapeHtml(cleanName)}</p>
+
+                <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#8a93a6;text-transform:uppercase;letter-spacing:0.03em;">Correo</p>
+                <p style="margin:0 0 16px 0;font-size:15px;"><a href="mailto:${escapeHtml(cleanEmail)}" style="color:#1230B8;text-decoration:none;">${escapeHtml(cleanEmail)}</a></p>
+
+                <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#8a93a6;text-transform:uppercase;letter-spacing:0.03em;">Mensaje</p>
+                <p style="margin:0 0 8px 0;font-size:15px;line-height:1.6;color:#101828;white-space:pre-wrap;">${escapeHtml(cleanMessage)}</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:20px 32px 28px 32px;">
+                <p style="margin:0;font-size:12px;color:#8a93a6;">Responde directo a este correo para contestarle a ${escapeHtml(cleanName)}.</p>
+              </td>
+            </tr>
+          </table>
+          <p style="margin:16px 0 0 0;font-size:11px;color:#9aa2b1;">Enviado automáticamente desde el formulario de contacto de trivesoft.com</p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>`
+
     const resendResponse = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${resendApiKey}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json; charset=utf-8',
       },
       body: JSON.stringify({
         from: 'Trive <contacto@trivesoft.com>',
         to: ['privacy@trivesoft.com'],
         reply_to: cleanEmail,
         subject: `Nuevo mensaje de contacto — ${cleanName}`,
-        html: `
-          <p><strong>Nombre:</strong> ${escapeHtml(cleanName)}</p>
-          <p><strong>Correo:</strong> ${escapeHtml(cleanEmail)}</p>
-          <p><strong>Mensaje:</strong></p>
-          <p>${escapeHtml(cleanMessage).replace(/\n/g, '<br>')}</p>
-        `,
+        html,
       }),
     })
 
