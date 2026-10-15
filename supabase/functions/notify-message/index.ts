@@ -1,10 +1,16 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
+// Lo llama un webhook de base de datos con el secreto WEBHOOK_SECRET
+// (mismo secreto que usa send-push), nunca directo desde la app.
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
 
 serve(async (req) => {
   try {
+    if (req.headers.get('x-webhook-secret') !== Deno.env.get('WEBHOOK_SECRET')) {
+      return new Response(JSON.stringify({ error: 'No autorizado' }), { status: 401 })
+    }
+
     const payload = await req.json()
 
     // Payload del database webhook: { type, table, schema, record, old_record }
