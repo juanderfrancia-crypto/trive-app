@@ -11,6 +11,7 @@ module.exports = ({ config }) => {
       '@react-native-firebase/app',
       '@react-native-firebase/crashlytics',
       '@react-native-community/datetimepicker',
+      '@sentry/react-native',
     ],
   };
 };

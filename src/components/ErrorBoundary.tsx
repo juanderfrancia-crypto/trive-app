@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
 import { View, TouchableOpacity, StyleSheet } from 'react-native'
+import * as Sentry from '@sentry/react-native'
 import { Text } from './AppText'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Illustration from './illustrations/Illustration'
@@ -17,6 +18,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error) {
     console.error('ErrorBoundary:', error)
+    Sentry.captureException(error)
   }
 
   private handleRetry = () => {
