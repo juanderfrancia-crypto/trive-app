@@ -79,6 +79,27 @@ Migraciones: `20261015110000_conciliacion_finanzas.sql`, `20261015120000_monitor
 
 Migración: `20261015100000_insights_inicio.sql`. Sin Edge Function.
 
+## 0.0.4 Monitoreo con Sentry, dominio propio y sitio público (2026-10-15, misma sesión)
+
+El dueño compró `trivesoft.com` en Cloudflare y pidió usarlo para alojar el back-office. Antes de eso se agregó monitoreo de errores con Sentry (cuenta propia del dueño, org `trive-1k`) en los dos frontends existentes, en paralelo a lo que ya había:
+- **App móvil**: `@sentry/react-native` inicializado en `index.ts` (antes de `registerRootComponent`), `App` envuelta con `Sentry.wrap`, y el `ErrorBoundary` existente ahora también manda la excepción a Sentry además de solo loguearla.
+- **Back-office**: `@sentry/react` inicializado en `main.tsx`. `logError()` (la función que ya alimentaba `frontend_error_logs` en Supabase y la pantalla `/errores`) ahora también manda la excepción a Sentry — las dos vías conviven, no se reemplazó ninguna.
+- No se configuró subida de source maps ni crash reporting nativo todavía (necesita `SENTRY_AUTH_TOKEN` y tocar el build de EAS) — queda para cuando se retome el build de producción.
+
+Después, el dueño decidió separar el dominio: `trivesoft.com` iba a quedar con el login de empleados directo, lo cual no tenía sentido para un dominio público. Se construyó un **sitio público nuevo** (repo separado `trive-web`, mismo stack que `trive-backoffice`: Vite + React + TS + Tailwind v4) con estructura inspirada en blablacar.co (pedido explícito, no es una copia) pero con identidad de Trive:
+- Hero, cómo funciona, confianza/verificación de conductores, cobertura actual (Puerto Tejada↔Cali, sin prometer zonas que no existen), preguntas frecuentes, banner de soporte, y una sección de descarga con lista de espera por correo (como la app aún no está en Google Play).
+- **Lista de espera**: tabla nueva `launch_notify_subscribers` (migración `20261015150000_lista_lanzamiento.sql`) — insert público vía RLS (sin SELECT público), lectura solo por `get_launch_notify_subscribers()` gateada a `administrador_general`/`operaciones`. Pendiente: no se construyó todavía una pantalla en el back-office para ver esa lista (solo queda accesible por SQL); se puede agregar cuando haga falta.
+- **Términos de Uso y Política de Privacidad**: se reutilizó tal cual el texto ya aprobado en la app (`TermsOfServiceScreen`/`PrivacyPolicyScreen`), no se inventó contenido legal nuevo.
+- **Ilustraciones**: se encontraron 5 ilustraciones undraw ya recoloreadas a la marca en `design-canvas/assets/undraw/` que nunca se conectaron a ningún componente de la app (`order-ride`, `confident`, `instant-support`, `sign-in`, `no-signal`). Se usaron en el hero, la sección de confianza, el banner de soporte, la sección de descarga y una página 404 nueva (el sitio no tenía ninguna).
+- Nota pendiente sin resolver: el correo de contacto ya aprobado en los términos es `privacy@trive.co` (dominio `.co`), pero el sitio vive en `trivesoft.com` (dominio `.com`) — queda así hasta que el dueño decida si los unifica.
+
+**Infraestructura final en Cloudflare Pages:**
+- `trivesoft.com` → proyecto `trive-web` (sitio público).
+- `backoffice.trivesoft.com` → proyecto `trive-backoffice` (antes vivía en el dominio raíz, se movió).
+- Ambos conectados a sus repos de GitHub (`juanderfrancia-crypto/trive-web`, `juanderfrancia-crypto/trive-backoffice`) con deploy automático en cada push a `main`.
+
+**Pendiente de este bloque:** pantalla en el back-office para ver/exportar `launch_notify_subscribers`; decidir si se unifica el dominio del correo de contacto; subida de source maps de Sentry cuando se arme el build de producción.
+
 ## 0.1 Dónde quedamos (bitácora, 2026-10-10)
 
 **Hecho y verificado (resumen desde el 2026-10-03; detalle completo en el historial de git de la rama `seguridad/fase-2`, todo commiteado y pusheado):**
