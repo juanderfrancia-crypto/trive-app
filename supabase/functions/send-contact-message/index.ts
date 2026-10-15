@@ -50,14 +50,13 @@ serve(async (req) => {
               </td>
             </tr>
             <tr>
-              <td align="center" style="background-color:#eef1fb;padding:20px;">
-                <img src="https://trivesoft.com/illustrations/chatting.svg" width="160" alt="" style="display:block;width:160px;max-width:60%;height:auto;" />
+              <td align="center" style="padding:28px 32px 8px 32px;">
+                <img src="https://trivesoft.com/illustrations/chatting.svg" width="140" alt="" style="display:block;width:140px;max-width:50%;height:auto;margin:0 0 20px 0;" />
+                <p style="margin:0 0 20px 0;font-size:13px;font-weight:700;color:#1230B8;text-transform:uppercase;letter-spacing:0.04em;">Nuevo mensaje de contacto</p>
               </td>
             </tr>
             <tr>
-              <td style="padding:28px 32px 8px 32px;">
-                <p style="margin:0 0 20px 0;font-size:13px;font-weight:700;color:#1230B8;text-transform:uppercase;letter-spacing:0.04em;">Nuevo mensaje de contacto</p>
-
+              <td style="padding:0 32px 8px 32px;">
                 <p style="margin:0 0 4px 0;font-size:12px;font-weight:700;color:#8a93a6;text-transform:uppercase;letter-spacing:0.03em;">Nombre</p>
                 <p style="margin:0 0 16px 0;font-size:15px;color:#101828;">${escapeHtml(cleanName)}</p>
 
