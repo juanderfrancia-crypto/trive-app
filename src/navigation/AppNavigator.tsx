@@ -22,7 +22,6 @@ import NotificationsScreen from '../screens/NotificationsScreen'
 import SettingsScreen from '../screens/SettingsScreen'
 import SecurityScreen from '../screens/SecurityScreen'
 import DriverDocumentsScreen from '../screens/DriverDocumentsScreen'
-import AdminDocumentsScreen from '../screens/AdminDocumentsScreen'
 import DriverOnboardingScreen from '../screens/DriverOnboardingScreen'
 import SessionHistoryScreen from '../screens/SessionHistoryScreen'
 import RecoveryAccountScreen from '../screens/RecoveryAccountScreen'
@@ -160,7 +159,6 @@ export default function AppNavigator() {
       <Stack.Screen name="DriverPanel" component={DriverPanelScreen} />
       <Stack.Screen name="DriverOnboarding" component={DriverOnboardingScreen} />
       <Stack.Screen name="DriverDocuments" component={DriverDocumentsScreen} />
-      <Stack.Screen name="AdminDocuments" component={AdminDocumentsScreen} />
       <Stack.Screen name="Notifications" component={NotificationsScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />

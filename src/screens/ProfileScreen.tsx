@@ -21,7 +21,6 @@ import { showSuccess, showError, showInfo } from '../utils/showError'
 import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
-import AdminMenuButton from '../components/AdminMenuButton'
 import Button from '../components/Button'
 import Card from '../components/Card'
 import Badge from '../components/Badge'
@@ -498,8 +497,6 @@ export default function ProfileScreen() {
         </KeyboardAvoidingScreen>
       </Modal>
 
-      {/* Acceso admin — solo aparece si user.is_admin === true */}
-      <AdminMenuButton onAdminDocumentsPress={() => navigation.navigate('AdminDocuments')} />
     </SafeAreaView>
   )
 }
