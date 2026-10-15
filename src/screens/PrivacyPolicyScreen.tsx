@@ -24,13 +24,13 @@ export default function PrivacyPolicyScreen() {
 
         <View style={s.brandBlock}>
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.company}>Trive Technologies SAS</Text>
+          <Text style={s.company}>Jormelia Soft</Text>
           <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
           <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
         </View>
 
         <Section title="1. Responsable del tratamiento">
-          <B>Trive Technologies SAS</B>{'\n'}
+          <B>Jormelia Soft</B>{'\n'}
           Ciudad: Cali, Colombia{'\n'}
           Correo: privacy@trivesoft.com
         </Section>

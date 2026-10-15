@@ -24,7 +24,7 @@ export default function TermsOfServiceScreen() {
 
         <View style={s.brandBlock}>
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
-          <Text style={s.company}>Trive Technologies SAS</Text>
+          <Text style={s.company}>Jormelia Soft</Text>
           <Text style={s.date}>Última actualización: 6 de octubre de 2026</Text>
         </View>
 
@@ -33,7 +33,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="2. Naturaleza del servicio">
-          Trive Technologies SAS opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
+          Jormelia Soft opera exclusivamente como una plataforma tecnológica de intermediación que facilita la conexión entre particulares que deseen compartir un vehículo y los costos de un trayecto.{'\n\n'}
           Trive no es una empresa de transporte público, privado colectivo ni individual, ni presta servicios de taxi o similares. Las rutas publicadas corresponden a viajes que los conductores ya tienen planeado realizar, en los cuales ofrecen puestos disponibles a otros usuarios para compartir gastos de desplazamiento.{'\n\n'}
           Las rutas personalizadas (aeropuerto o particulares) son solicitudes de trayecto publicadas por pasajeros y aceptadas por conductores. Trive no fija el precio de estos trayectos, no participa en su ejecución y no es parte del acuerdo entre pasajero y conductor.
         </Section>
@@ -114,7 +114,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="11. Propiedad intelectual">
-          Todos los derechos sobre la marca Trive, su diseño, código fuente y contenidos de la Plataforma pertenecen a Trive Technologies SAS. Queda prohibida su reproducción, distribución o uso no autorizado.
+          Todos los derechos sobre la marca Trive, su diseño, código fuente y contenidos de la Plataforma pertenecen a Jormelia Soft. Queda prohibida su reproducción, distribución o uso no autorizado.
         </Section>
 
         <Section title="12. Modificaciones">
