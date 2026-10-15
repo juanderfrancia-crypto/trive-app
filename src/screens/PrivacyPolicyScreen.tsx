@@ -32,7 +32,7 @@ export default function PrivacyPolicyScreen() {
         <Section title="1. Responsable del tratamiento">
           <B>Trive Technologies SAS</B>{'\n'}
           Ciudad: Cali, Colombia{'\n'}
-          Correo: privacy@trive.co
+          Correo: privacy@trivesoft.com
         </Section>
 
         <Section title="2. Datos personales que recopilamos">
@@ -75,7 +75,7 @@ export default function PrivacyPolicyScreen() {
           • <B>Revocar</B> la autorización otorgada para el tratamiento.{'\n'}
           • <B>Acceder</B> gratuitamente a tus datos personales.{'\n'}
           • <B>Presentar quejas</B> ante la Superintendencia de Industria y Comercio (SIC).{'\n\n'}
-          Para ejercer estos derechos escríbenos a <B>privacy@trive.co</B>. Responderemos dentro de los <B>10 días hábiles</B> siguientes a la recepción de tu solicitud, conforme al artículo 14 de la Ley 1581 de 2012.
+          Para ejercer estos derechos escríbenos a <B>privacy@trivesoft.com</B>. Responderemos dentro de los <B>10 días hábiles</B> siguientes a la recepción de tu solicitud, conforme al artículo 14 de la Ley 1581 de 2012.
         </Section>
 
         <Section title="6. Transferencia de datos a terceros">
@@ -121,7 +121,7 @@ export default function PrivacyPolicyScreen() {
           <Icon name="Mail" size={18} color={COLORS.primary} />
           <View style={{ flex: 1 }}>
             <Text style={s.contactLabel}>Canal de atención de datos personales</Text>
-            <Text style={s.contactValue}>privacy@trive.co</Text>
+            <Text style={s.contactValue}>privacy@trivesoft.com</Text>
           </View>
         </View>
 

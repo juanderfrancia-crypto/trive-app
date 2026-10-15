@@ -47,7 +47,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="4. Registro y cuenta">
-          Eres responsable de mantener la confidencialidad de tu cuenta y de todas las actividades realizadas desde ella. Debes notificarnos de inmediato ante cualquier uso no autorizado escribiendo a privacy@trive.co.
+          Eres responsable de mantener la confidencialidad de tu cuenta y de todas las actividades realizadas desde ella. Debes notificarnos de inmediato ante cualquier uso no autorizado escribiendo a privacy@trivesoft.com.
         </Section>
 
         <Section title="5. Conductores">
@@ -129,7 +129,7 @@ export default function TermsOfServiceScreen() {
           <Icon name="Mail" size={18} color={COLORS.primary} />
           <View style={{ flex: 1 }}>
             <Text style={s.contactLabel}>Contacto</Text>
-            <Text style={s.contactValue}>privacy@trive.co</Text>
+            <Text style={s.contactValue}>privacy@trivesoft.com</Text>
           </View>
         </View>
 
