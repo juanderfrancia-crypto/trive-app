@@ -37,7 +37,7 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.POST_NOTIFICATIONS"
       ],
-      "package": "com.traive.triveapp",
+      "package": "com.trivesoft.app",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON"
     },
     "web": {
