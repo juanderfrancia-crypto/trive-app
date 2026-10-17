@@ -38,7 +38,8 @@
         "android.permission.POST_NOTIFICATIONS"
       ],
       "package": "com.trivesoft.app",
-      "googleServicesFile": "$GOOGLE_SERVICES_JSON"
+      "googleServicesFile": "$GOOGLE_SERVICES_JSON",
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/logo.png"
