@@ -3,14 +3,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 // Manda el correo de "¡Trive ya está disponible!" a todos los que dejaron su
 // correo en trivesoft.com y aún no han sido notificados. Se dispara a mano
-// (una vez, el día del lanzamiento real en Play Store) — no es un cron.
-// Requiere el secreto NOTIFY_SECRET en el header x-notify-secret, nunca
-// --no-verify-jwt ni acceso público: nadie debe poder mandarle correo masivo
-// a esta lista salvo quien tenga ese secreto.
+// desde el botón de la pantalla "Lanzamiento" del back-office (una vez, el
+// día del lanzamiento real en Play Store) — no es un cron. Protegida por el
+// mismo patrón que moderate-account/invite-employee: exige una sesión real
+// de staff con cargo administrador_general u operaciones, no un secreto fijo.
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-notify-secret',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.trivesoft.app'
@@ -21,19 +21,31 @@ serve(async (req) => {
   try {
     if (req.method !== 'POST') throw new Error('Método no permitido')
 
-    const expectedSecret = Deno.env.get('NOTIFY_SECRET')
-    const providedSecret = req.headers.get('x-notify-secret')
-    if (!expectedSecret || providedSecret !== expectedSecret) {
-      return new Response(JSON.stringify({ error: 'No autorizado' }), {
-        status: 401,
-        headers: { ...cors, 'Content-Type': 'application/json' },
-      })
-    }
+    const token = req.headers.get('Authorization')?.replace('Bearer ', '')
+    if (!token) throw new Error('No autorizado')
 
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     )
+
+    const { data: callerData, error: callerError } = await admin.auth.getUser(token)
+    if (callerError || !callerData.user) throw new Error('No autorizado')
+    const callerId = callerData.user.id
+
+    const [{ data: callerProfile }, { data: callerRoles }] = await Promise.all([
+      admin.from('profiles').select('is_admin').eq('id', callerId).single(),
+      admin.from('staff_roles').select('role').eq('employee_id', callerId),
+    ])
+    const isAuthorized =
+      callerProfile?.is_admin === true ||
+      (callerRoles ?? []).some((r) => r.role === 'administrador_general' || r.role === 'operaciones')
+    if (!isAuthorized) {
+      return new Response(JSON.stringify({ error: 'No autorizado para avisar a la lista de lanzamiento' }), {
+        status: 403,
+        headers: { ...cors, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { data: subscribers, error: fetchError } = await admin
       .from('launch_notify_subscribers')

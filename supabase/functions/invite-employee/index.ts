@@ -3,10 +3,9 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 // Crea la cuenta de un empleado nuevo del back-office (solo administrador general).
 // Usa el Admin API de Supabase (createUser), que necesita la clave service_role —
 // por eso vive en una Edge Function y nunca en el repo del back-office, que solo
-// tiene la clave pública. El correo del proyecto no tiene un proveedor SMTP propio
-// configurado (ver docs/features/EMAIL_RATE_LIMIT_SOLUTION.md), así que no se manda
-// un correo de invitación: se genera una contraseña temporal y se devuelve una sola
-// vez a quien hace la llamada, para que se la comparta al empleado por otro medio.
+// tiene la clave pública. La contraseña temporal se manda por correo (Resend, el
+// mismo que ya usa send-contact-message) directo al nuevo empleado, y además se
+// devuelve una vez a quien hace la llamada por si el correo no llega a tiempo.
 
 const ALLOWED_ROLES = [
   'verificacion',
@@ -110,5 +109,49 @@ Deno.serve(async (req) => {
     )
   }
 
-  return json({ ok: true, email, tempPassword, userId: created.user.id })
+  const escapeHtml = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
+
+  const resendApiKey = Deno.env.get('RESEND_API_KEY')
+  let emailSent = false
+  if (resendApiKey) {
+    const html = `<!doctype html>
+<html lang="es">
+  <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+  <body style="margin:0;padding:0;background-color:#f4f5f7;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:32px 16px;">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:16px;overflow:hidden;">
+          <tr><td style="background-color:#1230B8;padding:24px 32px;"><span style="color:#ffffff;font-size:20px;font-weight:800;">Trive</span></td></tr>
+          <tr><td style="padding:28px 32px 8px 32px;">
+            <p style="margin:0 0 8px 0;font-size:13px;font-weight:700;color:#1230B8;text-transform:uppercase;letter-spacing:0.04em;">Acceso al back-office</p>
+            <h1 style="margin:0 0 16px 0;font-size:20px;font-weight:800;color:#101828;">Hola, ${escapeHtml(name)}</h1>
+            <p style="margin:0 0 20px 0;font-size:15px;line-height:1.6;color:#475467;">Te crearon una cuenta en el panel interno de Trive. Entra con estas credenciales y luego activa la verificación en dos pasos que te va a pedir la primera vez:</p>
+            <p style="margin:0 0 6px 0;font-size:13px;color:#8a93a6;">Correo</p>
+            <p style="margin:0 0 16px 0;font-size:15px;font-weight:700;color:#101828;">${escapeHtml(email)}</p>
+            <p style="margin:0 0 6px 0;font-size:13px;color:#8a93a6;">Contraseña temporal</p>
+            <p style="margin:0 0 20px 0;font-size:15px;font-weight:700;color:#101828;font-family:monospace;">${escapeHtml(tempPassword)}</p>
+            <a href="https://backoffice.trivesoft.com/login" style="display:inline-block;background-color:#1230B8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;padding:12px 28px;border-radius:999px;">Entrar al back-office</a>
+          </td></tr>
+          <tr><td style="padding:20px 32px 28px 32px;"><p style="margin:0;font-size:12px;color:#8a93a6;">Por seguridad, cambia esta contraseña apenas entres.</p></td></tr>
+        </table>
+      </td></tr>
+    </table>
+  </body>
+</html>`
+
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${resendApiKey}`, 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        from: 'Trive <contacto@trivesoft.com>',
+        to: [email],
+        subject: 'Tu acceso al back-office de Trive',
+        html,
+      }),
+    })
+    emailSent = resendResponse.ok
+  }
+
+  return json({ ok: true, email, tempPassword, userId: created.user.id, emailSent })
 })
