@@ -19,7 +19,20 @@ No es un cambio de código — queda documentado aquí porque es un bloqueador r
 - Cuestionario completo en el ticket: caso de uso (OTP vía Verify para login de la app Trive, sin SMS de marketing), que es la primera y única cuenta de Twilio, datos de la empresa (Jormelia Soft S.A.S., en trámite de registro ante Cámara de Comercio, radicado y pagado, pendiente resolución) y la aclaración de que la cuenta de Twilio se creó a nombre personal del dueño (persona natural, antes de que la empresa existiera) — no hay contradicción con los documentos de identidad ya subidos a Twilio.
 - Correo de verificación de dominio (lo que Twilio pedía como prueba de que se controla `trivesoft.com`): se mandó desde `verificacion@trivesoft.com` usando la API de Resend (el dominio ya estaba verificado ahí para los correos reales de la app) hacia `verifymyaccount@twilio.zendesk.com`, confirmado `Sent` → `Delivered`. No fue necesario montar un buzón de correo nuevo — se usó la regla de Cloudflare Email Routing que ya existía (`privacy@trivesoft.com → soportetrive@gmail.com`) solo como referencia de que el dominio está bajo control del dueño, y Resend para el envío real.
 
-**Estado al cerrar esta nota:** respuesta completa enviada, a la espera de que Twilio levante la restricción. Revisar primero si ya se puede loguear con un número real antes de volver a diagnosticar nada.
+**Resuelto (2026-10-20):** Twilio aprobó la cuenta ("account upgrade has been approved") tras un segundo intercambio donde además pidieron verificación de pago (últimos 4 dígitos de la tarjeta, nombre, código postal, monto de la última transacción y relación del titular con la empresa — proceso real de Twilio, respondido directo en el ticket autenticado, nunca por correo). Probado de punta a punta con un número real: el SMS con el código llegó correctamente. El login por OTP ya funciona en producción.
+
+## -3. Login/registro por correo: SMTP y recuperación de contraseña rotos (2026-10-20)
+
+Al revisar el flujo de login por correo (paralelo al de teléfono) se encontraron dos huecos reales de entrega, ninguno de los dos era un problema de código del flujo en sí, sino de la infraestructura de correo detrás:
+
+**SMTP de Auth apuntaba a un Gmail personal:** Supabase Auth ya tenía SMTP personalizado activado, pero configurado con `smtp.gmail.com` y un Gmail personal como remitente — el propio Supabase lo marcaba con advertencia ("designed for sending personal rather than transactional email messages"). Se cambió a **Resend** (`smtp.resend.com`, usuario `resend`, clave de API dedicada `supabase-auth-smtp` con permiso de solo envío sobre `trivesoft.com`), remitente `noreply@trivesoft.com`. De paso se personalizaron las plantillas de "Confirm signup" (código de 6 dígitos, `{{ .Token }}`, igual que el flujo de teléfono) y "Reset Password" (botón con `{{ .ConfirmationURL }}`), antes genéricas de Supabase.
+
+**Recuperación de contraseña no tenía a dónde volver:** `resetPasswordForEmail()` en `RecoveryAccountScreen.tsx` se llamaba sin `redirectTo`, así que el enlace usaba el Site URL del proyecto — que además estaba en `http://localhost:3000` (resto de desarrollo, nunca actualizado). La app tampoco tiene ningún `scheme` de deep link configurado (`app.json` no define ninguno), así que no había forma de volver a la app ni una página web que recibiera el enlace. Corregido:
+- `RecoveryAccountScreen.tsx` ahora manda `redirectTo: 'https://trivesoft.com/restablecer-contrasena'`.
+- Nueva página `trive-web/src/pages/ResetPasswordPage.tsx` (ruta `/restablecer-contrasena`) que recibe la sesión de recuperación de Supabase y deja guardar la contraseña nueva.
+- Site URL del proyecto actualizado a `https://trivesoft.com` (ya no `localhost:3000`), y ese Redirect URL agregado a la lista blanca de Supabase.
+
+**Pendiente:** nada bloqueante — falta el build nuevo de la app (ya tiene el `redirectTo`) y confirmar con una prueba real de registro/recuperación por correo una vez esté desplegado.
 
 ## -1. Auditoría de lanzamiento a Play Store (2026-10-15)
 

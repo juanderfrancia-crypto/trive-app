@@ -27,7 +27,9 @@ export default function RecoveryAccountScreen() {
 
     try {
       setLoading(true)
-      const { error } = await supabase.auth.resetPasswordForEmail(target)
+      const { error } = await supabase.auth.resetPasswordForEmail(target, {
+        redirectTo: 'https://trivesoft.com/restablecer-contrasena',
+      })
       if (error) throw error
       setSentTo(target)
     } catch (err: any) {
