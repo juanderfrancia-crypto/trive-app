@@ -1,9 +1,25 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-15.
+Última actualización: 2026-10-20.
 
 ---
+
+## -2. Verificación de cuenta Twilio para Verify/OTP (2026-10-16 a 20)
+
+No es un cambio de código — queda documentado aquí porque es un bloqueador real de login que tomó varios días resolver y conviene no repetir el diagnóstico si vuelve a pasar con otra cuenta.
+
+**Síntoma:** desde que se activó Twilio Verify para el OTP de login, todo intento real devolvía `422 sms_send_failed` con el error de Twilio **60238** ("Verification Creation Attempt blocked by Twilio"). Según la documentación oficial de Twilio, ese código normalmente se resuelve solo en 72h tras el upgrade de cuenta a plan de pago — pasaron esas 72h (cuenta creada 2026-10-16, probado de nuevo el 2026-10-19) y el bloqueo seguía igual.
+
+**Diagnóstico descartado:** no era un problema de configuración. Se verificó directo contra la API de Twilio (cuenta `status: active`, `type: Full`; Verify Service `VA64cbaa...` bien configurado) — ni la cuenta ni el Verify Service tenían nada mal. Tampoco hacía falta comprar un número propio (Verify usa infraestructura compartida de Twilio, no un número de la cuenta).
+
+**Causa real:** no era un bloqueo por tiempo, sino un ticket de revisión manual ya abierto desde el 2026-10-15 por **Twilio Fraud Operations – Onboarding & Compliance** (ticket `#29952189`, "Twilio Account Verification - Action Required"), en estado `Pending` porque nunca se había respondido su cuestionario. El bloqueo no se levanta hasta contestarlo completo.
+
+**Qué se respondió (2026-10-19/20):**
+- Cuestionario completo en el ticket: caso de uso (OTP vía Verify para login de la app Trive, sin SMS de marketing), que es la primera y única cuenta de Twilio, datos de la empresa (Jormelia Soft S.A.S., en trámite de registro ante Cámara de Comercio, radicado y pagado, pendiente resolución) y la aclaración de que la cuenta de Twilio se creó a nombre personal del dueño (persona natural, antes de que la empresa existiera) — no hay contradicción con los documentos de identidad ya subidos a Twilio.
+- Correo de verificación de dominio (lo que Twilio pedía como prueba de que se controla `trivesoft.com`): se mandó desde `verificacion@trivesoft.com` usando la API de Resend (el dominio ya estaba verificado ahí para los correos reales de la app) hacia `verifymyaccount@twilio.zendesk.com`, confirmado `Sent` → `Delivered`. No fue necesario montar un buzón de correo nuevo — se usó la regla de Cloudflare Email Routing que ya existía (`privacy@trivesoft.com → soportetrive@gmail.com`) solo como referencia de que el dominio está bajo control del dueño, y Resend para el envío real.
+
+**Estado al cerrar esta nota:** respuesta completa enviada, a la espera de que Twilio levante la restricción. Revisar primero si ya se puede loguear con un número real antes de volver a diagnosticar nada.
 
 ## -1. Auditoría de lanzamiento a Play Store (2026-10-15)
 
