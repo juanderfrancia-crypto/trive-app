@@ -102,7 +102,7 @@ export default function SettingsScreen() {
 
     if (value) {
       // Reactivar: registrar el token de nuevo en el perfil
-      const token = await getPushNotificationToken()
+      const token = await getPushNotificationToken(user.id)
       if (token) await registerPushToken(user.id, token)
     } else {
       // Desactivar: borrar el token del perfil para que no reciba pushes

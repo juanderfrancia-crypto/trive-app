@@ -351,12 +351,20 @@ export default function PassengerHomeScreen() {
 
         <View style={styles.sectionHead}>
           <Text style={styles.sectionTitle}>Salidas de hoy</Text>
-          <TouchableOpacity onPress={handleAvailableRidesPress} hitSlop={8}>
-            <Text style={styles.sectionLink}>Ver todas</Text>
-          </TouchableOpacity>
+          {preferredMunicipality && (
+            <TouchableOpacity onPress={handleAvailableRidesPress} hitSlop={8}>
+              <Text style={styles.sectionLink}>Ver todas</Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.ridesList}>
-          {salidasHoy.length === 0 ? (
+          {!preferredMunicipality ? (
+            // Sin municipio, useTodayDepartures no filtra nada — mostrar esas rutas aquí
+            // confunde al usuario haciéndole creer que le aplican. Mejor pedir el municipio.
+            <TouchableOpacity style={styles.ridesEmpty} onPress={() => setShowMunicipalityPicker(true)} activeOpacity={0.75}>
+              <Text style={styles.ridesEmptyText}>Elige tu municipio para ver las salidas cerca de ti</Text>
+            </TouchableOpacity>
+          ) : salidasHoy.length === 0 ? (
             <View style={styles.ridesEmpty}>
               <Text style={styles.ridesEmptyText}>Aún no hay salidas publicadas para hoy</Text>
             </View>
@@ -375,6 +383,7 @@ export default function PassengerHomeScreen() {
                   />
                 </View>
                 <View style={styles.rideMiddle}>
+                  <Text style={styles.rideDestination} numberOfLines={1}>Hacia {ride.destination}</Text>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
                   <Text style={styles.rideSeats}>
                     {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} · Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
@@ -530,7 +539,8 @@ const styles = StyleSheet.create({
   rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.white },
   ridePeriod: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
   rideMiddle: { flex: 1, justifyContent: 'center', paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
-  rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
+  rideDestination: { fontSize: 12.5, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.3 },
+  rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginTop: 1 },
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
   ridePrice: {
     fontSize: 16, fontWeight: '800', color: COLORS.primary,

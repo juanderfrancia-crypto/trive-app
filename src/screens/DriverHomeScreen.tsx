@@ -37,13 +37,36 @@ export default function DriverHomeScreen() {
   const { routes: todayRoutes, reload: reloadTodayRoutes } = useDriverTodayRoutes(user?.id)
   const pendingPaymentsCount = pendingPayments.length
 
+  // Mismo filtro que usa la lista real (loadDriverFeed en useAirportNegotiation):
+  // por municipio del conductor (si lo tiene) y excluyendo las que ya descartó.
+  // Sin esto, el badge cuenta solicitudes que el conductor nunca va a ver en la lista.
   const loadAirportCount = useCallback(async () => {
-    const { count } = await supabase
-      .from('airport_requests')
-      .select('id', { count: 'exact', head: true })
-      .eq('status', 'pending')
-    setPendingAirportCount(count ?? 0)
-  }, [])
+    const driverId = user?.id
+    if (!driverId) {
+      setPendingAirportCount(0)
+      return
+    }
+
+    const [{ data: profileRow }, { data: dismissals }, { data: requests }] = await Promise.all([
+      supabase.from('profiles').select('preferred_municipality').eq('id', driverId).maybeSingle(),
+      supabase.from('airport_request_dismissals').select('request_id').eq('driver_id', driverId),
+      supabase.from('airport_requests').select('id, origin, destination').eq('status', 'pending'),
+    ])
+
+    const municipality = profileRow?.preferred_municipality ?? null
+    const dismissedIds = new Set((dismissals ?? []).map((d) => d.request_id))
+    const municipalityPattern = municipality
+      ? new RegExp(`\\b${municipality.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+      : null
+
+    const count = (requests ?? []).filter((r) => {
+      if (dismissedIds.has(r.id)) return false
+      if (!municipalityPattern) return true
+      return municipalityPattern.test(r.origin) || municipalityPattern.test(r.destination)
+    }).length
+
+    setPendingAirportCount(count)
+  }, [user?.id])
 
   useFocusEffect(
     useCallback(() => {

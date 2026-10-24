@@ -57,6 +57,8 @@ export default function ProfileScreen() {
   const [isLoading, setIsLoading]         = useState(false)
   const [editNameVisible, setEditNameVisible] = useState(false)
   const [newName, setNewName]             = useState('')
+  const [newEmail, setNewEmail]           = useState('')
+  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false)
   const [savingName, setSavingName]       = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [avatarBroken, setAvatarBroken] = useState(false)
@@ -184,21 +186,48 @@ export default function ProfileScreen() {
     finally { setIsLoading(false) }
   }
 
-  // ── Name edit ─────────────────────────────────────────────────────────────
-  const openEditName = () => { setNewName(user?.name || ''); setEditNameVisible(true) }
+  // ── Datos personales (nombre + correo; el teléfono es la identidad de la cuenta y no se edita aquí) ──
+  const openEditName = () => {
+    setNewName(user?.name || '')
+    setNewEmail(user?.email || '')
+    setEmailConfirmationSent(false)
+    setEditNameVisible(true)
+  }
 
   const handleSaveName = async () => {
     if (!newName.trim() || newName.trim().length < 2) return
     if (!user?.id) return
+
+    const trimmedEmail = newEmail.trim()
+    if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
+      showToast('Correo inválido', 'error')
+      return
+    }
+    const emailChanged = trimmedEmail && trimmedEmail !== (user.email || '')
+
     try {
       setSavingName(true)
       const { error } = await supabase.from('profiles').update({ name: newName.trim() }).eq('id', user.id)
       if (error) throw error
       useAppStore.getState().setUser({ ...user, name: newName.trim() })
-      setEditNameVisible(false)
-      showToast('Nombre actualizado')
-    } catch { showToast('No se pudo guardar el nombre', 'error') }
-    finally { setSavingName(false) }
+
+      if (emailChanged) {
+        // Esto NO crea una cuenta nueva ni cambia el login (que sigue siendo el teléfono):
+        // solo actualiza el correo de contacto del mismo usuario, y Supabase no lo deja
+        // efectivo hasta que el dueño del correo confirme el enlace que le llega.
+        const { error: emailError } = await supabase.auth.updateUser({ email: trimmedEmail })
+        if (emailError) throw emailError
+        setEmailConfirmationSent(true)
+        showToast('Revisa tu correo para confirmar el cambio')
+      } else {
+        setEditNameVisible(false)
+        showToast('Nombre actualizado')
+      }
+    } catch (err: any) {
+      showToast(err?.message?.includes('already') ? 'Ese correo ya está en uso' : 'No se pudo guardar', 'error')
+    } finally {
+      setSavingName(false)
+    }
   }
 
   // ── Photo ──────────────────────────────────────────────────────────────────
@@ -463,22 +492,52 @@ export default function ProfileScreen() {
       </ScrollView>
 
 
-      {/* Modal editar nombre */}
+      {/* Modal de datos personales */}
       <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
-        <KeyboardAvoidingScreen>
+        <KeyboardAvoidingScreen fill={false}>
           <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
           <View style={nm.sheet}>
-            <Text style={nm.title}>Editar nombre</Text>
-            <TextInput
-              style={nm.input}
-              value={newName}
-              onChangeText={setNewName}
-              placeholder="Tu nombre completo"
-              placeholderTextColor={COLORS.textTertiary}
-              autoCapitalize="words"
-              autoFocus
-              maxLength={60}
-            />
+            <Text style={nm.title}>Datos personales</Text>
+
+            <View>
+              <Text style={nm.fieldLabel}>Nombre</Text>
+              <TextInput
+                style={nm.input}
+                value={newName}
+                onChangeText={setNewName}
+                placeholder="Tu nombre completo"
+                placeholderTextColor={COLORS.textTertiary}
+                autoCapitalize="words"
+                autoFocus
+                maxLength={60}
+              />
+            </View>
+
+            <View>
+              <Text style={nm.fieldLabel}>Correo</Text>
+              <TextInput
+                style={nm.input}
+                value={newEmail}
+                onChangeText={setNewEmail}
+                placeholder="Tu correo (opcional)"
+                placeholderTextColor={COLORS.textTertiary}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                maxLength={120}
+              />
+              {emailConfirmationSent && (
+                <Text style={nm.hint}>Te enviamos un enlace de confirmación a {newEmail}. Ábrelo para que quede guardado.</Text>
+              )}
+            </View>
+
+            <View>
+              <Text style={nm.fieldLabel}>Teléfono</Text>
+              <View style={nm.readOnlyBox}>
+                <Text style={nm.readOnlyText}>{user?.phone || 'Sin verificar'}</Text>
+              </View>
+              <Text style={nm.hint}>Es tu identidad de acceso, no se puede cambiar aquí.</Text>
+            </View>
+
             <View style={nm.btnRow}>
               <TouchableOpacity style={nm.cancelBtn} onPress={() => setEditNameVisible(false)}>
                 <Text style={nm.cancelText}>Cancelar</Text>
@@ -641,10 +700,17 @@ const nm = StyleSheet.create({
     shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
   },
   title:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
+  fieldLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
   input:  {
     height: 52, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight,
     paddingHorizontal: SPACING.lg, fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surface,
   },
+  readOnlyBox: {
+    height: 52, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight,
+    paddingHorizontal: SPACING.lg, justifyContent: 'center', backgroundColor: COLORS.background,
+  },
+  readOnlyText: { fontSize: 15, color: COLORS.textSecondary },
+  hint: { fontSize: 12, color: COLORS.textTertiary, marginTop: 6 },
   btnRow: { flexDirection: 'row', gap: SPACING.md },
   cancelBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight, justifyContent: 'center', alignItems: 'center' },
   cancelText: { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary },

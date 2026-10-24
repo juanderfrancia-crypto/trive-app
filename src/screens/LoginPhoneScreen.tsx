@@ -469,6 +469,7 @@ export default function LoginPhoneScreen() {
                     value={email}
                     onChangeText={(t) => { setEmail(t); if (errors.email) setErrors((p) => ({ ...p, email: '' })) }}
                     editable={!isSubmitting}
+                    onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)}
                   />
                 </View>
                 {errors.email && <Text style={s.errorText}>{errors.email}</Text>}
@@ -486,6 +487,7 @@ export default function LoginPhoneScreen() {
                     value={password}
                     onChangeText={(t) => { setPassword(t); if (errors.password) setErrors((p) => ({ ...p, password: '' })) }}
                     editable={!isSubmitting}
+                    onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)}
                   />
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)} disabled={isSubmitting}>
                     <Icon name={showPassword ? 'EyeOff' : 'Eye'} size={20} color={COLORS.textSecondary} />

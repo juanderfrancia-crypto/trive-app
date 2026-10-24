@@ -41,12 +41,29 @@ export const configureNotificationHandler = () => {
   }
 }
 
-export const getPushNotificationToken = async (): Promise<string | null> => {
+// DIAGNÓSTICO TEMPORAL (2026-10-23): ningún tester real tiene push_token guardado
+// y antes este catch se tragaba el error en silencio, imposible de depurar sin un
+// teléfono a la mano. Ahora cada salida (éxito o fallo) escribe la razón real en
+// profiles.push_token_debug. Quitar `userId` y este logging una vez resuelto.
+const logPushDebug = async (userId: string | undefined, reason: string) => {
+  if (!userId) return
   try {
-    if (!isPushNotificationsAvailable || !Notifications) return null
+    await supabase.from('profiles').update({ push_token_debug: reason, push_token_debug_at: new Date().toISOString() }).eq('id', userId)
+  } catch (_e) {}
+}
+
+export const getPushNotificationToken = async (userId?: string): Promise<string | null> => {
+  try {
+    if (!isPushNotificationsAvailable || !Notifications) {
+      await logPushDebug(userId, 'no disponible: plataforma o expo-notifications ausente')
+      return null
+    }
 
     if (!Device.isDevice) {
-      if (Platform.OS !== 'android') return null
+      if (Platform.OS !== 'android') {
+        await logPushDebug(userId, `no disponible: Device.isDevice=false, plataforma=${Platform.OS}`)
+        return null
+      }
     }
 
     const { status: existingStatus } = await Notifications.getPermissionsAsync()
@@ -57,15 +74,20 @@ export const getPushNotificationToken = async (): Promise<string | null> => {
       finalStatus = status
     }
 
-    if (finalStatus !== 'granted') return null
+    if (finalStatus !== 'granted') {
+      await logPushDebug(userId, `permiso no concedido: ${finalStatus}`)
+      return null
+    }
 
     const pushTokenData = await Notifications.getExpoPushTokenAsync({
       projectId: '17d0b706-d74a-4ddd-8633-b9d0fb6de764',
     })
     const token = pushTokenData.data
 
+    await logPushDebug(userId, `ok: token obtenido (${token.slice(0, 25)}...)`)
     return token
-  } catch (_e) {
+  } catch (e: any) {
+    await logPushDebug(userId, `error: ${e?.message || String(e)}`)
     return null
   }
 }
@@ -73,7 +95,10 @@ export const getPushNotificationToken = async (): Promise<string | null> => {
 export const registerPushToken = async (userId: string, token: string) => {
   try {
     const { data: { user: authUser } } = await supabase.auth.getUser()
-    if (!authUser || authUser.id !== userId) return
+    if (!authUser || authUser.id !== userId) {
+      await logPushDebug(userId, `guardar: auth.getUser no coincide (authUser=${authUser?.id ?? 'null'})`)
+      return
+    }
 
     const { data: user, error: fetchError } = await supabase
       .from('profiles')
@@ -91,8 +116,9 @@ export const registerPushToken = async (userId: string, token: string) => {
 
       if (updateError) throw updateError
     }
-  } catch (_e) {
-    // silent fail — token registration is non-critical
+  } catch (e: any) {
+    // Antes era un fallo silencioso — ver nota de diagnóstico temporal arriba.
+    await logPushDebug(userId, `guardar: error: ${e?.message || String(e)}`)
   }
 }
 

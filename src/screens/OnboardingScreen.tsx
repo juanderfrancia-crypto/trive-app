@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image } from 'react-native'
+import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SvgXml } from 'react-native-svg'
@@ -11,8 +11,11 @@ import {
   biometricLoginXml,
 } from '../components/illustrations/onboarding/onboardingIllustrations'
 
-const { width } = Dimensions.get('window')
-const ILLUSTRATION_MAX_HEIGHT = 340
+const { width, height } = Dimensions.get('window')
+// Altura fija (340) dejaba muy poco espacio para el texto en pantallas bajas,
+// y el FlatList recortaba la descripción de los slides con más texto.
+// La capamos como proporción del alto real de pantalla, nunca más de 340.
+const ILLUSTRATION_MAX_HEIGHT = Math.min(340, height * 0.32)
 const ILLUSTRATION_MAX_WIDTH = width - SPACING.xxl * 2
 
 type Slide = {
@@ -122,7 +125,12 @@ export default function OnboardingScreen({ onComplete }: Props) {
         onMomentumScrollEnd={onMomentumEnd}
         style={styles.pager}
         renderItem={({ item }) => (
-          <View style={[styles.slide, { width }]}>
+          <ScrollView
+            style={{ width }}
+            contentContainerStyle={styles.slide}
+            showsVerticalScrollIndicator={false}
+            bounces={false}
+          >
             <View style={styles.illustrationBox}>
               <SvgXml {...illustrationSize(item.ratio)} xml={item.xml} />
             </View>
@@ -131,7 +139,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
               <Text style={styles.title}>{item.title}</Text>
               <Text style={styles.description}>{item.description}</Text>
             </View>
-          </View>
+          </ScrollView>
         )}
       />
 

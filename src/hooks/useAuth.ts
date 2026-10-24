@@ -119,7 +119,7 @@ export const useAuth = () => {
 
       subscribeToProfile(currentSession.user.id)
 
-      getPushNotificationToken()
+      getPushNotificationToken(currentSession.user.id)
         .then((token) => {
           if (token) registerPushToken(currentSession.user.id, token)
         })

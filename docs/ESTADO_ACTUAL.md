@@ -1,9 +1,48 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-20.
+Última actualización: 2026-10-24.
 
 ---
+
+## -5. Notificaciones push nunca llegan — diagnóstico confirmado, falta el build para ver la causa exacta (2026-10-23/24)
+
+El dueño reportó que ningún tester recibe notificaciones push, pese a haber reservado cupo, cancelado, publicado ruta e iniciado viaje. Diagnóstico hecho con datos reales de producción (solo lectura, sin tocar nada):
+
+**Confirmado con evidencia, no es sospecha:**
+- Consulta a `profiles`: **ningún tester real de la prueba cerrada tiene `push_token` guardado.** Solo cuentas viejas de pruebas de antes del cambio de paquete (`com.trivesoft.app`) lo tienen.
+- Consulta a `net._http_response` (donde `pg_net` guarda cada respuesta HTTP que dispara el trigger de `notifications`): para los usuarios sin token, `send-push` responde `{"skipped":"sin token de push"}` (correcto, no hay nada que mandar). Para los que sí tienen token (cuentas viejas), responde `{"ok":true}` — **Expo acepta el envío sin problema.**
+- Conclusión: el trigger de base de datos, la función `send-push` y la API de Expo **funcionan bien**. El 100% del problema es que el teléfono nunca logra guardar el `push_token` en el perfil — `getPushNotificationToken()` en `src/services/pushNotifications.ts` tenía un `catch` vacío que se tragaba el error real en silencio, así que era imposible saber por qué sin verlo en vivo.
+
+**Ya corregido (instrumentación, no la causa final todavía):**
+- Migración `20261023100000_push_token_debug.sql`: agrega `profiles.push_token_debug` y `push_token_debug_at` (temporal, se puede quitar una vez resuelto el bug real).
+- `src/services/pushNotifications.ts`: cada salida de `getPushNotificationToken()` y `registerPushToken()` (éxito o cualquier tipo de fallo: permiso denegado, plataforma no disponible, error de Expo, error al guardar) ahora escribe la razón real en esa columna, en vez de fallar en silencio.
+- `src/hooks/useAuth.ts` y `src/screens/SettingsScreen.tsx`: actualizados para pasar el `userId` que la nueva instrumentación necesita.
+
+**Pendiente — esto es lo que falta para cerrar el tema:**
+1. Lanzar un build de producción nuevo con este código (el diagnóstico no sirve de nada hasta que esté instalado en un teléfono real).
+2. Que alguien (el dueño o cualquier tester) abra la app una vez con ese build nuevo — el registro del token se intenta automáticamente al iniciar sesión (`useAuth.ts`), no hace falta ninguna acción especial.
+3. Consultar `profiles.push_token_debug` después de eso — ahí va a estar la razón exacta (no es necesario adivinar: puede ser permiso de notificaciones negado, un problema de `google-services.json`/FCM con el paquete nuevo, o algo de la librería `expo-notifications`).
+4. Una vez se sepa la causa real, aplicar el fix correspondiente (que todavía no se conoce, no asumir cuál es).
+
+**Cómo aplicar:** al retomar, lo primero es preguntar si ya se hizo el build y se abrió la app en algún teléfono — si sí, consultar `push_token_debug` antes de proponer nada, ahí probablemente ya está la respuesta. No repetir el diagnóstico de arriba, ya está confirmado.
+
+## -4. Bugs reportados por testers de la prueba cerrada (2026-10-21)
+
+## -4. Bugs reportados por testers de la prueba cerrada (2026-10-21)
+
+El dueño reportó varios problemas (con capturas) encontrados por los testers reales. Causa raíz confirmada contra el código para cada uno, no solo el síntoma:
+
+- **Splash duplicado al abrir la app**: `app.json` tenía el splash configurado dos veces (la clave vieja `"splash"` y el plugin `"expo-splash-screen"`), mostrando la pantalla de carga nativa y luego la de Expo encima. Corregido: se quitó la clave vieja, queda solo el plugin.
+- **Badge "1 solicitud" en Rutas personalizadas (conductor) sin nada adentro**: el contador (`DriverHomeScreen.tsx`) contaba `airport_requests` pendientes de TODA la base, sin filtrar por municipio del conductor ni excluir las que ya descartó — pero la lista real sí aplica ese filtro. Corregido: el contador ahora replica el mismo filtro que `loadDriverFeed` (`useAirportNegotiation.ts`).
+- **"Datos personales" solo editaba el nombre**, aunque el subtítulo prometía "Nombre, correo y teléfono". Se completó: ahora el correo es editable (campo de contacto del perfil, nunca crea una cuenta nueva ni pide contraseña — usa `auth.updateUser({email})`, que Supabase no aplica hasta que el usuario confirma el enlace que le llega por correo) y el teléfono se muestra de solo lectura (es la identidad de acceso de la cuenta). Nueva migración `20261021100000_sync_profile_email.sql`: espejo del trigger que ya existía para teléfono, sincroniza `profiles.email` desde `auth.users.email` solo cuando el cambio ya fue confirmado.
+- **Teclado tapaba el campo en ese mismo modal**: usaba `KeyboardAvoidingScreen` con `fill=true` por defecto, pero es un sheet anclado abajo (`position:absolute`) — el propio componente documenta que esos casos necesitan `fill=false`. Corregido.
+- **Teclado no subía el campo de correo la primera vez en el login** (sí funcionaba después de cerrar y volver a abrir el teclado): el campo de teléfono ya tenía un `onFocus` que fuerza scroll al final como respaldo del `KeyboardAvoidingView`, pero el campo de correo/contraseña del login no lo tenía — por eso fallaba ahí y no en teléfono. Se agregó el mismo `onFocus` a correo y contraseña. (El dueño reportó que a veces pasa también en el flujo de reserva del pasajero, en una pantalla sin identificar — pendiente de más detalle para aplicar el mismo fix ahí si hace falta.)
+- **Onboarding (primeras pantallas) tapaba el texto de abajo**: la altura de la ilustración (`ILLUSTRATION_MAX_HEIGHT`) era un valor fijo (340px) sin importar el alto real de la pantalla, dejando muy poco espacio para el texto en teléfonos más chicos. Corregido: ahora es proporcional al alto de pantalla (`Math.min(340, height * 0.32)`), y además cada slide quedó dentro de un `ScrollView` como respaldo por si algún texto sigue sin caber.
+- **Tarjetas de "Salidas de hoy" no mostraban el destino**: solo tenían hora, conductor, cupos y precio. Se agregó el destino ("Hacia {destino}") como primera línea de la tarjeta. La placa del vehículo se deja para la pantalla de detalle del viaje (no la tarjeta compacta del inicio), es información de más detalle, no la decisión principal de si la ruta sirve.
+- **Pasajero nuevo sin municipio elegido veía rutas sin relación con él en "Salidas de hoy"** (confirmado con capturas): `useTodayDepartures.ts` no aplica ningún filtro cuando el usuario no tiene `preferred_municipality` configurado, así que mostraba las primeras rutas del día sin importar destino/origen. Corregido: mientras no haya municipio elegido, la sección pide elegirlo en vez de mostrar rutas que no le aplican al usuario.
+
+**Hallazgo aparte, más grande, documentado pero NO ejecutado todavía** (ver [[project_rediseno_login_pin]]): existe una pestaña "Correo" en el login que crea una cuenta de Supabase Auth completamente separada e independiente de la cuenta por teléfono — contradice el propio diseño documentado en `20261007100000_identity_single_account.sql` ("una persona, una cuenta: el teléfono es la identidad"). Decisión del dueño: no tocar esto ahora (la prueba cerrada ya está corriendo con el login actual), se va a resolver con un rediseño completo a teléfono+PIN (estilo Nequi) ~15-16 días antes de salir a producción pública, con un AAB nuevo antes de publicar.
 
 ## -2. Verificación de cuenta Twilio para Verify/OTP (2026-10-16 a 20)
 
