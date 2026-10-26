@@ -9,19 +9,26 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 No es un bug ni un cambio de código — es un análisis de capacidad hecho a pedido del dueño, con hallazgos que quedan como trabajo técnico pendiente antes de abrir más allá de la prueba cerrada.
 
-**Contexto real (dato del dueño, no supuesto):** Puerto Tejada↔Cali ya tiene una operación de transporte informal ("pirata") diaria, de tiempo completo, con un piso de ~300 conductores × 4 puestos, de 4am a medianoche, lunes a sábado — Trive digitaliza una demanda que ya existe y se mueve todos los días, no una que hay que crear desde cero. Con un rango estimado de 4-8 ciclos/conductor/día (dato a confirmar con el dueño, que conoce la operación real), eso da entre ~124.000 y ~249.000 movimientos de pasajero al mes solo en ese corredor — sin contar los otros municipios cercanos (Padilla, Guachené, Villa Rica, Santander de Quilichao, ~230.000 habitantes combinados).
+**Contexto real (dato del dueño, no supuesto):** Puerto Tejada↔Cali ya tiene una operación de transporte informal ("pirata") diaria, de tiempo completo — Trive digitaliza una demanda que ya existe, no una que hay que crear desde cero. El transporte informal no compite con el bus intermunicipal tradicional, lo complementa: cubre las conexiones que el bus no hace (universidades, Jardín Plaza, Unicentro, Cañasgordas), que es donde la gente necesita conectar con el MIO dentro de Cali — relevante también para destinos frecuentes predefinidos en la app, no solo para capacidad.
+
+**Volumen real estimado (actualizado 2026-10-26 con dato del dueño: 8 viajes/día por conductor, ida y vuelta contados):**
+
+| Escenario | Conductores | Pasajeros/día (×4 puestos ×8 viajes) | Pasajeros/semana (×6 días) | Pasajeros/mes (~4.3 sem) |
+|---|---|---|---|---|
+| Conservador | 50 | 1.600 | 9.600 | ~41.600 |
+| Realista-alto | 100 | 3.200 | 19.200 | ~83.100 |
+| Referencia (hay más) | 150 | 4.800 | 28.800 | ~124.700 |
 
 **Población del corredor (proyecciones DANE 2026, vía fuente intermediaria, no censo nuevo):** Puerto Tejada 43.709 · Villa Rica 23.909 · Guachené 20.437 · Padilla 10.622 · Santander de Quilichao 130.768.
 
 **Hallazgos de capacidad técnica (contra el plan Free de Supabase, que es el que está activo hoy):**
 - Auth (50.000 MAU) y almacenamiento (500 MB) alcanzan de sobra para el piloto en Puerto Tejada.
-- **El riesgo real es el patrón de notificaciones**: `notify_passengers_new_route` (el trigger de "nueva ruta publicada") inserta una notificación —y por lo tanto dispara una invocación de la función `send-push`— **por cada pasajero cuyo municipio coincide, una por una, no en lote**. Con el volumen real de la operación pirata (cientos de conductores publicando varias veces al día) y cientos/miles de pasajeros con el mismo municipio configurado, esto puede agotar el tope gratuito de 500.000 invocaciones/mes de Supabase mucho antes de lo esperado — potencialmente dentro del mismo piloto si se captura una fracción real de esa demanda, no solo "si la app crece mucho a futuro".
+- **El riesgo real es el patrón de notificaciones**: `notify_passengers_new_route` (el trigger de "nueva ruta publicada") inserta una notificación —y por lo tanto dispara una invocación de la función `send-push`— **por cada pasajero cuyo municipio coincide, una por una, no en lote**. Si cada uno de los 8 viajes/día por conductor se publica como ruta nueva (como está pensado el flujo hoy), eso da **400-800 publicaciones de ruta al día** (50-100 conductores × 8). Si solo 200-500 pasajeros reales tienen Puerto Tejada configurado como municipio, son **80.000 a 400.000 invocaciones... en un solo día**. El tope gratuito de Supabase es 500.000 **al mes** — con el escenario conservador, se agotaría en menos de una semana real de operación.
 - El plan Free no tiene cobro por exceso: si se choca contra cualquier tope, el proyecto empieza a fallar (escrituras/funciones bloqueadas), no cobra de más.
 
-**Pendiente, en orden de prioridad:**
-1. **Confirmar con el dueño cuántos ciclos/vueltas hace en promedio un conductor pirata al día** — es el dato que más cambia la proyección de volumen real.
-2. **Agrupar/enviar en lote la función `send-push`** en vez de una invocación por pasajero por cada ruta publicada — esto es lo que más baja el riesgo real de agotar el tope gratuito.
-3. **Subir a Supabase Pro (~USD 25/mes)** antes de abrir más allá de la prueba cerrada — no es opcional dado el volumen real de la operación que se está digitalizando, es la diferencia entre una caída real de la app y margen de seguridad.
+**Pendiente, en orden de prioridad (ya no es "a futuro si crece", es antes de abrir más allá de la prueba cerrada):**
+1. **Agrupar/enviar en lote la función `send-push`** en vez de una invocación por pasajero por cada ruta publicada — esto es lo que más baja el riesgo real de agotar el tope gratuito.
+2. **Subir a Supabase Pro (~USD 25/mes)** antes de abrir más allá de la prueba cerrada.
 
 **Cómo aplicar:** no ejecutar nada de esto sin confirmación explícita del dueño — queda documentado como trabajo pendiente, no como tarea en curso.
 
