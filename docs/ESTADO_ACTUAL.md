@@ -5,6 +5,16 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -10. "Algoritmos" para Trive — ranking de relevancia agregado, el resto evaluado (2026-10-26)
+
+A pedido del dueño, se evaluó qué tipo de algoritmos (en el sentido de Facebook/Instagram/YouTube/Uber) le sirven a Trive. Postura tomada: los algoritmos de "enganche" (maximizar tiempo en la app) y el precio dinámico/surge son explícitamente **inadecuados** para este modelo (contradice el posicionamiento de gastos compartidos y la naturaleza de utilidad de la app — el usuario quiere resolver rápido e irse, no quedarse). Se identificaron 3 piezas que sí aportan, sin manipular a nadie:
+
+**1. Ranking de búsqueda por relevancia — CONSTRUIDO.** Nuevo util compartido `src/utils/rideRelevance.ts` (`sortByRelevance`), usado en `AvailableRidesScreen.tsx` y `src/screens/passenger/useTodayDepartures.ts` (antes ninguno de los dos ordenaba por nada más que hora). Diseño: la hora de salida manda siempre (agrupa en ventanas de 15 min), y la calificación del conductor solo desempata **dentro** de esa ventana — nunca puede hacer que una ruta que sale antes quede detrás de una que sale después. Los conductores sin reseñas (nuevos) se tratan con una calificación neutral (4.5), no como los peores, para no perjudicar a la oferta nueva de la plataforma (decisión de equidad explícita, no solo técnica). Verificado con `npx tsc --noEmit` sin errores.
+
+**2. Rutas frecuentes en el inicio — YA ESTABA CONSTRUIDO, no hizo falta nada.** `useRecentRoutes` + los chips en `PassengerHomeScreen.tsx` (líneas 290-304) ya muestran las 3 rutas más recientes del pasajero y las usan para completar la búsqueda con un toque.
+
+**3. Detección de fraude/confianza en patrones de cancelación y calificaciones — EVALUADO, PENDIENTE DE DECISIÓN DEL DUEÑO.** No se construyó todavía porque falta una decisión de negocio, no técnica: cuando el sistema detecte algo sospechoso (ej. un conductor que cancela mucho más que el promedio, patrones de calificación anómalos), ¿debe solo quedar marcado para revisión de un admin en el back-office, o debe la app tomar alguna acción automática (ej. ocultar temporalmente al conductor)? Una acción automática mal calibrada podría bloquear a un conductor real por error — se le preguntó explícitamente al dueño, respuesta pendiente.
+
 ## -9. Prueba de carga — PRÓXIMO PASO, no ejecutado todavía (2026-10-26)
 
 Documentado a pedido del dueño como lo siguiente a hacer, no como tarea en curso.

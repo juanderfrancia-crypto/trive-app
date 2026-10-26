@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../../services/supabase'
 import { withTimeout } from '../../utils/withTimeout'
+import { sortByRelevance } from '../../utils/rideRelevance'
 import type { AvailableRide } from '../../hooks/useAvailableRides'
 
 const SALIDAS_MOSTRADAS = 2
@@ -77,6 +78,7 @@ export const useTodayDepartures = (municipality: string | null, excludedRouteIds
       result = result.filter((r) => pattern.test(r.origin) || pattern.test(r.destination))
     }
 
+    result = sortByRelevance(result)
     setRides(result.slice(0, SALIDAS_MOSTRADAS))
     setHasMore(result.length > SALIDAS_MOSTRADAS)
     // eslint-disable-next-line react-hooks/exhaustive-deps

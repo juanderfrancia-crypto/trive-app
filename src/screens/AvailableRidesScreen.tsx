@@ -15,6 +15,7 @@ import { supabase } from '../services/supabase'
 import { VehicleVector } from '../components/illustrations/VehicleVector'
 import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
 import { showSuccess } from '../utils/showError'
+import { sortByRelevance } from '../utils/rideRelevance'
 
 // Reserva2: elegir conductor. Llega con origen, destino y pasajeros (búsqueda)
 // o solo con municipio (Viajes ahora desde Inicio).
@@ -202,19 +203,23 @@ export default function AvailableRidesScreen() {
 
   const visibleRides = useMemo(() => {
     const now = Date.now()
+    let filtered: AvailableRide[]
     if (isSearch) {
       const originQ = normalizeText(params.origin ?? '')
       const destQ = normalizeText(params.destination ?? '')
-      return rides.filter((r) =>
+      filtered = rides.filter((r) =>
         isToday(r.departure_time) &&
         new Date(r.departure_time).getTime() > now &&
         normalizeText(r.origin).includes(originQ) &&
         normalizeText(r.destination).includes(destQ)
       )
+    } else if (!municipality) {
+      filtered = rides
+    } else {
+      const mun = normalizeText(municipality)
+      filtered = rides.filter((r) => normalizeText(r.origin).includes(mun) || normalizeText(r.destination).includes(mun))
     }
-    if (!municipality) return rides
-    const mun = normalizeText(municipality)
-    return rides.filter((r) => normalizeText(r.origin).includes(mun) || normalizeText(r.destination).includes(mun))
+    return sortByRelevance(filtered)
   }, [rides, isSearch, params.origin, params.destination, municipality])
 
   const selectedRide = visibleRides.find((r) => r.id === selectedId) ?? null
