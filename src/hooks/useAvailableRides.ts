@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../services/supabase'
+import { withTimeout } from '../utils/withTimeout'
 
 export interface AvailableRide {
   id: string
@@ -45,10 +46,14 @@ export const useAvailableRides = () => {
     try {
       setLoading(true)
       setError(null)
-      const { data, error: fetchError } = await supabase
-        .from('available_rides')
-        .select('*')
-        .order('departure_time', { ascending: true })
+      const { data, error: fetchError } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('available_rides')
+            .select('*')
+            .order('departure_time', { ascending: true })
+        )
+      )
       if (fetchError) { setError(fetchError.message); return }
       setRides((data as AvailableRide[]) || [])
     } catch (err) {

@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { supabase } from "../services/supabase";
 import { insertNotificationForUser } from "../services/notificationInsert";
+import { withTimeout } from "../utils/withTimeout";
 
 // Función para normalizar texto: elimina acentos y convierte a minúsculas
 const normalizeText = (text: string): string => {
@@ -74,10 +75,12 @@ export const useRoutes = () => {
 
     const driverIds = Array.from(new Set(rawRoutes.map((route) => route.driver_id)));
     try {
-      const [{ data: profiles }, { data: drivers }] = await Promise.all([
-        supabase.from('profiles').select('id, name, rating, avatar_url').in('id', driverIds),
-        supabase.from('drivers').select('id, average_rating').in('id', driverIds),
-      ]);
+      const [{ data: profiles }, { data: drivers }] = await withTimeout(
+        Promise.all([
+          supabase.from('profiles').select('id, name, rating, avatar_url').in('id', driverIds),
+          supabase.from('drivers').select('id, average_rating').in('id', driverIds),
+        ])
+      );
 
       const profileMap = new Map(
         (profiles || []).map((item: any) => [item.id, item])
@@ -147,11 +150,13 @@ export const useRoutes = () => {
         query = query.limit(limit);
       }
 
-      const { data, error: fetchError } = await query.order(
-        isDriverRatingSort ? 'departure_time' : sortBy,
-        {
-          ascending,
-        }
+      const { data, error: fetchError } = await withTimeout(
+        Promise.resolve(query.order(
+          isDriverRatingSort ? 'departure_time' : sortBy,
+          {
+            ascending,
+          }
+        ))
       );
 
       if (fetchError) throw fetchError;
@@ -213,11 +218,13 @@ export const useRoutes = () => {
             fallbackQuery = fallbackQuery.limit(limit);
           }
 
-          const { data: fallbackData, error: fallbackFetchError } = await fallbackQuery.order(
-            isDriverRatingSort ? 'departure_time' : sortBy,
-            {
-              ascending,
-            }
+          const { data: fallbackData, error: fallbackFetchError } = await withTimeout(
+            Promise.resolve(fallbackQuery.order(
+              isDriverRatingSort ? 'departure_time' : sortBy,
+              {
+                ascending,
+              }
+            ))
           );
 
           if (fallbackFetchError) throw fallbackFetchError;
@@ -267,11 +274,15 @@ export const useRoutes = () => {
 
   const getRouteById = useCallback(async (routeId: string) => {
     try {
-      const { data, error } = await supabase
-        .from("routes")
-        .select("*")
-        .eq("id", routeId)
-        .maybeSingle();
+      const { data, error } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("routes")
+            .select("*")
+            .eq("id", routeId)
+            .maybeSingle()
+        )
+      );
 
       if (error) throw error;
       if (!data) return null;

@@ -28,6 +28,10 @@ export default function SeatSelectionScreen() {
   const [bookings, setBookings] = useState<any[]>([])
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
+  // Cubre la validación previa a reservar (getRouteById/getRouteBookings), que no
+  // pasa por el `loading` de useBookings — sin esto, el botón no muestra nada
+  // mientras valida y el usuario cree que el toque no registró.
+  const [validating, setValidating] = useState(false)
   const { isOnline } = useNetworkStatus()
   const isMountedRef = useRef(true)
   const isFetchingRef = useRef(false)
@@ -255,6 +259,7 @@ export default function SeatSelectionScreen() {
     }
 
     try {
+      setValidating(true)
       const currentRoute = await getRouteById(selectedRoute.id)
       if (!currentRoute) {
         errorHandler.handle(
@@ -349,6 +354,8 @@ export default function SeatSelectionScreen() {
           { context: 'seat_reserve_error' }
         )
       }
+    } finally {
+      setValidating(false)
     }
   }
 
@@ -478,10 +485,10 @@ export default function SeatSelectionScreen() {
         <TouchableOpacity
           style={[styles.cta, !hasSelection && styles.ctaDisabled]}
           onPress={handleContinue}
-          disabled={!hasSelection || loading}
+          disabled={!hasSelection || loading || validating}
           activeOpacity={0.85}
         >
-          {loading ? (
+          {(loading || validating) ? (
             <ActivityIndicator color={COLORS.textInverse} />
           ) : (
             <>

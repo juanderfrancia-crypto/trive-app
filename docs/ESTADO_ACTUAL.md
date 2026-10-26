@@ -5,6 +5,28 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -8. Auditoría de resiliencia/concurrencia/caché/rendimiento — timeouts corregidos (2026-10-26)
+
+A pedido del dueño, auditoría completa de 4 áreas pensando en red rural inestable (3G/Edge, Cauca) y dispositivos de gama baja, a 10 días de salir a producción.
+
+**1. Resiliencia de red — BLOQUEANTE, corregido hoy.** El cliente de Supabase no tiene timeout global, y antes de este fix solo 2 llamadas de toda la app lo tenían (`reserve_seats`, `finalize_bookings_atomic`, usando la utilidad `withTimeout` que ya existía). El resto —incluida la carga de asientos y la revalidación antes de reservar en `SeatSelectionScreen`— podía quedarse colgado indefinidamente si la señal se degradaba a mitad de petición (no un corte total, que sí se detecta, sino una conexión que se cuelga sin cerrarse). Se envolvió con `withTimeout` (10s por defecto):
+- `src/hooks/useBookings.ts`: `getPassengerBookings`, `getRouteBookings`, `releasePendingBookings`, `cancelBooking`.
+- `src/hooks/useRoutes.ts`: `fetchRoutes` (+ su fallback sin `vehicle_type`), `getRouteById`, `enrichRoutesWithDriverInfo`.
+- `src/hooks/useAvailableRides.ts`: `fetchAvailableRides`.
+- `src/screens/passenger/useTodayDepartures.ts`: `load` — este no tenía `try/catch`, se agregó junto con el timeout para no romper nada (antes un error de red resolvía `{error}`, no rechazaba; con `withTimeout` el caso de timeout sí rechaza, así que necesitaba el catch para no quedar como promesa no manejada).
+- `src/screens/SeatSelectionScreen.tsx`: no necesitó cambios en las llamadas en sí (usa `getRouteById`/`getRouteBookings` de los hooks ya corregidos), pero se agregó un estado `validating` para que el botón "Continuar" muestre el spinner también durante la validación previa a reservar, no solo durante la reserva — antes el botón no daba ningún feedback visual en esos segundos.
+- Verificado con `npx tsc --noEmit`: sin errores tras el cambio.
+
+**2. Concurrencia en reserva de cupos — ya estaba bien, no se tocó.** `reserve_seats` (última versión en `20261005100000_security_phase2s_direct_payments.sql`) usa `SELECT ... FOR UPDATE` (lock de fila) + un índice `UNIQUE (route_id, seat_number) WHERE booking_status <> 'cancelled'` a nivel de base de datos. Estructuralmente imposible reservar el mismo asiento dos veces. No hay ningún camino desde el cliente que inserte en `bookings` sin pasar por esa función (confirmado: no hay políticas RLS de INSERT/UPDATE para `authenticated` en `bookings`, solo lectura).
+
+**3. Caché y peso de datos — mejora recomendada, no bloqueante, queda pendiente.** El archivo de municipios (`colombiaMunicipalities.ts`, 48 KB, 899 filas) no es problema. No hay caché entre pantallas (cada pantalla vuelve a pedir todo al servidor en cada `useFocusEffect`) — genera tráfico de más en redes lentas pero los payloads son chicos. Algunos `select('*')` de más (`useRoutes.ts`, `getPassengerBookings` con `routes:route_id(*)` anidado) — impacto bajo dado el volumen por usuario.
+
+**4. Eficiencia en gama baja — mejora recomendada, no bloqueante, queda pendiente.** Las listas grandes ya usan `FlatList`/`SectionList` virtualizado. `RideCard` en `AvailableRidesScreen.tsx` no está memoizado (`React.memo`), causa re-render de toda la lista visible ante cualquier cambio de selección — impacto modesto dado el volumen esperado por ruta. Fuga real pero menor: `useAirportNegotiation.ts:902` (`updateRequestPrice`) crea un canal de broadcast puntual y nunca lo cierra (`removeChannel`) — se acumula en memoria si se usa repetidamente esa función de negociación de aeropuerto en una sesión larga. El resto de canales/timers de la app sí limpian correctamente.
+
+**De paso, al regenerar los tipos de TypeScript** (necesario porque `push_token_debug`/`push_token_debug_at` de la sección "-5" no estaban en `database.types.ts`, rompía el build): se encontró y corrigió un error de tipos pre-existente en `useProfile.ts` — `ProfileRow` se declaraba como el Row completo de `profiles` menos `phone`, pero `PROFILE_COLUMNS` (la lista real de columnas que se seleccionan) nunca incluyó `account_status` (de la función de moderación de cuentas) ni ahora `push_token_debug*` — el tipo mentía, afirmaba que esas columnas existían en el objeto cuando la consulta real no las trae. Corregido ajustando el `Omit` para que coincida con lo que de verdad se selecciona.
+
+**Pendiente (no bloqueante, documentado para después del lanzamiento):** punto 3 completo, re-render de `AvailableRidesScreen`, y cerrar el canal de `useAirportNegotiation.ts:902`.
+
 ## -7. Capacidad técnica vs. demanda real de Puerto Tejada — notificaciones en lote YA CORREGIDO (2026-10-26)
 
 Empezó como análisis de capacidad a pedido del dueño; el hallazgo principal (riesgo de agotar el tope gratuito de Supabase por el patrón de notificaciones) ya se corrigió el mismo día, dado que faltan 10 días para salir al público general.

@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       achievements: {
@@ -1174,6 +1149,353 @@ export type Database = {
           },
         ]
       }
+      finance_accounts: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "finance_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_accounts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_categories: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_system: boolean
+          kind: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_system?: boolean
+          kind: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_system?: boolean
+          kind?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "finance_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_categories_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_movements: {
+        Row: {
+          account_id: string
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+          movement_date: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind: string
+          movement_date?: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+          movement_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_movements_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_movements_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "finance_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_movements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      finance_recurring_templates: {
+        Row: {
+          account_id: string
+          amount: number
+          category_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          kind: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          category_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          category_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          kind?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_recurring_templates_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "finance_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_recurring_templates_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "finance_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "finance_recurring_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "finance_recurring_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_recurring_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "finance_recurring_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      frontend_error_logs: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          page_url: string | null
+          stack: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          page_url?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          page_url?: string | null
+          stack?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "frontend_error_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "available_rides"
+            referencedColumns: ["driver_user_id"]
+          },
+          {
+            foreignKeyName: "frontend_error_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "driver_earnings_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "frontend_error_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "driver_reputation_summary"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "frontend_error_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      launch_notify_subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          notified_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          notified_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          notified_at?: string | null
+        }
+        Relationships: []
+      }
       message_reactions: {
         Row: {
           created_at: string | null
@@ -1652,6 +1974,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_status: string
           avatar_url: string | null
           balance: number | null
           created_at: string | null
@@ -1675,6 +1998,8 @@ export type Database = {
           preferred_payment_method: string | null
           profile_photo_url: string | null
           push_token: string | null
+          push_token_debug: string | null
+          push_token_debug_at: string | null
           rating: number | null
           referral_code: string | null
           referred_by: string | null
@@ -1685,6 +2010,7 @@ export type Database = {
           vehicle_photo_url: string | null
         }
         Insert: {
+          account_status?: string
           avatar_url?: string | null
           balance?: number | null
           created_at?: string | null
@@ -1708,6 +2034,8 @@ export type Database = {
           preferred_payment_method?: string | null
           profile_photo_url?: string | null
           push_token?: string | null
+          push_token_debug?: string | null
+          push_token_debug_at?: string | null
           rating?: number | null
           referral_code?: string | null
           referred_by?: string | null
@@ -1718,6 +2046,7 @@ export type Database = {
           vehicle_photo_url?: string | null
         }
         Update: {
+          account_status?: string
           avatar_url?: string | null
           balance?: number | null
           created_at?: string | null
@@ -1741,6 +2070,8 @@ export type Database = {
           preferred_payment_method?: string | null
           profile_photo_url?: string | null
           push_token?: string | null
+          push_token_debug?: string | null
+          push_token_debug_at?: string | null
           rating?: number | null
           referral_code?: string | null
           referred_by?: string | null
@@ -3211,6 +3542,10 @@ export type Database = {
         Args: { p_vehicle_id: string }
         Returns: boolean
       }
+      admin_assign_staff_role: {
+        Args: { p_employee_id: string; p_role: string }
+        Returns: undefined
+      }
       admin_complete_vehicle_checklist: {
         Args: { p_vehicle_id: string }
         Returns: boolean
@@ -3218,6 +3553,14 @@ export type Database = {
       admin_credit_balance: {
         Args: { p_amount: number; p_note: string; p_user_id: string }
         Returns: number
+      }
+      admin_debit_balance: {
+        Args: { p_amount: number; p_note: string; p_user_id: string }
+        Returns: number
+      }
+      admin_revoke_staff_role: {
+        Args: { p_employee_id: string; p_role: string }
+        Returns: undefined
       }
       anonymize_account: { Args: { p_uid: string }; Returns: undefined }
       approve_document_admin: {
@@ -3254,6 +3597,7 @@ export type Database = {
       }
       claim_driver_file: { Args: { p_driver_id: string }; Returns: boolean }
       cleanup_old_trip_messages: { Args: never; Returns: undefined }
+      clear_frontend_errors: { Args: never; Returns: undefined }
       close_expired_routes: { Args: never; Returns: number }
       complete_booking_internal: {
         Args: { p_booking_id: string }
@@ -3262,6 +3606,35 @@ export type Database = {
       complete_trip: {
         Args: { v_request_id: string; v_trip_notes?: string }
         Returns: undefined
+      }
+      create_finance_account: {
+        Args: { p_name: string; p_type: string }
+        Returns: string
+      }
+      create_finance_category: {
+        Args: { p_kind: string; p_name: string }
+        Returns: string
+      }
+      create_finance_movement: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_category_id: string
+          p_description: string
+          p_kind: string
+          p_movement_date: string
+        }
+        Returns: string
+      }
+      create_finance_recurring_template: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_category_id: string
+          p_description: string
+          p_kind: string
+        }
+        Returns: string
       }
       create_negotiation_payment: {
         Args: { v_amount?: number; v_offer_id: string }
@@ -3278,6 +3651,14 @@ export type Database = {
       }
       delete_conversation_messages: {
         Args: { other_user_id: string; user_id: string }
+        Returns: undefined
+      }
+      delete_finance_movement: {
+        Args: { p_movement_id: string }
+        Returns: undefined
+      }
+      delete_finance_recurring_template: {
+        Args: { p_template_id: string }
         Returns: undefined
       }
       driver_cancel_booking: {
@@ -3363,7 +3744,89 @@ export type Database = {
           oldest_pending_at: string
         }[]
       }
+      get_finance_accounts: {
+        Args: never
+        Returns: {
+          balance: number
+          created_at: string
+          id: string
+          name: string
+          type: string
+        }[]
+      }
+      get_finance_categories: {
+        Args: never
+        Returns: {
+          id: string
+          is_system: boolean
+          kind: string
+          name: string
+        }[]
+      }
+      get_finance_movements: {
+        Args: {
+          p_account_id?: string
+          p_category_id?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_kind?: string
+          p_limit?: number
+          p_offset?: number
+        }
+        Returns: {
+          account_id: string
+          account_name: string
+          amount: number
+          category_id: string
+          category_name: string
+          created_at: string
+          created_by_name: string
+          description: string
+          id: string
+          kind: string
+          movement_date: string
+        }[]
+      }
+      get_finance_recurring_templates: {
+        Args: never
+        Returns: {
+          account_id: string
+          account_name: string
+          amount: number
+          category_id: string
+          category_name: string
+          description: string
+          id: string
+          kind: string
+        }[]
+      }
+      get_finance_summary: {
+        Args: { p_date_from?: string; p_date_to?: string }
+        Returns: Json
+      }
+      get_frontend_errors: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          id: string
+          message: string
+          page_url: string
+          stack: string
+          user_agent: string
+          user_name: string
+        }[]
+      }
+      get_launch_notify_subscribers: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          notified_at: string
+        }[]
+      }
       get_my_phone: { Args: never; Returns: string }
+      get_open_tickets_count: { Args: never; Returns: number }
       get_pending_documents_for_admin: {
         Args: never
         Returns: {
@@ -3404,8 +3867,9 @@ export type Database = {
           verified_at: string
         }[]
       }
+      get_reconciliation_status: { Args: never; Returns: Json }
       get_resolved_disputes: {
-        Args: never
+        Args: { p_limit?: number; p_offset?: number }
         Returns: {
           booking_id: string
           departure_time: string
@@ -3426,8 +3890,28 @@ export type Database = {
           phone: string
         }[]
       }
+      get_staff_alerts: {
+        Args: never
+        Returns: {
+          item_count: number
+          kind: string
+          link: string
+          message: string
+          sample: string
+        }[]
+      }
+      get_staff_employees: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          roles: string[]
+        }[]
+      }
       get_support_tickets: {
-        Args: { p_status?: string }
+        Args: { p_limit?: number; p_offset?: number; p_status?: string }
         Returns: {
           category: string
           created_at: string
@@ -3442,6 +3926,42 @@ export type Database = {
           user_name: string
         }[]
       }
+      get_wallet_ledger: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_limit?: number
+          p_offset?: number
+          p_query?: string
+          p_status?: string
+          p_type?: string
+        }
+        Returns: {
+          amount: number
+          created_at: string
+          id: string
+          note: string
+          route_destination: string
+          route_origin: string
+          status: string
+          type: string
+          user_email: string
+          user_name: string
+        }[]
+      }
+      get_wallet_ledger_totals: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_query?: string
+          p_status?: string
+          p_type?: string
+        }
+        Returns: {
+          total_amount: number
+          total_count: number
+        }[]
+      }
       has_accepted_trip_between: {
         Args: { p_a: string; p_b: string }
         Returns: boolean
@@ -3454,6 +3974,15 @@ export type Database = {
       is_admin_user: { Args: never; Returns: boolean }
       is_membership_active: { Args: { user_id: string }; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
+      log_frontend_error: {
+        Args: {
+          p_message: string
+          p_page_url?: string
+          p_stack?: string
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
       mark_chat_thread_read: {
         Args: { p_driver_id: string; p_request_id: string }
         Returns: number
@@ -3645,6 +4174,16 @@ export type Database = {
           role: string
         }[]
       }
+      search_users_for_moderation: {
+        Args: { p_query: string }
+        Returns: {
+          account_status: string
+          email: string
+          id: string
+          name: string
+          role: string
+        }[]
+      }
       send_chat_message: {
         Args: {
           p_driver_id: string
@@ -3677,6 +4216,17 @@ export type Database = {
         Returns: undefined
       }
       update_completed_bookings: { Args: never; Returns: undefined }
+      update_finance_movement: {
+        Args: {
+          p_account_id: string
+          p_amount: number
+          p_category_id: string
+          p_description: string
+          p_movement_date: string
+          p_movement_id: string
+        }
+        Returns: undefined
+      }
       update_support_ticket: {
         Args: { p_response?: string; p_status: string; p_ticket_id: string }
         Returns: undefined
@@ -3813,9 +4363,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

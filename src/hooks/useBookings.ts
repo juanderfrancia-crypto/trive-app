@@ -117,10 +117,12 @@ export const useBookings = () => {
       setLoading(true);
 
       for (const bookingId of bookingIds) {
-        const { error: releaseError } = await supabase.rpc('cancel_booking', {
-          p_booking_id: bookingId,
-          p_reason: 'Reserva liberada por el pasajero',
-        });
+        const { error: releaseError } = await withTimeout(
+          Promise.resolve(supabase.rpc('cancel_booking', {
+            p_booking_id: bookingId,
+            p_reason: 'Reserva liberada por el pasajero',
+          }))
+        );
         if (releaseError) throw releaseError;
       }
 
@@ -139,12 +141,16 @@ export const useBookings = () => {
       setError(null);
       setLoading(true);
 
-      const { data, error: fetchError } = await supabase
-        .from("bookings")
-        .select(`*, routes:route_id(*)`)
-        .eq("passenger_id", passengerId)
-        .not("booking_status", "eq", "pending")
-        .order("created_at", { ascending: false });
+      const { data, error: fetchError } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from("bookings")
+            .select(`*, routes:route_id(*)`)
+            .eq("passenger_id", passengerId)
+            .not("booking_status", "eq", "pending")
+            .order("created_at", { ascending: false })
+        )
+      );
 
       if (fetchError) throw fetchError;
       return data;
@@ -163,9 +169,9 @@ export const useBookings = () => {
       setError(null);
       setLoading(true);
 
-      const { data, error: fetchError } = await supabase.rpc('route_occupied_seats', {
-        p_route_id: routeId,
-      });
+      const { data, error: fetchError } = await withTimeout(
+        Promise.resolve(supabase.rpc('route_occupied_seats', { p_route_id: routeId }))
+      );
 
       if (fetchError) throw fetchError;
       return ((data as number[]) || []).map((seat_number) => ({ seat_number }));
@@ -183,9 +189,9 @@ export const useBookings = () => {
       setError(null);
       setLoading(true);
 
-      const { error: cancelError } = await supabase.rpc('cancel_booking', {
-        p_booking_id: bookingId,
-      });
+      const { error: cancelError } = await withTimeout(
+        Promise.resolve(supabase.rpc('cancel_booking', { p_booking_id: bookingId }))
+      );
 
       if (cancelError) throw cancelError;
 

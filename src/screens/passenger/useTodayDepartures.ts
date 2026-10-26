@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../../services/supabase'
+import { withTimeout } from '../../utils/withTimeout'
 import type { AvailableRide } from '../../hooks/useAvailableRides'
 
 const SALIDAS_MOSTRADAS = 2
@@ -52,8 +53,17 @@ export const useTodayDepartures = (municipality: string | null, excludedRouteIds
       consulta = consulta.not('id', 'in', `(${excludedRouteIds.join(',')})`)
     }
 
-    const { data, error } = await consulta
-    if (error) {
+    let data: AvailableRide[] | null = null
+    try {
+      const queryResult = await withTimeout(Promise.resolve(consulta))
+      if (queryResult.error) {
+        setRides([])
+        setHasMore(false)
+        return
+      }
+      data = queryResult.data as AvailableRide[] | null
+    } catch {
+      // Tardó demasiado (red inestable): dejar la lista como estaba antes, sin romper la pantalla.
       setRides([])
       setHasMore(false)
       return
