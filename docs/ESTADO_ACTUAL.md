@@ -5,6 +5,18 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -12. Segundo bug real de monitoreo (plugins de Firebase sin declarar) + Remote Config como seguro de emergencia (2026-10-27)
+
+Al revisar qué más de Firebase convenía activar (Release Monitoring, Remote Config), se encontró y corrigió otro hueco real, de la misma familia que el de Sentry (sección "-11"):
+
+**Bug encontrado:** `app.json` nunca tenía `@react-native-firebase/app` ni `@react-native-firebase/crashlytics` en el arreglo `plugins`. Sin esos plugins de Expo, el build nunca aplica el plugin de Gradle de Crashlytics que sube el archivo de mapeo (ProGuard/R8) — Crashlytics sí recibía los errores (la llamada `recordError()` funciona por autolinking normal), pero probablemente los mostraba sin poder traducir el stack trace al código real, igual que pasaba con Sentry. Corregido: se agregaron `"@react-native-firebase/app"` y `"@react-native-firebase/crashlytics"` al `plugins` de `app.json`. Confirmado que el proyecto no tiene carpeta `android/` local (gestionado por EAS), así que el cambio se aplica limpio en el próximo build sin chocar con nada editado a mano.
+
+**Release Monitoring:** no necesita código — se alimenta de los datos de Crashlytics que ya están llegando (y ahora con el mapeo corregido, van a ser legibles). Se activa directo desde la consola de Firebase, sin cambios en el repo.
+
+**Remote Config conectado como seguro de emergencia:** `@react-native-firebase/remote-config` instalado. Nuevo `src/services/remoteConfig.ts` (init con valores por defecto, fetch+activate) y `src/components/MaintenanceScreen.tsx` (mismo patrón visual que `ErrorBoundary`). `App.tsx` revisa el valor `maintenance_mode` una vez al abrir la app — si está activado desde la consola de Firebase, muestra una pantalla de mantenimiento en vez de la app normal, **sin necesitar una versión nueva en Play Store** (que puede tardar horas/días en revisión). Deliberadamente se agregó solo esta bandera (no banderas especulativas sin un uso real todavía) — es el interruptor de emergencia que se usaría si algo sale mal justo después de publicar el build grande que ya está pendiente.
+
+Verificado con `npx tsc --noEmit` sin errores. **Requiere build nuevo** (plugins nativos nuevos) — se incluye en el mismo build pendiente.
+
 ## -11. Sentry no estaba reportando nada (bug real) + Firebase Performance Monitoring agregado (2026-10-27)
 
 A pedido del dueño, revisión de cobertura de monitoreo (Sentry + Crashlytics, y qué más ofrece Firebase gratis).

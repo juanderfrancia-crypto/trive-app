@@ -1,4 +1,5 @@
 import "react-native-gesture-handler";
+import { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
@@ -7,8 +8,10 @@ import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
 import ErrorBoundary from "./src/components/ErrorBoundary";
+import MaintenanceScreen from "./src/components/MaintenanceScreen";
 import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
+import { initRemoteConfig, isMaintenanceMode, getMaintenanceMessage } from "./src/services/remoteConfig";
 import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
 
 let _crashlytics: any = null
@@ -41,7 +44,27 @@ function App() {
     Manrope_800ExtraBold,
   });
 
+  // Seguro de emergencia: si algo sale mal justo después de publicar, se puede
+  // activar desde Firebase Remote Config sin esperar una revisión nueva de
+  // Play Store. Se revisa una vez al abrir la app, no en vivo durante la sesión.
+  const [maintenance, setMaintenance] = useState<{ on: boolean; message: string }>({ on: false, message: "" });
+
+  useEffect(() => {
+    initRemoteConfig().then(() => {
+      setMaintenance({ on: isMaintenanceMode(), message: getMaintenanceMessage() });
+    });
+  }, []);
+
   if (!fontsLoaded) return null;
+
+  if (maintenance.on) {
+    return (
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <MaintenanceScreen message={maintenance.message} />
+      </SafeAreaProvider>
+    );
+  }
 
   return (
     <SafeAreaProvider>
