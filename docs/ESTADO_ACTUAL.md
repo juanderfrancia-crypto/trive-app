@@ -13,12 +13,19 @@ Documentado a pedido del dueño como lo siguiente a hacer, no como tarea en curs
 
 **Por qué no se ejecuta directo en producción:** hoy desarrollo, pruebas y la prueba cerrada real corren sobre el **mismo** proyecto de Supabase (`iksenkkaxlmdiyeezoym`), en plan Free, con los topes duros ya documentados (500K invocaciones Edge Functions/mes, 5GB egress, etc. — ver sección "-7"). Una prueba de carga real contra ese proyecto arriesga tumbarle el servicio a los testers reales que ya están usando la app — justo lo que se quiere evitar.
 
+**Cálculo de la proporción (de abajo hacia arriba, no es un benchmark externo — no existe uno publicado para carpooling tipo BlaBlaCar; el de ride-hailing tipo Uber no aplica, mecánica distinta: ahí el conductor espera despacho, acá un carro con 4 puestos hace varias vueltas al día con pasajeros distintos cada vez):**
+- Escenario 100 conductores × 8 viajes/día × 4 puestos = 3.200 asientos ocupados/día.
+- La mayoría son viajeros habituales (ida y vuelta diaria al trabajo) con ~1.5-2 trayectos/día en promedio → 3.200 ÷ ~1.6 ≈ **~2.000 pasajeros activos/día**.
+- Esto coincide casi exacto con la referencia del dueño (100 conductores → ~2.000 pasajeros), y valida estructuralmente por qué la proporción es así de alta en este modelo específico.
+- **Ratio de trabajo para la prueba de carga: ~16-20 pasajeros activos por cada conductor activo.**
+- El tráfico real no es parejo — se concentra en picos: salida de la mañana (~4am-8am) y regreso tarde/noche. La prueba debe simular ráfagas en esas franjas, no carga uniforme todo el día.
+
 **Plan acordado con el dueño:**
-1. Clonar las migraciones a un **segundo proyecto de Supabase** (gratis, aislado de producción) como espejo para pruebas.
-2. Simular carga con una proporción realista pasajero:conductor (~20:1, ajustable), no solo volumen de conductores publicando rutas — incluye búsqueda de rutas, "salidas de hoy", conexiones Realtime simultáneas, y picos de reserva del último cupo con varios pasajeros a la vez (la prueba de concurrencia que ya se auditó por código, ahora bajo carga real).
+1. Clonar las migraciones a un **segundo proyecto de Supabase** (gratis, aislado de producción) como espejo para pruebas — **ambiente de pruebas separado, nunca mezclado con producción** (decisión explícita del dueño, 2026-10-26).
+2. Simular carga con la proporción ~16-20:1 pasajero:conductor calculada arriba, concentrada en los picos horarios (mañana y tarde/noche) — no solo volumen de conductores publicando rutas. Incluye búsqueda de rutas, "salidas de hoy", conexiones Realtime simultáneas, y picos de reserva del último cupo con varios pasajeros a la vez (la concurrencia que ya se auditó por código, ahora bajo carga real).
 3. No requiere un servicio externo de pago (tipo k6 Cloud/Loader.io) — se puede escribir el script de carga directamente (Node, llamadas concurrentes contra las mismas funciones RPC reales) dado el volumen que se maneja.
 
-**Pendiente:** armar el proyecto espejo y el script de carga. No ejecutar nada contra producción sin aprobación explícita del dueño.
+**Pendiente:** armar el proyecto espejo y el script de carga. Todavía NO se va a ejecutar — el dueño quiere esto documentado primero, antes de dar la orden de avanzar. No ejecutar nada contra producción bajo ninguna circunstancia.
 
 ## -8. Auditoría de resiliencia/concurrencia/caché/rendimiento — timeouts corregidos (2026-10-26)
 
