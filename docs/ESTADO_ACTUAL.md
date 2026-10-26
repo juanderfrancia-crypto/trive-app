@@ -5,6 +5,21 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -9. Prueba de carga — PRÓXIMO PASO, no ejecutado todavía (2026-10-26)
+
+Documentado a pedido del dueño como lo siguiente a hacer, no como tarea en curso.
+
+**Dato de negocio clave (del dueño, 2026-10-26):** los pasajeros siempre multiplican a los conductores por un factor grande — su estimado de referencia es que **100 conductores activos pueden corresponder a ~2.000 pasajeros activos** (orden de magnitud ~20:1, no una cifra exacta, "son ejemplos para entender el mensaje"). Esto importa porque hasta ahora el análisis de capacidad (ver sección "-7") se enfocó en el lado de los conductores (publicar rutas, notificaciones en lote). El volumen real de **lectura** (pasajeros buscando rutas, viendo "salidas de hoy", conexiones de Realtime esperando cambios de cupos) va a ser mucho mayor que el de escritura de los conductores, y no se ha probado a esa escala.
+
+**Por qué no se ejecuta directo en producción:** hoy desarrollo, pruebas y la prueba cerrada real corren sobre el **mismo** proyecto de Supabase (`iksenkkaxlmdiyeezoym`), en plan Free, con los topes duros ya documentados (500K invocaciones Edge Functions/mes, 5GB egress, etc. — ver sección "-7"). Una prueba de carga real contra ese proyecto arriesga tumbarle el servicio a los testers reales que ya están usando la app — justo lo que se quiere evitar.
+
+**Plan acordado con el dueño:**
+1. Clonar las migraciones a un **segundo proyecto de Supabase** (gratis, aislado de producción) como espejo para pruebas.
+2. Simular carga con una proporción realista pasajero:conductor (~20:1, ajustable), no solo volumen de conductores publicando rutas — incluye búsqueda de rutas, "salidas de hoy", conexiones Realtime simultáneas, y picos de reserva del último cupo con varios pasajeros a la vez (la prueba de concurrencia que ya se auditó por código, ahora bajo carga real).
+3. No requiere un servicio externo de pago (tipo k6 Cloud/Loader.io) — se puede escribir el script de carga directamente (Node, llamadas concurrentes contra las mismas funciones RPC reales) dado el volumen que se maneja.
+
+**Pendiente:** armar el proyecto espejo y el script de carga. No ejecutar nada contra producción sin aprobación explícita del dueño.
+
 ## -8. Auditoría de resiliencia/concurrencia/caché/rendimiento — timeouts corregidos (2026-10-26)
 
 A pedido del dueño, auditoría completa de 4 áreas pensando en red rural inestable (3G/Edge, Cauca) y dispositivos de gama baja, a 10 días de salir a producción.
