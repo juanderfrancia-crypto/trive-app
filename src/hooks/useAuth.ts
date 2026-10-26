@@ -1,6 +1,7 @@
 import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
 import { useState, useEffect, useRef } from "react";
 import { Alert, AppState, AppStateStatus } from "react-native";
+import * as Sentry from "@sentry/react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore, AppUser } from "../store/useAppStore";
@@ -116,6 +117,7 @@ export const useAuth = () => {
       await registerUserSession(currentSession.user.id);
       setUserId(currentSession.user.id);
       try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
+      try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
 
       subscribeToProfile(currentSession.user.id)
 
@@ -423,6 +425,7 @@ export const useAuth = () => {
       await clearLocalSessionKey();
       setUserId(null);
       try { if (_crashlytics) _crashlytics().setUserId('') } catch {}
+      try { Sentry.setUser(null) } catch {}
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       

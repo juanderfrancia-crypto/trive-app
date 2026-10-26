@@ -4,6 +4,7 @@
  */
 
 import Toast from 'react-native-toast-message';
+import * as Sentry from '@sentry/react-native';
 import { supabase } from './supabase';
 
 let _crashlytics: any = null
@@ -78,17 +79,18 @@ class ErrorHandler {
       }
     }
 
-    // Reportar errores críticos a Crashlytics
+    // Reportar errores críticos a Crashlytics y Sentry
     if (severity === ErrorSeverity.CRITICAL || severity === ErrorSeverity.HIGH) {
       this.reportError(errorLog);
+      const errorObj = typeof error === 'string' ? new Error(error) : error;
       try {
         if (_crashlytics) {
-          _crashlytics().recordError(
-            typeof error === 'string' ? new Error(error) : error,
-            `[${type}] ${errorMessage}`
-          )
+          _crashlytics().recordError(errorObj, `[${type}] ${errorMessage}`)
           if (context) _crashlytics().log(JSON.stringify(context))
         }
+      } catch {}
+      try {
+        Sentry.captureException(errorObj, { tags: { errorType: type, severity }, extra: context })
       } catch {}
     }
 

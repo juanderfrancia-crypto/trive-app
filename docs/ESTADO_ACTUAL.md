@@ -1,9 +1,25 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-26.
+Última actualización: 2026-10-27.
 
 ---
+
+## -11. Sentry no estaba reportando nada (bug real) + Firebase Performance Monitoring agregado (2026-10-27)
+
+A pedido del dueño, revisión de cobertura de monitoreo (Sentry + Crashlytics, y qué más ofrece Firebase gratis).
+
+**Bug real encontrado:** `src/services/sentry.ts` tenía un DSN real configurado dentro de `initSentry()`, pero **esa función nunca se llamaba en ningún lado**. `App.tsx` solo hacía `Sentry.wrap(App)` (captura errores de React), pero sin `Sentry.init()` corrido antes, el SDK no tiene dónde mandar nada — Sentry llevaba todo este tiempo sin reportar un solo error a producción, pese a parecer configurado. Crashlytics sí funcionaba de verdad (activado solo en producción, conectado al manejador de errores central).
+
+**Corregido:**
+- `App.tsx`: ahora llama `initSentry()` como lo primero que corre, antes de `Sentry.wrap`.
+- `src/services/errorHandler.ts`: los errores HIGH/CRITICAL ahora se mandan también a Sentry (`Sentry.captureException`, con el tipo/severidad/contexto como tags), igual que ya se mandaban a Crashlytics — antes Sentry solo recibía errores de render de React (`ErrorBoundary`), se perdía todo lo que pasa por el manejador central (red, pagos, validación).
+- `src/hooks/useAuth.ts`: `Sentry.setUser()` al loguearse/desloguearse, igual que ya hacía Crashlytics — para poder ver a qué usuario le pasó cada error.
+- `tracesSampleRate` de Sentry se deja en 0 (solo errores, sin tracing de performance) a propósito, porque esa función la cubre ahora Firebase Performance Monitoring sin duplicar cuota de ninguno de los dos servicios gratuitos.
+
+**Agregado — Firebase Performance Monitoring:** paquete `@react-native-firebase/perf` instalado, `src/services/performance.ts` nuevo (mismo patrón que Crashlytics: activado solo en producción). Es automático — sin código adicional, mide tiempo de arranque de la app y peticiones de red reales en el teléfono de cada usuario. Da datos de verdad sobre qué tan seguido se activan los timeouts de red rural que se agregaron el 26 de octubre (antes solo había la corrección, sin forma de medir el problema real).
+
+Verificado con `npx tsc --noEmit` sin errores. **Requiere build nuevo** (paquete nativo nuevo, no aplica con hot reload) — se incluye en el mismo build pendiente que ya tiene el fix de sesión, el diagnóstico de push y los timeouts.
 
 ## -10. "Algoritmos" para Trive — ranking de relevancia agregado, el resto evaluado (2026-10-26)
 
