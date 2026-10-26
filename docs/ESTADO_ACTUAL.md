@@ -5,9 +5,9 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
-## -7. Capacidad técnica vs. demanda real de Puerto Tejada — pendiente, no ejecutado (2026-10-26)
+## -7. Capacidad técnica vs. demanda real de Puerto Tejada — notificaciones en lote YA CORREGIDO (2026-10-26)
 
-No es un bug ni un cambio de código — es un análisis de capacidad hecho a pedido del dueño, con hallazgos que quedan como trabajo técnico pendiente antes de abrir más allá de la prueba cerrada.
+Empezó como análisis de capacidad a pedido del dueño; el hallazgo principal (riesgo de agotar el tope gratuito de Supabase por el patrón de notificaciones) ya se corrigió el mismo día, dado que faltan 10 días para salir al público general.
 
 **Contexto real (dato del dueño, no supuesto):** Puerto Tejada↔Cali ya tiene una operación de transporte informal ("pirata") diaria, de tiempo completo — Trive digitaliza una demanda que ya existe, no una que hay que crear desde cero. El transporte informal no compite con el bus intermunicipal tradicional, lo complementa: cubre las conexiones que el bus no hace (universidades, Jardín Plaza, Unicentro, Cañasgordas), que es donde la gente necesita conectar con el MIO dentro de Cali — relevante también para destinos frecuentes predefinidos en la app, no solo para capacidad.
 
@@ -26,11 +26,19 @@ No es un bug ni un cambio de código — es un análisis de capacidad hecho a pe
 - **El riesgo real es el patrón de notificaciones**: `notify_passengers_new_route` (el trigger de "nueva ruta publicada") inserta una notificación —y por lo tanto dispara una invocación de la función `send-push`— **por cada pasajero cuyo municipio coincide, una por una, no en lote**. Si cada uno de los 8 viajes/día por conductor se publica como ruta nueva (como está pensado el flujo hoy), eso da **400-800 publicaciones de ruta al día** (50-100 conductores × 8). Si solo 200-500 pasajeros reales tienen Puerto Tejada configurado como municipio, son **80.000 a 400.000 invocaciones... en un solo día**. El tope gratuito de Supabase es 500.000 **al mes** — con el escenario conservador, se agotaría en menos de una semana real de operación.
 - El plan Free no tiene cobro por exceso: si se choca contra cualquier tope, el proyecto empieza a fallar (escrituras/funciones bloqueadas), no cobra de más.
 
-**Pendiente, en orden de prioridad (ya no es "a futuro si crece", es antes de abrir más allá de la prueba cerrada):**
-1. **Agrupar/enviar en lote la función `send-push`** en vez de una invocación por pasajero por cada ruta publicada — esto es lo que más baja el riesgo real de agotar el tope gratuito.
-2. **Subir a Supabase Pro (~USD 25/mes)** antes de abrir más allá de la prueba cerrada.
+**Corregido (2026-10-26), con confirmación explícita del dueño:**
+1. **Notificaciones en lote** — migración `20261026100000_batch_push_notifications.sql`:
+   - `notify_passengers_new_route()` pasó de un loop llamando `notify_user()` por cada pasajero (N inserts separados) a **un solo `INSERT ... SELECT` múltiple**.
+   - El trigger `"push-notificaciones"` sobre `notifications` pasó de `FOR EACH ROW` a **`FOR EACH STATEMENT` con tabla de transición** (`REFERENCING NEW TABLE AS new_table`) — dispara una sola vez por sentencia, agrupando todas las filas nuevas de esa sentencia, sea 1 (confirmaciones normales) o muchas (publicación de ruta).
+   - `send-push` (Edge Function) actualizado para aceptar un lote (`records: [...]`) en vez de una sola fila, busca los `push_token` de todos los destinatarios en una sola consulta, y manda a Expo en grupos de hasta 100 (el límite real de su API), con compatibilidad hacia atrás para el formato de una sola fila.
+   - **Verificado en producción con datos de prueba** (3 cuentas de prueba del dueño, no testers reales): una sola inserción múltiple → una sola llamada a `send-push` (confirmado contra `net._http_response`, no tres llamadas separadas) → `{"ok":true,"enviados":2,"total":2}` tras limpiar un error no relacionado (ver abajo). Filas de prueba borradas después.
+   - **Hallazgo aparte durante la prueba, no un bug del cambio**: Expo rechaza un lote si mezcla tokens de proyectos Expo distintos (`PUSH_TOO_MANY_EXPERIENCE_IDS`). Dos cuentas de prueba viejas tenían tokens del slug de Expo anterior al cambio de paquete (`@traive/trive-app`, antes de `com.trivesoft.app`) — no afecta a usuarios reales, todos quedan registrados bajo el proyecto actual (`@triveapp/trive-app`). Esas dos cuentas de prueba tienen un token que nunca va a funcionar (son de un proyecto que ya no existe); no se tocaron, son cuentas de desarrollo, no de producción real.
+   - Al redesplegar la función hubo que agregar `--no-verify-jwt` (se había perdido ese flag en el primer deploy de este cambio) — sin eso, la puerta de entrada de Supabase rechazaba la llamada del webhook con 401 antes de que la función la recibiera. Ya quedó desplegada correctamente.
 
-**Cómo aplicar:** no ejecutar nada de esto sin confirmación explícita del dueño — queda documentado como trabajo pendiente, no como tarea en curso.
+**Pendiente, confirmado por el dueño que se paga al salir a producción real (no antes):**
+2. **Subir a Supabase Pro (~USD 25/mes)** — el dueño confirmó que la cuenta está en Free solo mientras dura la prueba cerrada, y se actualiza a Pro al salir al público general. No requiere acción de código, es un paso de facturación que hace el dueño directamente en el dashboard.
+
+**Cómo aplicar:** el punto 1 ya está en producción. El punto 2 es una acción de facturación pendiente del dueño, no de código — no asumir que ya se hizo sin confirmarlo.
 
 ## -6. Sesión se cerraba sola de vez en cuando — causa identificada y corregida (2026-10-26)
 
