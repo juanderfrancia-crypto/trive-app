@@ -1,9 +1,21 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-24.
+Última actualización: 2026-10-26.
 
 ---
+
+## -6. Sesión se cerraba sola de vez en cuando — causa identificada y corregida (2026-10-26)
+
+Una usuaria reportó que la app a veces la mandaba al login sin haber cerrado sesión — cada vez que pasa, gasta un OTP nuevo de Twilio sin necesidad.
+
+**Causa identificada:** `SecureStoreAdapter` en `src/services/supabase.ts` parte la sesión en varios "trozos" (SecureStore limita cada valor a 2048 bytes) y los escribía uno por uno, **sobrescribiendo en el mismo lugar cada vez**, sin ninguna protección si la escritura se interrumpe a mitad de camino. Eso pasa de forma predecible: `autoRefreshToken` renueva el token en segundo plano cada cierto tiempo sin que el usuario haga nada, y si Android mata la app justo en ese momento (común bajo presión de memoria), el trozo que se alcanzó a escribir queda mezclado con trozos viejos de la escritura anterior — una sesión corrupta. La próxima vez que la app intenta usarla, Supabase la rechaza como "Refresh Token" inválido, y `useAuth.ts:149-155` ya tenía código que ante ese error específico hace `signOut()` **en silencio** (sin alertar al usuario) — encaja exactamente con el síntoma reportado.
+
+**Corregido:** esquema A/B (doble espacio). Cada escritura nueva va completa a un espacio aparte (el que no está activo en ese momento), y solo al final se cambia un único valor (`__active`) que dice cuál espacio usar. Si la app se cierra a mitad de la escritura, el espacio activo anterior — completo y válido — nunca se toca, así que la sesión sigue funcionando normal. Se mantiene compatibilidad hacia atrás: si un dispositivo todavía tiene una sesión guardada con el formato viejo (sin `__active`), se sigue leyendo igual, sin forzar un logout por este mismo cambio.
+
+**Confianza del diagnóstico:** alta, pero no confirmada con telemetría en vivo (no se puede reproducir sin tener el bug en curso en un teléfono real). Es la causa estructural más plausible encontrada en el código, no una suposición al aire — si después del próximo build el problema sigue, hay que revisar otras causas (ej. configuración de rotación de refresh token en el dashboard de Supabase, o reinicios del Keystore de Android).
+
+**Pendiente:** build de producción nuevo con este fix (no lanzado todavía).
 
 ## -5. Notificaciones push nunca llegan — diagnóstico confirmado, falta el build para ver la causa exacta (2026-10-23/24)
 
