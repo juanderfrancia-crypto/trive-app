@@ -5,6 +5,18 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -13. Build de producción bloqueado por cuota gratuita de EAS — se espera al 1 de noviembre (2026-10-27)
+
+Se intentó lanzar el build de producción (`.aab`) con todos los fixes de esta sesión (splash, sesión, push, timeouts, Sentry/Crashlytics, Remote Config, ranking, detección de fraude). **Falló, pero no por código**: `"This account has used its Android builds from the Free plan this month, which will reset in 5 days (on Sun Nov 01 2026)"` — se agotó la cuota mensual de builds de Android del plan gratuito de EAS.
+
+**Se evaluaron alternativas y se descartaron, por decisión explícita del dueño:**
+- Proyecto nuevo en la misma cuenta de EAS: no sirve, el tope es por cuenta, no por proyecto (confirmado por el texto exacto del error).
+- Cuenta de Expo nueva: técnicamente tendría cuota propia, pero se descartó por dos riesgos reales — probable violación de los términos de uso de Expo (crear cuentas para esquivar límites), y sobre todo el riesgo de perder la llave de firma del AAB (`Keystore ... LQrhDXLmsR`, administrada por EAS) — Play Store exige la misma llave para siempre en las actualizaciones; migrarla mal podría dejar la app sin poder actualizarse nunca más. No vale la pena el riesgo por ahorrar unos días.
+
+**Decisión:** esperar al 1 de noviembre de 2026 (reinicio de cuota), sin pagar el plan Starter de EAS por ahora (no hay forma de pagar en este momento). No representa una pérdida real de tiempo: la prueba cerrada de Google Play tampoco termina hasta el 3-4 de noviembre, así que el build igual puede lanzarse antes de necesitar pasar a producción pública.
+
+**Pendiente:** relanzar el build de producción el 1 de noviembre o después. `app.json` quedó con `versionCode: 4` (el intento fallido sí alcanzó a incrementarlo localmente antes de fallar la subida — no es un problema, el próximo build simplemente usa ese número o el siguiente).
+
 ## -12. Segundo bug real de monitoreo (plugins de Firebase sin declarar) + Remote Config como seguro de emergencia (2026-10-27)
 
 Al revisar qué más de Firebase convenía activar (Release Monitoring, Remote Config), se encontró y corrigió otro hueco real, de la misma familia que el de Sentry (sección "-11"):
