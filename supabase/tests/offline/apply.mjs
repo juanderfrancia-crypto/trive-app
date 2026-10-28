@@ -11,6 +11,13 @@ const FASE2 = readdirSync(MIGRATIONS)
 
 export async function buildDb() {
   const db = new PGlite()
+  // Fija la zona horaria de la sesión a UTC (igual que Supabase en producción), sin depender
+  // de la del sistema operativo donde corre la prueba. Sin esto, un UPDATE/INSERT que mezcle
+  // now() (timestamptz) con una columna "timestamp" sin zona (como routes.departure_time) se
+  // interpreta distinto en cada máquina — así se encontró un bug real en los datos de prueba
+  // (tests.mjs usaba now() en vez de now_bogota() al "adelantar" un viaje), que pasaba en una
+  // máquina y fallaba en otra según su zona horaria local.
+  await db.exec(`SET TIME ZONE 'UTC'`)
   await db.exec(readFileSync(join(HERE, 'base.sql'), 'utf8'))
   const failures = []
   for (const file of FASE2) {
