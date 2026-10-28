@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native'
 import { Text } from './AppText'
-import { COLORS, SPACING } from '../theme/theme'
+import { COLORS, SPACING, TYPOGRAPHY } from '../theme/theme'
 import Illustration from './illustrations/Illustration'
 
 // Pantalla de mantenimiento: se activa a distancia desde Firebase Remote Config
@@ -24,14 +24,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   title: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...TYPOGRAPHY.h4,
     color: COLORS.textPrimary,
     marginTop: SPACING.lg,
     marginBottom: SPACING.sm,
   },
   message: {
-    fontSize: 14,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.textSecondary,
     textAlign: 'center',
   },

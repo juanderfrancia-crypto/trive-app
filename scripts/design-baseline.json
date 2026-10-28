@@ -1,18 +1,4 @@
 {
-  "src/screens/ActiveChatsScreen.tsx": {
-    "total": 13,
-    "color": 3,
-    "fontSize": 6,
-    "fontWeight": 4,
-    "iconoIonicons": 0
-  },
-  "src/screens/ActiveTripsScreen.tsx": {
-    "total": 20,
-    "color": 4,
-    "fontSize": 4,
-    "fontWeight": 12,
-    "iconoIonicons": 0
-  },
   "src/screens/AirportHubScreen.tsx": {
     "total": 7,
     "color": 0,
@@ -98,10 +84,10 @@
     "iconoIonicons": 0
   },
   "src/screens/DriverPanelScreen.tsx": {
-    "total": 82,
+    "total": 84,
     "color": 25,
-    "fontSize": 28,
-    "fontWeight": 29,
+    "fontSize": 29,
+    "fontWeight": 30,
     "iconoIonicons": 0
   },
   "src/screens/DriverPaymentMethodsScreen.tsx": {
@@ -139,11 +125,18 @@
     "fontWeight": 1,
     "iconoIonicons": 0
   },
+  "src/screens/passenger/PassengerTripsScreen.tsx": {
+    "total": 2,
+    "color": 0,
+    "fontSize": 1,
+    "fontWeight": 1,
+    "iconoIonicons": 0
+  },
   "src/screens/PassengerHomeScreen.tsx": {
-    "total": 55,
+    "total": 57,
     "color": 3,
-    "fontSize": 28,
-    "fontWeight": 24,
+    "fontSize": 29,
+    "fontWeight": 25,
     "iconoIonicons": 0
   },
   "src/screens/payments/DriverPaymentsScreen.tsx": {
@@ -175,10 +168,10 @@
     "iconoIonicons": 0
   },
   "src/screens/ProfileScreen.tsx": {
-    "total": 52,
+    "total": 56,
     "color": 7,
-    "fontSize": 26,
-    "fontWeight": 19,
+    "fontSize": 29,
+    "fontWeight": 20,
     "iconoIonicons": 0
   },
   "src/screens/RatingAnalyticsDashboard.tsx": {
@@ -223,20 +216,6 @@
     "fontWeight": 7,
     "iconoIonicons": 0
   },
-  "src/screens/ScheduledTripsScreen.tsx": {
-    "total": 47,
-    "color": 26,
-    "fontSize": 1,
-    "fontWeight": 20,
-    "iconoIonicons": 0
-  },
-  "src/screens/SearchScreen.tsx": {
-    "total": 15,
-    "color": 0,
-    "fontSize": 8,
-    "fontWeight": 7,
-    "iconoIonicons": 0
-  },
   "src/screens/SeatSelectionScreen.tsx": {
     "total": 20,
     "color": 0,
@@ -273,10 +252,10 @@
     "iconoIonicons": 0
   },
   "src/screens/TripStatusScreen.tsx": {
-    "total": 46,
-    "color": 24,
+    "total": 50,
+    "color": 27,
     "fontSize": 3,
-    "fontWeight": 19,
+    "fontWeight": 20,
     "iconoIonicons": 0
   },
   "src/screens/VehicleInfoScreen.tsx": {
@@ -384,13 +363,6 @@
     "fontWeight": 0,
     "iconoIonicons": 0
   },
-  "src/components/LoadingIndicator.tsx": {
-    "total": 1,
-    "color": 1,
-    "fontSize": 0,
-    "fontWeight": 0,
-    "iconoIonicons": 0
-  },
   "src/components/MunicipalityPickerModal.tsx": {
     "total": 11,
     "color": 2,
@@ -426,20 +398,6 @@
     "fontWeight": 1,
     "iconoIonicons": 0
   },
-  "src/components/ReputationCard.tsx": {
-    "total": 4,
-    "color": 2,
-    "fontSize": 0,
-    "fontWeight": 2,
-    "iconoIonicons": 0
-  },
-  "src/components/ReviewComments.tsx": {
-    "total": 4,
-    "color": 0,
-    "fontSize": 0,
-    "fontWeight": 4,
-    "iconoIonicons": 0
-  },
   "src/components/Skeleton.tsx": {
     "total": 1,
     "color": 1,
@@ -448,8 +406,8 @@
     "iconoIonicons": 0
   },
   "src/components/toastConfig.tsx": {
-    "total": 4,
-    "color": 1,
+    "total": 3,
+    "color": 0,
     "fontSize": 2,
     "fontWeight": 1,
     "iconoIonicons": 0

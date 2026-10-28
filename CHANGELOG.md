@@ -3,6 +3,8 @@
 Todos los cambios relevantes del proyecto se documentan aquí.  
 Formato: `[YYYY-MM-DD] — Descripción`
 
+> **Nota:** este archivo se dejó de actualizar día a día después de mayo de 2026 (incluye decisiones de infraestructura, como la cuenta de EAS, que después cambiaron otra vez). Para el estado y la historia real desde entonces, usa el historial de commits de git y [`docs/ESTADO_ACTUAL.md`](docs/ESTADO_ACTUAL.md), que es la fuente de verdad vigente.
+
 ---
 
 ## [2026-05-20] — Identidad visual, flujo de viaje completado y calificación desde notificaciones

@@ -163,36 +163,6 @@ Componentes reutilizables para mantener consistencia visual y reducir código du
 
 ---
 
-### 4. **LoadingIndicator** - Spinner animado
-
-**Ubicación**: `src/components/LoadingIndicator.tsx`
-
-**Tamaños**:
-- `sm` (24px)
-- `md` (32px)
-- `lg` (48px)
-
-**Colores**:
-- `primary` (azul)
-- `white` (blanco)
-- `success` (verde)
-- `error` (rojo)
-
-**Ejemplo**:
-
-```tsx
-// Spinner pequeño en primario
-<LoadingIndicator size="sm" />
-
-// Spinner grande en blanco
-<LoadingIndicator size="lg" color="white" />
-
-// Con overlay full screen
-<LoadingOverlay visible={isLoading} label="Procesando..." />
-```
-
----
-
 ### 5. **EmptyState** - Pantalla vacía
 
 **Ubicación**: `src/components/EmptyState.tsx`
@@ -283,7 +253,6 @@ Componentes reutilizables para mantener consistencia visual y reducir código du
 - ✅ TripStatusScreen
 
 **Próximas integraciones**:
-- SearchScreen
 - AvailableRidesScreen
 - WalletScreen
 - SettingsScreen
