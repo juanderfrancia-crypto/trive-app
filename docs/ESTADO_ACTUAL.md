@@ -1,9 +1,23 @@
 # Estado actual de Trive
 
 Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
-Última actualización: 2026-10-27.
+Última actualización: 2026-10-28.
 
 ---
+
+## -14. Punto de recogida personalizado del pasajero (2026-10-28)
+
+El dueño planteó un caso real: el conductor publica "Puerto Tejada → Cali", pero un pasajero vive en Ciudad del Sur, un sector que pertenece al municipio pero está afuera del casco urbano, vía a Cali. Hasta ahora el pasajero podía elegir un punto de **llegada** distinto al destino final (`dropoff_point`, ya existía), pero no un punto de **recogida** distinto al origen — asimetría real que obligaba a coordinar todo por el chat del viaje, con riesgo de malentendidos que incluso podrían disparar mal la detección de fraude por cancelaciones (sección "-anterior", construida el 27-oct).
+
+**Construido, simétrico al punto de llegada existente, con el mismo patrón exacto:**
+- Migración `20261028100000_pickup_point_pasajero.sql`: columnas `pickup_point`/`pickup_point_custom` en `bookings`; `reserve_seats` extendida para aceptar `p_pickup_point`/`p_pickup_custom` al crear la reserva (requirió `DROP FUNCTION` antes del `CREATE OR REPLACE` porque agregar parámetros nuevos no es un "replace" válido en Postgres, crearía una sobrecarga aparte); nueva función `set_booking_pickup` que es un espejo exacto de `set_booking_dropoff` (mismo chequeo de dueño/estado pendiente, sin REVOKE adicional, mismo candado real: `auth.uid()` adentro de la función).
+- `BookingScreen.tsx`: nueva pregunta "¿Dónde te recogemos en {origen}?" justo antes de la de llegada, con las mismas dos opciones (el origen de la ruta, o "Otro punto de recogida" con texto libre), misma validación, y el punto elegido ahora aparece en la pantalla de confirmación junto al de llegada.
+- `DriverPanelScreen.tsx`: cuando un pasajero pidió un punto de recogida distinto al origen, aparece una línea "Recoger en: ..." bajo su nombre en la lista de pasajeros de cada ruta (ícono de bandera, igual que ya se usa para marcar llegada personalizada).
+- `database.types.ts` actualizado a mano con las columnas y funciones nuevas (no se regeneró desde la base real porque la migración todavía no está aplicada en producción — mismo criterio que con `push_token_debug`).
+
+Verificado con `npx tsc --noEmit` (0 errores) y con la suite offline completa (`node supabase/tests/offline/tests.mjs`, 122/122 pasan), que aplica la migración real contra un Postgres embebido — confirma que el `DROP FUNCTION`+recreación de `reserve_seats` no rompe nada de lo que ya dependía de ella (pagos, código de reserva, etc.).
+
+**Pendiente:** el dueño debe aplicar la migración en producción (política del proyecto: las migraciones de esquema las corre él, no se escriben en producción sin su acción). Después de aplicarla, probar de punta a punta con una cuenta real y, si se quiere, regenerar `database.types.ts` desde la base real para reemplazar el parcheo manual.
 
 ## -13. Build de producción bloqueado por cuota gratuita de EAS — se espera al 1 de noviembre (2026-10-27)
 

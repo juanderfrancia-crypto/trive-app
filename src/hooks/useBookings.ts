@@ -19,6 +19,8 @@ export interface Booking {
   notes?: string;
   dropoff_point?: string;
   dropoff_point_custom?: boolean;
+  pickup_point?: string;
+  pickup_point_custom?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -33,7 +35,9 @@ export const useBookings = () => {
     seatNumbers: number[],
     paymentMethod: PaymentMethod = 'cash',
     dropoffPoint?: string,
-    dropoffPointCustom?: boolean
+    dropoffPointCustom?: boolean,
+    pickupPoint?: string,
+    pickupPointCustom?: boolean
   ) => {
     try {
       setError(null);
@@ -46,6 +50,8 @@ export const useBookings = () => {
           p_payment_method: paymentMethod,
           p_dropoff_point: dropoffPoint ?? undefined,
           p_dropoff_custom: dropoffPointCustom ?? false,
+          p_pickup_point: pickupPoint ?? undefined,
+          p_pickup_custom: pickupPointCustom ?? false,
         })),
         12000
       );

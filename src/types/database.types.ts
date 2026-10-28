@@ -430,6 +430,8 @@ export type Database = {
           payment_marked_at: string | null
           payment_method: string | null
           payment_status: string | null
+          pickup_point: string | null
+          pickup_point_custom: boolean | null
           price: number
           refund_amount: number | null
           refund_percentage: number | null
@@ -452,6 +454,8 @@ export type Database = {
           payment_marked_at?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          pickup_point?: string | null
+          pickup_point_custom?: boolean | null
           price: number
           refund_amount?: number | null
           refund_percentage?: number | null
@@ -474,6 +478,8 @@ export type Database = {
           payment_marked_at?: string | null
           payment_method?: string | null
           payment_status?: string | null
+          pickup_point?: string | null
+          pickup_point_custom?: boolean | null
           price?: number
           refund_amount?: number | null
           refund_percentage?: number | null
@@ -4127,6 +4133,8 @@ export type Database = {
           p_dropoff_custom?: boolean
           p_dropoff_point?: string
           p_payment_method?: string
+          p_pickup_custom?: boolean
+          p_pickup_point?: string
           p_route_id: string
           p_seat_numbers: number[]
         }
@@ -4144,6 +4152,8 @@ export type Database = {
           payment_marked_at: string | null
           payment_method: string | null
           payment_status: string | null
+          pickup_point: string | null
+          pickup_point_custom: boolean | null
           price: number
           refund_amount: number | null
           refund_percentage: number | null
@@ -4198,6 +4208,14 @@ export type Database = {
           p_booking_ids: string[]
           p_dropoff_custom?: boolean
           p_dropoff_point: string
+        }
+        Returns: number
+      }
+      set_booking_pickup: {
+        Args: {
+          p_booking_ids: string[]
+          p_pickup_custom?: boolean
+          p_pickup_point: string
         }
         Returns: number
       }

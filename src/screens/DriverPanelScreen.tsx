@@ -29,6 +29,8 @@ interface Passenger {
   created_at: string
   dropoff_point?: string
   dropoff_point_custom?: boolean
+  pickup_point?: string
+  pickup_point_custom?: boolean
 }
 
 interface DriverRoute {
@@ -102,6 +104,8 @@ export default function DriverPanelScreen() {
             created_at,
             dropoff_point,
             dropoff_point_custom,
+            pickup_point,
+            pickup_point_custom,
             passenger:profiles!passenger_id(id, name, email)
           )
         `)
@@ -137,6 +141,8 @@ export default function DriverPanelScreen() {
           created_at: b.created_at,
           dropoff_point: b.dropoff_point || route.destination,
           dropoff_point_custom: b.dropoff_point_custom || false,
+          pickup_point: b.pickup_point || route.pickup_point || route.origin,
+          pickup_point_custom: b.pickup_point_custom || false,
         }))
         return { ...route, passengers }
       })
@@ -662,6 +668,14 @@ export default function DriverPanelScreen() {
                                 </LinearGradient>
                                 <View style={styles.passengerInfo}>
                                   <Text style={styles.passengerName}>{passenger.name}</Text>
+                                  {passenger.pickup_point_custom && (
+                                    <View style={styles.pickupHint}>
+                                      <Icon name="Flag" size={10} color={COLORS.primary} />
+                                      <Text style={styles.pickupHintText} numberOfLines={1}>
+                                        Recoger en: {passenger.pickup_point}
+                                      </Text>
+                                    </View>
+                                  )}
                                   <View style={styles.passengerMeta}>
                                     <View style={styles.seatPill}>
                                       <Icon name="User" size={10} color={COLORS.textTertiary} />
@@ -1206,6 +1220,12 @@ const styles = StyleSheet.create({
   },
   passengerMeta: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
+  },
+  pickupHint: {
+    flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, marginBottom: 2,
+  },
+  pickupHintText: {
+    fontSize: 11, color: COLORS.primary, fontWeight: '600', flexShrink: 1,
   },
   seatPill: {
     flexDirection: 'row', alignItems: 'center', gap: 3,

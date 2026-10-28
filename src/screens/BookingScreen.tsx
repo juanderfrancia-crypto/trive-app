@@ -32,6 +32,7 @@ function seatList(seats: number[]) {
 type Confirmation = {
   seatNumbers: number[]
   total: number
+  pickup: string
   dropoff: string
 }
 
@@ -51,6 +52,8 @@ export default function BookingScreen() {
   useEffect(() => {
     if (user?.id) getPaymentPreference(user.id).then(setPaymentMethod)
   }, [user?.id])
+  const [pickupOption, setPickupOption] = useState<'origin' | 'custom'>('origin')
+  const [customPickupPoint, setCustomPickupPoint] = useState('')
   const [dropoffOption, setDropoffOption] = useState<'final' | 'custom'>('final')
   const [customDropoffPoint, setCustomDropoffPoint] = useState('')
   const [pendingBookingIds, setPendingBookingIds] = useState<string[]>(bookingData?.pending_booking_ids ?? [])
@@ -128,6 +131,10 @@ export default function BookingScreen() {
               </Text>
             </View>
             <View style={[styles.summaryRow, styles.summaryRowSpaced]}>
+              <Text style={styles.summaryKey}>Recogida</Text>
+              <Text style={styles.summaryValue}>{confirmation.pickup}</Text>
+            </View>
+            <View style={[styles.summaryRow, styles.summaryRowSpaced]}>
               <Text style={styles.summaryKey}>Llegada</Text>
               <Text style={styles.summaryValue}>{confirmation.dropoff}</Text>
             </View>
@@ -191,6 +198,7 @@ export default function BookingScreen() {
   const { seat_numbers, total_price } = bookingData
   const seatCount = seat_numbers.length
 
+  const getPickupPoint = () => (pickupOption === 'origin' ? selectedRoute.origin : customPickupPoint.trim())
   const getDropoffPoint = () => (dropoffOption === 'final' ? selectedRoute.destination : customDropoffPoint.trim())
 
   const handleConfirm = async () => {
@@ -212,6 +220,17 @@ export default function BookingScreen() {
         ErrorSeverity.HIGH,
         true,
         { context: 'booking_offline' }
+      )
+      return
+    }
+
+    if (pickupOption === 'custom' && !customPickupPoint.trim()) {
+      errorHandler.handle(
+        'Por favor escribe la dirección de recogida',
+        ErrorType.VALIDATION,
+        ErrorSeverity.MEDIUM,
+        true,
+        { context: 'pickup_required' }
       )
       return
     }
@@ -239,6 +258,8 @@ export default function BookingScreen() {
     }
 
     try {
+      const pickupPoint = getPickupPoint()
+      const isCustomPickup = pickupOption === 'custom'
       const dropoffPoint = getDropoffPoint()
       const isCustomDropoff = dropoffOption === 'custom'
       let bookingIds = pendingBookingIds
@@ -250,6 +271,12 @@ export default function BookingScreen() {
           p_dropoff_custom: isCustomDropoff,
         })
         if (updateError) throw updateError
+        const { error: pickupError } = await supabase.rpc('set_booking_pickup', {
+          p_booking_ids: bookingIds,
+          p_pickup_point: pickupPoint,
+          p_pickup_custom: isCustomPickup,
+        })
+        if (pickupError) throw pickupError
         await finalizePendingBookings(bookingIds, paymentMethod)
       } else {
         const reserved = await reservePendingBookings(
@@ -257,7 +284,9 @@ export default function BookingScreen() {
           seat_numbers,
           paymentMethod,
           dropoffPoint,
-          isCustomDropoff
+          isCustomDropoff,
+          pickupPoint,
+          isCustomPickup
         )
         bookingIds = reserved.map((b) => b.id)
         await finalizePendingBookings(bookingIds, paymentMethod)
@@ -268,6 +297,7 @@ export default function BookingScreen() {
       setConfirmation({
         seatNumbers: seat_numbers,
         total: total_price,
+        pickup: pickupPoint,
         dropoff: dropoffPoint,
       })
       setBookingData(null)
@@ -369,7 +399,45 @@ export default function BookingScreen() {
           </View>
         </View>
 
-        <Text style={styles.title}>¿Dónde te dejamos en {selectedRoute.destination}?</Text>
+        <Text style={styles.title}>¿Dónde te recogemos en {selectedRoute.origin}?</Text>
+
+        {/* Punto de recogida */}
+        <View style={styles.optionStack}>
+          <TouchableOpacity
+            style={[styles.option, pickupOption === 'origin' && styles.optionSelected]}
+            onPress={() => setPickupOption('origin')}
+            activeOpacity={0.7}
+            accessibilityState={{ selected: pickupOption === 'origin' }}
+          >
+            <Text style={styles.optionTitle}>{selectedRoute.origin}</Text>
+            <Radio selected={pickupOption === 'origin'} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.option, pickupOption === 'custom' && styles.optionSelected]}
+            onPress={() => setPickupOption('custom')}
+            activeOpacity={0.7}
+            accessibilityState={{ selected: pickupOption === 'custom' }}
+          >
+            <Text style={[styles.optionTitle, pickupOption !== 'custom' && styles.optionTitleMuted]}>
+              Otro punto de recogida
+            </Text>
+            <Radio selected={pickupOption === 'custom'} />
+          </TouchableOpacity>
+
+          {pickupOption === 'custom' && (
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Ej: Ciudad del Sur, vía a Cali"
+              placeholderTextColor={COLORS.textTertiary}
+              value={customPickupPoint}
+              onChangeText={setCustomPickupPoint}
+              editable={!loading}
+            />
+          )}
+        </View>
+
+        <Text style={styles.sectionTitle}>¿Dónde te dejamos en {selectedRoute.destination}?</Text>
 
         {/* Punto de llegada */}
         <View style={styles.optionStack}>
