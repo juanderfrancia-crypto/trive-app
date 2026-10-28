@@ -597,7 +597,7 @@ export default function NotificationsScreen() {
                     activeOpacity={0.85}
                     onPress={() => {
                       setDetailNotif(null)
-                      ;(navigation as any).navigate('ActiveTrips')
+                      ;(navigation as any).navigate('Main', { screen: 'Search' })
                     }}
                   >
                     <Icon name="Car" size={16} color={COLORS.white} />

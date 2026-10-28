@@ -30,7 +30,6 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen'
 import PrivacyScreen from '../screens/PrivacyScreen'
 import LoadingScreen from '../screens/LoadingScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
-import ScheduledTripsScreen from '../screens/ScheduledTripsScreen'
 import GroupTripsScreen from '../screens/GroupTripsScreen'
 import FavoriteRoutesScreen from '../screens/FavoriteRoutesScreen'
 import TripHistoryScreen from '../screens/TripHistoryScreen'
@@ -53,8 +52,6 @@ import DriverPaymentMethodsScreen from '../screens/DriverPaymentMethodsScreen'
 import CancellationHistoryScreen from '../screens/CancellationHistoryScreen'
 import RatingAnalyticsDashboard from '../screens/RatingAnalyticsDashboard'
 import TravelPreferencesScreen from '../screens/TravelPreferencesScreen'
-import ActiveTripsScreen from '../screens/ActiveTripsScreen'
-import ActiveChatsScreen from '../screens/ActiveChatsScreen'
 import ReviewsScreen from '../screens/ReviewsScreen'
 import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
 import ReferralScreen from '../screens/ReferralScreen'
@@ -167,7 +164,6 @@ export default function AppNavigator() {
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
       <Stack.Screen name="RecentActivity" component={RecentActivityScreen} />
-      <Stack.Screen name="ScheduledTrips" component={ScheduledTripsScreen} />
       <Stack.Screen name="GroupTrips" component={GroupTripsScreen} />
       <Stack.Screen name="FavoriteRoutes" component={FavoriteRoutesScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
@@ -178,8 +174,6 @@ export default function AppNavigator() {
       <Stack.Screen name="RatingAnalytics" component={RatingAnalyticsDashboard} />
       <Stack.Screen name="TravelPreferences" component={TravelPreferencesScreen} />
       <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
-      <Stack.Screen name="ActiveTrips" component={ActiveTripsScreen} />
-      <Stack.Screen name="ActiveChats" component={ActiveChatsScreen} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} />
       <Stack.Screen name="RecurringRoutes" component={RecurringRoutesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />

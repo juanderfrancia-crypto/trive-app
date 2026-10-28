@@ -65,9 +65,9 @@ export function getNotificationRoute(
   }
 
   switch (notification.type) {
-    // Confirmar el viaje: la tarjeta de confirmación está en Viajes Activos.
+    // Confirmar el viaje: la tarjeta de confirmación está en Mis viajes.
     case 'trip_confirm':
-      return { screenName: 'ActiveTrips', params: {} }
+      return { screenName: 'Main', params: { screen: 'Search' } }
 
     case 'review_received':
       return { screenName: 'Reviews', params: {} }
@@ -83,10 +83,12 @@ export function getNotificationRoute(
       }
       return null
 
+    // Mensaje de un viaje normal: el chat vive en Mis viajes, no en Solicitudes
+    // (eso es solo para la negociación de viajes al aeropuerto).
     case 'message':
       return {
         screenName: 'Main',
-        params: { screen: 'Requests' },
+        params: { screen: 'Search' },
       }
 
     default:

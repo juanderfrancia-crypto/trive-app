@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import type { Tables } from '../types/database.types'
+import { withTimeout } from '../utils/withTimeout'
 
 export interface TripMessage {
   id: string
@@ -40,15 +41,19 @@ export const getTripMessages = async (
   try {
     if (!tripId || !userId || !otherUserId) throw new Error('tripId, userId and otherUserId are required')
 
-    const { data, error } = await supabase
-      .from('trip_messages')
-      .select('*')
-      .eq('trip_id', tripId)
-      .or(
-        `and(from_user_id.eq.${userId},to_user_id.eq.${otherUserId}),` +
-        `and(from_user_id.eq.${otherUserId},to_user_id.eq.${userId})`
+    const { data, error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .select('*')
+          .eq('trip_id', tripId)
+          .or(
+            `and(from_user_id.eq.${userId},to_user_id.eq.${otherUserId}),` +
+            `and(from_user_id.eq.${otherUserId},to_user_id.eq.${userId})`
+          )
+          .order('created_at', { ascending: true })
       )
-      .order('created_at', { ascending: true })
+    )
 
     if (error) throw error
 
@@ -96,16 +101,20 @@ export const sendTripMessage = async (
     }
 
     // Insertar mensaje
-    const { data, error } = await supabase
-      .from('trip_messages')
-      .insert({
-        trip_id: tripId,
-        from_user_id: fromUserId,
-        to_user_id: toUserId,
-        message: message.trim(),
-      })
-      .select()
-      .single()
+    const { data, error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .insert({
+            trip_id: tripId,
+            from_user_id: fromUserId,
+            to_user_id: toUserId,
+            message: message.trim(),
+          })
+          .select()
+          .single()
+      )
+    )
 
     if (error) throw error
 
@@ -131,13 +140,17 @@ export const markTripMessageAsRead = async (messageId: string): Promise<void> =>
   try {
     if (!messageId) throw new Error('messageId is required')
 
-    const { error } = await supabase
-      .from('trip_messages')
-      .update({
-        is_read: true,
-        read_at: new Date().toISOString(),
-      })
-      .eq('id', messageId)
+    const { error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .update({
+            is_read: true,
+            read_at: new Date().toISOString(),
+          })
+          .eq('id', messageId)
+      )
+    )
 
     if (error) throw error
   } catch (err: any) {
@@ -159,15 +172,19 @@ export const markTripMessagesAsRead = async (tripId: string, userId: string): Pr
   try {
     if (!tripId || !userId) throw new Error('tripId and userId are required')
 
-    const { error } = await supabase
-      .from('trip_messages')
-      .update({
-        is_read: true,
-        read_at: new Date().toISOString(),
-      })
-      .eq('trip_id', tripId)
-      .eq('to_user_id', userId)
-      .eq('is_read', false)
+    const { error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .update({
+            is_read: true,
+            read_at: new Date().toISOString(),
+          })
+          .eq('trip_id', tripId)
+          .eq('to_user_id', userId)
+          .eq('is_read', false)
+      )
+    )
 
     if (error) throw error
   } catch (err: any) {
@@ -293,12 +310,16 @@ export const getTripUnreadCount = async (tripId: string, userId: string): Promis
   try {
     if (!tripId || !userId) throw new Error('tripId and userId are required')
 
-    const { count, error } = await supabase
-      .from('trip_messages')
-      .select('*', { count: 'exact', head: true })
-      .eq('trip_id', tripId)
-      .eq('to_user_id', userId)
-      .eq('is_read', false)
+    const { count, error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('trip_id', tripId)
+          .eq('to_user_id', userId)
+          .eq('is_read', false)
+      )
+    )
 
     if (error) throw error
 
@@ -315,13 +336,17 @@ export const getTripUnreadCountFrom = async (
   fromUserId: string
 ): Promise<number> => {
   try {
-    const { count, error } = await supabase
-      .from('trip_messages')
-      .select('*', { count: 'exact', head: true })
-      .eq('trip_id', tripId)
-      .eq('to_user_id', toUserId)
-      .eq('from_user_id', fromUserId)
-      .eq('is_read', false)
+    const { count, error } = await withTimeout(
+      Promise.resolve(
+        supabase
+          .from('trip_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('trip_id', tripId)
+          .eq('to_user_id', toUserId)
+          .eq('from_user_id', fromUserId)
+          .eq('is_read', false)
+      )
+    )
     if (error) throw error
     return count ?? 0
   } catch {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert, Share } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert, Share, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -8,6 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
 import { notifyTripCancellation } from '../services/pushNotifications'
+import { getCounterpartPhone } from '../services/profileColumns'
 import { showSuccess, showError } from '../utils/showError'
 import Button from '../components/Button'
 import Card from '../components/Card'
@@ -68,6 +69,19 @@ export default function TripStatusScreen() {
       }
     }, [selectedRoute, setBookingData, loadBookings, navigation, user?.id])
   )
+
+  const handleCallDriver = async () => {
+    if (!selectedRoute?.driver_id) return
+    const phone = await getCounterpartPhone(selectedRoute.driver_id)
+    if (phone) {
+      Linking.openURL(`tel:${phone}`)
+    } else {
+      Alert.alert(
+        'No pudimos hacer la llamada',
+        'No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.'
+      )
+    }
+  }
 
   if (!selectedRoute) return null
 
@@ -353,6 +367,15 @@ export default function TripStatusScreen() {
                   )}
                 </TouchableOpacity>
               </LinearGradient>
+
+              <TouchableOpacity
+                style={styles.callDriverBtn}
+                onPress={handleCallDriver}
+                activeOpacity={0.85}
+              >
+                <Icon name="Phone" size={18} color="#fff" />
+                <Text style={styles.callDriverBtnText}>Llamar al conductor</Text>
+              </TouchableOpacity>
             </LinearGradient>
 
             {/* Trip Info Card */}
@@ -929,6 +952,21 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     lineHeight: 14,
+  },
+  callDriverBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  callDriverBtnText: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: '#fff',
+    fontWeight: '700',
   },
   shareBtn: {
     flexDirection: 'row',

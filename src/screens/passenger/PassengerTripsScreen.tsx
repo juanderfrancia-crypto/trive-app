@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import TripHistoryScreen from '../TripHistoryScreen'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
@@ -10,6 +10,8 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { getCounterpartPhone } from '../../services/profileColumns'
 import { showSuccess, showError } from '../../utils/showError'
+import { TripMessagesModal } from '../../components/TripMessagesModal'
+import { getTripUnreadCountFrom, subscribeTripMessages } from '../../services/trip_messages'
 import {
   usePassengerBookings,
   confirmPassengerTrip,
@@ -24,8 +26,64 @@ export default function PassengerTripsScreen() {
   const { bookings, loading, refetch } = usePassengerBookings(user?.id)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [segmento, setSegmento] = useState<'proximos' | 'historial'>('proximos')
+  const [selectedChat, setSelectedChat] = useState<PassengerBooking | null>(null)
+  const [chatModalVisible, setChatModalVisible] = useState(false)
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
+  const channelsRef = useRef<Record<string, () => void>>({})
 
   useFocusEffect(useCallback(() => { refetch() }, [refetch]))
+
+  // Contactables: reservas con relación de viaje real (mismo criterio del servidor para chat/llamada).
+  const contactableBookings = bookings.filter(
+    (b) => b.bookingStatus === 'confirmed' || b.bookingStatus === 'awaiting_confirmation'
+  )
+
+  useEffect(() => {
+    if (!user?.id || contactableBookings.length === 0) return
+
+    contactableBookings.forEach((b) => {
+      if (channelsRef.current[b.routeId]) return
+
+      getTripUnreadCountFrom(b.routeId, user.id, b.driverId)
+        .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
+        .catch(() => {})
+
+      channelsRef.current[b.routeId] = subscribeTripMessages(b.routeId, user.id, b.driverId, () => {
+        getTripUnreadCountFrom(b.routeId, user.id, b.driverId)
+          .then((count) => setUnreadCounts((prev) => ({ ...prev, [b.routeId]: count })))
+          .catch(() => {})
+      })
+    })
+
+    const activeRouteIds = new Set(contactableBookings.map((b) => b.routeId))
+    Object.keys(channelsRef.current).forEach((routeId) => {
+      if (!activeRouteIds.has(routeId)) {
+        channelsRef.current[routeId]()
+        delete channelsRef.current[routeId]
+      }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, bookings])
+
+  useEffect(() => {
+    return () => {
+      Object.values(channelsRef.current).forEach((fn) => fn())
+      channelsRef.current = {}
+    }
+  }, [])
+
+  const openChat = (booking: PassengerBooking) => {
+    setSelectedChat(booking)
+    setChatModalVisible(true)
+  }
+
+  const closeChat = () => {
+    setChatModalVisible(false)
+    if (!selectedChat || !user?.id) return
+    getTripUnreadCountFrom(selectedChat.routeId, user.id, selectedChat.driverId)
+      .then((count) => setUnreadCounts((prev) => ({ ...prev, [selectedChat.routeId]: count })))
+      .catch(() => {})
+  }
 
   const handleConfirm = async (booking: PassengerBooking) => {
     try {
@@ -135,16 +193,30 @@ export default function PassengerTripsScreen() {
           )
         )}
 
-        {esConfirmado && (
+        {(esConfirmado || porConfirmar) && (
           <View style={styles.actionsRow}>
             <TouchableOpacity style={styles.tintBtn} onPress={() => handleCall(booking)} activeOpacity={0.85}>
               <Icon name="Phone" size={16} color={COLORS.primary} />
-              <Text style={styles.tintBtnText}>Llamar al conductor</Text>
+              <Text style={styles.tintBtnText}>Llamar</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.outlineBtn} onPress={() => handleCancel(booking)} activeOpacity={0.85}>
-              <Text style={styles.outlineBtnText}>Cancelar</Text>
+            <TouchableOpacity style={styles.tintBtn} onPress={() => openChat(booking)} activeOpacity={0.85}>
+              <Icon name="MessageCircle" size={16} color={COLORS.primary} />
+              <Text style={styles.tintBtnText}>Mensaje</Text>
+              {!!unreadCounts[booking.routeId] && (
+                <View style={styles.msgBadge}>
+                  <Text style={styles.msgBadgeText}>
+                    {unreadCounts[booking.routeId] > 9 ? '9+' : unreadCounts[booking.routeId]}
+                  </Text>
+                </View>
+              )}
             </TouchableOpacity>
           </View>
+        )}
+
+        {esConfirmado && (
+          <TouchableOpacity style={styles.outlineBtnFull} onPress={() => handleCancel(booking)} activeOpacity={0.85}>
+            <Text style={styles.outlineBtnText}>Cancelar</Text>
+          </TouchableOpacity>
         )}
       </View>
     )
@@ -202,6 +274,17 @@ export default function PassengerTripsScreen() {
           </View>
         )}
       </ScrollView>
+      )}
+
+      {selectedChat && user && (
+        <TripMessagesModal
+          visible={chatModalVisible}
+          tripId={selectedChat.routeId}
+          userId={user.id}
+          otherUserId={selectedChat.driverId}
+          otherUserName={selectedChat.driverName}
+          onClose={closeChat}
+        />
       )}
     </SafeAreaView>
   )
@@ -279,6 +362,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xs,
+    position: 'relative',
   },
   tintBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
   outlineBtn: {
@@ -291,6 +375,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   outlineBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
+  outlineBtnFull: {
+    marginTop: SPACING.sm,
+    height: 44,
+    borderRadius: RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  msgBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: COLORS.error,
+    borderRadius: 9,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  msgBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.white },
 
   empty: { alignItems: 'center', marginTop: SPACING.xl, gap: SPACING.sm },
   emptyTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginTop: SPACING.sm, textAlign: 'center' },

@@ -5,6 +5,31 @@ Fuente de verdad del proyecto. Se actualiza al cerrar cada cambio importante.
 
 ---
 
+## -15. Chat y llamada conductor-pasajero: auditoría y consolidación (2026-10-28)
+
+A pedido del dueño, auditoría completa (backend real + cada pantalla) del chat de viaje y el botón de llamar. El backend ya era sólido (RLS correcta, índices, triggers de push ya corregidos en sesiones anteriores). **El problema real estaba en el frontend: existían 5 pantallas distintas con "contactar al conductor/pasajero" implementado de forma inconsistente**, 3 de ellas código muerto (registradas en el navegador pero sin ningún botón que las abriera):
+
+- `PassengerTripsScreen` (la pestaña **"Mis viajes"** real) solo tenía botón de llamar, **sin chat**.
+- `DriverPanelScreen` solo tenía chat, **sin llamar** — aunque el teléfono del pasajero ya se traía del servidor y no se usaba para nada.
+- `TripStatusScreen` (vista del viaje de hoy) solo tenía chat, sin llamar.
+- `ActiveTripsScreen`, `ActiveChatsScreen` y `ScheduledTripsScreen`: las tres tenían la función más completa o mejor hecha, pero **ningún botón del app navegaba a ellas** — código muerto. Una de ellas (`ScheduledTripsScreen`) ni siquiera llamaba de verdad: el botón "Llamar" solo mostraba *"Función de llamada aún no disponible"*.
+- Las notificaciones de "nuevo mensaje" (`type: 'message'`) y de "confirma tu viaje" (`type: 'trip_confirm'`) enlazaban a la pestaña de Solicitudes (función de aeropuerto) o a la pantalla muerta `ActiveTrips`, nunca al chat real.
+
+**Corregido, todo consolidado en las pantallas que de verdad se usan:**
+- `PassengerTripsScreen.tsx`: se agregó el botón "Mensaje" (con contador de no leídos en vivo) junto al de "Llamar", visible en reservas confirmadas y en las que esperan confirmación — mismo criterio que ya usa el servidor para autorizar chat/llamada.
+- `DriverPanelScreen.tsx`: se agregó el botón de llamar junto al de chat en cada pasajero, usando el teléfono que ya se traía y no se usaba.
+- `TripStatusScreen.tsx`: se agregó el botón de llamar junto al de chat que ya tenía.
+- Se eliminaron `ActiveTripsScreen.tsx`, `ActiveChatsScreen.tsx` y `ScheduledTripsScreen.tsx` (código muerto, confirmado que nada más los referenciaba) y sus registros en `AppNavigator.tsx`.
+- `NotificationNavigation.ts` y `NotificationsScreen.tsx`: los casos `message` y `trip_confirm` ahora enlazan a la pestaña real "Mis viajes" (`Main` → `Search`) en vez de a Solicitudes o a la pantalla eliminada.
+- `trip_messages.ts`: las 6 llamadas al servidor (cargar, enviar, marcar leído, contar no leídos) ahora usan `withTimeout`, igual que el resto de lecturas críticas desde la auditoría de resiliencia del 26-oct — antes no tenían ninguna.
+- Migración `20261028120000_chat_consistencia.sql`: el límite de 500 caracteres de un mensaje, que solo existía en el cliente, ahora también es un `CHECK` en el servidor (`NOT VALID`, mismo patrón ya usado en `bookings`).
+
+**Nota de honestidad sobre la verificación:** la suite offline (`node supabase/tests/offline/tests.mjs`) solo aplica un rango fijo de migraciones de principios de octubre (ver `supabase/tests/offline/apply.mjs`) — no cubre esta migración nueva ni la del punto de recogida (sección "-14"). Se corrió igual (122/122 siguen pasando, confirma que nada de lo que sí cubre se rompió) pero **no valida la migración de este cambio**; esa solo se verificó leyendo la base real que el nombre de la restricción no existe aún. Es una migración de una sola línea (`ALTER TABLE ... ADD CONSTRAINT ... CHECK (...) NOT VALID`), de bajo riesgo, pero quede registrado que la cobertura de la suite offline es más limitada de lo que se asumió en sesiones anteriores.
+
+Verificado con `npx tsc --noEmit` (0 errores) y confirmado que no quedó ninguna referencia a las tres pantallas eliminadas.
+
+**Pendiente:** el dueño debe aplicar `20261028120000_chat_consistencia.sql` en producción (igual que las anteriores). Queda fuera de este cambio, por ser un problema distinto y ya conocido: el `addNotificationResponseReceivedListener` de `pushNotifications.ts` (qué pasa al tocar una notificación del sistema con la app cerrada) está vacío — no navega a nada. No se tocó porque es un problema separado y, mientras el bug de `push_token` siga sin resolver (ver [[project_push_notifications_bug]]), no tiene impacto real todavía.
+
 ## -14. Punto de recogida personalizado del pasajero (2026-10-28)
 
 El dueño planteó un caso real: el conductor publica "Puerto Tejada → Cali", pero un pasajero vive en Ciudad del Sur, un sector que pertenece al municipio pero está afuera del casco urbano, vía a Cali. Hasta ahora el pasajero podía elegir un punto de **llegada** distinto al destino final (`dropoff_point`, ya existía), pero no un punto de **recogida** distinto al origen — asimetría real que obligaba a coordinar todo por el chat del viaje, con riesgo de malentendidos que incluso podrían disparar mal la detección de fraude por cancelaciones (sección "-anterior", construida el 27-oct).

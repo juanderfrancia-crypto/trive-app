@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, RefreshControl, Share, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, RefreshControl, Share, StatusBar, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -71,6 +71,17 @@ export default function DriverPanelScreen() {
   } | null>(null)
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
+
+  const handleCallPassenger = (phone?: string) => {
+    if (phone) {
+      Linking.openURL(`tel:${phone}`)
+    } else {
+      Alert.alert(
+        'No pudimos hacer la llamada',
+        'No tenemos el número de este pasajero en este momento. Puedes escribirle por el chat.'
+      )
+    }
+  }
 
   const loadUnreadCounts = useCallback(async (loadedRoutes: DriverRoute[]) => {
     if (!user?.id) return
@@ -699,29 +710,37 @@ export default function DriverPanelScreen() {
                                     </View>
                                   </View>
                                 </View>
-                                <TouchableOpacity
-                                  style={styles.chatBtn}
-                                  onPress={() => {
-                                    const key = `${route.id}-${passenger.passenger_id}`
-                                    setUnreadCounts((prev) => ({ ...prev, [key]: 0 }))
-                                    setSelectedChat({
-                                      tripId: route.id,
-                                      otherUserId: passenger.passenger_id,
-                                      otherUserName: passenger.name,
-                                    })
-                                  }}
-                                >
-                                  <Icon name="MessageCircle" size={17} color={COLORS.primary} />
-                                  {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
-                                    <View style={styles.chatBadge}>
-                                      <Text style={styles.chatBadgeText}>
-                                        {unreadCounts[`${route.id}-${passenger.passenger_id}`] > 9
-                                          ? '9+'
-                                          : unreadCounts[`${route.id}-${passenger.passenger_id}`]}
-                                      </Text>
-                                    </View>
-                                  )}
-                                </TouchableOpacity>
+                                <View style={styles.passengerActions}>
+                                  <TouchableOpacity
+                                    style={styles.callBtn}
+                                    onPress={() => handleCallPassenger(passenger.phone)}
+                                  >
+                                    <Icon name="Phone" size={17} color={COLORS.primary} />
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.chatBtn}
+                                    onPress={() => {
+                                      const key = `${route.id}-${passenger.passenger_id}`
+                                      setUnreadCounts((prev) => ({ ...prev, [key]: 0 }))
+                                      setSelectedChat({
+                                        tripId: route.id,
+                                        otherUserId: passenger.passenger_id,
+                                        otherUserName: passenger.name,
+                                      })
+                                    }}
+                                  >
+                                    <Icon name="MessageCircle" size={17} color={COLORS.primary} />
+                                    {(unreadCounts[`${route.id}-${passenger.passenger_id}`] ?? 0) > 0 && (
+                                      <View style={styles.chatBadge}>
+                                        <Text style={styles.chatBadgeText}>
+                                          {unreadCounts[`${route.id}-${passenger.passenger_id}`] > 9
+                                            ? '9+'
+                                            : unreadCounts[`${route.id}-${passenger.passenger_id}`]}
+                                        </Text>
+                                      </View>
+                                    )}
+                                  </TouchableOpacity>
+                                </View>
                               </View>
                             ))}
                           </View>
@@ -1248,6 +1267,15 @@ const styles = StyleSheet.create({
     width: 24, height: 24, borderRadius: RADIUS.full,
     backgroundColor: COLORS.success + '20',
     justifyContent: 'center', alignItems: 'center',
+  },
+  passengerActions: { flexDirection: 'row', gap: SPACING.xs },
+  callBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chatBtn: {
     width: 36,
