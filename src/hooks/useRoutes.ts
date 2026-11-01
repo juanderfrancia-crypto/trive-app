@@ -77,7 +77,7 @@ export const useRoutes = () => {
     try {
       const [{ data: profiles }, { data: drivers }] = await withTimeout(
         Promise.all([
-          supabase.from('profiles').select('id, name, rating, avatar_url').in('id', driverIds),
+          supabase.from('profiles').select('id, name, rating, avatar_url, vehicle_photo_url').in('id', driverIds),
           supabase.from('drivers').select('id, average_rating').in('id', driverIds),
         ])
       );
@@ -98,6 +98,7 @@ export const useRoutes = () => {
           driver_rating:
             route.driver_rating ?? profile?.rating ?? driver?.average_rating ?? 0,
           driver_avatar_url: profile?.avatar_url ?? undefined,
+          vehicle_photo_url: profile?.vehicle_photo_url ?? undefined,
         } as Route;
       });
     } catch (err) {

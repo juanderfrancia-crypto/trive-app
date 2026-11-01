@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { View, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -396,23 +396,49 @@ export default function SeatSelectionScreen() {
           </View>
         ) : (
           <>
-            {/* Ficha del conductor: solo datos que llegan en available_rides (rating y reseñas). */}
+            {/* Ficha del conductor y del vehículo: quién te va a llevar y en qué carro. */}
             <View style={styles.driverCard}>
-              <View style={styles.driverAvatar}>
-                <Text style={styles.driverInitial}>
-                  {(selectedRoute.driver_name || 'C').charAt(0).toUpperCase()}
-                </Text>
+              <View style={styles.driverRow}>
+                {selectedRoute.driver_avatar_url ? (
+                  <Image source={{ uri: selectedRoute.driver_avatar_url }} style={styles.driverAvatar} />
+                ) : (
+                  <View style={styles.driverAvatar}>
+                    <Text style={styles.driverInitial}>
+                      {(selectedRoute.driver_name || 'C').charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
+                <View style={styles.driverBody}>
+                  <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
+                  <View style={styles.driverStats}>
+                    <Icon name="Star" size={13} color={COLORS.accent} />
+                    <Text style={styles.driverStatValue}>
+                      {selectedRoute.driver_rating ? Number(selectedRoute.driver_rating).toFixed(1) : 'Nuevo'}
+                    </Text>
+                    <Text style={styles.driverStatMuted}>
+                      · {Number(selectedRoute.driver_review_count ?? 0)} reseñas
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.driverBody}>
-                <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
-                <View style={styles.driverStats}>
-                  <Icon name="Star" size={13} color={COLORS.accent} />
-                  <Text style={styles.driverStatValue}>
-                    {selectedRoute.driver_rating ? Number(selectedRoute.driver_rating).toFixed(1) : 'Nuevo'}
+
+              <View style={styles.cardDivider} />
+
+              <View style={styles.vehicleRow}>
+                {selectedRoute.vehicle_photo_url ? (
+                  <Image source={{ uri: selectedRoute.vehicle_photo_url }} style={styles.vehicleThumb} />
+                ) : (
+                  <View style={styles.vehicleThumb}>
+                    <Icon name="Car" size={26} color={COLORS.primary} />
+                  </View>
+                )}
+                <View style={styles.driverBody}>
+                  <Text style={styles.vehicleName}>
+                    {[selectedRoute.vehicle_make, selectedRoute.vehicle_model, selectedRoute.vehicle_color]
+                      .filter(Boolean)
+                      .join(' ')}
                   </Text>
-                  <Text style={styles.driverStatMuted}>
-                    · {Number(selectedRoute.driver_review_count ?? 0)} reseñas
-                  </Text>
+                  <Text style={styles.vehiclePlate}>Placa {selectedRoute.vehicle_plate}</Text>
                 </View>
               </View>
             </View>
@@ -537,16 +563,16 @@ const styles = StyleSheet.create({
 
   driverCard: {
     marginTop: SPACING.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
-    padding: SPACING.lg,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     backgroundColor: COLORS.surface,
+    overflow: 'hidden',
     ...SHADOWS.card,
   },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.lg },
+  cardDivider: { height: 1, backgroundColor: COLORS.borderLight },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, padding: SPACING.lg },
   driverAvatar: {
     width: 44,
     height: 44,
@@ -561,6 +587,18 @@ const styles = StyleSheet.create({
   driverStats: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, marginTop: 2 },
   driverStatValue: { ...TYPOGRAPHY.labelMedium, color: COLORS.textPrimary, fontWeight: '700' },
   driverStatMuted: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary },
+  vehicleThumb: {
+    width: 68,
+    height: 54,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+    flexShrink: 0,
+  },
+  vehicleName: { ...TYPOGRAPHY.bodyMedium, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.bold },
+  vehiclePlate: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginTop: 2 },
 
   mapCard: {
     marginTop: 20,
