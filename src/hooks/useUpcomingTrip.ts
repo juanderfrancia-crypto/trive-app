@@ -9,6 +9,12 @@ export interface UpcomingTrip {
   departureTime: string
   driverName: string
   driverRating: number
+  driverPhotoUrl: string | null
+  vehiclePhotoUrl: string | null
+  vehicleMake: string | null
+  vehicleModel: string | null
+  vehicleColor: string | null
+  vehiclePlate: string | null
   seatNumber: number
   minutesUntil: number
   routeObj: any
@@ -36,7 +42,7 @@ export const useUpcomingTrip = (passengerId?: string) => {
       const routeIds = bookings.map((b: any) => b.route_id)
       const { data: routes } = await supabase
         .from('routes')
-        .select('id, origin, destination, departure_time, driver_id, total_seats, available_seats, price_per_seat, vehicle_make, vehicle_color, vehicle_plate, status')
+        .select('id, origin, destination, departure_time, driver_id, total_seats, available_seats, price_per_seat, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, status')
         .in('id', routeIds)
         .not('status', 'eq', 'cancelled')
         .gte('departure_time', new Date().toISOString())
@@ -51,7 +57,7 @@ export const useUpcomingTrip = (passengerId?: string) => {
 
       const { data: driver } = await supabase
         .from('profiles')
-        .select('name, rating')
+        .select('name, rating, avatar_url, vehicle_photo_url')
         .eq('id', route.driver_id)
         .maybeSingle()
 
@@ -66,6 +72,12 @@ export const useUpcomingTrip = (passengerId?: string) => {
         departureTime: route.departure_time,
         driverName:    driver?.name  ?? 'Conductor',
         driverRating:  driver?.rating ?? 0,
+        driverPhotoUrl: driver?.avatar_url ?? null,
+        vehiclePhotoUrl: driver?.vehicle_photo_url ?? null,
+        vehicleMake:   route.vehicle_make ?? null,
+        vehicleModel:  route.vehicle_model ?? null,
+        vehicleColor:  route.vehicle_color ?? null,
+        vehiclePlate:  route.vehicle_plate ?? null,
         seatNumber:    booking.seat_number,
         minutesUntil,
         routeObj:      route,
