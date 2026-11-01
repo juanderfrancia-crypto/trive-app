@@ -5,7 +5,7 @@ export default function LoadingScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/logo.png')}
+        source={require('../../assets/icon.png')}
         style={styles.logo}
         resizeMode="contain"
       />
@@ -21,11 +21,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.white,
   },
-  // Mismo ancho que "imageWidth" del splash nativo (app.json), para que no se note
-  // el cambio de tamaño cuando el splash nativo entrega el control a esta pantalla.
+  // Mismo ícono y mismo "imageWidth" del splash nativo (app.json), para que el
+  // paso del splash nativo a esta pantalla sea invisible (sin salto de imagen).
   logo: {
-    width: 220,
-    height: 220 * (385 / 1300),
+    width: 180,
+    height: 180,
   },
   spinner: {
     position: 'absolute',
