@@ -27,7 +27,7 @@
       ],
       "package": "com.trivesoft.app",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON",
-      "versionCode": 4
+      "versionCode": 5
     },
     "web": {
       "favicon": "./assets/logo.png"
@@ -39,15 +39,15 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/logo.png",
+          "image": "./assets/icon.png",
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF",
-          "imageWidth": 220,
+          "imageWidth": 180,
           "dark": {
-            "image": "./assets/logo.png",
+            "image": "./assets/icon.png",
             "resizeMode": "contain",
             "backgroundColor": "#FFFFFF",
-            "imageWidth": 220
+            "imageWidth": 180
           }
         }
       ],
