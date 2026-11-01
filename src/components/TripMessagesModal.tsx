@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from 'react-native'
+import { View, Image, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from 'react-native'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'
@@ -9,6 +9,7 @@ import { TripMessageList } from './TripMessageList'
 import { QuickMessageInput } from './QuickMessageInput'
 import { useTripMessages } from '../hooks/useTripMessages'
 import { getCounterpartPhone } from '../services/profileColumns'
+import { supabase } from '../services/supabase'
 
 interface TripMessagesModalProps {
   visible: boolean
@@ -42,6 +43,25 @@ export const TripMessagesModal = React.memo(
     const { messages, loading, error, send } = useTripMessages(tripId, userId, otherUserId)
     const [sending, setSending] = useState(false)
     const [sendError, setSendError] = useState<string | null>(null)
+    const [otherPhotoUrl, setOtherPhotoUrl] = useState<string | null>(null)
+
+    // Foto real del otro usuario para el avatar del chat (no un ícono genérico).
+    useEffect(() => {
+      let cancelled = false
+      setOtherPhotoUrl(null)
+      if (!otherUserId) return
+      supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', otherUserId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!cancelled) setOtherPhotoUrl(data?.avatar_url ?? null)
+        })
+      return () => {
+        cancelled = true
+      }
+    }, [otherUserId])
 
     const handleSendMessage = useCallback(
       async (message: string) => {
@@ -98,9 +118,13 @@ export const TripMessagesModal = React.memo(
               <Icon name="ChevronDown" size={22} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{otherInitial}</Text>
-            </View>
+            {otherPhotoUrl ? (
+              <Image source={{ uri: otherPhotoUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>{otherInitial}</Text>
+              </View>
+            )}
 
             <View style={styles.headerContent}>
               <Text style={styles.title} numberOfLines={1}>{otherUserName}</Text>
@@ -136,6 +160,7 @@ export const TripMessagesModal = React.memo(
                   messages={messages}
                   userId={userId}
                   otherUserName={otherUserName}
+                  otherUserPhotoUrl={otherPhotoUrl}
                   loading={loading}
                 />
               </View>

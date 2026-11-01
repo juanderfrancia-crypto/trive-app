@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react'
-import { View, FlatList, StyleSheet } from 'react-native'
+import { View, Image, FlatList, StyleSheet } from 'react-native'
 import { Text } from './AppText'
 import { TripMessage } from '../services/trip_messages'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
@@ -8,6 +8,7 @@ interface TripMessageListProps {
   messages: TripMessage[]
   userId: string
   otherUserName: string
+  otherUserPhotoUrl?: string | null
   loading?: boolean
 }
 
@@ -27,7 +28,7 @@ const dayLabel = (date: Date): string => {
   return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
 }
 
-export const TripMessageList = React.memo(({ messages, userId, otherUserName, loading }: TripMessageListProps) => {
+export const TripMessageList = React.memo(({ messages, userId, otherUserName, otherUserPhotoUrl, loading }: TripMessageListProps) => {
   const listRef = useRef<FlatList>(null)
   const otherInitial = (otherUserName || '?').trim().charAt(0).toUpperCase()
 
@@ -86,9 +87,13 @@ export const TripMessageList = React.memo(({ messages, userId, otherUserName, lo
 
     return (
       <View style={styles.rowThem}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{otherInitial}</Text>
-        </View>
+        {otherUserPhotoUrl ? (
+          <Image source={{ uri: otherUserPhotoUrl }} style={styles.avatar} />
+        ) : (
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>{otherInitial}</Text>
+          </View>
+        )}
         <View style={[styles.bubble, styles.bubbleThem]}>
           <Text style={styles.messageTextThem}>{msg.message}</Text>
           <Text style={styles.timestampThem}>{timestamp}</Text>
