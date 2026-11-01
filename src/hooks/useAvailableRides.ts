@@ -26,6 +26,7 @@ export interface AvailableRide {
   driver_name: string
   driver_phone: string
   driver_photo: string | null
+  vehicle_photo: string | null
   driver_rating: number
   driver_review_count: number
   created_at: string

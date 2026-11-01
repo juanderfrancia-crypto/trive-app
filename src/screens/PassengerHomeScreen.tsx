@@ -404,14 +404,21 @@ export default function PassengerHomeScreen() {
             return (
               <TouchableOpacity key={ride.id} style={styles.rideRow} onPress={handleAvailableRidesPress} activeOpacity={0.8}>
                 <View style={styles.rideTime}>
+                  {ride.vehicle_photo ? (
+                    <>
+                      <Image source={{ uri: ride.vehicle_photo }} style={styles.rideTimePhoto} />
+                      <View style={styles.rideTimeOverlay} />
+                    </>
+                  ) : (
+                    <LinearGradient
+                      colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0)']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={styles.rideTimeShadow}
+                    />
+                  )}
                   <Text style={styles.rideHour}>{hora.hora}</Text>
                   <Text style={styles.ridePeriod}>{hora.periodo}</Text>
-                  <LinearGradient
-                    colors={['rgba(0,0,0,0.28)', 'rgba(0,0,0,0)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    style={styles.rideTimeShadow}
-                  />
                 </View>
                 <View style={styles.rideMiddle}>
                   <Text style={styles.rideDestination} numberOfLines={1}>Hacia {ride.destination}</Text>
@@ -580,8 +587,14 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.textPrimary,
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.sm,
+    position: 'relative',
+    overflow: 'hidden',
   },
   rideTimeShadow: { position: 'absolute', top: 0, right: -10, bottom: 0, width: 10 },
+  // Cuando hay foto real del vehículo, se usa como fondo del bloque de la hora,
+  // con rideTimeOverlay encima para que la hora en blanco siga siendo legible.
+  rideTimePhoto: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, resizeMode: 'cover' },
+  rideTimeOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: `${COLORS.textPrimary}94` },
   rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.white },
   ridePeriod: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },
   rideMiddle: { flex: 1, justifyContent: 'center', paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
