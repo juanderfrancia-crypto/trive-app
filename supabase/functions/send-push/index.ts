@@ -13,6 +13,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send'
 const EXPO_BATCH_SIZE = 100
+// Debe coincidir con "owner" + "slug" de app.json. Tokens de cualquier otro
+// projectId (ej. de antes de unificarlo, o un typo viejo) provocan que Expo
+// rechace el LOTE ENTERO con PUSH_TOO_MANY_EXPERIENCE_IDS — sin filtrarlos,
+// nadie del lote recibe nada, aunque su token esté perfecto.
+const EXPO_EXPERIENCE_ID = '@triveapp/trive-app'
 
 type NotificationRecord = {
   user_id: string
@@ -92,16 +97,54 @@ Deno.serve(async (req) => {
 
   let sent = 0
   const expoErrors: unknown[] = []
-  for (const batch of chunk(messages, EXPO_BATCH_SIZE)) {
-    const response = await fetch(EXPO_PUSH_URL, {
+  const staleTokens = new Set<string>()
+
+  for (let batch of chunk(messages, EXPO_BATCH_SIZE)) {
+    let response = await fetch(EXPO_PUSH_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify(batch),
     })
-    const body = await response.json().catch(() => null)
+    let body = await response.json().catch(() => null)
+
+    // Un token de otro proyecto "envenena" el lote completo (ver EXPO_EXPERIENCE_ID
+    // arriba): se identifican esos tokens, se sacan del lote y se reintenta solo
+    // con los válidos, en vez de perder la notificación de todos los demás.
+    const poisoned = body?.errors?.find((e: any) => e?.code === 'PUSH_TOO_MANY_EXPERIENCE_IDS')
+    if (!response.ok && poisoned?.details) {
+      for (const [experienceId, tokens] of Object.entries(poisoned.details)) {
+        if (experienceId === EXPO_EXPERIENCE_ID) continue
+        for (const t of tokens as string[]) staleTokens.add(t)
+      }
+      if (staleTokens.size > 0) {
+        batch = batch.filter((m) => !staleTokens.has(m.to))
+      }
+      if (batch.length > 0) {
+        response = await fetch(EXPO_PUSH_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(batch),
+        })
+        body = await response.json().catch(() => null)
+      }
+    }
+
+    if (batch.length === 0) continue
     if (response.ok) sent += batch.length
     else expoErrors.push({ status: response.status, body })
   }
 
-  return json({ ok: true, enviados: sent, total: records.length, errores: expoErrors.length ? expoErrors : undefined })
+  // Limpia los tokens de otro proyecto para que ese usuario reciba uno válido
+  // la próxima vez que abra la app (useAuth vuelve a registrar el token en cada login).
+  if (staleTokens.size > 0) {
+    await admin.from('profiles').update({ push_token: null }).in('push_token', [...staleTokens])
+  }
+
+  return json({
+    ok: true,
+    enviados: sent,
+    total: records.length,
+    tokens_viejos_limpiados: staleTokens.size || undefined,
+    errores: expoErrors.length ? expoErrors : undefined,
+  })
 })
