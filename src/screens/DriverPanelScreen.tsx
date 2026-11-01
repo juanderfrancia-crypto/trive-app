@@ -68,6 +68,9 @@ export default function DriverPanelScreen() {
     tripId: string
     otherUserId: string
     otherUserName: string
+    origin: string
+    destination: string
+    departureTime: string
   } | null>(null)
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
@@ -726,6 +729,9 @@ export default function DriverPanelScreen() {
                                         tripId: route.id,
                                         otherUserId: passenger.passenger_id,
                                         otherUserName: passenger.name,
+                                        origin: route.origin,
+                                        destination: route.destination,
+                                        departureTime: route.departure_time,
                                       })
                                     }}
                                   >
@@ -900,6 +906,9 @@ export default function DriverPanelScreen() {
           userId={user.id}
           otherUserId={selectedChat.otherUserId}
           otherUserName={selectedChat.otherUserName}
+          origin={selectedChat.origin}
+          destination={selectedChat.destination}
+          departureTime={selectedChat.departureTime}
           onClose={() => setSelectedChat(null)}
         />
       )}

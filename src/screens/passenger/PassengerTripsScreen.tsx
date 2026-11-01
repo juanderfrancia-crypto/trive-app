@@ -283,6 +283,9 @@ export default function PassengerTripsScreen() {
           userId={user.id}
           otherUserId={selectedChat.driverId}
           otherUserName={selectedChat.driverName}
+          origin={selectedChat.origin}
+          destination={selectedChat.destination}
+          departureTime={selectedChat.departureTime}
           onClose={closeChat}
         />
       )}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from 'react-native'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'
@@ -8,6 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { TripMessageList } from './TripMessageList'
 import { QuickMessageInput } from './QuickMessageInput'
 import { useTripMessages } from '../hooks/useTripMessages'
+import { getCounterpartPhone } from '../services/profileColumns'
 
 interface TripMessagesModalProps {
   visible: boolean
@@ -15,6 +16,10 @@ interface TripMessagesModalProps {
   userId: string
   otherUserId: string
   otherUserName: string
+  /** Contexto del viaje (opcional): si se pasa, reemplaza el subtítulo genérico "Mensaje". */
+  origin?: string
+  destination?: string
+  departureTime?: string
   onClose: () => void
 }
 
@@ -29,6 +34,9 @@ export const TripMessagesModal = React.memo(
     userId,
     otherUserId,
     otherUserName,
+    origin,
+    destination,
+    departureTime,
     onClose,
   }: TripMessagesModalProps) => {
     const { messages, loading, error, send } = useTripMessages(tripId, userId, otherUserId)
@@ -53,6 +61,28 @@ export const TripMessagesModal = React.memo(
       [send, sending]
     )
 
+    const handleCall = useCallback(async () => {
+      const phone = await getCounterpartPhone(otherUserId)
+      if (phone) {
+        Linking.openURL(`tel:${phone}`)
+      } else {
+        Alert.alert(
+          'No pudimos hacer la llamada',
+          'No tenemos el número de este contacto en este momento. Puedes escribirle por el chat.'
+        )
+      }
+    }, [otherUserId])
+
+    const routeSubtitle =
+      origin && destination
+        ? `${origin} → ${destination}` +
+          (departureTime
+            ? ` · ${new Date(departureTime).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })}`
+            : '')
+        : null
+
+    const otherInitial = (otherUserName || '?').trim().charAt(0).toUpperCase()
+
     return (
       <Modal
         visible={visible}
@@ -64,19 +94,28 @@ export const TripMessagesModal = React.memo(
         <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="ChevronDown" size={24} color={COLORS.textPrimary} />
+            <TouchableOpacity onPress={onClose} style={styles.iconButton} accessibilityLabel="Cerrar chat">
+              <Icon name="ChevronDown" size={22} color={COLORS.textPrimary} />
             </TouchableOpacity>
 
-            <View style={styles.headerContent}>
-              <Text style={styles.title}>Mensaje</Text>
-              <Text style={styles.subtitle}>{otherUserName}</Text>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>{otherInitial}</Text>
             </View>
 
-            <View style={styles.headerRight} />
+            <View style={styles.headerContent}>
+              <Text style={styles.title} numberOfLines={1}>{otherUserName}</Text>
+              <Text style={styles.subtitle} numberOfLines={1}>{routeSubtitle ?? 'Chat del viaje'}</Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={handleCall}
+              style={[styles.iconButton, styles.callButton]}
+              accessibilityLabel="Llamar"
+            >
+              <Icon name="Phone" size={18} color={COLORS.primary} />
+            </TouchableOpacity>
           </View>
 
-          {/* Divider */}
           <View style={styles.divider} />
 
           {/* Messages List */}
@@ -93,7 +132,12 @@ export const TripMessagesModal = React.memo(
               </View>
             ) : (
               <View style={styles.messagesContent}>
-                <TripMessageList messages={messages} userId={userId} loading={loading} />
+                <TripMessageList
+                  messages={messages}
+                  userId={userId}
+                  otherUserName={otherUserName}
+                  loading={loading}
+                />
               </View>
             )}
 
@@ -127,19 +171,38 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: SPACING.md,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  closeButton: {
+  iconButton: {
     width: 40,
     height: 40,
+    borderRadius: RADIUS.full,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
+  },
+  callButton: {
+    backgroundColor: COLORS.primaryTint,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+  },
+  avatarText: {
+    ...TYPOGRAPHY.h4,
+    color: COLORS.primary,
   },
   headerContent: {
     flex: 1,
-    alignItems: 'center',
+    minWidth: 0,
+    gap: 2,
   },
   title: {
     ...TYPOGRAPHY.h4,
@@ -148,10 +211,6 @@ const styles = StyleSheet.create({
   subtitle: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  headerRight: {
-    width: 40,
   },
   divider: {
     height: 1,
@@ -162,7 +221,7 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     flex: 1,
-    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.surfaceAlt,
   },
   centerContainer: {
     flex: 1,

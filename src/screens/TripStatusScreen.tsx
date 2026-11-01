@@ -488,6 +488,9 @@ export default function TripStatusScreen() {
                 userId={user.id}
                 otherUserId={selectedTripForChat.driverId}
                 otherUserName={selectedTripForChat.driverName}
+                origin={selectedRoute.origin}
+                destination={selectedRoute.destination}
+                departureTime={selectedRoute.departure_time}
                 onClose={() => setSelectedTripForChat(null)}
               />
             )}

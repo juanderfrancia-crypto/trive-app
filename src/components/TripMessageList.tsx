@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useMemo } from 'react'
 import { View, FlatList, StyleSheet } from 'react-native'
 import { Text } from './AppText'
 import { TripMessage } from '../services/trip_messages'
@@ -7,11 +7,29 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 interface TripMessageListProps {
   messages: TripMessage[]
   userId: string
+  otherUserName: string
   loading?: boolean
 }
 
-export const TripMessageList = React.memo(({ messages, userId, loading }: TripMessageListProps) => {
+type ListItem =
+  | { kind: 'separator'; id: string; label: string }
+  | { kind: 'message'; id: string; message: TripMessage }
+
+const dayLabel = (date: Date): string => {
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(today.getDate() - 1)
+  const sameDay = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+
+  if (sameDay(date, today)) return 'Hoy'
+  if (sameDay(date, yesterday)) return 'Ayer'
+  return date.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })
+}
+
+export const TripMessageList = React.memo(({ messages, userId, otherUserName, loading }: TripMessageListProps) => {
   const listRef = useRef<FlatList>(null)
+  const otherInitial = (otherUserName || '?').trim().charAt(0).toUpperCase()
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -20,21 +38,61 @@ export const TripMessageList = React.memo(({ messages, userId, loading }: TripMe
     }
   }, [messages.length])
 
-  const renderMessage = ({ item }: { item: TripMessage }) => {
-    const isFromMe = item.from_user_id === userId
-    const timestamp = new Date(item.created_at).toLocaleTimeString('es-ES', {
+  // Intercala un separador de fecha ("Hoy", "Ayer"...) antes del primer mensaje de cada día.
+  const items = useMemo<ListItem[]>(() => {
+    const out: ListItem[] = []
+    let lastLabel: string | null = null
+    for (const m of messages) {
+      const label = dayLabel(new Date(m.created_at))
+      if (label !== lastLabel) {
+        out.push({ kind: 'separator', id: `sep-${m.id}`, label })
+        lastLabel = label
+      }
+      out.push({ kind: 'message', id: m.id, message: m })
+    }
+    return out
+  }, [messages])
+
+  const renderItem = ({ item }: { item: ListItem }) => {
+    if (item.kind === 'separator') {
+      return (
+        <View style={styles.separatorRow}>
+          <View style={styles.separatorPill}>
+            <Text style={styles.separatorText}>{item.label}</Text>
+          </View>
+        </View>
+      )
+    }
+
+    const msg = item.message
+    const isFromMe = msg.from_user_id === userId
+    const timestamp = new Date(msg.created_at).toLocaleTimeString('es-CO', {
       hour: '2-digit',
       minute: '2-digit',
     })
 
+    if (isFromMe) {
+      return (
+        <View style={styles.rowMe}>
+          <View style={[styles.bubble, styles.bubbleMe]}>
+            <Text style={styles.messageTextMe}>{msg.message}</Text>
+            <Text style={styles.timestampMe}>
+              {timestamp}{msg.is_read ? ' ✓✓' : ''}
+            </Text>
+          </View>
+        </View>
+      )
+    }
+
     return (
-      <View style={[styles.bubble, isFromMe ? styles.bubbleMe : styles.bubbleThem]}>
-        <Text style={[styles.messageText, isFromMe ? styles.messageTextMe : styles.messageTextThem]}>
-          {item.message}
-        </Text>
-        <Text style={[styles.timestamp, isFromMe ? styles.timestampMe : styles.timestampThem]}>
-          {timestamp}{isFromMe && item.is_read ? ' ✓✓' : ''}
-        </Text>
+      <View style={styles.rowThem}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>{otherInitial}</Text>
+        </View>
+        <View style={[styles.bubble, styles.bubbleThem]}>
+          <Text style={styles.messageTextThem}>{msg.message}</Text>
+          <Text style={styles.timestampThem}>{timestamp}</Text>
+        </View>
       </View>
     )
   }
@@ -59,8 +117,8 @@ export const TripMessageList = React.memo(({ messages, userId, loading }: TripMe
   return (
     <FlatList
       ref={listRef}
-      data={messages}
-      renderItem={renderMessage}
+      data={items}
+      renderItem={renderItem}
       keyExtractor={(item) => item.id}
       contentContainerStyle={styles.list}
       onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
@@ -86,25 +144,72 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.caption,
     color: COLORS.textTertiary,
   },
+  // flexGrow + justifyContent:'flex-end' ancla los mensajes abajo cuando hay pocos
+  // (como WhatsApp): el espacio vacío queda arriba, no abajo del último mensaje.
+  // Con más mensajes de los que caben, la lista simplemente scrollea normal.
   list: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    gap: SPACING.sm,
+  },
+  separatorRow: {
+    alignItems: 'center',
+    marginVertical: SPACING.xs,
+  },
+  separatorPill: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: 5,
+  },
+  separatorText: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: TYPOGRAPHY.weight.semibold,
+    color: COLORS.textTertiary,
+  },
+  rowMe: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  rowThem: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: SPACING.sm,
+  },
+  avatar: {
+    width: 26,
+    height: 26,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  avatarText: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.primary,
   },
   bubble: {
-    marginVertical: SPACING.xs,
-    maxWidth: '80%',
+    maxWidth: '76%',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
+    borderRadius: RADIUS.lg,
+    shadowColor: COLORS.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   bubbleMe: {
-    alignSelf: 'flex-end',
     backgroundColor: COLORS.primary,
     borderBottomRightRadius: 4,
   },
   bubbleThem: {
-    alignSelf: 'flex-start',
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: COLORS.white,
     borderBottomLeftRadius: 4,
   },
   messageText: {
@@ -112,9 +217,13 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageTextMe: {
+    ...TYPOGRAPHY.body,
+    lineHeight: 20,
     color: COLORS.white,
   },
   messageTextThem: {
+    ...TYPOGRAPHY.body,
+    lineHeight: 20,
     color: COLORS.textPrimary,
   },
   timestamp: {
@@ -122,11 +231,15 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
   },
   timestampMe: {
-    color: 'rgba(255,255,255,0.65)',
+    ...TYPOGRAPHY.caption,
+    marginTop: SPACING.xs,
+    color: 'rgba(255,255,255,0.7)',
     textAlign: 'right',
   },
   timestampThem: {
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.caption,
+    marginTop: SPACING.xs,
+    color: COLORS.textTertiary,
     textAlign: 'left',
   },
 })
