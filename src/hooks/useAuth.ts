@@ -8,6 +8,7 @@ import { useAppStore, AppUser } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
 import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
 import { setUserId } from "../services/analytics";
+import { withTimeout } from "../utils/withTimeout";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
@@ -146,7 +147,9 @@ export const useAuth = () => {
 
     const initializeSession = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        // Con timeout: si esta llamada se queda colgada, el usuario no debe
+        // quedarse atascado para siempre en la pantalla de carga inicial.
+        const { data, error } = await withTimeout(supabase.auth.getSession(), 8000);
         if (error) {
           if (isRefreshTokenError(error.message)) {
             // Token inválido: limpiar sesión y redirigir al login sin alert
