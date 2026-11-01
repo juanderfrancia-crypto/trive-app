@@ -14,6 +14,7 @@ import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
 import { useRequestsBadgeCount } from '../hooks/useRequestsBadge'
+import { useMessagesBadgeCount } from '../hooks/useMessagesBadge'
 
 const Tab = createBottomTabNavigator()
 
@@ -60,6 +61,14 @@ export default function TabNavigator() {
       ? requestsUnreadCount > 99
         ? '99+'
         : requestsUnreadCount
+      : undefined
+
+  const messagesUnreadCount = useMessagesBadgeCount(userId)
+  const messagesBadge =
+    messagesUnreadCount > 0
+      ? messagesUnreadCount > 99
+        ? '99+'
+        : messagesUnreadCount
       : undefined
 
   return (
@@ -126,7 +135,23 @@ export default function TabNavigator() {
       })}
     >
       <Tab.Screen name="Home"    component={HomeScreen}          options={{ title: 'Inicio' }} />
-      <Tab.Screen name="Search"  component={TripsTab}           options={{ title: 'Viajes' }} />
+      <Tab.Screen
+        name="Search"
+        component={TripsTab}
+        options={{
+          title: 'Viajes',
+          tabBarBadge: messagesBadge,
+          tabBarBadgeStyle: {
+            backgroundColor: COLORS.error,
+            color: '#fff',
+            fontSize: 10,
+            fontWeight: '700',
+            minWidth: 18,
+            maxHeight: 18,
+            lineHeight: 16,
+          },
+        }}
+      />
       <Tab.Screen
         name="Requests"
         component={AirportHubScreen}
