@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import TripHistoryScreen from '../TripHistoryScreen'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
+import { View, Image, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -157,10 +157,36 @@ export default function PassengerTripsScreen() {
         {esPendiente ? (
           <Text style={styles.sub}>Tu reserva está en proceso</Text>
         ) : (
-          <Text style={styles.sub}>
-            {booking.driverName} · ★ {booking.driverRating.toFixed(1)}
-            {esConfirmado ? ` · Asiento ${booking.seatNumber}` : ''}
-          </Text>
+          <View style={styles.driverVehicleBox}>
+            <View style={styles.driverVehicleRow}>
+              {booking.driverPhotoUrl ? (
+                <Image source={{ uri: booking.driverPhotoUrl }} style={styles.driverAvatarSm} />
+              ) : (
+                <View style={styles.driverAvatarSm}>
+                  <Text style={styles.driverAvatarSmText}>{booking.driverName.charAt(0).toUpperCase()}</Text>
+                </View>
+              )}
+              <Text style={styles.driverVehicleText} numberOfLines={1}>
+                {booking.driverName} · ★ {booking.driverRating.toFixed(1)}
+                {esConfirmado ? ` · Asiento ${booking.seatNumber}` : ''}
+              </Text>
+            </View>
+            {(booking.vehicleMake || booking.vehiclePlate) && (
+              <View style={styles.driverVehicleRow}>
+                {booking.vehiclePhotoUrl ? (
+                  <Image source={{ uri: booking.vehiclePhotoUrl }} style={styles.vehicleThumbSm} />
+                ) : (
+                  <View style={styles.vehicleThumbSm}>
+                    <Icon name="Car" size={15} color={COLORS.primary} />
+                  </View>
+                )}
+                <Text style={styles.driverVehicleText} numberOfLines={1}>
+                  {[booking.vehicleMake, booking.vehicleModel, booking.vehicleColor].filter(Boolean).join(' ')}
+                  {booking.vehiclePlate ? ` · ${booking.vehiclePlate}` : ''}
+                </Text>
+              </View>
+            )}
+          </View>
         )}
 
         {porConfirmar && (
@@ -333,6 +359,18 @@ const styles = StyleSheet.create({
   cardDay: { ...TYPOGRAPHY.labelMedium, flex: 1, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
   route: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginTop: SPACING.sm },
   sub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
+  driverVehicleBox: { marginTop: SPACING.xs, gap: 4 },
+  driverVehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
+  driverAvatarSm: {
+    width: 26, height: 26, borderRadius: 13, backgroundColor: COLORS.primaryTint,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0,
+  },
+  driverAvatarSmText: { ...TYPOGRAPHY.label, color: COLORS.primary },
+  vehicleThumbSm: {
+    width: 34, height: 26, borderRadius: RADIUS.xs, backgroundColor: COLORS.surfaceAlt,
+    alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0,
+  },
+  driverVehicleText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, flex: 1 },
   question: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginTop: SPACING.md, lineHeight: 20 },
 
   pill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },

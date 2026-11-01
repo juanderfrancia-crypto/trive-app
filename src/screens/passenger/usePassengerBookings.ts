@@ -15,6 +15,12 @@ export interface PassengerBooking {
   driverId: string
   driverName: string
   driverRating: number
+  driverPhotoUrl: string | null
+  vehiclePhotoUrl: string | null
+  vehicleMake: string | null
+  vehicleModel: string | null
+  vehicleColor: string | null
+  vehiclePlate: string | null
   reservationCode: string | null
   paymentMethod: string | null
   paymentMarkedAt: string | null
@@ -34,7 +40,7 @@ export const usePassengerBookings = (passengerId?: string) => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('id, booking_status, seat_number, reservation_code, payment_method, payment_marked_at, payment_confirmed_at, routes:route_id(id, origin, destination, departure_time, status, driver_id, profiles:driver_id(name, rating))')
+        .select('id, booking_status, seat_number, reservation_code, payment_method, payment_marked_at, payment_confirmed_at, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))')
         .eq('passenger_id', passengerId)
         .in('booking_status', ACTIVE_STATUSES)
 
@@ -53,6 +59,12 @@ export const usePassengerBookings = (passengerId?: string) => {
           driverId: b.routes.driver_id,
           driverName: b.routes.profiles?.name ?? 'Conductor',
           driverRating: Number(b.routes.profiles?.rating ?? 0),
+          driverPhotoUrl: b.routes.profiles?.avatar_url ?? null,
+          vehiclePhotoUrl: b.routes.profiles?.vehicle_photo_url ?? null,
+          vehicleMake: b.routes.vehicle_make ?? null,
+          vehicleModel: b.routes.vehicle_model ?? null,
+          vehicleColor: b.routes.vehicle_color ?? null,
+          vehiclePlate: b.routes.vehicle_plate ?? null,
           reservationCode: b.reservation_code ?? null,
           paymentMethod: b.payment_method ?? null,
           paymentMarkedAt: b.payment_marked_at ?? null,
