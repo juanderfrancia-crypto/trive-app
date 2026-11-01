@@ -219,9 +219,15 @@ export const subscribeTripMessages = (
     return () => {}
   }
 
+  // Sufijo único por llamada: esta función puede estar corriendo dos veces a la vez para
+  // el mismo trip/usuarios (ej. el contador de no leídos de la lista de viajes, que corre
+  // en segundo plano, y el propio chat al abrirlo) — sin esto, supabase.channel() reutiliza
+  // el canal ya suscrito del primero, y el segundo .on().subscribe() revienta con
+  // "tried to subscribe multiple times" (bug real, visto en Sentry: crash al abrir el chat
+  // desde Mis Viajes mientras el contador de esa misma reserva seguía corriendo).
   const channelKey = otherUserId
-    ? `trip:${tripId}:${userId}:${otherUserId}`
-    : `trip:${tripId}:${userId}`
+    ? `trip:${tripId}:${userId}:${otherUserId}:${Date.now()}`
+    : `trip:${tripId}:${userId}:${Date.now()}`
 
   const channel = supabase
     .channel(channelKey)
