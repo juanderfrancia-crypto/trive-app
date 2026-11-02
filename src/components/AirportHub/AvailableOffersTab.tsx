@@ -1,10 +1,9 @@
-import { useCallback, useState } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, Modal, TextInput, RefreshControl } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, Modal, TextInput, RefreshControl, Keyboard, Platform } from 'react-native'
 import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Icon from '../Icon'
-import KeyboardAvoidingScreen from '../KeyboardAvoidingScreen'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
@@ -31,6 +30,25 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
   const [proposedPrice, setProposedPrice] = useState('')
   const [chatRequest, setChatRequest] = useState<AirportRequest | null>(null)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+  // Modal nativo de RN = ventana propia en Android, no se redimensiona sola con el
+  // teclado (menos con edgeToEdgeEnabled). Se mide el alto real en vez de confiar en
+  // KeyboardAvoidingView — mismo patrón ya validado en TripMessagesModal/NegotiationChatModal.
+  useEffect(() => {
+    if (!showProposalModal) {
+      setKeyboardHeight(0)
+      return
+    }
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+    const showSub = Keyboard.addListener(showEvent, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0))
+    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0))
+    return () => {
+      showSub.remove()
+      hideSub.remove()
+    }
+  }, [showProposalModal])
 
   const availableRequests = requests.filter((r) => r.status === 'pending')
 
@@ -248,8 +266,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
       )}
 
       <Modal visible={showProposalModal} transparent animationType="slide" onRequestClose={() => setShowProposalModal(false)}>
-        <KeyboardAvoidingScreen>
-        <View style={styles.modalOverlay}>
+        <View style={[styles.modalOverlay, { paddingBottom: keyboardHeight }]}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Proponer precio</Text>
             {selectedRequest && (
@@ -283,7 +300,6 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
             </View>
           </View>
         </View>
-        </KeyboardAvoidingScreen>
       </Modal>
     </View>
   )
