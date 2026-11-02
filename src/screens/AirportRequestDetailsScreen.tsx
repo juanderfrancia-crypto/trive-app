@@ -243,7 +243,7 @@ export default function AirportRequestDetailsScreen() {
               <View style={styles.driverRow}>
                 {renderAvatar(acceptedOffer.driver_name, acceptedOffer.driver_avatar_url)}
                 <View style={styles.driverInfo}>
-                  <Text style={styles.driverName}>{acceptedOffer.driver_name}</Text>
+                  <Text style={styles.driverName} numberOfLines={1}>{acceptedOffer.driver_name}</Text>
                   {renderRating(acceptedOffer.driver_rating)}
                 </View>
               </View>
@@ -265,7 +265,7 @@ export default function AirportRequestDetailsScreen() {
                   <View style={styles.driverRow}>
                     {renderAvatar(offer.driver_name, offer.driver_avatar_url)}
                     <View style={styles.driverInfo}>
-                      <Text style={styles.driverName}>{offer.driver_name}</Text>
+                      <Text style={styles.driverName} numberOfLines={1}>{offer.driver_name}</Text>
                       {renderRating(offer.driver_rating)}
                     </View>
                   </View>
@@ -433,8 +433,8 @@ const styles = StyleSheet.create({
   },
   priceEditBtnText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
 
-  driverRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  driverInfo: { flex: 1, gap: 2 },
+  driverRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, flex: 1, minWidth: 0 },
+  driverInfo: { flex: 1, gap: 2, minWidth: 0 },
   avatar: { width: 44, height: 44, borderRadius: 22 },
   avatarFallback: { backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
   avatarInitial: { ...TYPOGRAPHY.body, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
 
   offerWrap: { marginBottom: SPACING.md },
   offerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },
-  offerPrice: { alignItems: 'flex-end' },
+  offerPrice: { alignItems: 'flex-end', flexShrink: 0 },
   offerPriceLabel: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
   offerPriceValue: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.primary },
   acceptBtn: {
