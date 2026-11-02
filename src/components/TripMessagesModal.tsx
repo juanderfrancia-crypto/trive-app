@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Image, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert } from 'react-native'
+import { View, Image, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert, Keyboard, Platform } from 'react-native'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'
-import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { TripMessageList } from './TripMessageList'
 import { QuickMessageInput } from './QuickMessageInput'
@@ -44,6 +43,29 @@ export const TripMessagesModal = React.memo(
     const [sending, setSending] = useState(false)
     const [sendError, setSendError] = useState<string | null>(null)
     const [otherPhotoUrl, setOtherPhotoUrl] = useState<string | null>(null)
+    const [keyboardHeight, setKeyboardHeight] = useState(0)
+
+    // Este modal (Modal nativo de RN) crea su propia ventana en Android, que no
+    // redimensiona sola con el teclado (menos aún con edgeToEdgeEnabled en app.json)
+    // — KeyboardAvoidingView aquí adentro calculaba mal (campo tapado, o se quedaba
+    // "pegado" arriba después de cerrar el teclado). En vez de adivinar un offset,
+    // se mide el teclado real con los eventos del sistema y se empuja exactamente esa
+    // distancia — por eso solo se usa cuando el modal está visible (si no, un teclado
+    // abierto en la pantalla de atrás dejaría la próxima apertura ya con el padding puesto).
+    useEffect(() => {
+      if (!visible) {
+        setKeyboardHeight(0)
+        return
+      }
+      const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
+      const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
+      const showSub = Keyboard.addListener(showEvent, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0))
+      const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0))
+      return () => {
+        showSub.remove()
+        hideSub.remove()
+      }
+    }, [visible])
 
     // Foto real del otro usuario para el avatar del chat (no un ícono genérico).
     useEffect(() => {
@@ -143,7 +165,7 @@ export const TripMessagesModal = React.memo(
           <View style={styles.divider} />
 
           {/* Messages List */}
-          <KeyboardAvoidingScreen style={styles.messagesContainer} extraOffset={100}>
+          <View style={[styles.keyboardArea, { paddingBottom: keyboardHeight }]}>
             {loading ? (
               <View style={styles.centerContainer}>
                 <ActivityIndicator size="large" color={COLORS.primary} />
@@ -179,7 +201,7 @@ export const TripMessagesModal = React.memo(
             disabled={sending || !!error}
             placeholder="Escribe un mensaje..."
           />
-          </KeyboardAvoidingScreen>
+          </View>
         </SafeAreaView>
       </Modal>
     )
@@ -241,7 +263,8 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: COLORS.border,
   },
-  messagesContainer: {
+  // paddingBottom dinámico (alto real del teclado) se agrega inline — ver keyboardHeight.
+  keyboardArea: {
     flex: 1,
   },
   messagesContent: {
