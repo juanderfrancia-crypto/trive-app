@@ -12,6 +12,7 @@ import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import TimeInput12h from '../components/TimeInput12h'
+import DurationInput from '../components/DurationInput'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
 import {
@@ -34,11 +35,6 @@ const parseHHMM = (texto: string): number | null => {
   const horas = Number(m[1]), minutos = Number(m[2])
   if (horas > 23 || minutos > 59) return null
   return horas * 60 + minutos
-}
-
-const formatHHMM = (texto: string): string => {
-  const digitos = texto.replace(/\D/g, '').slice(0, 4)
-  return digitos.length > 2 ? `${digitos.slice(0, 2)}:${digitos.slice(2)}` : digitos
 }
 
 interface RouteTemplate {
@@ -81,7 +77,7 @@ export default function RecurringRoutesScreen() {
   // ── Modal publicar desde plantilla ─────────────────────────────────────────
   const [publishTarget, setPublishTarget] = useState<RouteTemplate | null>(null)
   const [departureTime, setDepartureTime] = useState('')
-  const [durationText, setDurationText] = useState('03:00')
+  const [durationMinutes, setDurationMinutes] = useState(180) // 3 horas por defecto
   const [pubVia, setPubVia] = useState('')
   const [publishing, setPublishing] = useState(false)
 
@@ -195,8 +191,8 @@ export default function RecurringRoutesScreen() {
       delay = Math.round((dep.getTime() - ahora.getTime()) / 60000)
       if (delay < 0) { showError('La hora de salida ya pasó.'); return }
     }
-    const duration = parseHHMM(durationText)
-    if (!duration) { showError('Escribe la duración en formato HH:MM.'); return }
+    const duration = durationMinutes
+    if (!duration) { showError('Elige la duración del viaje.'); return }
 
     setPublishing(true)
     try {
@@ -235,7 +231,7 @@ export default function RecurringRoutesScreen() {
       }).catch(() => {})
 
       setPublishTarget(null)
-      setDepartureTime(''); setDurationText('03:00'); setPubVia('')
+      setDepartureTime(''); setDurationMinutes(180); setPubVia('')
       showSuccess('¡Viaje publicado! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
       showError(err.message || 'No se pudo publicar la ruta.')
@@ -397,7 +393,7 @@ export default function RecurringRoutesScreen() {
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Publicar viaje</Text>
-                <TouchableOpacity onPress={() => { setPublishTarget(null); setDepartureTime(''); setDurationText('03:00'); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={() => { setPublishTarget(null); setDepartureTime(''); setDurationMinutes(180); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Icon name="X" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
@@ -425,7 +421,7 @@ export default function RecurringRoutesScreen() {
                 </View>
 
                 <TimeInput12h label="Hora de salida (vacío = ahora)" value={departureTime} onChangeText={setDepartureTime} placeholder="02:30" style={styles.marginTopSm} />
-                <FormField label="Duración del viaje (HH:MM)" placeholder="Ej: 03:00" value={durationText} onChangeText={(t) => setDurationText(formatHHMM(t))} keyboardType="number-pad" />
+                <DurationInput label="Duración del viaje" valueMinutes={durationMinutes} onChangeMinutes={setDurationMinutes} style={styles.marginTopSm} />
 
                 <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
 
