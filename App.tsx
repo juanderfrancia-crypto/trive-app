@@ -27,11 +27,13 @@ if (!__DEV__) {
   console.debug = () => {}
 }
 
-// Mantiene visible el splash nativo (el ícono) hasta que llamemos a hideAsync()
-// nosotros mismos, una vez carguen las fuentes. Sin esto, Android lo oculta solo
-// apenas arranca el JS, dejando una pantalla en blanco mientras cargan las fuentes
-// y recién después aparece LoadingScreen — un parpadeo en blanco bien notorio
-// entre dos pantallas que, por diseño, muestran el mismo ícono.
+// Mantiene visible el splash nativo (el ícono) hasta que AppNavigator llame a
+// hideAsync() él mismo, una vez estén listas las fuentes, la sesión y el estado
+// persistido — no apenas cargan las fuentes. Sin esto, Android lo oculta solo
+// apenas arranca el JS: eso dejaba ver LoadingScreen por separado mientras se
+// restauraba la sesión, un "parpadeo" perceptible aunque las dos pantallas
+// muestren el mismo ícono (como WhatsApp: una sola pantalla fija hasta que todo
+// esté listo, nunca un paso intermedio visible).
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // initSentry() antes que cualquier otra cosa: Sentry.wrap(App) de más abajo
@@ -62,12 +64,6 @@ function App() {
       setMaintenance({ on: isMaintenanceMode(), message: getMaintenanceMessage() });
     });
   }, []);
-
-  useEffect(() => {
-    if (fontsLoaded) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 

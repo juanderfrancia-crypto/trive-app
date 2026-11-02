@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SplashScreen from 'expo-splash-screen'
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { COLORS } from '../theme/theme'
 
@@ -110,7 +111,20 @@ export default function AppNavigator() {
     return () => clearTimeout(timer)
   }, [])
 
-  if (!mounted || authLoading || !stateRestored) {
+  const appReady = mounted && !authLoading && stateRestored
+
+  // El splash nativo (App.tsx llamó preventAutoHideAsync) se queda puesto hasta este
+  // momento exacto — recién cuando ya hay algo real que mostrar en vez de LoadingScreen,
+  // nunca antes. Así el usuario nunca ve el paso intermedio: splash nativo y después,
+  // directo, la pantalla real (como WhatsApp). hideAsync() no hace nada si ya está oculto,
+  // así que es seguro que este efecto se repita si authLoading vuelve a activarse después.
+  useEffect(() => {
+    if (appReady) {
+      SplashScreen.hideAsync().catch(() => {})
+    }
+  }, [appReady])
+
+  if (!appReady) {
     return <LoadingScreen />
   }
 
