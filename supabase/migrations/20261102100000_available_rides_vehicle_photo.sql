@@ -1,8 +1,11 @@
 -- "Salidas de hoy" (Inicio) va a mostrar la foto real del vehículo como fondo del bloque
 -- de la hora, pero available_rides no la traía (solo profiles.avatar_url del conductor,
 -- como driver_photo). Se agrega vehicle_photo del mismo profiles del conductor.
--- Solo se agrega una columna al final: CREATE OR REPLACE VIEW conserva los permisos
--- ya existentes sobre la vista.
+--
+-- CREATE OR REPLACE VIEW solo permite agregar columnas al FINAL de la lista — insertarla
+-- en medio (como se hizo en el primer intento de este archivo) corre la posición de las
+-- columnas siguientes y Postgres lo rechaza como si fuera un renombre
+-- (42P16: cannot change name of view column). vehicle_photo va al final.
 
 CREATE OR REPLACE VIEW public.available_rides WITH (security_invoker = true) AS
 SELECT
@@ -24,14 +27,14 @@ SELECT
   p.id AS driver_user_id,
   p.name AS driver_name,
   p.avatar_url AS driver_photo,
-  p.vehicle_photo_url AS vehicle_photo,
   p.rating::numeric AS driver_rating,
   (SELECT count(*) FROM reviews rv WHERE rv.reviewee_id = r.driver_id) AS driver_review_count,
   r.created_at,
   r.updated_at,
   r.pickup_point,
   r.route_via,
-  r.dropoff_point
+  r.dropoff_point,
+  p.vehicle_photo_url AS vehicle_photo
 FROM routes r
 LEFT JOIN profiles p ON p.id = r.driver_id
 WHERE r.departure_time > (now_bogota() - '00:15:00'::interval)
