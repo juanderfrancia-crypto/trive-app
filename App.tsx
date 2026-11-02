@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
+import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
@@ -25,6 +26,13 @@ if (!__DEV__) {
   console.info  = () => {}
   console.debug = () => {}
 }
+
+// Mantiene visible el splash nativo (el ícono) hasta que llamemos a hideAsync()
+// nosotros mismos, una vez carguen las fuentes. Sin esto, Android lo oculta solo
+// apenas arranca el JS, dejando una pantalla en blanco mientras cargan las fuentes
+// y recién después aparece LoadingScreen — un parpadeo en blanco bien notorio
+// entre dos pantallas que, por diseño, muestran el mismo ícono.
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // initSentry() antes que cualquier otra cosa: Sentry.wrap(App) de más abajo
 // necesita que el DSN ya esté configurado, si no, no manda nada a ningún
@@ -54,6 +62,12 @@ function App() {
       setMaintenance({ on: isMaintenanceMode(), message: getMaintenanceMessage() });
     });
   }, []);
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded]);
 
   if (!fontsLoaded) return null;
 
