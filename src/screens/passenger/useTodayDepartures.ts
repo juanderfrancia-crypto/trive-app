@@ -30,18 +30,18 @@ const getTodayBoundsBogota = async (): Promise<{ start: string; end: string }> =
 
 const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-// Primeras salidas de hoy con cupos libres, filtradas por el municipio de origen si lo hay,
-// sin repetir rutas que el pasajero ya reservó (la lista de reservas activas se recibe de
-// afuera para no repetir la misma consulta que ya hace usePassengerBookings).
-export const useTodayDepartures = (municipality: string | null, excludedRouteIds: string[] = []) => {
+// Primeras salidas de hoy con cupos libres, filtradas por el municipio de origen si lo hay.
+// Antes excluía las rutas donde el pasajero ya tenía una reserva — se quitó esa exclusión
+// (2026-11-02) para que se comporte igual que "Viajes ahora" (AvailableRidesScreen), que sí
+// deja ver y comprar más cupos en una ruta donde el pasajero ya reservó.
+export const useTodayDepartures = (municipality: string | null) => {
   const [rides, setRides] = useState<AvailableRide[]>([])
   const [hasMore, setHasMore] = useState(false)
-  const excludedKey = excludedRouteIds.join(',')
 
   const load = useCallback(async () => {
     const { start, end } = await getTodayBoundsBogota()
 
-    let consulta = supabase
+    const consulta = supabase
       .from('available_rides')
       .select('*')
       .gte('departure_time', start)
@@ -49,10 +49,6 @@ export const useTodayDepartures = (municipality: string | null, excludedRouteIds
       .gt('available_seats', 0)
       .order('departure_time', { ascending: true })
       .limit(FETCH_CAP)
-
-    if (excludedRouteIds.length > 0) {
-      consulta = consulta.not('id', 'in', `(${excludedRouteIds.join(',')})`)
-    }
 
     let data: AvailableRide[] | null = null
     try {
@@ -81,8 +77,7 @@ export const useTodayDepartures = (municipality: string | null, excludedRouteIds
     result = sortByRelevance(result)
     setRides(result.slice(0, SALIDAS_MOSTRADAS))
     setHasMore(result.length > SALIDAS_MOSTRADAS)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [municipality, excludedKey])
+  }, [municipality])
 
   useFocusEffect(useCallback(() => { load() }, [load]))
 
