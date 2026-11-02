@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert,
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon, { type IconName as IconNameType } from '../components/Icon'
-import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -124,6 +124,10 @@ export default function NotificationsScreen() {
   const [selectionMode, setSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [detailNotif, setDetailNotif] = useState<NotificationWithSender | null>(null)
+  // modalOverlay tiene justifyContent:'flex-end'; su paddingBottom (medido con el
+  // teclado real, ver useKeyboardHeight) empuja el sheet hacia arriba sin depender
+  // del redimensionamiento automático que no ocurre dentro de un Modal en Android.
+  const keyboardHeight = useKeyboardHeight(!!detailNotif)
   const [replyText, setReplyText] = useState('')
   const [replySending, setReplySending] = useState(false)
   const [replySent, setReplySent] = useState(false)
@@ -485,8 +489,11 @@ export default function NotificationsScreen() {
         animationType="slide"
         onRequestClose={() => setDetailNotif(null)}
       >
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setDetailNotif(null)}>
-          <KeyboardAvoidingScreen fill={false} style={{ width: '100%' }}>
+        <TouchableOpacity
+          style={[styles.modalOverlay, { paddingBottom: keyboardHeight }]}
+          activeOpacity={1}
+          onPress={() => setDetailNotif(null)}
+        >
           <TouchableOpacity activeOpacity={1} style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]} onPress={() => {}}>
             <View style={styles.modalHandle} />
 
@@ -642,7 +649,6 @@ export default function NotificationsScreen() {
               </View>
             )}
           </TouchableOpacity>
-          </KeyboardAvoidingScreen>
         </TouchableOpacity>
       </Modal>
 

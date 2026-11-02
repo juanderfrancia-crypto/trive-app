@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator, Keyboard, Platform } from 'react-native'
+import { View, TextInput, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from 'react-native'
 import { Text } from './AppText';
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNegotiationChat } from '../hooks/useNegotiationChat';
 import { useAppStore } from '../store/useAppStore';
 import { COLORS, SPACING } from '../theme/theme';
 import Icon from './Icon'
+import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 
 interface NegotiationChatModalProps {
   visible: boolean;
@@ -26,29 +27,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
 }) => {
   const [messageText, setMessageText] = useState('');
   const [sending, setSending] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
-
-  // Este Modal (Modal nativo de RN) crea su propia ventana en Android, que no
-  // redimensiona sola con el teclado (menos aún con edgeToEdgeEnabled en app.json):
-  // KeyboardAvoidingView calculaba mal el offset y, al cerrar el teclado, el campo
-  // se quedaba "pegado" arriba en vez de volver al fondo. Se mide el alto real del
-  // teclado con los eventos del sistema y se empuja exactamente esa distancia —
-  // mismo patrón ya validado en TripMessagesModal.tsx.
-  useEffect(() => {
-    if (!visible) {
-      setKeyboardHeight(0);
-      return;
-    }
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
-    const showSub = Keyboard.addListener(showEvent, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0));
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0));
-    return () => {
-      showSub.remove();
-      hideSub.remove();
-    };
-  }, [visible]);
 
   const {
     messages,
@@ -135,7 +114,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
             <ActivityIndicator size="large" color={COLORS.primary} />
           </View>
         ) : (
-          <View style={[s.keyboardArea, { paddingBottom: keyboardHeight }]}>
+          <KeyboardAvoidingScreen measureKeyboard active={visible} style={s.keyboardArea}>
             {/* Mensajes */}
             <ScrollView
               ref={scrollRef}
@@ -224,7 +203,7 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
                 <Text style={s.closedText}>{closedMessage}</Text>
               </View>
             )}
-          </View>
+          </KeyboardAvoidingScreen>
         )}
       </SafeAreaView>
     </Modal>

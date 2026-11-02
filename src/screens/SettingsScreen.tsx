@@ -210,8 +210,7 @@ export default function SettingsScreen() {
       />
 
       <Modal visible={sosModalVisible} transparent animationType="fade" onRequestClose={() => setSosModalVisible(false)}>
-        <KeyboardAvoidingScreen>
-        <View style={styles.overlay}>
+        <KeyboardAvoidingScreen measureKeyboard active={sosModalVisible} style={styles.overlay}>
           <View style={styles.sheet}>
             <View style={styles.sheetHeader}>
               <View style={styles.sheetIcon}>
@@ -246,7 +245,6 @@ export default function SettingsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
         </KeyboardAvoidingScreen>
       </Modal>
     </SafeAreaView>

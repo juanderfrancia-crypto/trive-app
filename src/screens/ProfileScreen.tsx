@@ -3,7 +3,7 @@ import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Modal, TextInput, StatusBar } from 'react-native'
-import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -56,6 +56,9 @@ export default function ProfileScreen() {
   const [isDriver, setIsDriver]           = useState(() => user?.role === 'driver')
   const [isLoading, setIsLoading]         = useState(false)
   const [editNameVisible, setEditNameVisible] = useState(false)
+  // sheet está position:absolute (bottom:0), no reacciona a padding de un
+  // contenedor — se le mueve el "bottom" directamente con el alto real del teclado.
+  const keyboardHeight = useKeyboardHeight(editNameVisible)
   const [newName, setNewName]             = useState('')
   const [newEmail, setNewEmail]           = useState('')
   const [emailConfirmationSent, setEmailConfirmationSent] = useState(false)
@@ -494,9 +497,8 @@ export default function ProfileScreen() {
 
       {/* Modal de datos personales */}
       <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
-        <KeyboardAvoidingScreen fill={false}>
-          <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
-          <View style={nm.sheet}>
+        <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
+        <View style={[nm.sheet, { bottom: keyboardHeight }]}>
             <Text style={nm.title}>Datos personales</Text>
 
             <View>
@@ -552,8 +554,7 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </LinearGradient>
             </View>
-          </View>
-        </KeyboardAvoidingScreen>
+        </View>
       </Modal>
 
     </SafeAreaView>

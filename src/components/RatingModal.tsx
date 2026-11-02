@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react'
-import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, Keyboard, Platform } from 'react-native'
+import React, { useState } from 'react'
+import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
 import { Text } from './AppText'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from './Icon'
+import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
 
 interface RatingModalProps {
   visible: boolean
@@ -30,25 +31,6 @@ export default function RatingModal({
   const [comment, setComment] = useState(initialComment)
   const [recommend, setRecommend] = useState(initialRecommend)
   const [loading, setLoading] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
-
-  // Modal nativo de RN = ventana propia en Android, no se redimensiona sola con el
-  // teclado (menos con edgeToEdgeEnabled). Se mide el alto real en vez de confiar en
-  // KeyboardAvoidingView — mismo patrón ya validado en TripMessagesModal/NegotiationChatModal.
-  useEffect(() => {
-    if (!visible) {
-      setKeyboardHeight(0)
-      return
-    }
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow'
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide'
-    const showSub = Keyboard.addListener(showEvent, (e) => setKeyboardHeight(e.endCoordinates?.height ?? 0))
-    const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardHeight(0))
-    return () => {
-      showSub.remove()
-      hideSub.remove()
-    }
-  }, [visible])
 
   const handleSubmit = async () => {
     if (rating === 0) {
@@ -81,7 +63,7 @@ export default function RatingModal({
   return (
     <>
       <Modal visible={visible} transparent animationType="fade">
-        <View style={[styles.overlay, { paddingBottom: keyboardHeight }]}>
+        <KeyboardAvoidingScreen measureKeyboard active={visible} style={styles.overlay}>
           <View style={styles.modalContainer}>
             {/* Header */}
             <View style={styles.header}>
@@ -224,7 +206,7 @@ export default function RatingModal({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingScreen>
       </Modal>
 
     </>

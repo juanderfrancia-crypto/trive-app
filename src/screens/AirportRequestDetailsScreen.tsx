@@ -326,8 +326,7 @@ export default function AirportRequestDetailsScreen() {
       )}
 
       <Modal visible={showPriceModal} animationType="slide" transparent onRequestClose={() => setShowPriceModal(false)}>
-        <KeyboardAvoidingScreen>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingScreen measureKeyboard active={showPriceModal} style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Subir oferta</Text>
@@ -364,7 +363,6 @@ export default function AirportRequestDetailsScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
         </KeyboardAvoidingScreen>
       </Modal>
     </SafeAreaView>

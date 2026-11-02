@@ -8,7 +8,7 @@ import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
-import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { useKeyboardHeight } from '../hooks/useKeyboardHeight'
 
 type MethodType = 'nequi' | 'daviplata' | 'bre_b'
 
@@ -42,6 +42,9 @@ export default function DriverPaymentMethodsScreen() {
   const [loading, setLoading]     = useState(false)
   const [saving, setSaving]       = useState(false)
   const [showForm, setShowForm]   = useState(false)
+  // sheet está position:absolute (bottom:0), así que no reacciona a padding de un
+  // contenedor — se le mueve el "bottom" directamente con el alto real del teclado.
+  const keyboardHeight = useKeyboardHeight(showForm)
 
   const [selectedType, setSelectedType] = useState<MethodType>('nequi')
   const [value, setValue]               = useState('')
@@ -196,9 +199,8 @@ export default function DriverPaymentMethodsScreen() {
       </ScrollView>
 
       <Modal visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-        <KeyboardAvoidingScreen>
-          <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setShowForm(false)} />
-          <View style={s.sheet}>
+        <TouchableOpacity style={s.backdrop} activeOpacity={1} onPress={() => setShowForm(false)} />
+        <View style={[s.sheet, { bottom: keyboardHeight }]}>
             <View style={s.sheetHeader}>
               <Text style={s.sheetTitle}>Agregar método digital</Text>
               <TouchableOpacity onPress={() => setShowForm(false)} style={s.iconBtn}>
@@ -258,8 +260,7 @@ export default function DriverPaymentMethodsScreen() {
             >
               {saving ? <ActivityIndicator color={COLORS.white} /> : <Text style={s.saveBtnText}>Guardar</Text>}
             </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingScreen>
+        </View>
       </Modal>
     </SafeAreaView>
   )
