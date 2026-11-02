@@ -11,6 +11,7 @@ import { useRoutes } from '../hooks/useRoutes'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import TimeInput12h from '../components/TimeInput12h'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
 import {
@@ -423,7 +424,7 @@ export default function RecurringRoutesScreen() {
                   </View>
                 </View>
 
-                <FormField label="Hora de salida (HH:MM)" placeholder="Vacío = ahora · Ej: 14:30" value={departureTime} onChangeText={(t) => setDepartureTime(formatHHMM(t))} keyboardType="number-pad" />
+                <TimeInput12h label="Hora de salida (vacío = ahora)" value={departureTime} onChangeText={setDepartureTime} placeholder="02:30" style={styles.marginTopSm} />
                 <FormField label="Duración del viaje (HH:MM)" placeholder="Ej: 03:00" value={durationText} onChangeText={(t) => setDurationText(formatHHMM(t))} keyboardType="number-pad" />
 
                 <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
@@ -537,6 +538,7 @@ const styles = StyleSheet.create({
   pubChips: { flexDirection: 'row', flexWrap: 'wrap', gap: SPACING.sm, marginTop: SPACING.xs },
   pubRoute: { ...TYPOGRAPHY.subtitle2, fontWeight: '800', color: COLORS.textPrimary },
 
+  marginTopSm: { marginTop: SPACING.sm },
   formField: {
     borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,

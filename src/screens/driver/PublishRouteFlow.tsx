@@ -4,6 +4,7 @@ import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
 import KeyboardAvoidingScreen from '../../components/KeyboardAvoidingScreen'
+import TimeInput12h from '../../components/TimeInput12h'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
 import { useRoutes, PublishRoutePayload, Route } from '../../hooks/useRoutes'
@@ -14,11 +15,6 @@ import { showSuccess } from '../../utils/showError'
 
 export type VehicleTypeId = 'auto' | 'busetica' | 'buseta'
 export type PaymentMethodId = 'efectivo' | 'nequi' | 'daviplata'
-
-function formatTimeInput(text: string): string {
-  const digits = text.replace(/\D/g, '').slice(0, 4)
-  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits
-}
 
 export const VEHICLE_TYPES: { id: VehicleTypeId; name: string; maxSeats: number }[] = [
   { id: 'auto', name: 'Auto', maxSeats: 4 },
@@ -431,30 +427,20 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
       </View>
 
       <View style={styles.row}>
-        <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Salida (HH:MM)</Text>
-          <TextInput
-            style={styles.fieldInput}
-            placeholder="14:30"
-            placeholderTextColor={COLORS.textTertiary}
-            value={draft.departureTime}
-            onChangeText={(t) => update('departureTime', formatTimeInput(t))}
-            keyboardType="number-pad"
-            maxLength={5}
-          />
-        </View>
-        <View style={styles.field}>
-          <Text style={styles.fieldLabel}>Llegada (opcional)</Text>
-          <TextInput
-            style={styles.fieldInput}
-            placeholder="Sin definir"
-            placeholderTextColor={COLORS.textTertiary}
-            value={draft.arrivalTime}
-            onChangeText={(t) => update('arrivalTime', formatTimeInput(t))}
-            keyboardType="number-pad"
-            maxLength={5}
-          />
-        </View>
+        <TimeInput12h
+          label="Salida"
+          value={draft.departureTime}
+          onChangeText={(t) => update('departureTime', t)}
+          placeholder="02:30"
+          style={styles.flexField}
+        />
+        <TimeInput12h
+          label="Llegada (opcional)"
+          value={draft.arrivalTime}
+          onChangeText={(t) => update('arrivalTime', t)}
+          placeholder="Sin definir"
+          style={styles.flexField}
+        />
       </View>
 
       <View style={styles.row}>
@@ -817,6 +803,7 @@ const styles = StyleSheet.create({
   chipTextActive: { color: COLORS.primary },
 
   row: { flexDirection: 'row', gap: SPACING.sm },
+  flexField: { flex: 1 },
   field: {
     flex: 1,
     borderWidth: 1,
