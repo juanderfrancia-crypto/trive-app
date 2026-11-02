@@ -1920,6 +1920,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          send_push: boolean
           title: string
           type: string
           updated_at: string | null
@@ -1931,6 +1932,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          send_push?: boolean
           title: string
           type: string
           updated_at?: string | null
@@ -1942,6 +1944,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          send_push?: boolean
           title?: string
           type?: string
           updated_at?: string | null

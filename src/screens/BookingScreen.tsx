@@ -302,6 +302,11 @@ export default function BookingScreen() {
       })
       setBookingData(null)
 
+      // Al conductor ya lo notifica reserve_seats() en el servidor (tipo 'booking',
+      // "Nueva reserva en tu viaje") en la misma transacción que crea la reserva —
+      // insertar otra aquí desde el cliente duplicaba el push. Esta es solo la
+      // confirmación para el propio pasajero, que ya está viendo el resultado en
+      // pantalla: queda en su centro de notificaciones, sin disparar push (send_push: false).
       try {
         await insertNotificationForUser(authUser.id, {
           user_id: authUser.id,
@@ -321,26 +326,8 @@ export default function BookingScreen() {
             audience: 'passengers_only',
           },
           is_read: false,
+          send_push: false,
         })
-
-        insertNotificationForUser(selectedRoute.driver_id, {
-          user_id: selectedRoute.driver_id,
-          type: 'booking',
-          title: 'Nueva reserva',
-          message: `${user.name || 'Un pasajero'} reservó ${seat_numbers.length} cupo${seat_numbers.length > 1 ? 's' : ''} en tu ruta ${selectedRoute.origin} → ${selectedRoute.destination}.`,
-          data: {
-            route_id: selectedRoute.id,
-            passenger_id: authUser.id,
-            passenger_name: user.name ?? null,
-            seat_numbers,
-            origin: selectedRoute.origin,
-            destination: selectedRoute.destination,
-            trip_date: selectedRoute.departure_time,
-            price: total_price,
-            audience: 'drivers_only',
-          },
-          is_read: false,
-        }).catch(() => {})
       } catch (notifError) {
         console.error('Error creando notificación:', notifError)
       }

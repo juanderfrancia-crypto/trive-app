@@ -26,6 +26,8 @@ export interface Notification {
   };
   is_read: boolean;
   created_at: string;
+  /** false = solo queda en el centro de notificaciones, no dispara push (p. ej. autoconfirmaciones). Por defecto true. */
+  send_push?: boolean;
 }
 
 type NotificationRow = Tables<'notifications'>;

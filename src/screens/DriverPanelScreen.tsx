@@ -10,8 +10,6 @@ import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { useCreateRouteGate } from '../hooks/useCreateRouteGate'
-import { notifyRouteCancellation } from '../services/pushNotifications'
-import { insertNotificationForUser } from '../services/notificationInsert'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
 import { withTimeout } from '../utils/withTimeout'
@@ -277,27 +275,6 @@ export default function DriverPanelScreen() {
     }, [fetchDriverRoutes, user?.id])
   )
 
-  const notifyPassengers = async (route: DriverRoute) => {
-    if (!route.passengers?.length) return
-
-    try {
-      await Promise.all(
-        route.passengers.map((passenger) =>
-          insertNotificationForUser(passenger.passenger_id, {
-            user_id: passenger.passenger_id,
-            type: 'trip_update',
-            title: 'Tu viaje ha iniciado',
-            message: `El viaje ${route.origin} → ${route.destination} ya comenzó. Tu asiento está confirmado.`,
-            data: { route_id: route.id, audience: 'passengers_only' },
-            is_read: false,
-          })
-        )
-      )
-    } catch (err: any) {
-      console.error('Error notificando a los pasajeros:', err)
-    }
-  }
-
   const onRefresh = () => {
     setRefreshing(true)
     fetchDriverRoutes()
@@ -342,14 +319,8 @@ export default function DriverPanelScreen() {
         )
       )
 
-      if (newStatus === 'in_progress') {
-        const route = routes.find((routeItem) => routeItem.id === routeId)
-        if (route) {
-          await notifyPassengers(route)
-        }
-      }
-
-
+      // driver_set_route_status ya notifica a cada pasajero confirmado en el
+      // servidor (tipo 'trip_started'); no se duplica aquí desde el cliente.
 
       Alert.alert(
         'Éxito',

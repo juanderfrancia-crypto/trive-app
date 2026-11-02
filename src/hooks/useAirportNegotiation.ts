@@ -132,7 +132,8 @@ export const useAirportNegotiation = () => {
       // Actualizar estado local para que aparezca inmediatamente
       setRequests(prev => [newRequest, ...prev])
 
-      //  Enviar notificación de viaje publicado al pasajero
+      //  Autoconfirmación al pasajero: ya está viendo el éxito en pantalla, así
+      //  que queda en su centro de notificaciones sin disparar push.
       console.log(' [HOOK] Enviando notificación de viaje publicado')
       insertNotificationForUser(data.passenger_id, {
         user_id: data.passenger_id,
@@ -146,6 +147,7 @@ export const useAirportNegotiation = () => {
           price: data.offered_price,
         },
         is_read: false,
+        send_push: false,
       }).catch((notifErr) => {
         console.error(' [HOOK] Error enviando notificación de publicación:', notifErr)
       })
@@ -898,19 +900,10 @@ export const useAirportNegotiation = () => {
         prev.map(r => r.id === requestId ? { ...r, offered_price: newPrice, price_updated_at: new Date().toISOString() } : r)
       )
 
-      // Notificar a conductores (mediante broadcast) — este canal es de un solo uso
-      // (solo para mandar el broadcast), nunca se cerraba y se iba acumulando uno
-      // por cada ajuste de precio en toda la sesión.
-      const channel = supabase.channel(`price_update_${requestId}`)
-      try {
-        await channel.send({
-          type: 'broadcast',
-          event: 'price_changed',
-          payload: { request_id: requestId, new_price: newPrice },
-        })
-      } finally {
-        supabase.removeChannel(channel)
-      }
+      // update_airport_request_price() ya notifica en el servidor a cada conductor
+      // con oferta pendiente en esta solicitud (tipo 'trip_update'). Antes esto se
+      // intentaba avisar con un broadcast de Realtime que ningún componente
+      // escuchaba — nunca llegaba a nadie, ni como push ni como notificación interna.
     } catch (err: any) {
       const message = err.message || 'Error al actualizar precio'
       setError(message)
@@ -942,17 +935,10 @@ export const useAirportNegotiation = () => {
 
       if (updateError) throw updateError
 
-      // Notificar a conductores con ofertas pendientes
-      if (current.driver_id) {
-        insertNotificationForUser(current.driver_id, {
-          user_id: current.driver_id,
-          type: 'trip_update',
-          title: 'Solicitud cancelada',
-          message: 'El pasajero canceló la solicitud de aeropuerto',
-          data: { request_id: requestId },
-          is_read: false,
-        }).catch(() => {})
-      }
+      // cancel_airport_request() ya notifica en el servidor: al conductor asignado
+      // si ya había uno, o a todos los que tenían oferta pendiente si aún no lo había.
+      // Antes esto solo cubría el primer caso desde el cliente (y se perdía si la
+      // app se cerraba justo después de la llamada RPC).
 
       setRequests(prev => prev.filter(r => r.id !== requestId))
     } catch (err: any) {

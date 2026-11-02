@@ -221,6 +221,8 @@ export default function RecurringRoutesScreen() {
         .from('profiles').select('balance').eq('id', user.id).single()
       if (prof?.balance !== undefined) setBalance(prof.balance ?? 0)
 
+      // Autoconfirmación: el conductor ya ve "¡Viaje publicado!" en pantalla,
+      // así que queda en su centro de notificaciones sin disparar push.
       insertNotificationForUser(user.id, {
         user_id: user.id,
         type: 'trip_update',
@@ -228,6 +230,7 @@ export default function RecurringRoutesScreen() {
         message: `Tu ruta ${publishTarget.origin} → ${publishTarget.destination} está activa.`,
         data: { route_id: newRoute?.id },
         is_read: false,
+        send_push: false,
       }).catch(() => {})
 
       setPublishTarget(null)

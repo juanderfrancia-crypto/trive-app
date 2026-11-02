@@ -254,6 +254,8 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
     }
 
     // A partir de aquí la ruta ya existe en el servidor; lo siguiente es secundario.
+    // Autoconfirmación: el conductor ya está viendo el éxito en pantalla, así que
+    // queda en su centro de notificaciones sin disparar push (send_push: false).
     insertNotificationForUser(user.id, {
       user_id: user.id,
       type: 'trip_update',
@@ -261,6 +263,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
       message: `Tu ruta ${payload.origin} → ${payload.destination} está activa. Los pasajeros ya pueden verla y reservar.`,
       data: { route_id: route?.id },
       is_read: false,
+      send_push: false,
     }).catch(() => {})
 
     if (draft.saveAsTemplate) {
