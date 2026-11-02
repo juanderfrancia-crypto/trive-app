@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
+import { withTimeout } from '../utils/withTimeout';
 import type { Tables } from '../types/database.types';
 
 export interface Notification {
@@ -79,12 +80,16 @@ export const useNotifications = (userId?: string) => {
     try {
       setError(null);
       setLoading(true);
-      const { data, error: fetchError } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(100);
+      const { data, error: fetchError } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('notifications')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(100)
+        )
+      );
       if (fetchError) throw fetchError;
       setNotifications((data || []).map(toNotification).filter(notificationIsRelevantForCurrentUser));
     } catch (err: any) {

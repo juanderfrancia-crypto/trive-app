@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../services/supabase'
+import { withTimeout } from '../utils/withTimeout'
 
 export interface UpcomingTrip {
   bookingId: string
@@ -30,24 +31,32 @@ export const useUpcomingTrip = (passengerId?: string) => {
     setLoading(true)
     try {
       // Paso 1: obtener reservas activas del pasajero
-      const { data: bookings } = await supabase
-        .from('bookings')
-        .select('id, route_id, seat_number')
-        .eq('passenger_id', passengerId)
-        .in('booking_status', ['confirmed', 'pending'])
+      const { data: bookings } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('bookings')
+            .select('id, route_id, seat_number')
+            .eq('passenger_id', passengerId)
+            .in('booking_status', ['confirmed', 'pending'])
+        )
+      )
 
       if (!bookings?.length) { setTrip(null); return }
 
       // Paso 2: buscar la ruta más próxima (departure_time está en routes, no en bookings)
       const routeIds = bookings.map((b: any) => b.route_id)
-      const { data: routes } = await supabase
-        .from('routes')
-        .select('id, origin, destination, departure_time, driver_id, total_seats, available_seats, price_per_seat, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, status')
-        .in('id', routeIds)
-        .not('status', 'eq', 'cancelled')
-        .gte('departure_time', new Date().toISOString())
-        .order('departure_time', { ascending: true })
-        .limit(1)
+      const { data: routes } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('routes')
+            .select('id, origin, destination, departure_time, driver_id, total_seats, available_seats, price_per_seat, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, status')
+            .in('id', routeIds)
+            .not('status', 'eq', 'cancelled')
+            .gte('departure_time', new Date().toISOString())
+            .order('departure_time', { ascending: true })
+            .limit(1)
+        )
+      )
 
       if (!routes?.length) { setTrip(null); return }
 
@@ -55,11 +64,15 @@ export const useUpcomingTrip = (passengerId?: string) => {
       const booking = bookings.find((b: any) => b.route_id === route.id)
       if (!booking) { setTrip(null); return }
 
-      const { data: driver } = await supabase
-        .from('profiles')
-        .select('name, rating, avatar_url, vehicle_photo_url')
-        .eq('id', route.driver_id)
-        .maybeSingle()
+      const { data: driver } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('profiles')
+            .select('name, rating, avatar_url, vehicle_photo_url')
+            .eq('id', route.driver_id)
+            .maybeSingle()
+        )
+      )
 
       const depTime      = new Date(route.departure_time)
       const minutesUntil = Math.max(0, Math.round((depTime.getTime() - Date.now()) / 60000))

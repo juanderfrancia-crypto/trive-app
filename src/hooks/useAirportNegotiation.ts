@@ -898,13 +898,19 @@ export const useAirportNegotiation = () => {
         prev.map(r => r.id === requestId ? { ...r, offered_price: newPrice, price_updated_at: new Date().toISOString() } : r)
       )
 
-      // Notificar a conductores (mediante broadcast)
+      // Notificar a conductores (mediante broadcast) — este canal es de un solo uso
+      // (solo para mandar el broadcast), nunca se cerraba y se iba acumulando uno
+      // por cada ajuste de precio en toda la sesión.
       const channel = supabase.channel(`price_update_${requestId}`)
-      await channel.send({
-        type: 'broadcast',
-        event: 'price_changed',
-        payload: { request_id: requestId, new_price: newPrice },
-      })
+      try {
+        await channel.send({
+          type: 'broadcast',
+          event: 'price_changed',
+          payload: { request_id: requestId, new_price: newPrice },
+        })
+      } finally {
+        supabase.removeChannel(channel)
+      }
     } catch (err: any) {
       const message = err.message || 'Error al actualizar precio'
       setError(message)

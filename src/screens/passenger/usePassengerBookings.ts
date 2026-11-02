@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '../../services/supabase'
 import { notifyTripCancellation } from '../../services/pushNotifications'
+import { withTimeout } from '../../utils/withTimeout'
 
 export type PassengerBookingStatus = 'pending' | 'confirmed' | 'awaiting_confirmation'
 
@@ -38,11 +39,15 @@ export const usePassengerBookings = (passengerId?: string) => {
     if (!passengerId) { setBookings([]); return }
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('bookings')
-        .select('id, booking_status, seat_number, reservation_code, payment_method, payment_marked_at, payment_confirmed_at, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))')
-        .eq('passenger_id', passengerId)
-        .in('booking_status', ACTIVE_STATUSES)
+      const { data, error } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('bookings')
+            .select('id, booking_status, seat_number, reservation_code, payment_method, payment_marked_at, payment_confirmed_at, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))')
+            .eq('passenger_id', passengerId)
+            .in('booking_status', ACTIVE_STATUSES)
+        )
+      )
 
       if (error || !data) { setBookings([]); return }
 

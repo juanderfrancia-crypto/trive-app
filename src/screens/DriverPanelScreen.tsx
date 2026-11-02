@@ -14,6 +14,7 @@ import { notifyRouteCancellation } from '../services/pushNotifications'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { TripMessagesModal } from '../components/TripMessagesModal'
 import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_messages'
+import { withTimeout } from '../utils/withTimeout'
 import Icon, { type IconName } from '../components/Icon'
 import PublishSheet from '../components/driver/PublishSheet'
 
@@ -105,36 +106,42 @@ export default function DriverPanelScreen() {
     try {
       // 🔧 FIX: Usar JOIN en lugar de queries O(n²)
       // Obtener rutas CON bookings y perfiles en 1 sola query
-      const { data, error } = await supabase
-        .from('routes')
-        .select(`
-          *,
-          bookings(
-            id,
-            passenger_id,
-            seat_number,
-            booking_status,
-            payment_method,
-            created_at,
-            dropoff_point,
-            dropoff_point_custom,
-            pickup_point,
-            pickup_point_custom,
-            passenger:profiles!passenger_id(id, name, email)
-          )
-        `)
-        .eq('driver_id', user.id)
-        .in('status', ['scheduled', 'in_progress'])
-        .order('departure_time', { ascending: true })
+      const { data, error } = await withTimeout(
+        Promise.resolve(
+          supabase
+            .from('routes')
+            .select(`
+              *,
+              bookings(
+                id,
+                passenger_id,
+                seat_number,
+                booking_status,
+                payment_method,
+                created_at,
+                dropoff_point,
+                dropoff_point_custom,
+                pickup_point,
+                pickup_point_custom,
+                passenger:profiles!passenger_id(id, name, email)
+              )
+            `)
+            .eq('driver_id', user.id)
+            .in('status', ['scheduled', 'in_progress'])
+            .order('departure_time', { ascending: true })
+        )
+      )
 
       if (error) throw error
 
       // Teléfonos de pasajeros confirmados: la base solo los libera al conductor de cada ruta
-      const phoneRows = await Promise.all(
-        (data || []).map(async (route: any) => {
-          const { data: rows } = await supabase.rpc('get_route_passenger_phones', { p_route_id: route.id })
-          return [route.id, new Map(((rows as any[]) || []).map((r) => [r.passenger_id, r.phone]))] as const
-        })
+      const phoneRows = await withTimeout(
+        Promise.all(
+          (data || []).map(async (route: any) => {
+            const { data: rows } = await supabase.rpc('get_route_passenger_phones', { p_route_id: route.id })
+            return [route.id, new Map(((rows as any[]) || []).map((r) => [r.passenger_id, r.phone]))] as const
+          })
+        )
       )
       const phonesByRoute = new Map(phoneRows)
 
