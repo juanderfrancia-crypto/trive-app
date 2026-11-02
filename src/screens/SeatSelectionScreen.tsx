@@ -7,7 +7,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useBookings } from '../hooks/useBookings'
-import { useRoutes } from '../hooks/useRoutes'
+import { useRoutes, Route } from '../hooks/useRoutes'
 import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import OfflineBanner from '../components/OfflineBanner'
@@ -26,6 +26,11 @@ export default function SeatSelectionScreen() {
   const { getRouteBookings, reservePendingBookings, loading } = useBookings()
   const { getRouteById } = useRoutes()
   const [bookings, setBookings] = useState<any[]>([])
+  // selectedRoute (del store global) puede venir de distintas pantallas con distinta forma
+  // (ej. la vista available_rides trae driver_photo/vehicle_type, no driver_avatar_url ni
+  // vehicle_make/vehicle_photo_url) — routeDetails siempre trae la forma completa real,
+  // la misma que ya se pedía aquí para validar la reserva.
+  const [routeDetails, setRouteDetails] = useState<Route | null>(null)
   const [selectedSeats, setSelectedSeats] = useState<number[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
   // Cubre la validación previa a reservar (getRouteById/getRouteBookings), que no
@@ -88,6 +93,8 @@ export default function SeatSelectionScreen() {
         }
         return
       }
+
+      setRouteDetails(currentRoute)
 
       if (currentRoute.status !== 'scheduled') {
         if (!skipValidation) {
@@ -396,11 +403,14 @@ export default function SeatSelectionScreen() {
           </View>
         ) : (
           <>
-            {/* Ficha del conductor y del vehículo: quién te va a llevar y en qué carro. */}
+            {/* Ficha del conductor y del vehículo: quién te va a llevar y en qué carro.
+                Se usa routeDetails (la ruta completa, recién pedida a getRouteById) en vez
+                de selectedRoute directo: selectedRoute puede venir de otras pantallas con
+                forma incompleta (ej. available_rides no trae vehicle_make ni las fotos). */}
             <View style={styles.driverCard}>
               <View style={styles.driverRow}>
-                {selectedRoute.driver_avatar_url ? (
-                  <Image source={{ uri: selectedRoute.driver_avatar_url }} style={styles.driverAvatar} />
+                {(routeDetails ?? selectedRoute).driver_avatar_url ? (
+                  <Image source={{ uri: (routeDetails ?? selectedRoute).driver_avatar_url }} style={styles.driverAvatar} />
                 ) : (
                   <View style={styles.driverAvatar}>
                     <Text style={styles.driverInitial}>
@@ -425,8 +435,8 @@ export default function SeatSelectionScreen() {
               <View style={styles.cardDivider} />
 
               <View style={styles.vehicleRow}>
-                {selectedRoute.vehicle_photo_url ? (
-                  <Image source={{ uri: selectedRoute.vehicle_photo_url }} style={styles.vehicleThumb} />
+                {(routeDetails ?? selectedRoute).vehicle_photo_url ? (
+                  <Image source={{ uri: (routeDetails ?? selectedRoute).vehicle_photo_url }} style={styles.vehicleThumb} />
                 ) : (
                   <View style={styles.vehicleThumb}>
                     <Icon name="Car" size={26} color={COLORS.primary} />
@@ -434,7 +444,11 @@ export default function SeatSelectionScreen() {
                 )}
                 <View style={styles.driverBody}>
                   <Text style={styles.vehicleName}>
-                    {[selectedRoute.vehicle_make, selectedRoute.vehicle_model, selectedRoute.vehicle_color]
+                    {[
+                      (routeDetails ?? selectedRoute).vehicle_make,
+                      (routeDetails ?? selectedRoute).vehicle_model,
+                      selectedRoute.vehicle_color,
+                    ]
                       .filter(Boolean)
                       .join(' ')}
                   </Text>
