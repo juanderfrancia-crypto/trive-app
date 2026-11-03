@@ -30,50 +30,39 @@ export const useUpcomingTrip = (passengerId?: string) => {
 
     setLoading(true)
     try {
-      // Paso 1: obtener reservas activas del pasajero
-      const { data: bookings } = await withTimeout(
+      // Una sola consulta con las relaciones ya embebidas (mismo patrón ya
+      // probado en usePassengerBookings) en vez de 3 viajes de red seguidos
+      // (reservas -> rutas -> conductor) — eso es lo que hacía sentir lenta
+      // la tarjeta "Tu próximo viaje" cada vez que se volvía a Inicio.
+      const { data, error } = await withTimeout(
         Promise.resolve(
           supabase
             .from('bookings')
-            .select('id, route_id, seat_number')
+            .select(
+              'id, route_id, seat_number, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))'
+            )
             .eq('passenger_id', passengerId)
             .in('booking_status', ['confirmed', 'pending'])
         )
       )
 
-      if (!bookings?.length) { setTrip(null); return }
+      // Falla transitoria (red/timeout): se deja el último viaje conocido en
+      // pantalla en vez de hacerlo desaparecer — se reintenta en el próximo
+      // refetch sin que el usuario note nada.
+      if (error || !data) return
 
-      // Paso 2: buscar la ruta más próxima (departure_time está en routes, no en bookings)
-      const routeIds = bookings.map((b: any) => b.route_id)
-      const { data: routes } = await withTimeout(
-        Promise.resolve(
-          supabase
-            .from('routes')
-            .select('id, origin, destination, departure_time, driver_id, total_seats, available_seats, price_per_seat, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, status')
-            .in('id', routeIds)
-            .not('status', 'eq', 'cancelled')
-            .gte('departure_time', new Date().toISOString())
-            .order('departure_time', { ascending: true })
-            .limit(1)
-        )
-      )
+      const now = Date.now()
+      const candidatas = (data as any[])
+        .filter((b) => {
+          const r = b.routes
+          return r && r.status !== 'cancelled' && r.status !== 'completed' && new Date(r.departure_time).getTime() >= now
+        })
+        .sort((a, b) => new Date(a.routes.departure_time).getTime() - new Date(b.routes.departure_time).getTime())
 
-      if (!routes?.length) { setTrip(null); return }
+      if (candidatas.length === 0) { setTrip(null); return }
 
-      const route   = routes[0]
-      const booking = bookings.find((b: any) => b.route_id === route.id)
-      if (!booking) { setTrip(null); return }
-
-      const { data: driver } = await withTimeout(
-        Promise.resolve(
-          supabase
-            .from('profiles')
-            .select('name, rating, avatar_url, vehicle_photo_url')
-            .eq('id', route.driver_id)
-            .maybeSingle()
-        )
-      )
-
+      const booking = candidatas[0]
+      const route   = booking.routes
       const depTime      = new Date(route.departure_time)
       const minutesUntil = Math.max(0, Math.round((depTime.getTime() - Date.now()) / 60000))
 
@@ -83,10 +72,10 @@ export const useUpcomingTrip = (passengerId?: string) => {
         origin:        route.origin,
         destination:   route.destination,
         departureTime: route.departure_time,
-        driverName:    driver?.name  ?? 'Conductor',
-        driverRating:  driver?.rating ?? 0,
-        driverPhotoUrl: driver?.avatar_url ?? null,
-        vehiclePhotoUrl: driver?.vehicle_photo_url ?? null,
+        driverName:    route.profiles?.name  ?? 'Conductor',
+        driverRating:  route.profiles?.rating ?? 0,
+        driverPhotoUrl: route.profiles?.avatar_url ?? null,
+        vehiclePhotoUrl: route.profiles?.vehicle_photo_url ?? null,
         vehicleMake:   route.vehicle_make ?? null,
         vehicleModel:  route.vehicle_model ?? null,
         vehicleColor:  route.vehicle_color ?? null,
@@ -96,7 +85,7 @@ export const useUpcomingTrip = (passengerId?: string) => {
         routeObj:      route,
       })
     } catch {
-      setTrip(null)
+      // Igual que arriba: no borrar lo que ya había en pantalla por un error pasajero.
     } finally {
       setLoading(false)
     }

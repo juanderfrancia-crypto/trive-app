@@ -49,7 +49,10 @@ export const usePassengerBookings = (passengerId?: string) => {
         )
       )
 
-      if (error || !data) { setBookings([]); return }
+      // Falla transitoria: se deja la lista anterior en pantalla en vez de
+      // vaciarla — evita el parpadeo de "sin reservas" cada vez que se
+      // reintenta por una red lenta.
+      if (error || !data) return
 
       const lista: PassengerBooking[] = (data as any[])
         .filter((b) => b.routes && (b.booking_status === 'awaiting_confirmation' || !['completed', 'cancelled'].includes(b.routes.status)))
@@ -84,7 +87,7 @@ export const usePassengerBookings = (passengerId?: string) => {
 
       setBookings(lista)
     } catch {
-      setBookings([])
+      // Igual que arriba: no borrar lo que ya había en pantalla por un error pasajero.
     } finally {
       setLoading(false)
     }

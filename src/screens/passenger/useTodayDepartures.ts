@@ -53,16 +53,10 @@ export const useTodayDepartures = (municipality: string | null) => {
     let data: AvailableRide[] | null = null
     try {
       const queryResult = await withTimeout(Promise.resolve(consulta))
-      if (queryResult.error) {
-        setRides([])
-        setHasMore(false)
-        return
-      }
+      if (queryResult.error) return
       data = queryResult.data as AvailableRide[] | null
     } catch {
-      // Tardó demasiado (red inestable): dejar la lista como estaba antes, sin romper la pantalla.
-      setRides([])
-      setHasMore(false)
+      // Tardó demasiado (red inestable): se deja la lista como estaba antes, sin romper la pantalla.
       return
     }
 

@@ -43,7 +43,7 @@ export default function PassengerHomeScreen() {
   const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
 
-  const { trip: upcomingTrip, loading: tripLoading } = useUpcomingTrip(user?.id)
+  const { trip: upcomingTrip } = useUpcomingTrip(user?.id)
   const { routes: recentRoutes } = useRecentRoutes(user?.id)
   const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
   const { rides: salidasHoy, reload: reloadDepartures, hasMore: masSalidasHoy } = useTodayDepartures(preferredMunicipality)
@@ -324,7 +324,7 @@ export default function PassengerHomeScreen() {
           </View>
         )}
 
-        {!tripLoading && upcomingTrip && (
+        {upcomingTrip && (
           <TouchableOpacity style={styles.tripCard} onPress={goToTripStatus} activeOpacity={0.92}>
             <View style={styles.tripHeader}>
               <Text style={styles.tripLabel}>Tu próximo viaje</Text>
