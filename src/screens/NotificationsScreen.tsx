@@ -16,6 +16,7 @@ import { createReview } from '../services/reviews'
 import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
+import { showError } from '../utils/showError'
 
 type NotifType = Notification['type']
 type IconName = IconNameType
@@ -222,8 +223,12 @@ export default function NotificationsScreen() {
           text: 'Eliminar',
           style: 'destructive',
           onPress: async () => {
-            await deleteNotifications(selectedIds)
-            exitSelection()
+            try {
+              await deleteNotifications(selectedIds)
+              exitSelection()
+            } catch {
+              showError('No se pudieron eliminar. Verifica tu conexión e intenta de nuevo.')
+            }
           },
         },
       ]
@@ -313,7 +318,17 @@ export default function NotificationsScreen() {
               onPress={() => {
                 Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
                   { text: 'Cancelar', style: 'cancel' },
-                  { text: 'Eliminar', style: 'destructive', onPress: async () => { await deleteNotifications([item.id]) } },
+                  {
+                    text: 'Eliminar',
+                    style: 'destructive',
+                    onPress: async () => {
+                      try {
+                        await deleteNotifications([item.id])
+                      } catch {
+                        showError('No se pudo eliminar. Verifica tu conexión e intenta de nuevo.')
+                      }
+                    },
+                  },
                 ])
               }}
             >
