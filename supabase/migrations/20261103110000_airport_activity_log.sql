@@ -24,10 +24,10 @@ alter table public.airport_activity_log enable row level security;
 
 -- Nadie escribe esta tabla directamente (solo el trigger, que es SECURITY
 -- DEFINER y por lo tanto no depende de policies para insertar).
--- Solo administradores pueden leerla (back-office).
-create policy "admins_read_airport_activity_log"
+-- Solo personal de operaciones/administración (back-office) puede leerla.
+create policy "staff_read_airport_activity_log"
   on public.airport_activity_log for select
-  using (public.is_admin_user());
+  using (public.is_admin_user() or public.has_staff_role('operaciones'));
 
 revoke all on public.airport_activity_log from public, anon, authenticated;
 grant select on public.airport_activity_log to authenticated;
