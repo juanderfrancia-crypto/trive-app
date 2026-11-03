@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Image } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native'
+import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'

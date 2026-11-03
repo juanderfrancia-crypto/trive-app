@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Image, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert, Keyboard, Platform } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert, Keyboard, Platform } from 'react-native'
+import { Image } from 'expo-image'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'

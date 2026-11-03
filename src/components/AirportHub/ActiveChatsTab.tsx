@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet, Image } from 'react-native'
+import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
+import { Image } from 'expo-image'
 import { Text } from '../AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'

@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl, Image } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
+import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -405,7 +406,7 @@ export default function PassengerHomeScreen() {
                 <View style={styles.rideTime}>
                   {ride.vehicle_photo ? (
                     <>
-                      <Image source={{ uri: ride.vehicle_photo }} style={styles.rideTimePhoto} />
+                      <Image source={{ uri: ride.vehicle_photo }} style={styles.rideTimePhoto} contentFit="cover" />
                       <View style={styles.rideTimeOverlay} />
                     </>
                   ) : (
@@ -592,7 +593,7 @@ const styles = StyleSheet.create({
   rideTimeShadow: { position: 'absolute', top: 0, right: -10, bottom: 0, width: 10 },
   // Cuando hay foto real del vehículo, se usa como fondo del bloque de la hora,
   // con rideTimeOverlay encima para que la hora en blanco siga siendo legible.
-  rideTimePhoto: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, resizeMode: 'cover' },
+  rideTimePhoto: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   rideTimeOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: `${COLORS.textPrimary}94` },
   rideHour: { fontSize: 17, fontWeight: '800', color: COLORS.white },
   ridePeriod: { fontSize: 11, fontWeight: '600', color: 'rgba(255,255,255,0.75)' },

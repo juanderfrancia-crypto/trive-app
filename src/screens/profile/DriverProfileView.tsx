@@ -1,5 +1,6 @@
 import React from 'react'
-import { View, Image, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
+import { Image } from 'expo-image'
 import { Text } from '../../components/AppText'
 import Icon, { type IconName } from '../../components/Icon'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
