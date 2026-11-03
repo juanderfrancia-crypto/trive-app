@@ -133,7 +133,7 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
               </View>
             )}
           </View>
-          <VehicleVector type={ride.vehicle_type} width={84} />
+          <VehicleVector type={ride.vehicle_type} width={84} height={56} />
         </View>
       </View>
 
@@ -369,11 +369,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: 'hidden',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   ticketSelected: { borderColor: COLORS.primary, borderWidth: 2 },
   ticketDimmed: { opacity: 0.55 },
-  ticketTop: { padding: SPACING.lg, gap: SPACING.sm },
+  ticketTop: { paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md, gap: SPACING.xs },
   ticketHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   timeGroup: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   timePill: {
@@ -417,8 +417,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.lg,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.md,
     gap: SPACING.md,
   },
   seatsCol: { flex: 1, gap: SPACING.xs },
