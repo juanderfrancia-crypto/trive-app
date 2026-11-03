@@ -685,7 +685,7 @@ export default function DriverDocumentsScreen() {
             style={styles.helpButton}
             activeOpacity={0.8}
             onPress={() => {
-              Linking.openURL('mailto:soportetrive@gmail.com?subject=Consulta sobre Documentos&body=Hola, tengo una pregunta sobre mis documentos.')
+              Linking.openURL('mailto:privacy@trivesoft.com?subject=Consulta sobre Documentos&body=Hola, tengo una pregunta sobre mis documentos.')
             }}
           >
             <Icon name="Mail" size={18} color={COLORS.primary} />

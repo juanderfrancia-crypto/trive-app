@@ -58,7 +58,7 @@ const TUTORIALS: Tutorial[] = [
       description: 'Requisitos y pasos para comenzar a ganar dinero con Trive',
       steps: [
         "1. En tu perfil, toca \"Cambiar a modo Conductor\"",
-        "2. Revisa los requisitos: ser mayor de 18 años, licencia de conducir vigente, cédula, SOAT y vehículo en buen estado",
+        "2. Revisa los requisitos: ser mayor de 18 años, licencia de conducir vigente, cédula, tarjeta de propiedad del vehículo, SOAT y técnico-mecánica vigentes",
         "3. Si un conductor te invitó, ingresa su código de referido (es opcional)",
         "4. Sube tus documentos y los datos de tu vehículo",
         "5. Espera la verificación de tus documentos (24 a 48 horas)",

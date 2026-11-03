@@ -9,11 +9,11 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 const CONTACTS: { label: string; value: string; time: string; icon: IconName; color: string; onPress: () => void }[] = [
   {
     label: 'Correo electrónico',
-    value: 'soportetrive@gmail.com',
+    value: 'privacy@trivesoft.com',
     time: 'Respuesta en 24 horas',
     icon: 'Mail',
     color: COLORS.primary,
-    onPress: () => Linking.openURL('mailto:soportetrive@gmail.com'),
+    onPress: () => Linking.openURL('mailto:privacy@trivesoft.com'),
   },
   {
     label: 'WhatsApp',
@@ -25,11 +25,11 @@ const CONTACTS: { label: string; value: string; time: string; icon: IconName; co
   },
   {
     label: 'Llamada',
-    value: '+57 (317) 302-8628',
+    value: '+57 (300) 577-2967',
     time: 'Lunes a viernes, 8 a. m. a 6 p. m.',
     icon: 'Phone',
     color: COLORS.accent,
-    onPress: () => Linking.openURL('tel:+573173028628'),
+    onPress: () => Linking.openURL('tel:+573005772967'),
   },
 ]
 

@@ -87,7 +87,7 @@ export default function BugReportScreen() {
       setLoading(false)
       Alert.alert(
         'Error',
-        'No pudimos enviar tu reporte. Por favor intenta de nuevo o contacta directamente a soportetrive@gmail.com'
+        'No pudimos enviar tu reporte. Por favor intenta de nuevo o contacta directamente a privacy@trivesoft.com'
       )
     }
   }

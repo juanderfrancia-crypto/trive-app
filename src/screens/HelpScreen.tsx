@@ -55,7 +55,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Conductores',
     question: '¿Cuáles son los requisitos para ser conductor?',
     answer:
-      'Debes ser mayor de 18 años, tener licencia de conducir vigente, cédula, SOAT vigente y un vehículo en buen estado.',
+      'Debes ser mayor de 18 años, tener licencia de conducir vigente, cédula, tarjeta de propiedad del vehículo, SOAT vigente y técnico-mecánica vigente (si tu vehículo la requiere).',
   },
   {
     id: '7',
@@ -97,7 +97,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Cuentas',
     question: '¿Cómo elimino mi cuenta?',
     answer:
-      'Ve a Perfil > Privacidad y eliminar cuenta y sigue el proceso de confirmación. Ten en cuenta que esto es irreversible y perderás acceso a tu historial.',
+      'Ve a Perfil > Privacidad y eliminar cuenta y sigue el proceso de confirmación. Ten en cuenta que esto es irreversible, perderás acceso a tu historial y el saldo que tengas en tu billetera no se devuelve — úsalo antes de cerrar la cuenta.',
   },
   {
     id: '13',

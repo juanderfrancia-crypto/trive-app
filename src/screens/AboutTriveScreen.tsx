@@ -16,9 +16,9 @@ const FEATURES = [
 ]
 
 const CONTACTS: { label: string; value: string; icon: IconName; color: string; url: string }[] = [
-  { label: 'Correo', value: 'soportetrive@gmail.com', icon: 'Mail', color: COLORS.primary, url: 'mailto:soportetrive@gmail.com' },
+  { label: 'Correo', value: 'privacy@trivesoft.com', icon: 'Mail', color: COLORS.primary, url: 'mailto:privacy@trivesoft.com' },
   { label: 'WhatsApp', value: '+57 300 577 2967', icon: 'MessageCircle', color: COLORS.whatsapp, url: 'https://wa.me/573005772967' },
-  { label: 'Llamada', value: '+57 317 302 8628', icon: 'Phone', color: COLORS.accent, url: 'tel:+573173028628' },
+  { label: 'Llamada', value: '+57 300 577 2967', icon: 'Phone', color: COLORS.accent, url: 'tel:+573005772967' },
 ]
 
 export default function AboutTriveScreen() {
