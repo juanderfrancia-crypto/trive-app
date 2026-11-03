@@ -11,6 +11,7 @@ import { SkeletonCardList } from '../SkeletonLoader'
 import { NegotiationChatModal } from '../NegotiationChatModal'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../../utils/showError'
+import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
 
@@ -103,11 +104,24 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     )
   }
 
-  const handleDismiss = (item: AirportRequest) => {
+  const handleDismiss = async (item: AirportRequest) => {
     if (!user?.id) return
+
+    const { data: ownPendingOffer } = await supabase
+      .from('airport_offers')
+      .select('id')
+      .eq('request_id', item.id)
+      .eq('driver_id', user.id)
+      .eq('status', 'pending')
+      .maybeSingle()
+
+    const message = ownPendingOffer
+      ? 'Ya hiciste una oferta en esta solicitud. Se dejará de mostrar aquí, pero tu oferta sigue activa: si el pasajero la acepta, el viaje te aparecerá igual en "Aceptadas".'
+      : 'Se deja de mostrar en tu lista. Otros conductores la seguirán viendo.'
+
     Alert.alert(
       'No me interesa',
-      'Se deja de mostrar en tu lista. Otros conductores la seguirán viendo.',
+      message,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
