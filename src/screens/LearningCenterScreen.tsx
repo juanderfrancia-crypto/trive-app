@@ -164,7 +164,8 @@ const TUTORIALS: Tutorial[] = [
         '7. Escribe el precio que ofreces pagar al conductor',
         '8. Agrega una nota opcional (equipaje, instrucciones especiales, etc.)',
         '9. Toca "Publicar solicitud" — los conductores disponibles podrán verla',
-        '10. Recibirás una notificación cuando un conductor acepte tu viaje',
+        '10. Un conductor puede aceptar tu precio directamente, o proponerte otro valor en vez de aceptarlo. Si te propone otro precio, lo verás en tu solicitud (toca "Ver ofertas") y decides si lo aceptas o lo rechazas — si lo rechazas, tu solicitud sigue disponible para otros conductores',
+        '11. Recibirás una notificación cuando el viaje quede confirmado, ya sea porque aceptaron tu precio o porque tú aceptaste una propuesta',
       ],
     },
     {
@@ -178,12 +179,13 @@ const TUTORIALS: Tutorial[] = [
         "1. En tu inicio de conductor, toca \"Rutas personalizadas\"",
         "2. Verás las solicitudes activas con origen, destino, fecha, hora y precio ofrecido",
         "3. Revisa el número de personas, las notas y el precio",
-        "4. Toca \"Aceptar\" en la solicitud que te interese",
-        "5. Confirma: se descontarán $5.000 de tu billetera Trive",
-        "6. Si no tienes saldo suficiente, la solicitud no se acepta: recarga tu billetera y vuelve a intentarlo",
-        "7. El pasajero recibe una notificación de que aceptaste",
-        "8. Coordina con el pasajero el punto de encuentro y la forma de pago",
-        "9. Si el pasajero cancela antes del viaje, los $5.000 vuelven a tu saldo"
+        "4. Si el precio te sirve, toca \"Aceptar viaje\". Si prefieres cobrar otro valor, toca \"Proponer otro precio\", escribe tu propuesta y envíala — el pasajero decide si la acepta",
+        "5. Si aceptas directo, se descontarán $5.000 de tu billetera Trive de inmediato",
+        "6. Si propusiste un precio distinto, los $5.000 se descuentan solo cuando el pasajero acepta tu propuesta",
+        "7. Si no tienes saldo suficiente al aceptar, la solicitud no se acepta: recarga tu billetera y vuelve a intentarlo",
+        "8. El pasajero recibe una notificación de que aceptaste",
+        "9. Coordina con el pasajero el punto de encuentro y la forma de pago",
+        "10. Si el pasajero cancela antes del viaje, los $5.000 vuelven a tu saldo"
       ],
     },
       {

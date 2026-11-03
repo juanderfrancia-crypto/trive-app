@@ -155,6 +155,13 @@ const FAQ_DATA: FAQItem[] = [
     answer:
       'Están disponibles los 30 principales aeropuertos de Colombia, incluyendo El Dorado (Bogotá), José María Córdova (Medellín), Alfonso Bonilla Aragón (Cali), Rafael Núñez (Cartagena), Ernesto Cortissoz (Barranquilla) y muchos más. Al escribir el nombre de la ciudad o el código IATA, verás las sugerencias automáticamente.',
   },
+  {
+    id: '21',
+    category: 'Aeropuerto',
+    question: '¿El conductor puede proponerme un precio distinto al que ofrecí?',
+    answer:
+      'Sí. En vez de aceptar directamente, el conductor puede proponerte otro valor. Verás su propuesta en tu solicitud, en "Ver ofertas", y puedes aceptarla o rechazarla. Si la rechazas, tu solicitud sigue disponible para que otros conductores la vean y la oferten. El viaje solo queda confirmado cuando aceptas una oferta (la tuya o la de un conductor).',
+  },
 ]
 
 export default function HelpScreen() {
