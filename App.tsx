@@ -10,6 +10,7 @@ import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import MaintenanceScreen from "./src/components/MaintenanceScreen";
+import LoadingScreen from "./src/screens/LoadingScreen";
 import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
 import { initRemoteConfig, isMaintenanceMode, getMaintenanceMessage } from "./src/services/remoteConfig";
@@ -65,7 +66,11 @@ function App() {
     });
   }, []);
 
-  if (!fontsLoaded) return null;
+  // Mismo ícono que el splash nativo en vez de pantalla en blanco: si Android
+  // suelta su splash apenas se dibuja el primer frame (puede pasar antes de
+  // que preventAutoHideAsync surta efecto), lo que queda detrás debe verse
+  // igual al splash, nunca vacío — si no, se percibe como "carga dos veces".
+  if (!fontsLoaded) return <LoadingScreen />;
 
   if (maintenance.on) {
     return (
