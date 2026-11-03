@@ -109,6 +109,7 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
   const currentUser = useAppStore((s) => s.user)
   const isDriver = isDriverRole(currentUser)
+  const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const {
     notifications,
     loading,
@@ -253,7 +254,11 @@ export default function NotificationsScreen() {
 
     const route = getNotificationRoute(item, currentUser?.role)
     if (route?.screenName) {
-      if (route.screenName === 'Main') {
+      if (route.screenName === 'SeatSelection') {
+        const { routeId, origin, destination } = route.params as { routeId: string; origin?: string; destination?: string }
+        setSelectedRoute({ id: routeId, origin, destination })
+        ;(navigation as any).navigate('SeatSelection')
+      } else if (route.screenName === 'Main') {
         ;(navigation as any).navigate('Main', route.params)
       } else {
         ;(navigation as any).navigate(route.screenName, route.params)

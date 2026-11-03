@@ -45,6 +45,17 @@ export function getNotificationRoute(
     if (isDriver) {
       return { screenName: 'DriverPanel', params: {} }
     }
+    // Va directo a reservar esa ruta puntual (route_id ya viene en la notificación),
+    // en vez de a la lista de "Viajes ahora": esa lista filtra por hoy en modo
+    // búsqueda, y una ruta publicada para mañana quedaría invisible justo en el
+    // camino más directo para reservarla.
+    const routeId = data.route_id as string | undefined
+    if (routeId) {
+      return {
+        screenName: 'SeatSelection',
+        params: { routeId, origin: data.origin, destination: data.destination },
+      }
+    }
     return {
       screenName: 'AvailableRides',
       params: { origin: data.origin, destination: data.destination },
