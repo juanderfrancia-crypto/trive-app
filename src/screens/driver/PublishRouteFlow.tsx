@@ -426,22 +426,18 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         })}
       </View>
 
-      <View style={styles.row}>
-        <TimeInput12h
-          label="Salida"
-          value={draft.departureTime}
-          onChangeText={(t) => update('departureTime', t)}
-          placeholder="02:30"
-          style={styles.flexField}
-        />
-        <TimeInput12h
-          label="Llegada (opcional)"
-          value={draft.arrivalTime}
-          onChangeText={(t) => update('arrivalTime', t)}
-          placeholder="Sin definir"
-          style={styles.flexField}
-        />
-      </View>
+      <TimeInput12h
+        label="Salida"
+        value={draft.departureTime}
+        onChangeText={(t) => update('departureTime', t)}
+        placeholder="02:30"
+      />
+      <TimeInput12h
+        label="Llegada (opcional)"
+        value={draft.arrivalTime}
+        onChangeText={(t) => update('arrivalTime', t)}
+        placeholder="Sin definir"
+      />
 
       <View style={styles.row}>
         <View style={styles.field}>
@@ -803,7 +799,6 @@ const styles = StyleSheet.create({
   chipTextActive: { color: COLORS.primary },
 
   row: { flexDirection: 'row', gap: SPACING.sm },
-  flexField: { flex: 1 },
   field: {
     flex: 1,
     borderWidth: 1,
