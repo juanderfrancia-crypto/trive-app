@@ -57,6 +57,7 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
   const fits = seats >= passengers
   const isFull = seats === 0
   const { hour, period } = formatHourParts(ride.departure_time)
+  const isTomorrow = !isToday(ride.departure_time)
 
   let status: { text: string; color: string }
   if (isFull) {
@@ -90,8 +91,15 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
     >
       <View style={styles.ticketTop}>
         <View style={styles.ticketHead}>
-          <View style={styles.timePill}>
-            <Text style={styles.timeText}>{hour} {period}</Text>
+          <View style={styles.timeGroup}>
+            <View style={styles.timePill}>
+              <Text style={styles.timeText}>{hour} {period}</Text>
+            </View>
+            {isTomorrow && (
+              <View style={styles.tomorrowPill}>
+                <Text style={styles.tomorrowText}>Mañana</Text>
+              </View>
+            )}
           </View>
           <TouchableOpacity
             onPress={onToggleFavorite}
@@ -367,6 +375,7 @@ const styles = StyleSheet.create({
   ticketDimmed: { opacity: 0.55 },
   ticketTop: { padding: SPACING.lg, gap: SPACING.sm },
   ticketHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  timeGroup: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
   timePill: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
@@ -374,6 +383,13 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryTint,
   },
   timeText: { fontSize: 13, fontWeight: '800', color: COLORS.primary },
+  tomorrowPill: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.warningLight,
+  },
+  tomorrowText: { fontSize: TYPOGRAPHY.size.xs, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.warningDark },
   favBtn: { width: 34, height: 34, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.surfaceAlt },
   ticketBody: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   ticketInfo: { flex: 1, gap: 4 },
