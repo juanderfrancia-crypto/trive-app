@@ -27,7 +27,7 @@
       ],
       "package": "com.trivesoft.app",
       "googleServicesFile": "$GOOGLE_SERVICES_JSON",
-      "versionCode": 12
+      "versionCode": 14
     },
     "web": {
       "favicon": "./assets/logo.png"

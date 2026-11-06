@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from './Icon'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { TripMessageList } from './TripMessageList'
+import ChatDoodleBackground from './ChatDoodleBackground'
 import { QuickMessageInput } from './QuickMessageInput'
 import { useTripMessages } from '../hooks/useTripMessages'
 import { getCounterpartPhone } from '../services/profileColumns'
@@ -179,6 +180,7 @@ export const TripMessagesModal = React.memo(
               </View>
             ) : (
               <View style={styles.messagesContent}>
+                <ChatDoodleBackground />
                 <TripMessageList
                   messages={messages}
                   userId={userId}
@@ -270,7 +272,8 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     flex: 1,
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: COLORS.white,
+    position: 'relative',
   },
   centerContainer: {
     flex: 1,
