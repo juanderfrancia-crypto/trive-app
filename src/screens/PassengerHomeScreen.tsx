@@ -330,7 +330,7 @@ export default function PassengerHomeScreen() {
             <View style={styles.tripHeader}>
               <Text style={styles.tripLabel}>Tu próximo viaje</Text>
               <View style={styles.countdown}>
-                <Icon name="Clock" size={12} color={COLORS.success} />
+                <Icon name="Clock" size={12} color={COLORS.textPrimary} />
                 <Text style={styles.countdownText}>Sale en {formatCountdown(upcomingTrip.minutesUntil)}</Text>
               </View>
             </View>
@@ -373,9 +373,9 @@ export default function PassengerHomeScreen() {
             </View>
 
             <TouchableOpacity style={styles.sosRow} onPress={handleSOS} activeOpacity={0.75}>
-              <Icon name="CircleAlert" size={16} color={COLORS.error} />
+              <Icon name="CircleAlert" size={16} color={COLORS.textPrimary} />
               <Text style={styles.sosText}>Enviar mi ubicación por SOS</Text>
-              <Icon name="ChevronRight" size={14} color={COLORS.error} />
+              <Icon name="ChevronRight" size={14} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </TouchableOpacity>
         )}
@@ -536,16 +536,16 @@ const styles = StyleSheet.create({
   confirmBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.white },
 
   tripCard: {
-    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint,
+    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primary,
   },
   tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tripLabel: { fontSize: 12, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.5 },
+  tripLabel: { fontSize: 12, fontWeight: '700', color: COLORS.primaryTint, textTransform: 'uppercase', letterSpacing: 0.5 },
   countdown: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, backgroundColor: COLORS.white,
     paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full,
   },
-  countdownText: { fontSize: 12, fontWeight: '700', color: COLORS.success },
-  tripRoute: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginTop: SPACING.sm },
+  countdownText: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary },
+  tripRoute: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginTop: SPACING.sm },
   driverVehicleCard: {
     marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden',
     shadowColor: COLORS.textPrimary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
@@ -567,9 +567,10 @@ const styles = StyleSheet.create({
   tripVehicleText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary, flex: 1 },
   sosRow: {
     marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-    paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.white,
+    backgroundColor: COLORS.white, borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.sm,
   },
-  sosText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.error },
+  sosText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
 
   sectionHead: { marginTop: SPACING.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },

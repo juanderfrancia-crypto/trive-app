@@ -15,13 +15,13 @@ import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 const ROUTE_COMMISSION = 2000
 const TX_PAGE_SIZE = 15
-const RECHARGE_MIN = 10000
+const RECHARGE_MIN = 20000
 
 const AMOUNTS = [
-  { label: '$10.000', value: 10000 },
-  { label: '$20.000', value: 20000 },
-  { label: '$50.000', value: 50000 },
-  { label: '$100.000', value: 100000 },
+  { label: '$20.000', value: 20000, tag: 'Para tu día' },
+  { label: '$40.000', value: 40000, tag: 'Recomendado', highlight: true },
+  { label: '$50.000', value: 50000, tag: 'Conductor dedicado' },
+  { label: '$100.000', value: 100000, tag: 'Mejor precio' },
 ]
 
 interface WalletTx {
@@ -82,7 +82,7 @@ export default function WalletScreen() {
   const [transactions, setTransactions] = useState<WalletTx[]>([])
   const [hasMoreTx, setHasMoreTx] = useState(false)
   const [loadingMoreTx, setLoadingMoreTx] = useState(false)
-  const [selectedAmount, setSelectedAmount] = useState<number>(10000)
+  const [selectedAmount, setSelectedAmount] = useState<number>(40000)
   const [showCustomAmount, setShowCustomAmount] = useState(false)
   const [customAmount, setCustomAmount] = useState('')
   const [loadingBalance, setLoadingBalance] = useState(false)
@@ -275,24 +275,29 @@ export default function WalletScreen() {
         <View style={s.section}>
           <Text style={s.sectionLabel}>RECARGAR SALDO</Text>
           <View style={s.rechargeCard}>
-            <Text style={s.rechargeTitle}>Selecciona un monto</Text>
-            <Text style={s.rechargeMin}>Recarga mínima: ${RECHARGE_MIN.toLocaleString('es-CO')}</Text>
+            <Text style={s.rechargeTitle}>Elige tu paquete</Text>
+            <Text style={s.rechargeMin}>Entre más recargues, más te rinde cada publicación</Text>
             <View style={s.amountsGrid}>
               {AMOUNTS.map((a) => (
                 <TouchableOpacity
                   key={a.value}
-                  style={[s.amountChip, !showCustomAmount && selectedAmount === a.value && s.amountChipActive]}
+                  style={[
+                    s.amountChip,
+                    a.highlight && s.amountChipHighlight,
+                    !showCustomAmount && selectedAmount === a.value && s.amountChipActive,
+                  ]}
                   onPress={() => { setSelectedAmount(a.value); setShowCustomAmount(false) }}
                   activeOpacity={0.7}
                 >
+                  <View style={[s.amountTag, a.highlight && s.amountTagHighlight]}>
+                    <Text style={[s.amountTagText, a.highlight && s.amountTagTextHighlight]}>{a.tag}</Text>
+                  </View>
                   <Text style={[s.amountChipText, !showCustomAmount && selectedAmount === a.value && s.amountChipTextActive]}>
                     {a.label}
                   </Text>
-                  {!showCustomAmount && selectedAmount === a.value && (
-                    <Text style={s.amountChipSub}>
-                      {Math.floor(a.value / ROUTE_COMMISSION)} viaje{Math.floor(a.value / ROUTE_COMMISSION) !== 1 ? 's' : ''}
-                    </Text>
-                  )}
+                  <Text style={s.amountChipSub}>
+                    {Math.floor(a.value / ROUTE_COMMISSION)} publicaciones
+                  </Text>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
@@ -313,7 +318,7 @@ export default function WalletScreen() {
                     value={customAmount}
                     onChangeText={(t) => setCustomAmount(t.replace(/\D/g, ''))}
                     keyboardType="numeric"
-                    placeholder="Ej: 15.000"
+                    placeholder="Ej: 25.000"
                     placeholderTextColor={COLORS.textTertiary}
                     autoFocus
                   />
@@ -509,9 +514,17 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.background, alignItems: 'center',
   },
   amountChipActive: { borderColor: COLORS.primary, backgroundColor: `${COLORS.primary}08` },
+  amountChipHighlight: { borderColor: `${COLORS.primary}60` },
   amountChipText: { fontSize: 15, fontWeight: '700', color: COLORS.textSecondary },
   amountChipTextActive: { color: COLORS.primary },
-  amountChipSub: { fontSize: 11, color: COLORS.primary, marginTop: 2 },
+  amountChipSub: { fontSize: 11, color: COLORS.textTertiary, marginTop: 2 },
+  amountTag: {
+    backgroundColor: COLORS.surfaceAlt, borderRadius: RADIUS.sm,
+    paddingHorizontal: SPACING.xs, paddingVertical: 2, marginBottom: 4,
+  },
+  amountTagText: { fontSize: 10, fontWeight: '700', color: COLORS.textTertiary },
+  amountTagHighlight: { backgroundColor: COLORS.primary },
+  amountTagTextHighlight: { color: '#fff' },
   customAmountRow: {
     flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
     borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: RADIUS.md,

@@ -15,6 +15,12 @@
         "buildType": "app-bundle"
       },
       "autoIncrement": true
+    },
+    "huawei": {
+      "android": {
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
+      }
     }
   }
 }

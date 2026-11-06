@@ -14,7 +14,6 @@ import Button from '../components/Button'
 import Card from '../components/Card'
 import Badge from '../components/Badge'
 import { TripMessagesModal } from '../components/TripMessagesModal'
-import CancellationPolicyCard from '../components/CancellationPolicyCard'
 import { getTripUnreadCount, subscribeTripMessages } from '../services/trip_messages'
 import Icon from '../components/Icon'
 
@@ -87,7 +86,6 @@ export default function TripStatusScreen() {
 
   const occupiedSeats = bookings.length
   const totalSeats = selectedRoute.total_seats || 5
-  const availableSeats = totalSeats - occupiedSeats
 
   const departureTime = new Date(selectedRoute.departure_time).toLocaleTimeString('es-CO', {
     hour: '2-digit',
@@ -195,7 +193,6 @@ export default function TripStatusScreen() {
       : 'available',
   }))
 
-  const occupiedPercentage = (occupiedSeats / totalSeats) * 100
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
@@ -255,75 +252,32 @@ export default function TripStatusScreen() {
               </View>
             </LinearGradient>
 
-            {/* Seats Card */}
-            <LinearGradient
-              colors={[COLORS.surfaceAlt, COLORS.primaryTint, COLORS.primaryTint]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.seatsCardGradient}
-            >
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Cupos del vehículo</Text>
-              </View>
-
-              <View style={styles.seatsGrid}>
-                {allSeats.map((seat) => (
-                  <View key={seat.id} style={styles.seatItem}>
-                    <View
-                      style={[
-                        styles.seatCircle,
-                        seat.status === 'occupied' && styles.seatOccupied,
-                        seat.status === 'available' && styles.seatAvailable,
-                        seat.status === 'selected' && styles.seatSelected,
-                      ]}
-                    >
-                      {seat.status === 'occupied' ? (
-                        <Icon name="User" size={14} color="#fff" />
-                      ) : (
-                        <Text
-                          style={[
-                            styles.seatNumber,
-                            seat.status === 'selected' && styles.seatNumberSelected,
-                          ]}
-                        >
-                          {seat.id}
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                ))}
-              </View>
-
-              <View style={styles.progressContainer}>
-                <View style={styles.progressTrack}>
-                  <View style={[styles.progressFill, { width: `${occupiedPercentage}%` }]} />
+            {/* Tu viaje: vehículo + cupos + conductor + acciones, en una sola card */}
+            <View style={styles.tripCard}>
+              <View style={styles.vehicleRow}>
+                <View style={styles.vehicleBadge}>
+                  <Icon name="Car" size={18} color={COLORS.primary} />
                 </View>
-                <View style={styles.progressLabels}>
-                  <Text style={styles.progressText}>{occupiedSeats} ocupado{occupiedSeats === 1 ? '' : 's'}</Text>
-                  <Text style={styles.progressText}>{availableSeats} libre{availableSeats === 1 ? '' : 's'}</Text>
-                </View>
-              </View>
-            </LinearGradient>
-
-            {/* Vehicle Card */}
-            <LinearGradient
-              colors={[COLORS.primaryTint, COLORS.primaryTint, COLORS.primaryTint]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.vehicleCardGradient}
-            >
-              <View style={[styles.vehicleHeader, { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md, marginBottom: SPACING.sm }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.vehicleName}>Vehículo</Text>
-                  <Text style={styles.vehicleDetails}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.vehicleName} numberOfLines={1}>
                     {[selectedRoute.vehicle_color, selectedRoute.vehicle_plate].filter(Boolean).join(' · ')}
                   </Text>
+                  {!!selectedRoute.vehicle_make && (
+                    <Text style={styles.vehicleDetails} numberOfLines={1}>{selectedRoute.vehicle_make}</Text>
+                  )}
                 </View>
-
-                <View style={styles.vehicleBadge}>
-                  <Icon name="Car" size={20} color={COLORS.primary} />
+                <View style={styles.seatDots}>
+                  {allSeats.slice(0, 8).map((seat) => (
+                    <View
+                      key={seat.id}
+                      style={[styles.seatDot, seat.status === 'available' && styles.seatDotAvailable]}
+                    />
+                  ))}
                 </View>
+                <Text style={styles.seatDotsLabel}>{occupiedSeats}/{totalSeats}</Text>
               </View>
+
+              <View style={styles.tripCardDivider} />
 
               <View style={styles.driverRow}>
                 <View style={styles.driverAvatar}>
@@ -339,44 +293,46 @@ export default function TripStatusScreen() {
                 </View>
               </View>
 
-              <LinearGradient
-                colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.quickChatBtn}
-              >
-                <TouchableOpacity
-                  style={styles.quickChatBtnInner}
-                  onPress={() => {
-                    setChatUnreadCount(0)
-                    setSelectedTripForChat({
-                      id: selectedRoute.id,
-                      driverId: selectedRoute.driver_id,
-                      driverName: selectedRoute.driver_name,
-                    })
-                  }}
+              <View style={styles.tripCardActions}>
+                <LinearGradient
+                  colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.quickChatBtn}
                 >
-                  <Icon name="MessageCircle" size={18} color="#fff" />
-                  <Text style={styles.quickChatBtnText}>Contactar conductor</Text>
-                  {chatUnreadCount > 0 && (
-                    <View style={styles.chatBadge}>
-                      <Text style={styles.chatBadgeText}>
-                        {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-              </LinearGradient>
+                  <TouchableOpacity
+                    style={styles.quickChatBtnInner}
+                    onPress={() => {
+                      setChatUnreadCount(0)
+                      setSelectedTripForChat({
+                        id: selectedRoute.id,
+                        driverId: selectedRoute.driver_id,
+                        driverName: selectedRoute.driver_name,
+                      })
+                    }}
+                  >
+                    <Icon name="MessageCircle" size={16} color="#fff" />
+                    <Text style={styles.quickChatBtnText}>Chat</Text>
+                    {chatUnreadCount > 0 && (
+                      <View style={styles.chatBadge}>
+                        <Text style={styles.chatBadgeText}>
+                          {chatUnreadCount > 9 ? '9+' : chatUnreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </LinearGradient>
 
-              <TouchableOpacity
-                style={styles.callDriverBtn}
-                onPress={handleCallDriver}
-                activeOpacity={0.85}
-              >
-                <Icon name="Phone" size={18} color="#fff" />
-                <Text style={styles.callDriverBtnText}>Llamar al conductor</Text>
-              </TouchableOpacity>
-            </LinearGradient>
+                <TouchableOpacity
+                  style={styles.callDriverBtn}
+                  onPress={handleCallDriver}
+                  activeOpacity={0.85}
+                >
+                  <Icon name="Phone" size={16} color="#fff" />
+                  <Text style={styles.callDriverBtnText}>Llamar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
             {/* Trip Info Card */}
             <LinearGradient
@@ -406,28 +362,36 @@ export default function TripStatusScreen() {
               </View>
             </LinearGradient>
 
-            <CancellationPolicyCard />
+            <View style={styles.cancellationNote}>
+              <Icon name="Info" size={14} color={COLORS.textSecondary} />
+              <Text style={styles.cancellationNoteText}>
+                Puedes cancelar antes de la salida.{' '}
+                <Text style={styles.cancellationNoteLink} onPress={() => navigation.navigate('Help' as never)}>Ver política</Text>
+              </Text>
+            </View>
 
             {/* Action Buttons */}
-            <TouchableOpacity
-              style={styles.shareBtn}
-              onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
-              activeOpacity={0.8}
-            >
-              <Icon name="Search" size={20} color={COLORS.primary} />
-              <Text style={styles.shareBtnText}>Buscar nuevas rutas</Text>
-            </TouchableOpacity>
+            <View style={styles.secondaryActionsRow}>
+              <TouchableOpacity
+                style={styles.shareBtn}
+                onPress={() => navigation.navigate('Main' as never, { screen: 'Search' } as never)}
+                activeOpacity={0.8}
+              >
+                <Icon name="Search" size={18} color={COLORS.primary} />
+                <Text style={styles.shareBtnText}>Buscar rutas</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.shareBtn}
-              onPress={handleShareTrip}
-              activeOpacity={0.8}
-              accessibilityRole="button"
-              accessibilityLabel="Compartir mi viaje"
-            >
-              <Icon name="Share2" size={20} color={COLORS.primary} />
-              <Text style={styles.shareBtnText}>Compartir mi viaje</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.shareBtn}
+                onPress={handleShareTrip}
+                activeOpacity={0.8}
+                accessibilityRole="button"
+                accessibilityLabel="Compartir mi viaje"
+              >
+                <Icon name="Share2" size={18} color={COLORS.primary} />
+                <Text style={styles.shareBtnText}>Compartir</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={[styles.cancelBtn, cancelLoading && { opacity: 0.6 }]}
@@ -640,152 +604,65 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
 
-  // Seats Card
-  seatsCard: {
-    backgroundColor: COLORS.surface,
+  // Tu viaje (vehículo + cupos + conductor + acciones, una sola card)
+  tripCard: {
+    backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  seatsCardGradient: {
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    padding: SPACING.md + 2,
     marginBottom: SPACING.lg,
   },
-  sectionTitle: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-  seatsSubtitle: {
-    ...TYPOGRAPHY.labelMedium,
-    color: COLORS.textSecondary,
-  },
-  seatsGrid: {
+  vehicleRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  seatItem: {
-    alignItems: 'center',
-    width: 60,
-  },
-  seatCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  seatOccupied: {
-    backgroundColor: COLORS.textSecondary,
-  },
-  seatAvailable: {
-    backgroundColor: COLORS.primary,
-  },
-  seatSelected: {
-    backgroundColor: COLORS.success,
-    borderWidth: 3,
-    borderColor: COLORS.accent,
-  },
-  seatNumber: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: '#fff',
-    fontWeight: '700',
-  },
-  seatNumberSelected: {
-    color: '#fff',
-  },
-  seatLabel: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  progressContainer: {
-    marginTop: SPACING.sm,
-  },
-  progressTrack: {
-    height: 8,
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: 4,
-  },
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: SPACING.xs,
-  },
-  progressText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
-  },
-
-  // Vehicle Card
-  vehicleCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-  vehicleCardGradient: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-    flexDirection: 'column',
-  },
-  vehicleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: SPACING.md,
-  },
-  vehicleRightSection: {
-    flexDirection: 'column',
     alignItems: 'center',
     gap: SPACING.sm,
   },
   vehicleName: {
     ...TYPOGRAPHY.bodyMedium,
     color: COLORS.textPrimary,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   vehicleDetails: {
-    ...TYPOGRAPHY.labelMedium,
+    ...TYPOGRAPHY.label,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 1,
   },
   vehicleBadge: {
-    width: 44,
-    height: 44,
+    width: 38,
+    height: 38,
     borderRadius: RADIUS.md,
-    backgroundColor: 'rgba(18,48,184,0.1)',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  seatDots: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  seatDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: COLORS.primary,
+  },
+  seatDotAvailable: {
+    backgroundColor: COLORS.white,
+    borderWidth: 1.5,
+    borderColor: COLORS.primary,
+  },
+  seatDotsLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  tripCardDivider: {
+    height: 1,
+    backgroundColor: 'rgba(15,26,46,0.08)',
+    marginVertical: SPACING.sm,
+  },
   driverRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(18,48,184,0.15)',
   },
   driverAvatar: {
     width: 48,
@@ -825,25 +702,10 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontSize: 10,
   },
-  actionButtonsColumn: {
-    flexDirection: 'column',
-    gap: SPACING.xs,
-  },
-  callBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: COLORS.success,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  messageBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(18,48,184,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  tripCardActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
   },
 
   // Trip Info Card
@@ -857,7 +719,7 @@ const styles = StyleSheet.create({
   tripInfoCardGradient: {
     borderRadius: 12,
     padding: 16,
-    marginBottom: 32,
+    marginBottom: SPACING.lg,
     overflow: 'hidden',
   },
   infoRow: {
@@ -920,19 +782,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   quickChatBtn: {
-    borderRadius: RADIUS.lg,
-    marginTop: SPACING.sm,
+    flex: 1,
+    borderRadius: RADIUS.md,
     overflow: 'hidden',
   },
   quickChatBtnInner: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.md,
+    gap: SPACING.xs,
+    height: 44,
   },
   quickChatBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
+    ...TYPOGRAPHY.bodySmall,
     color: '#fff',
     fontWeight: '700',
   },
@@ -957,34 +819,56 @@ const styles = StyleSheet.create({
     lineHeight: 14,
   },
   callDriverBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
-    paddingVertical: SPACING.md,
-    borderRadius: RADIUS.lg,
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    gap: SPACING.xs,
+    height: 44,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.textPrimary,
   },
   callDriverBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
+    ...TYPOGRAPHY.bodySmall,
     color: '#fff',
     fontWeight: '700',
   },
-  shareBtn: {
+  cancellationNote: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 52,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.surface,
+    alignItems: 'flex-start',
+    gap: SPACING.xs,
+    marginBottom: SPACING.md,
+    paddingHorizontal: 2,
+  },
+  cancellationNoteText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
+    flex: 1,
+    lineHeight: 18,
+  },
+  cancellationNoteLink: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  secondaryActionsRow: {
+    flexDirection: 'row',
     gap: SPACING.sm,
     marginBottom: SPACING.md,
   },
+  shareBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 48,
+    borderRadius: RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.surface,
+    gap: SPACING.xs,
+  },
   shareBtnText: {
-    ...TYPOGRAPHY.bodyMedium,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.primary,
     fontWeight: '700',
   },

@@ -90,11 +90,11 @@ export default function TabNavigator() {
           }
 
           return (
-            <TabIcon name={iconName} size={size} focused={focused} color={COLORS.textPrimary} />
+            <TabIcon name={iconName} size={size} focused={focused} color={color} />
           )
         },
-        tabBarActiveTintColor: COLORS.textPrimary,
-        tabBarInactiveTintColor: COLORS.textPrimary,
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.75)',
         tabBarContainerStyle: {
           backgroundColor: COLORS.white,
           borderTopWidth: 0,
@@ -114,8 +114,8 @@ export default function TabNavigator() {
           borderRadius: RADIUS.xl,
           borderWidth: 1,
           borderTopWidth: 1,
-          borderColor: COLORS.white,
-          backgroundColor: COLORS.primaryTint,
+          borderColor: 'rgba(255,255,255,0.25)',
+          backgroundColor: COLORS.primary,
           elevation: 0,
           shadowOpacity: 0,
         },
@@ -199,8 +199,8 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: RADIUS.xl,
     borderWidth: 1,
-    borderColor: COLORS.white,
-    backgroundColor: COLORS.primaryTint,
+    borderColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: COLORS.primary,
   },
   iconBox: {
     width: 56,

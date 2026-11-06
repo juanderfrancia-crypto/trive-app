@@ -336,7 +336,13 @@ export default function DriverPanelScreen() {
         fetchDriverRoutes()
       }, 1000)
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo actualizar el estado')
+      // Los mensajes de negocio (RAISE EXCEPTION en driver_set_route_status, código
+      // P0001) sí son para el usuario ("No puedes completar un viaje antes de su hora
+      // de salida"). Cualquier otro error (de Postgres, de red, etc.) es técnico y no
+      // debe mostrarse tal cual — solo queda en consola para depurar.
+      const isBusinessMessage = err?.code === 'P0001' && !!err.message
+      if (__DEV__ && !isBusinessMessage) console.error('updateRouteStatus error:', err)
+      Alert.alert('Error', isBusinessMessage ? err.message : 'No se pudo actualizar el viaje. Intenta de nuevo.')
     } finally {
       setUpdatingRouteId(null)
     }

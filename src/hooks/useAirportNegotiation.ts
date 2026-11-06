@@ -663,7 +663,7 @@ export const useAirportNegotiation = () => {
         const displayPrice = proposedPrice ?? reqData.offered_price
         insertNotificationForUser(reqData.passenger_id, {
           user_id: reqData.passenger_id,
-          type: 'trip_update',
+          type: 'offer_received',
           title: 'Nueva oferta de conductor',
           message: `${driverName} propone $${displayPrice.toLocaleString('es-CO')}`,
           data: {
@@ -729,7 +729,7 @@ export const useAirportNegotiation = () => {
     if (reqData && driverProfile) {
       insertNotificationForUser(reqData.passenger_id, {
         user_id: reqData.passenger_id,
-        type: 'trip_update',
+        type: 'offer_accepted',
         title: '¡Tienes conductor!',
         message: `${driverProfile.name} aceptó tu solicitud`,
         data: {
@@ -827,7 +827,7 @@ export const useAirportNegotiation = () => {
             //  Notificación al CONDUCTOR: Viaje confirmado
             insertNotificationForUser(offer.driver_id, {
               user_id: offer.driver_id,
-              type: 'trip_confirmed',
+              type: 'offer_accepted',
               title: ' ¡Viaje confirmado!',
               message: `${passengerProfile.name} aceptó tu oferta en ${tripData.origin}`,
               data: {
@@ -847,7 +847,7 @@ export const useAirportNegotiation = () => {
             //  Notificación al PASAJERO: Conductor confirmado
             insertNotificationForUser(tripData.passenger_id, {
               user_id: tripData.passenger_id,
-              type: 'trip_confirmed',
+              type: 'offer_accepted',
               title: ' ¡Conductor confirmado!',
               message: `${driverProfile.name} está listo para tu viaje`,
               data: {

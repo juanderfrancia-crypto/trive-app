@@ -39,7 +39,7 @@ export const useUpcomingTrip = (passengerId?: string) => {
           supabase
             .from('bookings')
             .select(
-              'id, route_id, seat_number, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))'
+              'id, route_id, seat_number, routes:route_id(id, origin, destination, departure_time, status, driver_id, vehicle_make, vehicle_model, vehicle_color, vehicle_plate, total_seats, price_per_seat, profiles:driver_id(name, rating, avatar_url, vehicle_photo_url))'
             )
             .eq('passenger_id', passengerId)
             .in('booking_status', ['confirmed', 'pending'])

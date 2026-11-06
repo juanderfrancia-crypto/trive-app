@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator } from 'react-native'
+import { Modal, View, TouchableOpacity, TextInput, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from './AppText'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { showSuccess, showError } from '../utils/showError'
@@ -64,6 +64,11 @@ export default function RatingModal({
     <>
       <Modal visible={visible} transparent animationType="fade">
         <KeyboardAvoidingScreen measureKeyboard active={visible} style={styles.overlay}>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           <View style={styles.modalContainer}>
             {/* Header */}
             <View style={styles.header}>
@@ -206,6 +211,7 @@ export default function RatingModal({
               </TouchableOpacity>
             </View>
           </View>
+          </ScrollView>
         </KeyboardAvoidingScreen>
       </Modal>
 
@@ -217,8 +223,12 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: SPACING.xl,
   },
   modalContainer: {
     backgroundColor: 'white',

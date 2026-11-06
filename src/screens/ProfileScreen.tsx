@@ -1,4 +1,3 @@
-import IllustratedCard from '../components/illustrations/IllustratedCard'
 import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
@@ -356,7 +355,12 @@ export default function ProfileScreen() {
         {/* Entrada para ser conductor: se conserva porque es la única forma de cambiar de modo. */}
         <View style={s.section}>
           <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-            <IllustratedCard illustration="proudDriver" illustrationWidth={96} style={[pv.ctaCard, { borderRadius: RADIUS.xl }]}>
+            <View style={[pv.ctaCard, { borderRadius: RADIUS.xl, backgroundColor: COLORS.primary }]}>
+              <Image
+                source={require('../../assets/proud-driver.png')}
+                contentFit="cover"
+                style={pv.ctaBgImage}
+              />
               <View style={pv.ctaOportunidad}>
                 <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
               </View>
@@ -365,7 +369,7 @@ export default function ProfileScreen() {
               <View style={pv.ctaBtn}>
                 <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
               </View>
-            </IllustratedCard>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -661,6 +665,7 @@ const pv = StyleSheet.create({
 
   // Tarjeta de conductor y ayuda/ajustes (fuera del mockup, se conservan)
   ctaCard: { borderRadius: RADIUS.xl, overflow: 'hidden', padding: SPACING.xl, paddingBottom: SPACING.xxl },
+  ctaBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.26 },
   ctaOportunidad: {
     alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)',
     paddingHorizontal: SPACING.md, paddingVertical: 4,

@@ -20,7 +20,7 @@ import { showError } from '../utils/showError'
 
 type NotifType = Notification['type']
 type IconName = IconNameType
-type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas' | 'mensajes'
+type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas'
 type FilterDef = { id: FilterId; label: string; types: NotifType[] | null }
 type DayGroup = 'Hoy' | 'Ayer' | 'Anteriores'
 
@@ -37,13 +37,11 @@ const DRIVER_FILTERS: FilterDef[] = [
   { id: 'all', label: 'Todas', types: null },
   { id: 'solicitudes', label: 'Solicitudes', types: ['trip_published', 'offer_received', 'offer_accepted'] },
   { id: 'reservas', label: 'Reservas', types: TRIP_TYPES },
-  { id: 'mensajes', label: 'Mensajes', types: ['message'] },
 ]
 
 const PASSENGER_FILTERS: FilterDef[] = [
   { id: 'all', label: 'Todas', types: null },
   { id: 'viajes', label: 'Viajes', types: TRIP_TYPES },
-  { id: 'mensajes', label: 'Mensajes', types: ['message'] },
   { id: 'ofertas', label: 'Ofertas', types: ['offer_received', 'offer_accepted'] },
 ]
 

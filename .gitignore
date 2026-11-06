@@ -49,3 +49,7 @@ supabase/.temp/
 
 # Lienzo de diseño local (no es código de la app)
 design-canvas/
+
+# Llaves de firma y contraseñas (nunca subir al repo)
+/secrets/
+/credentials.json
