@@ -1,8 +1,8 @@
 import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
+import PassengerProfileView from './profile/PassengerProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Modal, TextInput, StatusBar } from 'react-native'
-import { Image } from 'expo-image'
 import { useKeyboardHeight } from '../hooks/useKeyboardHeight'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -11,7 +11,7 @@ import { APP_VERSION_LABEL } from '../config/appInfo'
 import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useProfile } from '../hooks/useProfile'
 import { useAuth } from '../hooks/useAuth'
@@ -25,25 +25,6 @@ import Button from '../components/Button'
 import Card from '../components/Card'
 import Badge from '../components/Badge'
 
-
-// Campos que la app lee del perfil pero que useProfile aún no tipa.
-type ProfileExtras = {
-  emergency_contact?: { name: string; phone: string } | null
-}
-
-
-// Fila de menú con título, subtítulo y chevron.
-function MenuRow({ title, sub, onPress }: { title: string; sub: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={pv.menuRow} onPress={onPress} activeOpacity={0.75}>
-      <View style={pv.menuText}>
-        <Text style={pv.menuTitle}>{title}</Text>
-        <Text style={pv.menuSub}>{sub}</Text>
-      </View>
-      <Icon name="ChevronRight" size={20} color={COLORS.textTertiary} />
-    </TouchableOpacity>
-  )
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 export default function ProfileScreen() {
@@ -307,126 +288,6 @@ export default function ProfileScreen() {
   const avatarUri  = user?.avatar_url || profile?.avatar_url
   const initials   = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const rating     = (profile?.rating ?? 0).toFixed(1)
-  const PassengerView = () => {
-    const extras = profile as ProfileExtras | null
-    const emergencyContact = extras?.emergency_contact ?? null
-    const tripsCount = passengerStats?.totalTrips ?? 0
-    const porConfirmar = passengerBookings.filter((b) => b.bookingStatus === 'awaiting_confirmation').length
-
-    return (
-      <>
-        <Text style={pv.title}>Mi perfil</Text>
-
-        <View style={pv.profileRow}>
-          <View style={pv.avatarWrap}>
-            <TouchableOpacity style={pv.avatar} onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.85} accessibilityLabel="Cambiar foto de perfil">
-              {uploadingPhoto
-                ? <ActivityIndicator color={COLORS.primary} />
-                : avatarUri && !avatarBroken
-                  ? <Image source={{ uri: avatarUri }} style={pv.avatarImg} onError={() => setAvatarBroken(true)} />
-                  : <Text style={pv.avatarInitials}>{initials}</Text>}
-            </TouchableOpacity>
-            <View style={pv.avatarBadge}>
-              <Icon name="Camera" size={12} color={COLORS.white} />
-            </View>
-          </View>
-          <View style={pv.profileInfo}>
-            <Text style={pv.name} numberOfLines={1}>{user?.name || 'Usuario'}</Text>
-            <Text style={pv.meta}>
-              Pasajero · ★ {(profile?.rating ?? 0).toFixed(1)} · {tripsCount} {tripsCount === 1 ? 'viaje' : 'viajes'}
-            </Text>
-            <TouchableOpacity onPress={handleProfilePhotoUpload} disabled={uploadingPhoto} activeOpacity={0.7} style={pv.linkRow}>
-              <Icon name="ImagePlus" size={14} color={COLORS.primary} />
-              <Text style={pv.linkText}>Cambiar foto de perfil</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <TouchableOpacity style={pv.card} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
-          <View style={pv.cardText}>
-            <Text style={pv.cardTitle}>Contacto de emergencia</Text>
-            <Text style={pv.cardSub}>Recibe tu ubicación en un viaje</Text>
-          </View>
-          {emergencyContact
-            ? <View style={pv.pillOk}><Text style={pv.pillOkText}>Configurado</Text></View>
-            : <View style={pv.pillWarn}><Text style={pv.pillWarnText}>Sin configurar</Text></View>}
-        </TouchableOpacity>
-
-        {/* Entrada para ser conductor: se conserva porque es la única forma de cambiar de modo. */}
-        <View style={s.section}>
-          <TouchableOpacity onPress={handleBecomeDriver} activeOpacity={0.88}>
-            <View style={[pv.ctaCard, { borderRadius: RADIUS.xl, backgroundColor: COLORS.primary }]}>
-              <Image
-                source={require('../../assets/proud-driver.png')}
-                contentFit="cover"
-                style={pv.ctaBgImage}
-              />
-              <View style={pv.ctaOportunidad}>
-                <Text style={pv.ctaOportunidadText}>OPORTUNIDAD</Text>
-              </View>
-              <Text style={pv.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
-              <Text style={pv.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
-              <View style={pv.ctaBtn}>
-                <Text style={pv.ctaBtnText}>Cambiar a modo Conductor</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={pv.sectionLabel}>Mis viajes</Text>
-        <View style={pv.group}>
-          <MenuRow
-            title="Próximos y pendientes"
-            sub={porConfirmar > 0 ? `${porConfirmar} por confirmar` : 'Sin viajes por confirmar'}
-            onPress={() => navigation.navigate('Search')}
-          />
-          <View style={pv.rowDivider} />
-          <MenuRow title="Historial" sub="Viajes completados y calificaciones" onPress={() => navigation.navigate('TripHistory')} />
-          <View style={pv.rowDivider} />
-          <MenuRow title="Solicitudes de aeropuerto" sub="Ofertas y chats con conductores" onPress={() => navigation.navigate('Requests')} />
-        </View>
-
-        <Text style={pv.sectionLabel}>Cuenta</Text>
-        <View style={pv.group}>
-          <MenuRow title="Cómo pagas" sub="Efectivo o transferencia a tu conductor" onPress={() => navigation.navigate('PaymentMethods')} />
-          <View style={pv.rowDivider} />
-          <MenuRow title="Datos personales" sub="Nombre, correo y teléfono" onPress={openEditName} />
-          <View style={pv.rowDivider} />
-          <MenuRow title="Privacidad y eliminar cuenta" sub="Tus datos y tu cuenta" onPress={() => navigation.navigate('Privacy')} />
-        </View>
-
-        <View style={s.section}>
-          <TouchableOpacity style={pv.group} onPress={() => navigation.navigate('Help')} activeOpacity={0.75}>
-            <View style={pv.helpRow}>
-              <View style={pv.helpIcon}><Icon name="Headset" size={20} color={COLORS.primary} /></View>
-              <View style={pv.helpText}>
-                <Text style={pv.payName}>Centro de Ayuda</Text>
-                <Text style={pv.paySub}>Soporte 24/7 disponible</Text>
-              </View>
-              <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <View style={s.section}>
-          <TouchableOpacity style={pv.group} onPress={() => navigation.navigate('Settings')} activeOpacity={0.75}>
-            <View style={pv.helpRow}>
-              <View style={pv.settingsIcon}><Icon name="Settings" size={20} color={COLORS.primary} /></View>
-              <View style={pv.helpText}>
-                <Text style={pv.payName}>Configuración</Text>
-                <Text style={pv.paySub}>Ajustes y preferencias</Text>
-              </View>
-              <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        <Text style={pv.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
-        <View style={{ height: SPACING.xxxl }} />
-      </>
-    )
-  }
-
   // ── DRIVER VIEW ───────────────────────────────────────────────────────────
   const handleVehiclePhotoError = async () => {
     const currentUrl = regeneratedVehiclePhotoUrl || driverVehicle?.vehicle_photo_url || profile?.vehicle_photo_url
@@ -484,7 +345,30 @@ export default function ProfileScreen() {
               onEditVehicle={() => navigation.navigate('EditVehicle' as never, { vehicle: driverVehicle } as never)}
               onLogout={handleLogout}
             />
-          ) : <PassengerView />
+          ) : (
+            <PassengerProfileView
+              userName={user?.name}
+              profile={profile}
+              totalTrips={passengerStats?.totalTrips ?? 0}
+              pendingConfirmationCount={passengerBookings.filter((b) => b.bookingStatus === 'awaiting_confirmation').length}
+              avatarUri={avatarUri}
+              avatarBroken={avatarBroken}
+              initials={initials}
+              uploadingPhoto={uploadingPhoto}
+              onChangeAvatar={handleProfilePhotoUpload}
+              onAvatarError={() => setAvatarBroken(true)}
+              onOpenEmergencyContact={() => navigation.navigate('Settings')}
+              onBecomeDriver={handleBecomeDriver}
+              onOpenUpcomingTrips={() => navigation.navigate('Search')}
+              onOpenHistory={() => navigation.navigate('TripHistory')}
+              onOpenRequests={() => navigation.navigate('Requests')}
+              onOpenPaymentMethods={() => navigation.navigate('PaymentMethods')}
+              onEditName={openEditName}
+              onOpenPrivacy={() => navigation.navigate('Privacy')}
+              onOpenHelp={() => navigation.navigate('Help')}
+              onOpenSettings={() => navigation.navigate('Settings')}
+            />
+          )
         }
 
         {!profileLoading && !isDriver && (
@@ -613,84 +497,6 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#fff',
-  },
-})
-
-// ── Passenger view styles ─────────────────────────────────────────────────────
-const pv = StyleSheet.create({
-  title: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, marginTop: SPACING.md },
-  profileRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.lg, marginTop: SPACING.lg },
-  avatarWrap: { position: 'relative' },
-  avatar: {
-    width: 68, height: 68, borderRadius: 34, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-  },
-  avatarImg: { width: 68, height: 68 },
-  avatarInitials: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
-  avatarBadge: {
-    position: 'absolute', right: -2, bottom: -2, width: 24, height: 24, borderRadius: 12,
-    backgroundColor: COLORS.textPrimary, borderWidth: 2, borderColor: COLORS.white,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  profileInfo: { flex: 1 },
-  name: { fontSize: 19, fontWeight: '800', color: COLORS.textPrimary },
-  meta: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.sm },
-  linkText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-
-  card: {
-    ...SHADOWS.sm,
-    marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md,
-    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg,
-  },
-  cardText: { flex: 1 },
-  cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
-  cardSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  pillOk: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.successLight },
-  pillOkText: { fontSize: 12, fontWeight: '700', color: COLORS.success },
-  pillWarn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.warningLight },
-  pillWarnText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
-
-
-  sectionLabel: {
-    marginTop: SPACING.xl, fontSize: 13, fontWeight: '700', color: COLORS.textSecondary,
-    textTransform: 'uppercase', letterSpacing: 0.8,
-  },
-  group: { ...SHADOWS.sm, marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
-  menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
-  menuText: { flex: 1 },
-  menuTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  menuSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  rowDivider: { height: 1, backgroundColor: COLORS.borderLight, marginHorizontal: SPACING.lg },
-
-  // Tarjeta de conductor y ayuda/ajustes (fuera del mockup, se conservan)
-  ctaCard: { borderRadius: RADIUS.xl, overflow: 'hidden', padding: SPACING.xl, paddingBottom: SPACING.xxl },
-  ctaBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.26 },
-  ctaOportunidad: {
-    alignSelf: 'flex-start', backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: SPACING.md, paddingVertical: 4,
-    borderRadius: RADIUS.full, marginBottom: SPACING.md,
-  },
-  ctaOportunidadText: { fontSize: 11, fontWeight: '700', color: COLORS.white, letterSpacing: 0.5 },
-  ctaTitle: { fontSize: 24, fontWeight: '800', color: COLORS.white, lineHeight: 30, letterSpacing: -0.5, marginBottom: SPACING.sm },
-  ctaSub: { fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 18, marginBottom: SPACING.xl },
-  ctaBtn: { alignSelf: 'stretch', backgroundColor: COLORS.white, borderRadius: RADIUS.md, paddingVertical: 14, alignItems: 'center' },
-  ctaBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primaryDark },
-  helpRow: { flexDirection: 'row', alignItems: 'center', padding: SPACING.md, gap: SPACING.sm },
-  helpIcon: {
-    width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
-  },
-  settingsIcon: {
-    width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, justifyContent: 'center', alignItems: 'center',
-  },
-  helpText: { flex: 1 },
-  payName: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
-  paySub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-
-  footer: {
-    textAlign: 'center', fontSize: 11, fontWeight: '600',
-    color: COLORS.textTertiary, letterSpacing: 0.5,
-    marginTop: SPACING.xl, marginBottom: SPACING.md,
   },
 })
 

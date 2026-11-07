@@ -19,6 +19,7 @@ interface ActiveTrip {
   price: number
   departureTime: string
   otherUserName: string
+  otherUserAvatar: string | null
   otherUserId: string
 }
 
@@ -43,7 +44,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
           .from('airport_requests')
           .select(
             `id, passenger_id, origin, destination, offered_price, departure_time,
-             profiles!passenger_id (name)`
+             profiles!passenger_id (name, avatar_url)`
           )
           .eq('driver_id', user.id)
           .eq('status', 'accepted')
@@ -57,6 +58,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             price: trip.offered_price,
             departureTime: trip.departure_time,
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
+            otherUserAvatar: (trip.profiles as any)?.avatar_url ?? null,
             otherUserId: trip.passenger_id,
           })
         }
@@ -65,7 +67,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
           .from('airport_requests')
           .select(
             `id, driver_id, origin, destination, offered_price, departure_time,
-             profiles!driver_id (name)`
+             profiles!driver_id (name, avatar_url)`
           )
           .eq('passenger_id', user.id)
           .eq('status', 'accepted')
@@ -80,6 +82,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             price: trip.offered_price,
             departureTime: trip.departure_time,
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
+            otherUserAvatar: (trip.profiles as any)?.avatar_url ?? null,
             otherUserId: trip.driver_id,
           })
         }
@@ -190,6 +193,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
               price: selectedTrip.price,
               status: 'accepted',
               otherUserName: selectedTrip.otherUserName,
+              otherUserAvatar: selectedTrip.otherUserAvatar ?? undefined,
               userRole: isDriver ? 'conductor' : 'pasajero',
             }}
           />

@@ -1,8 +1,9 @@
 import React from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet, ScrollView } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
+import { SafeAreaView } from 'react-native-safe-area-context'
 import { Text } from './AppText'
-import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../theme/theme'
+import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Icon from './Icon'
 
 interface TripDetailsModalProps {
@@ -27,141 +28,102 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
 }) => {
   const getStatusInfo = () => {
     if (trip.status === 'accepted') {
-      return { label: 'Aceptado', icon: 'CircleCheck', color: COLORS.success }
+      return { label: 'Aceptado', sub: 'Viaje confirmado', icon: 'CircleCheck', color: COLORS.success, bg: COLORS.successLight }
     }
-    return { label: 'En Progreso', icon: 'Navigation', color: COLORS.warning }
+    return { label: 'En Progreso', sub: 'En camino', icon: 'Navigation', color: COLORS.warning, bg: COLORS.warningLight }
   }
 
   const statusInfo = getStatusInfo()
+  const departureDate = new Date()
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
-      <ScrollView style={styles.container}>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose}>
-            <Icon name="X" size={28} color={COLORS.text} />
+          <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Icon name="X" size={22} color={COLORS.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Detalles del Viaje</Text>
-          <View style={{ width: 28 }} />
+          <Text style={styles.headerTitle}>Detalles del viaje</Text>
+          <View style={{ width: 22 }} />
         </View>
+        <View style={styles.divider} />
 
-        {/* Status Card */}
-        <View style={styles.statusCard}>
-          <View style={[styles.statusIcon, { backgroundColor: statusInfo.color + '20' }]}>
-            <Icon name={statusInfo.icon as any} size={32} color={statusInfo.color} />
+        <View style={styles.content}>
+          {/* Estado */}
+          <View style={[styles.row, { backgroundColor: statusInfo.bg }]}>
+            <View style={[styles.rowIcon, { backgroundColor: COLORS.white }]}>
+              <Icon name={statusInfo.icon as any} size={20} color={statusInfo.color} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>{statusInfo.label}</Text>
+              <Text style={styles.rowSub}>{statusInfo.sub}</Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.statusLabel}>{statusInfo.label}</Text>
-            <Text style={styles.statusSubtext}>
-              {trip.status === 'accepted' ? 'Viaje confirmado' : 'En camino'}
-            </Text>
-          </View>
-        </View>
 
-        {/* Passenger/Driver Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            {trip.userRole === 'conductor' ? 'Pasajero' : 'Conductor'}
-          </Text>
-          <View style={styles.infoCard}>
+          {/* Conductor / Pasajero */}
+          <View style={[styles.row, { backgroundColor: COLORS.surfaceAlt }]}>
             {trip.otherUserAvatar ? (
-              <Image
-                source={{ uri: trip.otherUserAvatar }}
-                style={styles.avatar}
-              />
+              <Image source={{ uri: trip.otherUserAvatar }} style={styles.avatar} />
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Icon name="User" size={24} color={COLORS.white} />
+              <View style={[styles.rowIcon, { backgroundColor: COLORS.primary }]}>
+                <Icon name="User" size={18} color={COLORS.white} />
               </View>
             )}
-            <View style={styles.infoContent}>
-              <Text style={styles.infoName}>{trip.otherUserName}</Text>
-              <Text style={styles.infoSubtext}>
-                {trip.userRole === 'conductor' ? 'Pasajero' : 'Conductor'}
-              </Text>
+            <View style={styles.rowText}>
+              <Text style={styles.rowTitle}>{trip.otherUserName}</Text>
+              <Text style={styles.rowSub}>{trip.userRole === 'conductor' ? 'Pasajero' : 'Conductor'}</Text>
             </View>
-            <View style={styles.ratingPlaceholder}>
-              <Text style={styles.ratingText}>⭐ 5.0</Text>
+            <View style={styles.ratingPill}>
+              <Icon name="Star" size={12} color={COLORS.warningDark} />
+              <Text style={styles.ratingText}>5.0</Text>
             </View>
           </View>
-        </View>
 
-        {/* Route Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Ruta</Text>
-          <View style={styles.routeCard}>
+          {/* Ruta */}
+          <View style={[styles.card, { backgroundColor: COLORS.surfaceAlt }]}>
             <View style={styles.routePoint}>
               <View style={styles.routeDot} />
               <View style={styles.routeTextContainer}>
                 <Text style={styles.routeLabel}>Origen</Text>
-                <Text style={styles.routeValue} numberOfLines={2}>
-                  {trip.origin}
-                </Text>
+                <Text style={styles.routeValue} numberOfLines={2}>{trip.origin}</Text>
               </View>
             </View>
-
             <View style={styles.routeLine} />
-
             <View style={styles.routePoint}>
               <View style={[styles.routeDot, styles.routeDotEnd]} />
               <View style={styles.routeTextContainer}>
                 <Text style={styles.routeLabel}>Destino</Text>
-                <Text style={styles.routeValue} numberOfLines={2}>
-                  {trip.destination}
-                </Text>
+                <Text style={styles.routeValue} numberOfLines={2}>{trip.destination}</Text>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Price Information */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Tarifa</Text>
-          <View style={styles.priceCard}>
-            <View>
-              <Text style={styles.priceLabel}>Precio Total</Text>
-              <Text style={styles.priceValue}>
-                ${trip.price.toLocaleString('es-CO')}
-              </Text>
-            </View>
-            <View style={styles.priceBadge}>
-              <Icon name="CircleCheck" size={20} color={COLORS.success} />
-            </View>
-          </View>
-        </View>
-
-        {/* Additional Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información Adicional</Text>
-          <View style={styles.infoGrid}>
+          {/* Tarifa · Fecha · Hora */}
+          <View style={[styles.infoRow, { backgroundColor: COLORS.surfaceAlt }]}>
             <View style={styles.infoItem}>
-              <View style={styles.infoItemIcon}>
-                <Icon name="Calendar" size={20} color={COLORS.primary} />
-              </View>
-              <Text style={styles.infoItemLabel}>Hoy</Text>
-              <Text style={styles.infoItemValue}>
-                {new Date().toLocaleDateString('es-CO')}
-              </Text>
+              <Text style={styles.infoLabel}>TARIFA</Text>
+              <Text style={[styles.infoValue, styles.infoValuePrice]}>${trip.price.toLocaleString('es-CO')}</Text>
             </View>
-
+            <View style={styles.infoDivider} />
             <View style={styles.infoItem}>
-              <View style={styles.infoItemIcon}>
-                <Icon name="Clock" size={20} color={COLORS.primary} />
-              </View>
-              <Text style={styles.infoItemLabel}>Hora</Text>
-              <Text style={styles.infoItemValue}>
-                {new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+              <Text style={styles.infoLabel}>FECHA</Text>
+              <Text style={styles.infoValue}>{departureDate.toLocaleDateString('es-CO')}</Text>
+            </View>
+            <View style={styles.infoDivider} />
+            <View style={styles.infoItem}>
+              <Text style={styles.infoLabel}>HORA</Text>
+              <Text style={styles.infoValue}>
+                {departureDate.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
               </Text>
             </View>
           </View>
-        </View>
 
-        {/* Close Button */}
-        <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Text style={styles.closeButtonText}>Entendido</Text>
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.85}>
+            <Text style={styles.closeButtonText}>Entendido</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
     </Modal>
   )
 }
@@ -176,113 +138,84 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.sm + 2,
   },
   headerTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
   },
-  statusCard: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.background,
-    marginHorizontal: SPACING.lg,
-    marginVertical: SPACING.lg,
-    borderRadius: RADIUS.lg,
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+  },
+  content: {
     padding: SPACING.lg,
-    gap: SPACING.md,
-    alignItems: 'center',
-    ...SHADOWS.md,
+    gap: SPACING.sm + 2,
   },
-  statusIcon: {
-    width: 60,
-    height: 60,
-    borderRadius: RADIUS.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusLabel: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  statusSubtext: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textSecondary,
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-  infoCard: {
+  row: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
+    alignItems: 'center',
+    gap: SPACING.sm + 2,
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
-    alignItems: 'center',
-    gap: SPACING.md,
-    ...SHADOWS.sm,
   },
-  avatarPlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primary,
+  rowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: RADIUS.lg,
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+    flexShrink: 0,
   },
-  infoContent: {
+  rowText: {
     flex: 1,
   },
-  infoName: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.text,
+  rowTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
   },
-  infoSubtext: {
-    fontSize: TYPOGRAPHY.size.sm,
+  rowSub: {
+    fontSize: 12,
     color: COLORS.textSecondary,
+    marginTop: 1,
   },
-  ratingPlaceholder: {
+  ratingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: COLORS.warningLight,
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.md,
+    paddingVertical: 5,
+    borderRadius: RADIUS.full,
   },
   ratingText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
     color: COLORS.warningDark,
   },
-  routeCard: {
-    backgroundColor: COLORS.background,
+  card: {
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    ...SHADOWS.sm,
+    padding: SPACING.md,
   },
   routePoint: {
     flexDirection: 'row',
-    gap: SPACING.md,
+    gap: SPACING.sm + 2,
   },
   routeDot: {
-    width: 12,
-    height: 12,
+    width: 10,
+    height: 10,
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.primary,
-    marginTop: 4,
+    marginTop: 3,
+    flexShrink: 0,
   },
   routeDotEnd: {
     backgroundColor: COLORS.success,
@@ -291,90 +224,61 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   routeLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
+    fontSize: 10,
     color: COLORS.textTertiary,
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   routeValue: {
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+    marginTop: 1,
   },
   routeLine: {
     width: 2,
-    height: 30,
+    height: 18,
     backgroundColor: COLORS.border,
-    marginLeft: 5,
-    marginVertical: SPACING.sm,
+    marginLeft: 4,
   },
-  priceCard: {
+  infoRow: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
     borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    ...SHADOWS.sm,
-  },
-  priceLabel: {
-    fontSize: TYPOGRAPHY.size.sm,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  priceValue: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  priceBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
-    backgroundColor: COLORS.successLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  infoGrid: {
-    flexDirection: 'row',
-    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
   infoItem: {
     flex: 1,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    gap: 3,
   },
-  infoItemIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
+  infoDivider: {
+    width: 1,
+    backgroundColor: COLORS.border,
   },
-  infoItemLabel: {
-    fontSize: TYPOGRAPHY.size.xs,
+  infoLabel: {
+    fontSize: 10,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  infoItemValue: {
-    fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '600',
-    color: COLORS.text,
+  },
+  infoValue: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.textPrimary,
+  },
+  infoValuePrice: {
+    color: COLORS.primary,
+    fontSize: 14,
   },
   closeButton: {
-    marginHorizontal: SPACING.lg,
-    marginVertical: SPACING.lg,
     backgroundColor: COLORS.primary,
     borderRadius: RADIUS.lg,
     paddingVertical: SPACING.md,
     alignItems: 'center',
+    marginTop: SPACING.xs,
   },
   closeButtonText: {
-    fontSize: TYPOGRAPHY.size.md,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.white,
   },

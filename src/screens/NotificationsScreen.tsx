@@ -103,6 +103,31 @@ const ctaOf = (notification: NotificationWithSender): string | null => {
 
 const timestampOf = (iso: string): Date => new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`)
 
+function EmptyState({ isAllFilter }: { isAllFilter: boolean }) {
+  return (
+    <View style={styles.emptyContainer}>
+      <Illustration name="myNotifications" width={180} />
+      <Text style={styles.emptySubtitle}>
+        {isAllFilter ? 'No hay más notificaciones' : 'No hay alertas en esta categoría'}
+      </Text>
+    </View>
+  )
+}
+
+function ListFooter({ isDriver }: { isDriver: boolean }) {
+  return (
+    <View style={styles.footer}>
+      {isDriver && (
+        <View style={styles.noteBox}>
+          <Text style={styles.noteText}>
+            Las alertas de pago se activarán cuando exista la confirmación de pagos recibidos.
+          </Text>
+        </View>
+      )}
+    </View>
+  )
+}
+
 export default function NotificationsScreen() {
   const navigation = useNavigation()
   const insets = useSafeAreaInsets()
@@ -399,27 +424,6 @@ export default function NotificationsScreen() {
     </ScrollView>
   )
 
-  const EmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <Illustration name="myNotifications" width={180} />
-      <Text style={styles.emptySubtitle}>
-        {activeFilter.id === 'all' ? 'No hay más notificaciones' : 'No hay alertas en esta categoría'}
-      </Text>
-    </View>
-  )
-
-  const ListFooter = () => (
-    <View style={styles.footer}>
-      {isDriver && (
-        <View style={styles.noteBox}>
-          <Text style={styles.noteText}>
-            Las alertas de pago se activarán cuando exista la confirmación de pagos recibidos.
-          </Text>
-        </View>
-      )}
-    </View>
-  )
-
   const _dStyle            = detailNotif ? tileOf(detailNotif.type) : null
   const _dIsBooking        = detailNotif ? TRIP_ACTION_TYPES.includes(detailNotif.type) : false
   const _dIsChat           = detailNotif?.type === 'message'
@@ -482,7 +486,7 @@ export default function NotificationsScreen() {
           <Text style={styles.loadingText}>Cargando alertas...</Text>
         </View>
       ) : sections.length === 0 ? (
-        <EmptyState />
+        <EmptyState isAllFilter={activeFilter.id === 'all'} />
       ) : (
         <SectionList
           sections={sections}
@@ -495,7 +499,7 @@ export default function NotificationsScreen() {
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />
           }
-          ListFooterComponent={<ListFooter />}
+          ListFooterComponent={<ListFooter isDriver={isDriver} />}
           stickySectionHeadersEnabled={false}
           showsVerticalScrollIndicator={false}
         />
