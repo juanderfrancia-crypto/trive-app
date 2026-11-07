@@ -3,6 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import { View, StyleSheet, Platform } from 'react-native'
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated'
 import Icon, { type IconName } from '../components/Icon'
+import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import HomeScreen from '../screens/HomeScreen'
 import DriverTripsScreen from '../screens/driver/DriverTripsScreen'
@@ -123,14 +124,21 @@ export default function TabNavigator() {
         sceneContainerStyle: {
           backgroundColor: COLORS.surface,
         },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '600',
-          marginTop: SPACING.xs - 2,
-          textShadowColor: 'rgba(15, 26, 46, 0.25)',
-          textShadowOffset: { width: 0, height: 1 },
-          textShadowRadius: 3,
-        },
+        // El ícono activo se ve sobre la pastilla blanca (por eso usa tabBarActiveTintColor,
+        // azul primario, ahí sí se lee bien) — pero el texto de la pestaña va directo sobre
+        // el fondo azul de la barra, sin pastilla debajo. Si usara el mismo tinte azul,
+        // quedaría azul sobre azul, invisible. Por eso el label tiene su propio color,
+        // siempre en blanco (más opaco cuando está activo), independiente del ícono.
+        tabBarLabel: ({ focused, children }) => (
+          <Text
+            style={[
+              styles.label,
+              { color: focused ? COLORS.white : 'rgba(255,255,255,0.75)', fontWeight: focused ? '800' : '600' },
+            ]}
+          >
+            {children}
+          </Text>
+        ),
         headerShown: false,
       })}
     >
@@ -192,6 +200,13 @@ export default function TabNavigator() {
 }
 
 const styles = StyleSheet.create({
+  label: {
+    fontSize: 11,
+    marginTop: SPACING.xs - 2,
+    textShadowColor: 'rgba(8,45,102,0.25)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 3,
+  },
   barBackground: {
     flex: 1,
   },

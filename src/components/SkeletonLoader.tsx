@@ -128,7 +128,8 @@ export function SkeletonChatCard() {
       <View style={cards.chatContent}>
         <SkeletonItem width="45%" height={14} marginBottom={0} />
         <SkeletonItem width="70%" height={12} marginBottom={0} />
-        <SkeletonItem width={70} height={12} marginBottom={0} />
+        <SkeletonItem width="55%" height={12} marginBottom={0} />
+        <SkeletonItem width={70} height={13} marginBottom={0} />
       </View>
     </View>
   )

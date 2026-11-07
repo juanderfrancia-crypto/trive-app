@@ -7,6 +7,7 @@ import { useAppStore } from '../store/useAppStore';
 import { COLORS, SPACING } from '../theme/theme';
 import Icon from './Icon'
 import KeyboardAvoidingScreen from './KeyboardAvoidingScreen'
+import ChatDoodleBackground from './ChatDoodleBackground'
 
 interface NegotiationChatModalProps {
   visible: boolean;
@@ -116,11 +117,13 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
         ) : (
           <KeyboardAvoidingScreen measureKeyboard active={visible} style={s.keyboardArea}>
             {/* Mensajes */}
-            <ScrollView
-              ref={scrollRef}
-              style={s.messagesContainer}
-              contentContainerStyle={s.messagesContent}
-            >
+            <View style={s.messagesWrap}>
+              <ChatDoodleBackground />
+              <ScrollView
+                ref={scrollRef}
+                style={s.messagesContainer}
+                contentContainerStyle={s.messagesContent}
+              >
               {messages.length === 0 ? (
                 <View style={s.emptyMessages}>
                   <Icon
@@ -165,7 +168,8 @@ export const NegotiationChatModal: React.FC<NegotiationChatModalProps> = ({
                   </View>
                 ))
               )}
-            </ScrollView>
+              </ScrollView>
+            </View>
 
             {isOpen ? (
             <View style={s.inputContainer}>
@@ -245,6 +249,10 @@ const s = {
     alignItems: 'center' as const,
   },
 
+  messagesWrap: {
+    flex: 1,
+    position: 'relative' as const,
+  },
   messagesContainer: {
     flex: 1,
   },
@@ -275,15 +283,23 @@ const s = {
 
   messageBubble: {
     maxWidth: '80%' as const,
-    backgroundColor: COLORS.border,
-    borderRadius: 12,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderBottomLeftRadius: 4,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
     alignSelf: 'flex-start' as const,
+    shadowColor: COLORS.textPrimary,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
   },
   ownMessageBubble: {
     backgroundColor: COLORS.primary,
     alignSelf: 'flex-end' as const,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 4,
   },
 
   messageText: {
@@ -329,9 +345,10 @@ const s = {
   },
   input: {
     flex: 1,
+    backgroundColor: COLORS.surfaceAlt,
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 20,
+    borderRadius: 14,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.sm,
     fontSize: 14,
