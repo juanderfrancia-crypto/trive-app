@@ -73,7 +73,8 @@ export default function DriverHomeScreen() {
     useCallback(() => {
       loadAirportCount()
       reloadPayments()
-    }, [loadAirportCount, reloadPayments])
+      if (user?.id) fetchProfile(user.id)
+    }, [loadAirportCount, reloadPayments, fetchProfile, user?.id])
   )
 
   const handleRefresh = async () => {
