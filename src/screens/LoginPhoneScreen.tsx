@@ -461,6 +461,10 @@ export default function LoginPhoneScreen() {
                 <Text style={s.subtleLinkText}>¿Ya tienes cuenta con correo? <Text style={s.subtleLinkStrong}>Inicia sesión aquí</Text></Text>
               </TouchableOpacity>
 
+              <TouchableOpacity style={s.subtleLinkSecond} onPress={() => navigation.navigate('AccountRecovery' as never)} disabled={isSubmitting}>
+                <Text style={s.subtleLinkText}>¿Perdiste tu número? <Text style={s.subtleLinkStrong}>Recupera tu cuenta</Text></Text>
+              </TouchableOpacity>
+
               <TermsText />
             </View>
 
@@ -601,6 +605,7 @@ const s = StyleSheet.create({
   },
 
   subtleLink: { alignItems: 'center', marginTop: SPACING.lg, paddingVertical: SPACING.sm },
+  subtleLinkSecond: { alignItems: 'center', paddingVertical: SPACING.sm },
   subtleLinkText: { fontSize: 12.5, color: COLORS.textTertiary },
   subtleLinkStrong: { color: COLORS.textSecondary, fontWeight: '600', textDecorationLine: 'underline' },
 

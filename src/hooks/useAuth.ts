@@ -30,7 +30,7 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { setUser: setAppUser, setAuthUser, setDeviceVerificationStatus } = useAppStore();
+  const { setUser: setAppUser, setAuthUser, setDeviceVerificationStatus, setJustRecoveredAccount } = useAppStore();
   const profileChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const currentSessionRef = useRef<Session | null>(null)
@@ -500,6 +500,7 @@ export const useAuth = () => {
       setAuthUser(null);
       setAppUser(null);
       setDeviceVerificationStatus('unknown');
+      setJustRecoveredAccount(false);
     } catch (err: any) {
       const message = err.message || "Error logging out";
       setError(message);

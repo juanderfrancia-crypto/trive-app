@@ -104,6 +104,13 @@ export default function SecurityScreen() {
           />
           <Divider />
           <Row
+            icon="ShieldCheck"
+            title="Correo de recuperación"
+            sub="Recupera tu cuenta si pierdes tu número"
+            onPress={() => navigation.navigate('RecoveryEmail' as never)}
+          />
+          <Divider />
+          <Row
             icon="Fingerprint"
             title="Acceso biométrico"
             sub="Huella digital o reconocimiento facial"

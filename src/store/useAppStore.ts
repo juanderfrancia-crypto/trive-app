@@ -43,6 +43,10 @@ interface AppState {
   // 'unknown' mientras restoreSession no ha llamado a check_device todavía (no bloquea:
   // el gate de AppNavigator solo bloquea con 'needs_verification').
   deviceVerificationStatus: 'unknown' | 'recognized' | 'needs_verification'
+  // true justo después de recuperar la cuenta por correo (AccountRecoveryScreen) -- obliga
+  // a pasar por VerifyPhoneScreen para fijar un número nuevo antes de entrar a la app,
+  // aunque la cuenta ya tenga un teléfono viejo guardado (el que se perdió).
+  justRecoveredAccount: boolean
 
   setUser: (user: AppUser | null) => void
   setAuthUser: (user: User | null) => void
@@ -58,6 +62,7 @@ interface AppState {
   setSearchParams: (origin: string, destination: string) => void
   setViewingAsPassenger: (viewingAsPassenger: boolean) => void
   setDeviceVerificationStatus: (status: AppState['deviceVerificationStatus']) => void
+  setJustRecoveredAccount: (value: boolean) => void
   logout: () => void
 }
 
@@ -122,6 +127,7 @@ export const useAppStore = create<AppState>()(
       searchParams: undefined,
       viewingAsPassenger: false,
       deviceVerificationStatus: 'unknown',
+      justRecoveredAccount: false,
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setAuthUser: (authUser) => set({ authUser }),
@@ -135,6 +141,7 @@ export const useAppStore = create<AppState>()(
       setSearchParams: (origin: string, destination: string) => set({ searchParams: { origin, destination } }),
       setViewingAsPassenger: (viewingAsPassenger) => set({ viewingAsPassenger }),
       setDeviceVerificationStatus: (deviceVerificationStatus) => set({ deviceVerificationStatus }),
+      setJustRecoveredAccount: (justRecoveredAccount) => set({ justRecoveredAccount }),
       setPendingVerification: (email: string, name: string, phone: string) => {
         // Guardar en SecureStore cifrado, no en AsyncStorage
         savePendingVerificationSecure(email, name, phone)
@@ -169,6 +176,7 @@ export const useAppStore = create<AppState>()(
           hasSeenOnboarding: true,
           viewingAsPassenger: false,
           deviceVerificationStatus: 'unknown',
+          justRecoveredAccount: false,
         })
       },
     }),

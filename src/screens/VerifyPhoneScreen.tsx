@@ -8,6 +8,7 @@ import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
+import { useAppStore } from '../store/useAppStore'
 import { showError } from '../utils/showError'
 
 const toE164 = (raw: string) => {
@@ -17,6 +18,7 @@ const toE164 = (raw: string) => {
 
 export default function VerifyPhoneScreen() {
   const { logout } = useAuth()
+  const setJustRecoveredAccount = useAppStore((s) => s.setJustRecoveredAccount)
   const [step, setStep] = useState<'phone' | 'code'>('phone')
   const [phone, setPhone] = useState('')
   const [code, setCode] = useState('')
@@ -68,6 +70,7 @@ export default function VerifyPhoneScreen() {
         type: 'phone_change',
       })
       if (error) throw error
+      setJustRecoveredAccount(false)
       await supabase.auth.refreshSession()
     } catch (err: any) {
       setInlineError('El código es inválido o expiró. Solicita uno nuevo.')

@@ -14,6 +14,8 @@ import LoginPhoneScreen from '../screens/LoginPhoneScreen'
 import VerifyPhoneScreen from '../screens/VerifyPhoneScreen'
 import CompleteCedulaScreen from '../screens/CompleteCedulaScreen'
 import DeviceVerificationScreen from '../screens/DeviceVerificationScreen'
+import AccountRecoveryScreen from '../screens/AccountRecoveryScreen'
+import RecoveryEmailScreen from '../screens/RecoveryEmailScreen'
 import RegisterScreen from '../screens/RegisterScreen'
 import VerifyEmailScreen from '../screens/VerifyEmailScreen'
 import SeatSelectionScreen from '../screens/SeatSelectionScreen'
@@ -76,6 +78,7 @@ export default function AppNavigator() {
   const hasSeenOnboarding = useAppStore((state) => state.hasSeenOnboarding)
   const user = useAppStore((state) => state.user)
   const deviceVerificationStatus = useAppStore((state) => state.deviceVerificationStatus)
+  const justRecoveredAccount = useAppStore((state) => state.justRecoveredAccount)
   const pendingVerificationEmail = useAppStore((state) => state.pendingVerificationEmail)
   const setHasSeenOnboarding = useAppStore((state) => state.setHasSeenOnboarding)
   const setPendingVerification = useAppStore((state) => state.setPendingVerification)
@@ -155,6 +158,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Login" component={LoginPhoneScreen} />
       <Stack.Screen name="Register" component={RegisterScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
+      <Stack.Screen name="AccountRecovery" component={AccountRecoveryScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
       {!pendingVerificationEmail && (
@@ -178,6 +182,7 @@ export default function AppNavigator() {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Privacy" component={PrivacyScreen} />
       <Stack.Screen name="Security" component={SecurityScreen} />
+      <Stack.Screen name="RecoveryEmail" component={RecoveryEmailScreen} />
       <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
@@ -213,7 +218,10 @@ export default function AppNavigator() {
     </>
   ) : null
 
-  const needsPhoneVerification = isUserAuthenticated && !session?.user?.phone
+  // justRecoveredAccount: la cuenta se recuperó por correo (AccountRecoveryScreen) -- aunque
+  // ya tenga un teléfono viejo guardado (el que se perdió), se le pide fijar uno nuevo con
+  // la misma pantalla de siempre antes de dejarlo entrar.
+  const needsPhoneVerification = isUserAuthenticated && (!session?.user?.phone || justRecoveredAccount)
   // Cédula obligatoria para todos los usuarios (ver memoria project_seguridad_cuenta_unica_dispositivo,
   // punto 2) -- se pide una sola vez, después de resolver el teléfono, antes de dejar entrar al resto de la app.
   const needsCedula = isUserAuthenticated && !needsPhoneVerification && !!user && !user.cedula
