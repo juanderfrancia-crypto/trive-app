@@ -22,7 +22,9 @@ export default function RecoveryEmailScreen() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      setCurrentEmail(data.user?.email ?? null)
+      // Solo cuenta como "configurado" si ya quedó confirmado -- si se quedó a medias en
+      // el código, no se le puede mostrar como si ya sirviera para recuperar la cuenta.
+      setCurrentEmail(data.user?.email_confirmed_at ? data.user.email ?? null : null)
       setLoadingCurrent(false)
     })
   }, [])

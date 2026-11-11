@@ -80,6 +80,8 @@ const tileOf = (type: NotifType): { icon: IconName; bg: string; fg: string } => 
       return { icon: 'Star', bg: COLORS.successLight, fg: COLORS.success }
     case 'message':
       return { icon: 'User', bg: COLORS.primaryTint, fg: COLORS.primary }
+    case 'profile_incomplete':
+      return { icon: 'Settings', bg: COLORS.warningLight, fg: COLORS.warningDark }
     case 'booking':
       return { icon: 'Ticket', bg: COLORS.primaryTint, fg: COLORS.primary }
     case 'trip_update':

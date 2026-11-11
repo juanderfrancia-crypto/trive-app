@@ -76,6 +76,22 @@ export function getNotificationRoute(
   }
 
   switch (notification.type) {
+    // Recordatorio de perfil incompleto (correo de recuperación, contacto de emergencia,
+    // municipio) -- lleva directo a la pantalla donde se resuelve cada uno.
+    case 'profile_incomplete': {
+      const pendingKey = data.pending_key as string | undefined
+      if (pendingKey === 'recovery_email') {
+        return { screenName: 'RecoveryEmail', params: {} }
+      }
+      if (pendingKey === 'emergency_contact') {
+        return { screenName: 'Settings', params: { openEmergencyContact: true } }
+      }
+      if (pendingKey === 'municipality') {
+        return { screenName: 'Settings', params: { openMunicipality: true } }
+      }
+      return { screenName: 'Settings', params: {} }
+    }
+
     // Confirmar el viaje: la tarjeta de confirmación está en Mis viajes.
     case 'trip_confirm':
       return { screenName: 'Main', params: { screen: 'Search' } }
@@ -123,6 +139,7 @@ export function getNotificationIcon(notificationType: Notification['type']): str
     driver_arrived: '🚗',
     review_pending: '⭐',
     message: '💬',
+    profile_incomplete: '📝',
   }
   return icons[notificationType] || '🔔'
 }
@@ -141,6 +158,7 @@ export function getNotificationColor(notificationType: Notification['type']): st
     driver_arrived: COLORS.primary,
     review_pending: COLORS.primary,
     message: COLORS.primary,
+    profile_incomplete: COLORS.warning,
   }
   return colors[notificationType] || COLORS.textSecondary
 }

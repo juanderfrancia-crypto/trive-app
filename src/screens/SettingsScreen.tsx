@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
 import {
@@ -21,6 +21,7 @@ import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 
 export default function SettingsScreen() {
   const navigation = useNavigation()
+  const route = useRoute<any>()
   const { user } = useAuth()
   const [pushNotifications, setPushNotifications] = useState(true)
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -44,6 +45,13 @@ export default function SettingsScreen() {
         if (data?.preferred_municipality) setPreferredMunicipality(data.preferred_municipality)
       })
   }, [user?.id])
+
+  // Desde una notificación de "te falta configurar X" se puede llegar directo a abrir
+  // el modal correspondiente, sin que el usuario tenga que buscarlo.
+  useEffect(() => {
+    if (route.params?.openEmergencyContact) setSosModalVisible(true)
+    if (route.params?.openMunicipality) setShowMunicipalityPicker(true)
+  }, [route.params])
 
   const saveMunicipality = async (m: Municipality) => {
     setShowMunicipalityPicker(false)

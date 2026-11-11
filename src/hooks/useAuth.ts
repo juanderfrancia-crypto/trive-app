@@ -7,6 +7,7 @@ import { Session, User } from "@supabase/supabase-js";
 import { useAppStore, AppUser } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey, updateSessionPushToken } from "../services/userSessions";
 import { checkDeviceVerification } from "../services/deviceVerification";
+import { checkPendingProfileSetup } from "../services/profileCompleteness";
 import { getPushNotificationToken, registerPushToken, sendPushNotificationToUser } from "../services/pushNotifications";
 import { setUserId } from "../services/analytics";
 import { withTimeout } from "../utils/withTimeout";
@@ -234,6 +235,7 @@ export const useAuth = () => {
       }
       if (event === 'SIGNED_IN' && session?.user) {
         subscribeToProfile(session.user.id)
+        checkPendingProfileSetup(session.user.id)
       }
       restoreSession(session);
     });

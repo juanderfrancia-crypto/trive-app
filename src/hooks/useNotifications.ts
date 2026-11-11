@@ -7,7 +7,7 @@ import type { Tables } from '../types/database.types';
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'booking' | 'trip_update' | 'driver_arrived' | 'trip_completed' | 'review_pending' | 'message' | 'trip_published' | 'offer_received' | 'offer_accepted' | 'trip_confirmed' | 'trip_started' | 'trip_rated' | 'trip_confirm' | 'review_received';
+  type: 'booking' | 'trip_update' | 'driver_arrived' | 'trip_completed' | 'review_pending' | 'message' | 'trip_published' | 'offer_received' | 'offer_accepted' | 'trip_confirmed' | 'trip_started' | 'trip_rated' | 'trip_confirm' | 'review_received' | 'profile_incomplete';
   title: string;
   message: string;
   data?: {
@@ -22,6 +22,7 @@ export interface Notification {
     origin?: string;
     destination?: string;
     audience?: string;
+    pending_key?: 'recovery_email' | 'emergency_contact' | 'municipality';
     [key: string]: any;
   };
   is_read: boolean;
@@ -35,7 +36,7 @@ type NotificationRow = Tables<'notifications'>;
 const NOTIFICATION_TYPES: Notification['type'][] = [
   'message', 'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'review_pending',
   'trip_published', 'offer_received', 'offer_accepted', 'trip_confirmed', 'trip_started',
-  'trip_rated', 'trip_confirm', 'review_received',
+  'trip_rated', 'trip_confirm', 'review_received', 'profile_incomplete',
 ];
 
 const toNotificationType = (type: string): Notification['type'] =>
