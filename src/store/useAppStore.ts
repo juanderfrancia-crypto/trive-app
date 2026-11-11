@@ -9,6 +9,7 @@ export interface AppUser {
   name: string
   email: string
   phone?: string
+  cedula?: string | null
   role: 'passenger' | 'driver' | 'support'
   rating: number
   avatar_url?: string
@@ -39,6 +40,9 @@ interface AppState {
   // Vista temporal: un conductor viendo la app como pasajero, sin cambiar profiles.role.
   // Nunca se persiste — vuelve a modo conductor sola al cerrar sesión o reabrir la app.
   viewingAsPassenger: boolean
+  // 'unknown' mientras restoreSession no ha llamado a check_device todavía (no bloquea:
+  // el gate de AppNavigator solo bloquea con 'needs_verification').
+  deviceVerificationStatus: 'unknown' | 'recognized' | 'needs_verification'
 
   setUser: (user: AppUser | null) => void
   setAuthUser: (user: User | null) => void
@@ -53,6 +57,7 @@ interface AppState {
   clearPendingVerification: () => void
   setSearchParams: (origin: string, destination: string) => void
   setViewingAsPassenger: (viewingAsPassenger: boolean) => void
+  setDeviceVerificationStatus: (status: AppState['deviceVerificationStatus']) => void
   logout: () => void
 }
 
@@ -116,6 +121,7 @@ export const useAppStore = create<AppState>()(
       pendingVerificationPhone: undefined,
       searchParams: undefined,
       viewingAsPassenger: false,
+      deviceVerificationStatus: 'unknown',
 
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setAuthUser: (authUser) => set({ authUser }),
@@ -128,6 +134,7 @@ export const useAppStore = create<AppState>()(
       setNotificationUnreadCount: (notificationUnreadCount) => set({ notificationUnreadCount }),
       setSearchParams: (origin: string, destination: string) => set({ searchParams: { origin, destination } }),
       setViewingAsPassenger: (viewingAsPassenger) => set({ viewingAsPassenger }),
+      setDeviceVerificationStatus: (deviceVerificationStatus) => set({ deviceVerificationStatus }),
       setPendingVerification: (email: string, name: string, phone: string) => {
         // Guardar en SecureStore cifrado, no en AsyncStorage
         savePendingVerificationSecure(email, name, phone)
@@ -161,6 +168,7 @@ export const useAppStore = create<AppState>()(
           pendingVerificationPhone: undefined,
           hasSeenOnboarding: true,
           viewingAsPassenger: false,
+          deviceVerificationStatus: 'unknown',
         })
       },
     }),

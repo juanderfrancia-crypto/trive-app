@@ -22,7 +22,7 @@ export interface Profile {
 
 // PROFILE_COLUMNS (profileColumns.ts) no trae estas columnas — si se agregan ahí,
 // hay que quitarlas de este Omit también.
-type ProfileRow = Omit<Tables<"profiles">, "phone" | "account_status" | "push_token_debug" | "push_token_debug_at">;
+type ProfileRow = Omit<Tables<"profiles">, "phone" | "cedula" | "account_status" | "push_token_debug" | "push_token_debug_at">;
 
 const toProfile = (row: ProfileRow): Profile => ({
   ...row,

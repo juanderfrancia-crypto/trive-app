@@ -12,6 +12,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import TabNavigator from './TabNavigator'
 import LoginPhoneScreen from '../screens/LoginPhoneScreen'
 import VerifyPhoneScreen from '../screens/VerifyPhoneScreen'
+import CompleteCedulaScreen from '../screens/CompleteCedulaScreen'
+import DeviceVerificationScreen from '../screens/DeviceVerificationScreen'
 import RegisterScreen from '../screens/RegisterScreen'
 import VerifyEmailScreen from '../screens/VerifyEmailScreen'
 import SeatSelectionScreen from '../screens/SeatSelectionScreen'
@@ -72,6 +74,8 @@ export default function AppNavigator() {
   const [mounted, setMounted] = useState(false)
   const [stateRestored, setStateRestored] = useState(false)
   const hasSeenOnboarding = useAppStore((state) => state.hasSeenOnboarding)
+  const user = useAppStore((state) => state.user)
+  const deviceVerificationStatus = useAppStore((state) => state.deviceVerificationStatus)
   const pendingVerificationEmail = useAppStore((state) => state.pendingVerificationEmail)
   const setHasSeenOnboarding = useAppStore((state) => state.setHasSeenOnboarding)
   const setPendingVerification = useAppStore((state) => state.setPendingVerification)
@@ -210,12 +214,28 @@ export default function AppNavigator() {
   ) : null
 
   const needsPhoneVerification = isUserAuthenticated && !session?.user?.phone
+  // Cédula obligatoria para todos los usuarios (ver memoria project_seguridad_cuenta_unica_dispositivo,
+  // punto 2) -- se pide una sola vez, después de resolver el teléfono, antes de dejar entrar al resto de la app.
+  const needsCedula = isUserAuthenticated && !needsPhoneVerification && !!user && !user.cedula
+  // Punto 3 del plan de seguridad: dispositivo no reconocido para esta cuenta (ver
+  // checkDeviceVerification en useAuth.ts). Solo bloquea con 'needs_verification' --
+  // 'unknown' (aún no se consultó) y 'recognized' dejan pasar.
+  const needsDeviceVerification =
+    isUserAuthenticated && !needsPhoneVerification && !needsCedula && deviceVerificationStatus === 'needs_verification'
 
   return (
     <NavigationContainer theme={navigationTheme}>
       {needsPhoneVerification ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="VerifyPhone" component={VerifyPhoneScreen} />
+        </Stack.Navigator>
+      ) : needsCedula ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="CompleteCedula" component={CompleteCedulaScreen} />
+        </Stack.Navigator>
+      ) : needsDeviceVerification ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="DeviceVerification" component={DeviceVerificationScreen} />
         </Stack.Navigator>
       ) : isUserAuthenticated ? (
         <NotificationsProvider userId={session?.user?.id}>

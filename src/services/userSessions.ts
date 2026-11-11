@@ -5,6 +5,7 @@ import { supabase } from './supabase'
 import { getItem, removeItem, setItem } from '../utils/storage'
 
 const SESSION_KEY = 'trive_user_session_key'
+const DEVICE_ID_KEY = 'trive_device_id'
 
 const createSessionKey = (): string => Crypto.randomUUID()
 
@@ -15,6 +16,19 @@ const getSessionKey = async (): Promise<string> => {
     await setItem(SESSION_KEY, sessionKey)
   }
   return sessionKey
+}
+
+// Identidad del dispositivo para la verificación de "dispositivo nuevo" (punto 3 de
+// seguridad). A diferencia de SESSION_KEY, esta NUNCA se borra al cerrar sesión -- tiene
+// que sobrevivir logout/login en el mismo teléfono, o todo el mundo sería "dispositivo
+// nuevo" cada vez que cierra sesión.
+export const getDeviceId = async (): Promise<string> => {
+  let deviceId = await getItem(DEVICE_ID_KEY)
+  if (!deviceId) {
+    deviceId = Crypto.randomUUID()
+    await setItem(DEVICE_ID_KEY, deviceId)
+  }
+  return deviceId
 }
 
 const getDeviceLabel = (): string => {
@@ -56,8 +70,11 @@ export type UserSessionRecord = {
   updated_at: string | null
 }
 
-export const registerUserSession = async (userId: string): Promise<string> => {
+export type RevokedSession = { session_key: string; push_token: string | null }
+
+export const registerUserSession = async (userId: string): Promise<{ sessionKey: string; revoked: RevokedSession[] }> => {
   const sessionKey = await getSessionKey()
+  const deviceId = await getDeviceId()
   const deviceName = getDeviceLabel()
   const deviceType = Platform.OS
   const osVersion = getOsVersion()
@@ -68,6 +85,7 @@ export const registerUserSession = async (userId: string): Promise<string> => {
     .upsert(
       {
         session_key: sessionKey,
+        device_id: deviceId,
         user_id: userId,
         device_name: deviceName,
         device_type: deviceType,
@@ -91,7 +109,38 @@ export const registerUserSession = async (userId: string): Promise<string> => {
     .eq('device_name', deviceName)
     .neq('session_key', sessionKey)
 
-  return sessionKey
+  // Sesión única por cuenta (punto 4 de seguridad): cualquier OTRO dispositivo (device_id
+  // distinto) que seguía activo se cierra. Se guarda su push_token antes de desactivarlo,
+  // para poder avisarle -- useAuth.ts es quien manda el push, aquí solo se marca y se
+  // devuelve la lista de sesiones cerradas.
+  const { data: otherSessions } = await supabase
+    .from('user_sessions')
+    .select('session_key, push_token')
+    .eq('user_id', userId)
+    .eq('is_current', true)
+    .neq('device_id', deviceId)
+
+  const revoked = (otherSessions ?? []) as RevokedSession[]
+
+  if (revoked.length > 0) {
+    await supabase
+      .from('user_sessions')
+      .update({ is_current: false, updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .eq('is_current', true)
+      .neq('device_id', deviceId)
+  }
+
+  return { sessionKey, revoked }
+}
+
+// Guarda el push token de ESTA sesión (no solo profiles.push_token, que un segundo
+// dispositivo sobrescribe) -- así se puede avisar a un dispositivo específico aunque
+// profiles.push_token ya apunte a otro.
+export const updateSessionPushToken = async (pushToken: string): Promise<void> => {
+  const sessionKey = await getItem(SESSION_KEY)
+  if (!sessionKey) return
+  await supabase.from('user_sessions').update({ push_token: pushToken }).eq('session_key', sessionKey)
 }
 
 export const getUserSessions = async (userId: string): Promise<UserSessionRecord[]> => {

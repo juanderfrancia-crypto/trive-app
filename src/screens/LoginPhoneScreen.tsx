@@ -5,11 +5,12 @@ import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth, toAppRole, toAppMembership } from '../hooks/useAuth'
 import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
+import { checkDeviceVerification } from '../services/deviceVerification'
 import { logLogin } from '../services/activityLogger'
 import OfflineBanner from '../components/OfflineBanner'
 import Button from '../components/Button'
@@ -33,6 +34,7 @@ export default function LoginPhoneScreen() {
   const [otp, setOtp] = useState('')
   const [otpDigits, setOtpDigits] = useState<string[]>(['', '', '', '', '', ''])
   const [name, setName] = useState('')
+  const [cedula, setCedula] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -178,23 +180,33 @@ export default function LoginPhoneScreen() {
   }, [otpDigits])
 
   const handleCompleteName = async () => {
-    if (!name.trim() || name.trim().length < 2) { setErrors({ name: 'Ingresa tu nombre completo' }); return }
+    const newErrors: Record<string, string> = {}
+    if (!name.trim() || name.trim().length < 2) newErrors.name = 'Ingresa tu nombre completo'
+    const cedulaDigits = cedula.replace(/[^\d]/g, '')
+    if (!cedulaDigits) newErrors.cedula = 'La cédula es requerida'
+    else if (!/^\d{6,10}$/.test(cedulaDigits)) newErrors.cedula = 'Ingresa un número de cédula válido (6 a 10 dígitos)'
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return }
     try {
       setIsSubmitting(true)
       const supabaseClient = (await import('../services/supabase')).supabase
       const rawEmail = tempUser?.email ?? null
       const isFakeEmail = !rawEmail || /^[0-9a-f-]{36}@/i.test(rawEmail) || rawEmail.includes('@sms.local')
       const userEmail = isFakeEmail ? null : rawEmail
-      const { error: saveError } = await saveMyProfile(tempUser.id, { name: name.trim(), email: userEmail, phone: formatPhone(phone), role: 'passenger' })
-      if (saveError) { errorHandler.handleSupabaseError(saveError as any, 'create_profile_name', {}); return }
+      const { error: saveError } = await saveMyProfile(tempUser.id, { name: name.trim(), email: userEmail, phone: formatPhone(phone), cedula: cedulaDigits, role: 'passenger' })
+      if (saveError) {
+        const msg = String((saveError as any)?.message ?? '')
+        if (/unique|duplicate/i.test(msg)) { setErrors({ cedula: 'Esta cédula ya está registrada en otra cuenta de Trive.' }); return }
+        errorHandler.handleSupabaseError(saveError as any, 'create_profile_name', {}); return
+      }
       const { data: savedProfile, error } = await supabaseClient
         .from('profiles')
         .select(PROFILE_COLUMNS)
         .eq('id', tempUser.id)
         .single()
       if (error) { errorHandler.handleSupabaseError(error, 'create_profile_name', {}); return }
-      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email ?? '', phone: formatPhone(phone), role: toAppRole(savedProfile.role), rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: toAppMembership(savedProfile.membership_type), membership_expiry: savedProfile.membership_expiry || null })
+      setUser({ id: savedProfile.id, name: savedProfile.name, email: savedProfile.email ?? '', phone: formatPhone(phone), cedula: cedulaDigits, role: toAppRole(savedProfile.role), rating: savedProfile.rating || 0, balance: savedProfile.balance || 0, membership_type: toAppMembership(savedProfile.membership_type), membership_expiry: savedProfile.membership_expiry || null })
       setAuthUser(tempUser)
+      await checkDeviceVerification(cedulaDigits)
       await logLogin(tempUser.id)
     } catch (err: any) {
       errorHandler.handle(err, ErrorType.UNKNOWN, ErrorSeverity.MEDIUM, true, { context: 'complete_profile_name' })
@@ -268,29 +280,6 @@ export default function LoginPhoneScreen() {
             <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           </View>
 
-          {step === 'input' && (
-            <View style={s.segment}>
-              <TouchableOpacity
-                style={[s.segmentItem, method === 'phone' && s.segmentItemActive]}
-                onPress={() => switchMethod('phone')}
-                disabled={isSubmitting}
-                activeOpacity={0.8}
-              >
-                <Icon name="Smartphone" size={16} color={method === 'phone' ? COLORS.primary : COLORS.textSecondary} />
-                <Text style={[s.segmentText, method === 'phone' && s.segmentTextActive]}>Teléfono</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[s.segmentItem, method === 'email' && s.segmentItemActive]}
-                onPress={() => switchMethod('email')}
-                disabled={isSubmitting}
-                activeOpacity={0.8}
-              >
-                <Icon name="Mail" size={16} color={method === 'email' ? COLORS.primary : COLORS.textSecondary} />
-                <Text style={[s.segmentText, method === 'email' && s.segmentTextActive]}>Correo</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
           {/* ── Name step ── */}
           {step === 'name' ? (
             <View style={s.section}>
@@ -299,7 +288,7 @@ export default function LoginPhoneScreen() {
                   <Icon name="User" size={28} color={COLORS.primary} />
                 </View>
                 <Text style={s.heading}>¿Cómo te llamas?</Text>
-                <Text style={s.subheading}>Ingresa tu nombre para completar tu registro en Trive</Text>
+                <Text style={s.subheading}>Ingresa tus datos para completar tu registro en Trive</Text>
               </View>
 
               <View style={s.inputGroup}>
@@ -312,12 +301,33 @@ export default function LoginPhoneScreen() {
                     placeholderTextColor={COLORS.textTertiary}
                     autoCapitalize="words"
                     value={name}
-                    onChangeText={(t) => { setName(t); if (errors.name) setErrors({}) }}
+                    onChangeText={(t) => { setName(t); if (errors.name) setErrors((p) => ({ ...p, name: '' })) }}
                     editable={!isSubmitting}
                     autoFocus
                   />
                 </View>
                 {errors.name && <Text style={s.errorText}>{errors.name}</Text>}
+              </View>
+
+              <View style={s.inputGroup}>
+                <Text style={s.label}>Número de cédula</Text>
+                <View style={[s.input, errors.cedula && s.inputError]}>
+                  <Icon name="CreditCard" size={20} color={errors.cedula ? COLORS.error : COLORS.textSecondary} />
+                  <TextInput
+                    style={s.inputText}
+                    placeholder="Ej: 1012345678"
+                    placeholderTextColor={COLORS.textTertiary}
+                    keyboardType="number-pad"
+                    value={cedula}
+                    onChangeText={(t) => { setCedula(t.replace(/[^\d]/g, '')); if (errors.cedula) setErrors((p) => ({ ...p, cedula: '' })) }}
+                    editable={!isSubmitting}
+                    maxLength={10}
+                  />
+                </View>
+                {errors.cedula
+                  ? <Text style={s.errorText}>{errors.cedula}</Text>
+                  : <Text style={s.hint}>La usamos para verificar tu identidad y proteger tu cuenta</Text>
+                }
               </View>
 
               <TouchableOpacity
@@ -447,12 +457,21 @@ export default function LoginPhoneScreen() {
                 Enviar código
               </Button>
 
+              <TouchableOpacity style={s.subtleLink} onPress={() => switchMethod('email')} disabled={isSubmitting}>
+                <Text style={s.subtleLinkText}>¿Ya tienes cuenta con correo? <Text style={s.subtleLinkStrong}>Inicia sesión aquí</Text></Text>
+              </TouchableOpacity>
+
               <TermsText />
             </View>
 
           ) : (
             /* ── Email step ── */
             <View style={s.section}>
+              <TouchableOpacity style={s.backLink} onPress={() => switchMethod('phone')} disabled={isSubmitting}>
+                <Icon name="ArrowLeft" size={13} color={COLORS.textTertiary} />
+                <Text style={s.backLinkText}>Volver a entrar con teléfono</Text>
+              </TouchableOpacity>
+
               <Text style={s.heading}>Inicia con tu correo</Text>
               <Text style={s.subheading}>Ingresa tu correo y contraseña de Trive</Text>
 
@@ -529,10 +548,6 @@ export default function LoginPhoneScreen() {
                   }
                 </LinearGradient>
               </TouchableOpacity>
-
-              <TouchableOpacity style={s.registerLink} onPress={() => navigation.navigate('Register' as never)} disabled={isSubmitting}>
-                <Text style={s.registerLinkText}>¿No tienes cuenta? <Text style={s.registerLinkStrong}>Regístrate con tu correo</Text></Text>
-              </TouchableOpacity>
             </View>
           )}
 
@@ -585,28 +600,12 @@ const s = StyleSheet.create({
     paddingTop: 8,
   },
 
-  segment: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.surfaceAlt,
-    borderRadius: RADIUS.lg,
-    padding: 4,
-    marginBottom: SPACING.xl,
-  },
-  segmentItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    height: 44,
-    borderRadius: RADIUS.md,
-  },
-  segmentItemActive: {
-    backgroundColor: COLORS.white,
-    ...SHADOWS.xs,
-  },
-  segmentText: { ...TYPOGRAPHY.bodySmall, fontWeight: '700', color: COLORS.textSecondary },
-  segmentTextActive: { color: COLORS.primary },
+  subtleLink: { alignItems: 'center', marginTop: SPACING.lg, paddingVertical: SPACING.sm },
+  subtleLinkText: { fontSize: 12.5, color: COLORS.textTertiary },
+  subtleLinkStrong: { color: COLORS.textSecondary, fontWeight: '600', textDecorationLine: 'underline' },
+
+  backLink: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: SPACING.md, alignSelf: 'flex-start' },
+  backLinkText: { fontSize: 12, color: COLORS.textTertiary },
 
   heading: {
     ...TYPOGRAPHY.h2,
@@ -794,10 +793,6 @@ const s = StyleSheet.create({
     color: COLORS.primary,
     fontWeight: '600',
   },
-
-  registerLink: { alignItems: 'center', marginTop: SPACING.xl, paddingVertical: SPACING.sm },
-  registerLinkText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
-  registerLinkStrong: { color: COLORS.primary, fontWeight: '700' },
 
   // OTP boxes
   otpBoxRow: {

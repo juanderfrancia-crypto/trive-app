@@ -14,6 +14,14 @@ export const getMyPhone = async (): Promise<string | null> => {
   return (data as string | null) ?? null
 }
 
+// Mi cédula. Igual que el teléfono, no está en PROFILE_COLUMNS (es más sensible,
+// nadie más que el dueño del perfil puede leerla) — se obtiene con su propia función.
+export const getMyCedula = async (): Promise<string | null> => {
+  const { data, error } = await supabase.rpc('get_my_cedula')
+  if (error) return null
+  return (data as string | null) ?? null
+}
+
 // Teléfono de otra persona. Solo existe si hay un viaje aceptado entre ambos.
 export const getCounterpartPhone = async (userId: string): Promise<string | null> => {
   const { data, error } = await supabase.rpc('get_counterpart_phone', { p_user: userId })

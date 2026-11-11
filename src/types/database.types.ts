@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       achievements: {
@@ -118,6 +143,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      airport_activity_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          detail: Json | null
+          id: string
+          new_status: string | null
+          old_status: string | null
+          record_id: string
+          table_name: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          record_id: string
+          table_name: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          detail?: Json | null
+          id?: string
+          new_status?: string | null
+          old_status?: string | null
+          record_id?: string
+          table_name?: string
+        }
+        Relationships: []
       }
       airport_offers: {
         Row: {
@@ -672,6 +733,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_verification_guard: {
+        Row: {
+          failed_attempts: number
+          locked_until: string | null
+          user_id: string
+        }
+        Insert: {
+          failed_attempts?: number
+          locked_until?: string | null
+          user_id: string
+        }
+        Update: {
+          failed_attempts?: number
+          locked_until?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       driver_achievements: {
         Row: {
@@ -1920,6 +1999,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          pushed_at: string | null
           send_push: boolean
           title: string
           type: string
@@ -1932,6 +2012,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          pushed_at?: string | null
           send_push?: boolean
           title: string
           type: string
@@ -1944,6 +2025,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          pushed_at?: string | null
           send_push?: boolean
           title?: string
           type?: string
@@ -1986,6 +2068,7 @@ export type Database = {
           account_status: string
           avatar_url: string | null
           balance: number | null
+          cedula: string | null
           created_at: string | null
           driver_active: boolean | null
           driver_verified: boolean | null
@@ -2022,6 +2105,7 @@ export type Database = {
           account_status?: string
           avatar_url?: string | null
           balance?: number | null
+          cedula?: string | null
           created_at?: string | null
           driver_active?: boolean | null
           driver_verified?: boolean | null
@@ -2058,6 +2142,7 @@ export type Database = {
           account_status?: string
           avatar_url?: string | null
           balance?: number | null
+          cedula?: string | null
           created_at?: string | null
           driver_active?: boolean | null
           driver_verified?: boolean | null
@@ -2158,6 +2243,27 @@ export type Database = {
           three_star_count?: number | null
           total_reviews?: number
           two_star_count?: number | null
+        }
+        Relationships: []
+      }
+      recognized_devices: {
+        Row: {
+          device_id: string
+          first_seen_at: string
+          last_seen_at: string
+          user_id: string
+        }
+        Insert: {
+          device_id: string
+          first_seen_at?: string
+          last_seen_at?: string
+          user_id: string
+        }
+        Update: {
+          device_id?: string
+          first_seen_at?: string
+          last_seen_at?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -3092,6 +3198,7 @@ export type Database = {
       user_sessions: {
         Row: {
           created_at: string
+          device_id: string | null
           device_name: string | null
           device_type: string | null
           id: string
@@ -3099,12 +3206,14 @@ export type Database = {
           last_active_at: string
           location: string | null
           os_version: string | null
+          push_token: string | null
           session_key: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          device_id?: string | null
           device_name?: string | null
           device_type?: string | null
           id?: string
@@ -3112,12 +3221,14 @@ export type Database = {
           last_active_at?: string
           location?: string | null
           os_version?: string | null
+          push_token?: string | null
           session_key: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          device_id?: string | null
           device_name?: string | null
           device_type?: string | null
           id?: string
@@ -3125,6 +3236,7 @@ export type Database = {
           last_active_at?: string
           location?: string | null
           os_version?: string | null
+          push_token?: string | null
           session_key?: string
           updated_at?: string
           user_id?: string
@@ -3389,6 +3501,7 @@ export type Database = {
           total_seats: number | null
           updated_at: string | null
           vehicle_color: string | null
+          vehicle_photo: string | null
           vehicle_plate: string | null
           vehicle_type: string | null
         }
@@ -3596,6 +3709,7 @@ export type Database = {
         Args: { p_driver_id: string }
         Returns: boolean
       }
+      check_device: { Args: { p_device_id: string }; Returns: string }
       check_seat_availability: {
         Args: { p_route_id: string; p_seats_needed: number }
         Returns: {
@@ -3605,6 +3719,8 @@ export type Database = {
         }[]
       }
       claim_driver_file: { Args: { p_driver_id: string }; Returns: boolean }
+      cleanup_old_notifications: { Args: never; Returns: undefined }
+      cleanup_old_trip_chat: { Args: never; Returns: undefined }
       cleanup_old_trip_messages: { Args: never; Returns: undefined }
       clear_frontend_errors: { Args: never; Returns: undefined }
       close_expired_routes: { Args: never; Returns: number }
@@ -3670,6 +3786,7 @@ export type Database = {
         Args: { p_template_id: string }
         Returns: undefined
       }
+      dispatch_route_publish_digest: { Args: never; Returns: undefined }
       driver_cancel_booking: {
         Args: { p_booking_id: string; p_reason?: string }
         Returns: undefined
@@ -3813,6 +3930,20 @@ export type Database = {
         Args: { p_date_from?: string; p_date_to?: string }
         Returns: Json
       }
+      get_flagged_accounts: {
+        Args: never
+        Returns: {
+          account_status: string
+          cancellation_rate: number
+          cancelled_count: number
+          email: string
+          id: string
+          name: string
+          population_avg_rate: number
+          role: string
+          total_count: number
+        }[]
+      }
       get_frontend_errors: {
         Args: { p_limit?: number }
         Returns: {
@@ -3834,6 +3965,7 @@ export type Database = {
           notified_at: string
         }[]
       }
+      get_my_cedula: { Args: never; Returns: string }
       get_my_phone: { Args: never; Returns: string }
       get_open_tickets_count: { Args: never; Returns: number }
       get_pending_documents_for_admin: {
@@ -4075,6 +4207,10 @@ export type Database = {
         Args: { v_comment?: string; v_rating: number; v_trip_id: string }
         Returns: undefined
       }
+      recompute_driver_total_trips: {
+        Args: { p_driver_id: string }
+        Returns: undefined
+      }
       register_vehicle: {
         Args: {
           p_color: string
@@ -4256,6 +4392,10 @@ export type Database = {
         Args: { p_vehicle_id: string }
         Returns: boolean
       }
+      verify_cedula_last4_and_register_device: {
+        Args: { p_device_id: string; p_last4: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never
@@ -4384,6 +4524,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

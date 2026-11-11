@@ -1,12 +1,13 @@
-import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
+import { PROFILE_COLUMNS, getMyPhone, getMyCedula, saveMyProfile } from '../services/profileColumns'
 import { useState, useEffect, useRef } from "react";
 import { Alert, AppState, AppStateStatus } from "react-native";
 import * as Sentry from "@sentry/react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore, AppUser } from "../store/useAppStore";
-import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey } from "../services/userSessions";
-import { getPushNotificationToken, registerPushToken } from "../services/pushNotifications";
+import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey, updateSessionPushToken } from "../services/userSessions";
+import { checkDeviceVerification } from "../services/deviceVerification";
+import { getPushNotificationToken, registerPushToken, sendPushNotificationToUser } from "../services/pushNotifications";
 import { setUserId } from "../services/analytics";
 import { withTimeout } from "../utils/withTimeout";
 
@@ -29,8 +30,9 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { setUser: setAppUser, setAuthUser } = useAppStore();
+  const { setUser: setAppUser, setAuthUser, setDeviceVerificationStatus } = useAppStore();
   const profileChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const currentSessionRef = useRef<Session | null>(null)
 
   const restoreSession = async (currentSession: Session | null) => {
@@ -64,11 +66,14 @@ export const useAuth = () => {
       }
 
       if (profile) {
+        const cedula = await getMyCedula()
+        await checkDeviceVerification(cedula)
         setAppUser({
           id: profile.id,
           name: profile.name,
           email: profile.email ?? '',
           phone: (await getMyPhone()) ?? undefined,
+          cedula,
           role: toAppRole(profile.role),
           rating: profile.rating ?? 0,
           avatar_url: profile.avatar_url ?? undefined,
@@ -99,11 +104,15 @@ export const useAuth = () => {
 
         if (insertError) throw insertError;
 
+        // Cuenta recién creada, todavía sin cédula -- nada que verificar aún.
+        setDeviceVerificationStatus('recognized')
+
         setAppUser({
           id: insertedProfile.id,
           name: insertedProfile.name,
           email: insertedProfile.email ?? '',
           phone: userPhone ?? null,
+          cedula: null,
           role: toAppRole(insertedProfile.role),
           rating: insertedProfile.rating ?? 0,
           avatar_url: insertedProfile.avatar_url ?? undefined,
@@ -115,16 +124,35 @@ export const useAuth = () => {
       // This eliminates the flash of wrong role/content during login.
       setSession(currentSession);
 
-      await registerUserSession(currentSession.user.id);
+      const { sessionKey, revoked } = await registerUserSession(currentSession.user.id);
       setUserId(currentSession.user.id);
       try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
       try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
 
       subscribeToProfile(currentSession.user.id)
+      subscribeToOwnSession(sessionKey)
+
+      // Sesión única (punto 4 de seguridad): avisar por push a los dispositivos que
+      // quedaron fuera porque esta cuenta entró aquí. Si esa app sigue abierta y
+      // conectada, subscribeToOwnSession ya la cierra al instante por su cuenta;
+      // esto es el aviso para cuando no lo esté.
+      revoked.forEach((r) => {
+        if (r.push_token) {
+          sendPushNotificationToUser(
+            r.push_token,
+            'Sesión cerrada',
+            'Tu cuenta de Trive se abrió en otro dispositivo, así que cerramos esta sesión por seguridad.',
+            { type: 'session_revoked' }
+          ).catch(() => {})
+        }
+      })
 
       getPushNotificationToken(currentSession.user.id)
         .then((token) => {
-          if (token) registerPushToken(currentSession.user.id, token)
+          if (token) {
+            registerPushToken(currentSession.user.id, token)
+            updateSessionPushToken(token)
+          }
         })
         .catch(() => {})
     } catch (err: any) {
@@ -194,10 +222,14 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         // Defer reset so all concurrent callbacks see _manualLogout = true
         setTimeout(() => { _manualLogout = false }, 0)
-        // Limpiar suscripción de perfil al cerrar sesión
+        // Limpiar suscripciones al cerrar sesión
         if (profileChannelRef.current) {
           supabase.removeChannel(profileChannelRef.current)
           profileChannelRef.current = null
+        }
+        if (sessionChannelRef.current) {
+          supabase.removeChannel(sessionChannelRef.current)
+          sessionChannelRef.current = null
         }
       }
       if (event === 'SIGNED_IN' && session?.user) {
@@ -221,6 +253,10 @@ export const useAuth = () => {
         supabase.removeChannel(profileChannelRef.current)
         profileChannelRef.current = null
       }
+      if (sessionChannelRef.current) {
+        supabase.removeChannel(sessionChannelRef.current)
+        sessionChannelRef.current = null
+      }
     };
   }, []);
 
@@ -235,11 +271,14 @@ export const useAuth = () => {
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
         async (payload) => {
           const p = payload.new as any
+          const cedula = await getMyCedula()
+          await checkDeviceVerification(cedula)
           setAppUser({
             id: p.id,
             name: p.name,
             email: p.email,
             phone: (await getMyPhone()) ?? undefined,
+            cedula,
             role: p.role,
             rating: p.rating,
             avatar_url: p.avatar_url,
@@ -252,6 +291,29 @@ export const useAuth = () => {
       )
       .subscribe()
     profileChannelRef.current = channel
+  }
+
+  // Sesión única (punto 4 de seguridad): si otro dispositivo nos marca is_current=false
+  // (porque esa cuenta entró en otro lado), cerramos sesión aquí al instante. El
+  // SIGNED_OUT que dispara ya muestra el aviso de "sesión cerrada en otro dispositivo"
+  // (más abajo en este archivo) -- no hace falta un alert aparte.
+  const subscribeToOwnSession = (sessionKey: string) => {
+    if (sessionChannelRef.current) return
+
+    const channel = supabase
+      .channel(`own-session:${sessionKey}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'user_sessions', filter: `session_key=eq.${sessionKey}` },
+        async (payload) => {
+          const row = payload.new as any
+          if (row.is_current === false) {
+            try { await supabase.auth.signOut() } catch {}
+          }
+        }
+      )
+      .subscribe()
+    sessionChannelRef.current = channel
   }
 
   const signInWithOTP = async (phone: string) => {
@@ -437,6 +499,7 @@ export const useAuth = () => {
       setUser(null);
       setAuthUser(null);
       setAppUser(null);
+      setDeviceVerificationStatus('unknown');
     } catch (err: any) {
       const message = err.message || "Error logging out";
       setError(message);
