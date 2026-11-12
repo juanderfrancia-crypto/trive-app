@@ -26,14 +26,25 @@ let _manualLogout = false
 // Evita mostrar el alert múltiples veces si hay varios listeners activos
 let _sessionExpiredAlertPending = false
 
+// useAuth() se llama desde ~17 pantallas distintas -- cada una monta su PROPIA copia de
+// este hook. Antes esto era redundante pero inofensivo; con sesión única (punto 4 de
+// seguridad) dejó de serlo: cada copia volvía a llamar registerUserSession() por su
+// cuenta, y dos copias corriendo casi al mismo tiempo se pisaban entre sí (condición de
+// carrera real, confirmada el 12-nov-2026 -- causaba un parpadeo infinito entre Inicio y
+// "Confirma tu cédula"). Estas variables de módulo (no refs por instancia) se comparten
+// entre TODAS las copias del hook, para que el registro de sesión y las suscripciones de
+// Realtime corran una sola vez por sesión real, sin importar cuántos componentes monten
+// useAuth() al mismo tiempo.
+let _profileChannel: ReturnType<typeof supabase.channel> | null = null
+let _sessionChannel: ReturnType<typeof supabase.channel> | null = null
+let _sessionRegisteredForUserId: string | null = null
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { setUser: setAppUser, setAuthUser, setDeviceVerificationStatus, setJustRecoveredAccount } = useAppStore();
-  const profileChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
-  const sessionChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
   const currentSessionRef = useRef<Session | null>(null)
 
   const restoreSession = async (currentSession: Session | null) => {
@@ -125,37 +136,47 @@ export const useAuth = () => {
       // This eliminates the flash of wrong role/content during login.
       setSession(currentSession);
 
-      const { sessionKey, revoked } = await registerUserSession(currentSession.user.id);
-      setUserId(currentSession.user.id);
-      try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
-      try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
-
       subscribeToProfile(currentSession.user.id)
-      subscribeToOwnSession(sessionKey)
 
-      // Sesión única (punto 4 de seguridad): avisar por push a los dispositivos que
-      // quedaron fuera porque esta cuenta entró aquí. Si esa app sigue abierta y
-      // conectada, subscribeToOwnSession ya la cierra al instante por su cuenta;
-      // esto es el aviso para cuando no lo esté.
-      revoked.forEach((r) => {
-        if (r.push_token) {
-          sendPushNotificationToUser(
-            r.push_token,
-            'Sesión cerrada',
-            'Tu cuenta de Trive se abrió en otro dispositivo, así que cerramos esta sesión por seguridad.',
-            { type: 'session_revoked' }
-          ).catch(() => {})
-        }
-      })
+      // Todo lo de abajo (registrar la sesión, cerrar otras, pedir push token) solo debe
+      // correr UNA VEZ por sesión real -- no una vez por cada componente que llame a
+      // useAuth(). Sin este guard, dos copias del hook montadas al mismo tiempo corrían
+      // registerUserSession() en paralelo y se revocaban la sesión la una a la otra.
+      if (_sessionRegisteredForUserId !== currentSession.user.id) {
+        _sessionRegisteredForUserId = currentSession.user.id
 
-      getPushNotificationToken(currentSession.user.id)
-        .then((token) => {
-          if (token) {
-            registerPushToken(currentSession.user.id, token)
-            updateSessionPushToken(token)
+        const { sessionKey, revoked } = await registerUserSession(currentSession.user.id);
+        setUserId(currentSession.user.id);
+        try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
+        try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
+
+        subscribeToOwnSession(sessionKey)
+        checkPendingProfileSetup(currentSession.user.id)
+
+        // Sesión única (punto 4 de seguridad): avisar por push a los dispositivos que
+        // quedaron fuera porque esta cuenta entró aquí. Si esa app sigue abierta y
+        // conectada, subscribeToOwnSession ya la cierra al instante por su cuenta;
+        // esto es el aviso para cuando no lo esté.
+        revoked.forEach((r) => {
+          if (r.push_token) {
+            sendPushNotificationToUser(
+              r.push_token,
+              'Sesión cerrada',
+              'Tu cuenta de Trive se abrió en otro dispositivo, así que cerramos esta sesión por seguridad.',
+              { type: 'session_revoked' }
+            ).catch(() => {})
           }
         })
-        .catch(() => {})
+
+        getPushNotificationToken(currentSession.user.id)
+          .then((token) => {
+            if (token) {
+              registerPushToken(currentSession.user.id, token)
+              updateSessionPushToken(token)
+            }
+          })
+          .catch(() => {})
+      }
     } catch (err: any) {
       console.error("Error restoring profile from session:", err);
       setAppUser(null);
@@ -223,19 +244,21 @@ export const useAuth = () => {
       if (event === 'SIGNED_OUT') {
         // Defer reset so all concurrent callbacks see _manualLogout = true
         setTimeout(() => { _manualLogout = false }, 0)
-        // Limpiar suscripciones al cerrar sesión
-        if (profileChannelRef.current) {
-          supabase.removeChannel(profileChannelRef.current)
-          profileChannelRef.current = null
+        // Limpiar suscripciones al cerrar sesión (compartidas entre todas las copias de
+        // useAuth() -- esto es lo único que debe tirarlas, nunca el desmontaje de un
+        // componente individual, o se rompería el hook de otra pantalla que siga montada).
+        if (_profileChannel) {
+          supabase.removeChannel(_profileChannel)
+          _profileChannel = null
         }
-        if (sessionChannelRef.current) {
-          supabase.removeChannel(sessionChannelRef.current)
-          sessionChannelRef.current = null
+        if (_sessionChannel) {
+          supabase.removeChannel(_sessionChannel)
+          _sessionChannel = null
         }
+        _sessionRegisteredForUserId = null
       }
       if (event === 'SIGNED_IN' && session?.user) {
         subscribeToProfile(session.user.id)
-        checkPendingProfileSetup(session.user.id)
       }
       restoreSession(session);
     });
@@ -251,20 +274,17 @@ export const useAuth = () => {
     return () => {
       data?.subscription?.unsubscribe();
       appStateSub.remove()
-      if (profileChannelRef.current) {
-        supabase.removeChannel(profileChannelRef.current)
-        profileChannelRef.current = null
-      }
-      if (sessionChannelRef.current) {
-        supabase.removeChannel(sessionChannelRef.current)
-        sessionChannelRef.current = null
-      }
+      // Los canales de Realtime NO se limpian aquí a propósito: son compartidos entre
+      // todas las copias de useAuth() montadas a la vez (ver comentario junto a
+      // _profileChannel más arriba). Que esta pantalla en particular se desmonte no
+      // significa que ya nadie los necesite -- solo el SIGNED_OUT real los cierra.
     };
   }, []);
 
   const subscribeToProfile = (userId: string) => {
-    // Si ya hay un canal activo para este usuario, no crear otro
-    if (profileChannelRef.current) return
+    // Compartido entre todas las copias de useAuth() -- si ya hay un canal activo
+    // (de esta instancia o de otra), no crear otro.
+    if (_profileChannel) return
 
     const channel = supabase
       .channel(`profile-live:${userId}:${Date.now()}`)
@@ -292,7 +312,7 @@ export const useAuth = () => {
         }
       )
       .subscribe()
-    profileChannelRef.current = channel
+    _profileChannel = channel
   }
 
   // Sesión única (punto 4 de seguridad): si otro dispositivo nos marca is_current=false
@@ -300,7 +320,7 @@ export const useAuth = () => {
   // SIGNED_OUT que dispara ya muestra el aviso de "sesión cerrada en otro dispositivo"
   // (más abajo en este archivo) -- no hace falta un alert aparte.
   const subscribeToOwnSession = (sessionKey: string) => {
-    if (sessionChannelRef.current) return
+    if (_sessionChannel) return
 
     const channel = supabase
       .channel(`own-session:${sessionKey}`)
@@ -315,7 +335,7 @@ export const useAuth = () => {
         }
       )
       .subscribe()
-    sessionChannelRef.current = channel
+    _sessionChannel = channel
   }
 
   const signInWithOTP = async (phone: string) => {

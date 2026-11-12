@@ -9,26 +9,47 @@ const DEVICE_ID_KEY = 'trive_device_id'
 
 const createSessionKey = (): string => Crypto.randomUUID()
 
-const getSessionKey = async (): Promise<string> => {
-  let sessionKey = await getItem(SESSION_KEY)
-  if (!sessionKey) {
-    sessionKey = createSessionKey()
-    await setItem(SESSION_KEY, sessionKey)
+// Si dos llamadas a getSessionKey()/getDeviceId() corren casi al mismo tiempo la PRIMERA
+// vez (antes de que exista un valor guardado), ambas leerían "nada guardado todavía" y
+// cada una generaría un UUID distinto -- la segunda en escribir ganaría en SecureStore,
+// pero la primera ya se había quedado con el UUID viejo en su variable local. Con 17
+// pantallas distintas llamando useAuth() (y por lo tanto registerUserSession()), esto
+// pasaba de verdad (encontrado el 12-nov-2026: dos UUID de dispositivo distintos para el
+// MISMO teléfono en el mismo instante, cada uno pensando que el otro era "otro
+// dispositivo" y revocándose la sesión mutuamente). Esta promesa compartida por módulo
+// asegura que todas las llamadas concurrentes esperen la MISMA lectura-o-creación.
+let _sessionKeyPromise: Promise<string> | null = null
+const getSessionKey = (): Promise<string> => {
+  if (!_sessionKeyPromise) {
+    _sessionKeyPromise = (async () => {
+      let sessionKey = await getItem(SESSION_KEY)
+      if (!sessionKey) {
+        sessionKey = createSessionKey()
+        await setItem(SESSION_KEY, sessionKey)
+      }
+      return sessionKey
+    })()
   }
-  return sessionKey
+  return _sessionKeyPromise
 }
 
 // Identidad del dispositivo para la verificación de "dispositivo nuevo" (punto 3 de
 // seguridad). A diferencia de SESSION_KEY, esta NUNCA se borra al cerrar sesión -- tiene
 // que sobrevivir logout/login en el mismo teléfono, o todo el mundo sería "dispositivo
 // nuevo" cada vez que cierra sesión.
-export const getDeviceId = async (): Promise<string> => {
-  let deviceId = await getItem(DEVICE_ID_KEY)
-  if (!deviceId) {
-    deviceId = Crypto.randomUUID()
-    await setItem(DEVICE_ID_KEY, deviceId)
+let _deviceIdPromise: Promise<string> | null = null
+export const getDeviceId = (): Promise<string> => {
+  if (!_deviceIdPromise) {
+    _deviceIdPromise = (async () => {
+      let deviceId = await getItem(DEVICE_ID_KEY)
+      if (!deviceId) {
+        deviceId = Crypto.randomUUID()
+        await setItem(DEVICE_ID_KEY, deviceId)
+      }
+      return deviceId
+    })()
   }
-  return deviceId
+  return _deviceIdPromise
 }
 
 const getDeviceLabel = (): string => {
@@ -180,6 +201,9 @@ export const deactivateCurrentSession = async (): Promise<void> => {
 
 export const clearLocalSessionKey = async (): Promise<void> => {
   await removeItem(SESSION_KEY)
+  // Si no se limpia también la promesa cacheada, getSessionKey() seguiría devolviendo
+  // para siempre el valor ya borrado de SecureStore en vez de generar uno nuevo real.
+  _sessionKeyPromise = null
 }
 
 export const endUserSession = async (sessionId: string): Promise<void> => {
