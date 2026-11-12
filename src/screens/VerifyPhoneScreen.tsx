@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import OtpDigitsInput from '../components/OtpDigitsInput'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
 import { useAppStore } from '../store/useAppStore'
@@ -127,22 +128,16 @@ export default function VerifyPhoneScreen() {
               Enviamos un código de 6 dígitos al <Text style={styles.bodyStrong}>+57 {phone.replace(/\D/g, '').replace(/^57/, '')}</Text>.
             </Text>
 
-            <TextInput
-              style={[styles.codeInput, inlineError && styles.inputError]}
+            <OtpDigitsInput
+              length={6}
               value={code}
-              onChangeText={(t) => {
-                const clean = t.replace(/\D/g, '').slice(0, 6)
+              onChange={(clean) => {
                 setCode(clean)
                 setInlineError(null)
                 if (clean.length === 6) verifyCode(clean)
               }}
-              keyboardType="number-pad"
-              maxLength={6}
-              placeholder="000000"
-              placeholderTextColor={COLORS.textTertiary}
               editable={!busy}
-              autoFocus
-              textAlign="center"
+              error={!!inlineError}
             />
             {!!inlineError && <Text style={styles.error}>{inlineError}</Text>}
             {busy && <ActivityIndicator color={COLORS.primary} style={{ marginTop: SPACING.md }} />}
@@ -203,18 +198,6 @@ const styles = StyleSheet.create({
   inputError: { borderColor: COLORS.error },
   prefix: { ...TYPOGRAPHY.body, fontWeight: '700', color: COLORS.textPrimary },
   inputText: { flex: 1, ...TYPOGRAPHY.body, color: COLORS.textPrimary, fontWeight: '600' },
-  codeInput: {
-    height: 64,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 8,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
   error: { ...TYPOGRAPHY.caption, color: COLORS.error, marginBottom: SPACING.md },
   btn: { ...SHADOWS.xs, shadowColor: COLORS.primary, shadowOpacity: 0.3, borderRadius: RADIUS.lg, overflow: 'hidden', marginTop: SPACING.md },
   btnGradient: { height: 58, alignItems: 'center', justifyContent: 'center' },

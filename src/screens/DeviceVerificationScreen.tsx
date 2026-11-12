@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, StatusBar, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ActivityIndicator, Image, StatusBar, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import OtpDigitsInput from '../components/OtpDigitsInput'
 import { useAuth } from '../hooks/useAuth'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -82,21 +83,15 @@ export default function DeviceVerificationScreen() {
           </Text>
 
           <Text style={styles.label}>Últimos 4 dígitos de tu cédula</Text>
-          <TextInput
-            style={[styles.codeInput, inlineError && styles.inputError]}
+          <OtpDigitsInput
+            length={4}
             value={last4}
-            onChangeText={(t) => {
-              const clean = t.replace(/\D/g, '').slice(0, 4)
+            onChange={(clean) => {
               setLast4(clean)
               setInlineError(null)
             }}
-            keyboardType="number-pad"
-            maxLength={4}
-            placeholder="0000"
-            placeholderTextColor={COLORS.textTertiary}
             editable={!busy && !isLocked}
-            autoFocus
-            textAlign="center"
+            error={!!inlineError}
           />
           {!!inlineError && <Text style={styles.error}>{inlineError}</Text>}
           {isLocked && <Text style={styles.error}>Intenta de nuevo en {remainingSeconds}s</Text>}
@@ -139,18 +134,6 @@ const styles = StyleSheet.create({
   heading: { ...TYPOGRAPHY.h2, color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.sm },
   body: { ...TYPOGRAPHY.body, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: SPACING.xl },
   label: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginBottom: SPACING.sm, textAlign: 'center' },
-  codeInput: {
-    height: 64,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    backgroundColor: COLORS.white,
-    fontSize: 28,
-    fontWeight: '800',
-    letterSpacing: 8,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
   inputError: { borderColor: COLORS.error },
   error: { ...TYPOGRAPHY.caption, color: COLORS.error, marginBottom: SPACING.md, textAlign: 'center' },
   btn: { ...SHADOWS.xs, shadowColor: COLORS.primary, shadowOpacity: 0.3, borderRadius: RADIUS.lg, overflow: 'hidden', marginTop: SPACING.md },

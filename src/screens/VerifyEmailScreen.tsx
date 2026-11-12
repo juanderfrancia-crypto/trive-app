@@ -181,7 +181,7 @@ export default function VerifyEmailScreen() {
             </View>
 
             <Text style={styles.instructionText}>
-              Ingresa el código de 6 dígitos que recibiste en tu correo:
+              Ingresa el código que recibiste en tu correo:
             </Text>
 
             {/* Code Input */}
