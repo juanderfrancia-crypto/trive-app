@@ -186,6 +186,10 @@ export const useAppStore = create<AppState>()(
       // Solo persiste hasSeenOnboarding — nada sensible en AsyncStorage
       partialize: (state): Partial<AppState> => ({
         hasSeenOnboarding: state.hasSeenOnboarding,
+        // Si se cierra la app a la fuerza entre verificar el correo de recuperación y
+        // fijar el número nuevo, esto debe sobrevivir -- si no, al reabrir se perdería la
+        // obligación de pasar por VerifyPhoneScreen (el teléfono viejo seguiría "puesto").
+        justRecoveredAccount: state.justRecoveredAccount,
       }),
     }
   )
