@@ -25,7 +25,7 @@ export default function TermsOfServiceScreen() {
         <View style={s.brandBlock}>
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.company}>JORMELIA SOFT S.A.S.</Text>
-          <Text style={s.date}>Última actualización: 6 de octubre de 2026</Text>
+          <Text style={s.date}>Última actualización: 11 de noviembre de 2026</Text>
         </View>
 
         <Section title="1. Aceptación de los términos">
@@ -43,11 +43,13 @@ export default function TermsOfServiceScreen() {
           • Ser mayor de 18 años.{'\n'}
           • Proporcionar información veraz, completa y actualizada.{'\n'}
           • Contar con un número de teléfono celular activo en Colombia.{'\n'}
+          • Contar con cédula de ciudadanía vigente.{'\n'}
           • Aceptar el tratamiento de tus datos conforme a nuestra Política de Privacidad.
         </Section>
 
         <Section title="4. Registro y cuenta">
-          Eres responsable de mantener la confidencialidad de tu cuenta y de todas las actividades realizadas desde ella. Debes notificarnos de inmediato ante cualquier uso no autorizado escribiendo a privacy@trivesoft.com.
+          Eres responsable de mantener la confidencialidad de tu cuenta y de todas las actividades realizadas desde ella. Debes notificarnos de inmediato ante cualquier uso no autorizado escribiendo a privacy@trivesoft.com.{'\n\n'}
+          Cada persona puede tener únicamente una cuenta en Trive, verificada por celular y cédula. Usar más de una cuenta a nombre de la misma persona da lugar a la suspensión de las cuentas involucradas.
         </Section>
 
         <Section title="5. Conductores">

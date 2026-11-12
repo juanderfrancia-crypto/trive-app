@@ -26,7 +26,7 @@ export default function PrivacyPolicyScreen() {
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.company}>JORMELIA SOFT S.A.S.</Text>
           <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
-          <Text style={s.date}>Última actualización: 20 de mayo de 2026</Text>
+          <Text style={s.date}>Última actualización: 11 de noviembre de 2026</Text>
         </View>
 
         <Section title="1. Responsable del tratamiento">
@@ -43,7 +43,8 @@ export default function PrivacyPolicyScreen() {
           <B>e) Datos técnicos:</B> token del dispositivo para notificaciones push, sistema operativo y versión de la aplicación.{'\n\n'}
           <B>f) Fotografía de perfil:</B> de forma opcional, cargada por el usuario.{'\n\n'}
           <B>g) Datos del programa de referidos (conductores):</B> código de referido generado por la Plataforma para cada conductor activo y, en caso de aplicar, el código del conductor que lo refirió. Estos datos se utilizan exclusivamente para calcular y acreditar los beneficios del programa de referidos.{'\n\n'}
-          <B>h) Datos de solicitudes de viaje al aeropuerto (pasajeros):</B> origen del recorrido, aeropuerto de destino, fecha y hora de vuelo, número de pasajeros, precio ofrecido y notas opcionales. Estos datos son visibles para los conductores verificados de la Plataforma con el fin de facilitar la aceptación del viaje.
+          <B>h) Datos de solicitudes de viaje al aeropuerto (pasajeros):</B> origen del recorrido, aeropuerto de destino, fecha y hora de vuelo, número de pasajeros, precio ofrecido y notas opcionales. Estos datos son visibles para los conductores verificados de la Plataforma con el fin de facilitar la aceptación del viaje.{'\n\n'}
+          <B>i) Número de cédula:</B> obligatorio para todos los usuarios, para verificar tu identidad y evitar cuentas duplicadas.
         </Section>
 
         <Section title="3. Finalidades del tratamiento">
@@ -56,6 +57,7 @@ export default function PrivacyPolicyScreen() {
           • Calcular calificaciones y reputación de usuarios.{'\n'}
           • Gestionar el programa de referidos entre conductores y acreditar los beneficios correspondientes.{'\n'}
           • Conectar pasajeros con conductores para solicitudes de viaje al aeropuerto, mostrando la información de la solicitud a conductores verificados.{'\n'}
+          • Verificar tu identidad y prevenir cuentas duplicadas.{'\n'}
           • Mejorar la Plataforma mediante análisis estadísticos anonimizados.{'\n'}
           • Cumplir obligaciones legales vigentes.
         </Section>
@@ -90,6 +92,7 @@ export default function PrivacyPolicyScreen() {
           • Cifrado de datos en tránsito mediante HTTPS/TLS.{'\n'}
           • Autenticación segura mediante OTP y tokens de sesión.{'\n'}
           • Acceso restringido a datos personales según rol de usuario.{'\n'}
+          • Verificación de identidad adicional en dispositivos nuevos y sesión única por cuenta.{'\n'}
           • Políticas de seguridad internas para el equipo de Trive.
         </Section>
 
