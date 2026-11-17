@@ -25,7 +25,7 @@ export default function TermsOfServiceScreen() {
         <View style={s.brandBlock}>
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.company}>JORMELIA SOFT S.A.S.</Text>
-          <Text style={s.date}>Última actualización: 11 de noviembre de 2026</Text>
+          <Text style={s.date}>Última actualización: 17 de noviembre de 2026</Text>
         </View>
 
         <Section title="1. Aceptación de los términos">
@@ -116,7 +116,7 @@ export default function TermsOfServiceScreen() {
         </Section>
 
         <Section title="11. Propiedad intelectual">
-          Todos los derechos sobre la marca Trive, su diseño, código fuente y contenidos de la Plataforma pertenecen a JORMELIA SOFT S.A.S. Queda prohibida su reproducción, distribución o uso no autorizado.
+          La marca Trive, su diseño, código fuente y contenidos de la Plataforma son de titularidad de <B>Jhan Carlos Sánchez Banguero</B>, su creador, quien ha autorizado su explotación comercial a <B>JORMELIA SOFT S.A.S.</B> para operar y comercializar la Plataforma. Queda prohibida su reproducción, distribución o uso no autorizado.
         </Section>
 
         <Section title="12. Modificaciones">

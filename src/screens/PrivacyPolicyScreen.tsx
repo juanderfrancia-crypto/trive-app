@@ -26,12 +26,12 @@ export default function PrivacyPolicyScreen() {
           <Image source={require('../../assets/logo.png')} style={s.logo} resizeMode="contain" />
           <Text style={s.company}>JORMELIA SOFT S.A.S.</Text>
           <Text style={s.law}>Conforme a la Ley 1581 de 2012 y el Decreto 1377 de 2013</Text>
-          <Text style={s.date}>Última actualización: 11 de noviembre de 2026</Text>
+          <Text style={s.date}>Última actualización: 17 de noviembre de 2026</Text>
         </View>
 
         <Section title="1. Responsable del tratamiento">
-          <B>JORMELIA SOFT S.A.S.</B>{'\n'}
-          Ciudad: Cali, Colombia{'\n'}
+          Esta aplicación es desarrollada y publicada por <B>Jhan Carlos Sánchez Banguero</B>, persona natural y desarrollador titular de la cuenta en las tiendas de aplicaciones (Google Play y Huawei AppGallery), quien opera en alianza y respaldo operativo de <B>JORMELIA SOFT S.A.S.</B> (NIT 902.118.595-0), domiciliada en Jamundí, Valle del Cauca, de la cual es Representante Legal.{'\n\n'}
+          Para efectos de la Ley 1581 de 2012 y el Decreto 1377 de 2013, ambos actúan de manera coordinada como Responsables del Tratamiento.{'\n\n'}
           Correo: privacy@trivesoft.com
         </Section>
 
