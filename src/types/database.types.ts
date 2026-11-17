@@ -2096,6 +2096,8 @@ export type Database = {
           referral_code: string | null
           referred_by: string | null
           role: string | null
+          terms_accepted_at: string | null
+          terms_version: string | null
           total_spent: number | null
           total_trips: number | null
           updated_at: string | null
@@ -2133,6 +2135,8 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           total_spent?: number | null
           total_trips?: number | null
           updated_at?: string | null
@@ -2170,6 +2174,8 @@ export type Database = {
           referral_code?: string | null
           referred_by?: string | null
           role?: string | null
+          terms_accepted_at?: string | null
+          terms_version?: string | null
           total_spent?: number | null
           total_trips?: number | null
           updated_at?: string | null

@@ -7,6 +7,11 @@ type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
 // cada quien lo obtiene con getMyPhone() (la base solo lo libera a quien corresponde).
 export const PROFILE_COLUMNS = 'id, name, email, avatar_url, role, rating, total_trips, total_spent, is_driver_verified, created_at, updated_at, is_driver, is_passenger, driver_active, is_admin, driver_verified, driver_verified_at, profile_photo_url, push_token, notification_preferences, membership_type, membership_expiry, vehicle_photo_url, last_seen, balance, referral_code, referred_by, emergency_contact, preferred_municipality, preferred_payment_method' as const
 
+// Versión de Términos/Privacidad vigente (coincide con la fecha "Última actualización" de
+// TermsOfServiceScreen.tsx). Subir este valor cada vez que cambie el contenido legal, para
+// que el registro de consentimiento (Ley 1581 de 2012, art. 9) quede ligado a la versión real.
+export const CURRENT_TERMS_VERSION = '2026-11-11'
+
 // Mi teléfono. Devuelve null si no hay sesión o no tiene teléfono registrado.
 export const getMyPhone = async (): Promise<string | null> => {
   const { data, error } = await supabase.rpc('get_my_phone')

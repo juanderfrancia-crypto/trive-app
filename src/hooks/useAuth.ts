@@ -1,4 +1,4 @@
-import { PROFILE_COLUMNS, getMyPhone, getMyCedula, saveMyProfile } from '../services/profileColumns'
+import { PROFILE_COLUMNS, getMyPhone, getMyCedula, saveMyProfile, CURRENT_TERMS_VERSION } from '../services/profileColumns'
 import { useState, useEffect, useRef } from "react";
 import { Alert, AppState, AppStateStatus } from "react-native";
 import * as Sentry from "@sentry/react-native";
@@ -99,12 +99,18 @@ export const useAuth = () => {
         const userEmail = currentSession.user.email || `${currentSession.user.id}@trive.local`;
         const userPhone = currentSession.user.phone || currentSession.user.user_metadata?.phone || undefined;
 
+        // Registro auditable del consentimiento a Términos/Privacidad (Ley 1581 de 2012,
+        // art. 9) -- este es el único momento en que se crea la cuenta, justo después de
+        // que el usuario vio el texto "Al continuar aceptas..." (TermsText en
+        // LoginPhoneScreen.tsx) y completó el OTP.
         const { error: saveError } = await saveMyProfile(currentSession.user.id, {
           name: userName,
           email: userEmail,
           phone: userPhone,
           role: "passenger",
           rating: 0,
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: CURRENT_TERMS_VERSION,
         });
         if (saveError) throw saveError;
 
