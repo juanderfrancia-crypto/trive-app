@@ -17,19 +17,19 @@ const CONTACTS: { label: string; value: string; time: string; icon: IconName; co
   },
   {
     label: 'WhatsApp',
-    value: '+57 (300) 577-2967',
+    value: '+57 (302) 259-6951',
     time: 'Lunes a viernes, 8 a. m. a 6 p. m.',
     icon: 'MessageCircle',
     color: COLORS.whatsapp,
-    onPress: () => Linking.openURL('https://wa.me/573005772967'),
+    onPress: () => Linking.openURL('https://wa.me/573022596951'),
   },
   {
     label: 'Llamada',
-    value: '+57 (300) 577-2967',
+    value: '+57 (302) 259-6951',
     time: 'Lunes a viernes, 8 a. m. a 6 p. m.',
     icon: 'Phone',
     color: COLORS.accent,
-    onPress: () => Linking.openURL('tel:+573005772967'),
+    onPress: () => Linking.openURL('tel:+573022596951'),
   },
 ]
 
