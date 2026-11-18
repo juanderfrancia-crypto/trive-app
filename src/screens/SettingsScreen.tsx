@@ -192,7 +192,7 @@ export default function SettingsScreen() {
           <Divider />
           <NavRow icon="Star" title="Rutas favoritas" sub="Tus rutas guardadas" onPress={go('FavoriteRoutes')} />
           <Divider />
-          <NavRow icon="Receipt" title="Cancelaciones" sub="Tus cancelaciones y reembolsos" onPress={go('CancellationHistory')} />
+          <NavRow icon="Receipt" title="Cancelaciones" sub="Tus viajes cancelados" onPress={go('CancellationHistory')} />
         </Group>
 
         <Group title="Información">

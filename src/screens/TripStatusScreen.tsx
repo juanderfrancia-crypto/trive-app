@@ -418,7 +418,7 @@ export default function TripStatusScreen() {
                   </View>
                   <Text style={styles.modalTitle}>Cancelar Reserva</Text>
                   <Text style={styles.modalMessage}>
-                    ¿Estás seguro? Se procesará un reembolso completo a tu cuenta.
+                    ¿Estás seguro? Se liberará tu asiento y el conductor será notificado.
                   </Text>
 
                   <View style={styles.modalActions}>
