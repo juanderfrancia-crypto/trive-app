@@ -190,8 +190,6 @@ export default function SettingsScreen() {
           <Divider />
           <NavRow icon="House" title="Direcciones guardadas" sub="Casa, trabajo y lugares frecuentes" onPress={go('SavedAddresses')} />
           <Divider />
-          <NavRow icon="Settings" title="Preferencias de viaje" sub="Música, temperatura y equipaje" onPress={go('TravelPreferences')} />
-          <Divider />
           <NavRow icon="Star" title="Rutas favoritas" sub="Tus rutas guardadas" onPress={go('FavoriteRoutes')} />
           <Divider />
           <NavRow icon="Receipt" title="Cancelaciones" sub="Tus cancelaciones y reembolsos" onPress={go('CancellationHistory')} />

@@ -1,75 +1,13 @@
-import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Switch, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
-import {
-  authenticateBiometric,
-  getStoredBiometricEnabled,
-  isBiometricEnrolled,
-  isBiometricSupported,
-  setStoredBiometricEnabled,
-} from '../services/biometricAuth'
 
 export default function SecurityScreen() {
   const navigation = useNavigation()
-  const [biometricEnabled, setBiometricEnabled] = useState(false)
-  const [biometricAvailable, setBiometricAvailable] = useState(true)
-
-  useEffect(() => {
-    const loadBiometricState = async () => {
-      const supported = await isBiometricSupported()
-      setBiometricAvailable(supported)
-      if (!supported) {
-        setBiometricEnabled(false)
-        return
-      }
-
-      const enabled = await getStoredBiometricEnabled()
-      setBiometricEnabled(enabled)
-    }
-
-    loadBiometricState()
-  }, [])
-
-  const handleBiometric = async () => {
-    if (biometricEnabled) {
-      setBiometricEnabled(false)
-      await setStoredBiometricEnabled(false)
-      Alert.alert('Autenticación Biométrica', 'Autenticación biométrica desactivada')
-      return
-    }
-
-    const supported = await isBiometricSupported()
-    if (!supported) {
-      Alert.alert(
-        'Autenticación Biométrica',
-        'Tu dispositivo no soporta autenticación biométrica o no tiene sensores configurados.'
-      )
-      return
-    }
-
-    const enrolled = await isBiometricEnrolled()
-    if (!enrolled) {
-      Alert.alert(
-        'Autenticación Biométrica',
-        'No hay datos biométricos registrados. Configura tu huella o reconocimiento facial en el dispositivo.'
-      )
-      return
-    }
-
-    const success = await authenticateBiometric()
-    if (success) {
-      setBiometricEnabled(true)
-      await setStoredBiometricEnabled(true)
-      Alert.alert('Autenticación Biométrica', 'Autenticación biométrica activada correctamente.')
-    } else {
-      Alert.alert('Autenticación Biométrica', 'No se pudo verificar tu identidad. Intenta de nuevo.')
-    }
-  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -108,21 +46,6 @@ export default function SecurityScreen() {
             title="Correo de recuperación"
             sub="Recupera tu cuenta si pierdes tu número"
             onPress={() => navigation.navigate('RecoveryEmail' as never)}
-          />
-          <Divider />
-          <Row
-            icon="Fingerprint"
-            title="Acceso biométrico"
-            sub="Huella digital o reconocimiento facial"
-            trailing={
-              <Switch
-                value={biometricEnabled}
-                onValueChange={handleBiometric}
-                disabled={!biometricAvailable}
-                trackColor={{ false: COLORS.border, true: COLORS.primaryLight }}
-                thumbColor={biometricEnabled ? COLORS.primary : COLORS.textTertiary}
-              />
-            }
           />
         </Section>
 
