@@ -208,8 +208,13 @@ export default function SeatSelectionScreen() {
     )
   }
 
+  // selectedRoute puede venir incompleto (ej. desde la notificación "Nueva ruta publicada",
+  // que solo manda id/origin/destination) -- routeDetails es siempre la ruta completa recién
+  // pedida a getRouteById, y es la fuente real para todo lo que no sea el id.
+  const route = routeDetails ?? selectedRoute
+
   const occupiedSeats = new Set(bookings.map((b: any) => Number(b.seat_number)))
-  const totalSeats = selectedRoute.total_seats || 5
+  const totalSeats = route.total_seats || 4
   const seatNumbers = Array.from({ length: totalSeats }, (_, i) => i + 1)
   const seatRows: number[][] = []
   for (let i = 0; i < seatNumbers.length; i += 2) seatRows.push(seatNumbers.slice(i, i + 2))
@@ -319,14 +324,14 @@ export default function SeatSelectionScreen() {
         route_id: selectedRoute.id,
         seat_numbers: selectedSeats,
         total_seats: selectedSeats.length,
-        price_per_seat: selectedRoute.price_per_seat,
+        price_per_seat: route.price_per_seat,
         total_price: serverTotal,
-        origin: selectedRoute.origin,
-        destination: selectedRoute.destination,
-        departure_time: selectedRoute.departure_time,
-        driver_name: selectedRoute.driver_name,
-        vehicle_info: `${selectedRoute.vehicle_make} ${selectedRoute.vehicle_color}`,
-        license_plate: selectedRoute.vehicle_plate,
+        origin: route.origin,
+        destination: route.destination,
+        departure_time: route.departure_time,
+        driver_name: route.driver_name,
+        vehicle_info: `${route.vehicle_make} ${route.vehicle_color}`,
+        license_plate: route.vehicle_plate,
         pending_booking_ids: reservedBookings.map((booking) => booking.id),
         reservation_code: reservationCode,
       })
@@ -367,7 +372,7 @@ export default function SeatSelectionScreen() {
     }
   }
 
-  const departureTime = new Date(selectedRoute.departure_time).toLocaleTimeString('es-CO', {
+  const departureTime = new Date(route.departure_time).toLocaleTimeString('es-CO', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -395,7 +400,7 @@ export default function SeatSelectionScreen() {
 
         <Text style={styles.title}>Elige tus asientos</Text>
         <Text style={styles.subtitle}>
-          {selectedRoute.driver_name || 'Conductor'} · {departureTime} · Se actualiza en vivo
+          {route.driver_name || 'Conductor'} · {departureTime} · Se actualiza en vivo
         </Text>
 
         {initialLoading ? (
@@ -405,29 +410,31 @@ export default function SeatSelectionScreen() {
         ) : (
           <>
             {/* Ficha del conductor y del vehículo: quién te va a llevar y en qué carro.
-                Se usa routeDetails (la ruta completa, recién pedida a getRouteById) en vez
-                de selectedRoute directo: selectedRoute puede venir de otras pantallas con
-                forma incompleta (ej. available_rides no trae vehicle_make ni las fotos). */}
+                Se usa `route` (routeDetails, la ruta completa recién pedida a getRouteById,
+                con fallback a selectedRoute) en vez de selectedRoute directo: selectedRoute
+                puede venir de otras pantallas con forma incompleta (ej. available_rides no
+                trae vehicle_make ni las fotos; la notificación "Nueva ruta publicada" solo
+                manda id/origin/destination). */}
             <View style={styles.driverCard}>
               <View style={styles.driverRow}>
-                {(routeDetails ?? selectedRoute).driver_avatar_url ? (
-                  <Image source={{ uri: (routeDetails ?? selectedRoute).driver_avatar_url }} style={styles.driverAvatar} />
+                {route.driver_avatar_url ? (
+                  <Image source={{ uri: route.driver_avatar_url }} style={styles.driverAvatar} />
                 ) : (
                   <View style={styles.driverAvatar}>
                     <Text style={styles.driverInitial}>
-                      {(selectedRoute.driver_name || 'C').charAt(0).toUpperCase()}
+                      {(route.driver_name || 'C').charAt(0).toUpperCase()}
                     </Text>
                   </View>
                 )}
                 <View style={styles.driverBody}>
-                  <Text style={styles.driverName}>{selectedRoute.driver_name || 'Conductor'}</Text>
+                  <Text style={styles.driverName}>{route.driver_name || 'Conductor'}</Text>
                   <View style={styles.driverStats}>
                     <Icon name="Star" size={13} color={COLORS.accent} />
                     <Text style={styles.driverStatValue}>
-                      {selectedRoute.driver_rating ? Number(selectedRoute.driver_rating).toFixed(1) : 'Nuevo'}
+                      {route.driver_rating ? Number(route.driver_rating).toFixed(1) : 'Nuevo'}
                     </Text>
                     <Text style={styles.driverStatMuted}>
-                      · {Number(selectedRoute.driver_review_count ?? 0)} reseñas
+                      · {Number(route.driver_review_count ?? 0)} reseñas
                     </Text>
                   </View>
                 </View>
@@ -436,8 +443,8 @@ export default function SeatSelectionScreen() {
               <View style={styles.cardDivider} />
 
               <View style={styles.vehicleRow}>
-                {(routeDetails ?? selectedRoute).vehicle_photo_url ? (
-                  <Image source={{ uri: (routeDetails ?? selectedRoute).vehicle_photo_url }} style={styles.vehicleThumb} />
+                {route.vehicle_photo_url ? (
+                  <Image source={{ uri: route.vehicle_photo_url }} style={styles.vehicleThumb} />
                 ) : (
                   <View style={styles.vehicleThumb}>
                     <Icon name="Car" size={26} color={COLORS.primary} />
@@ -446,14 +453,14 @@ export default function SeatSelectionScreen() {
                 <View style={styles.driverBody}>
                   <Text style={styles.vehicleName}>
                     {[
-                      (routeDetails ?? selectedRoute).vehicle_make,
-                      (routeDetails ?? selectedRoute).vehicle_model,
-                      selectedRoute.vehicle_color,
+                      route.vehicle_make,
+                      route.vehicle_model,
+                      route.vehicle_color,
                     ]
                       .filter(Boolean)
                       .join(' ')}
                   </Text>
-                  <Text style={styles.vehiclePlate}>Placa {selectedRoute.vehicle_plate}</Text>
+                  <Text style={styles.vehiclePlate}>Placa {route.vehicle_plate}</Text>
                 </View>
               </View>
             </View>
@@ -539,7 +546,7 @@ export default function SeatSelectionScreen() {
                   : 'Selecciona tus asientos'}
               </Text>
               {hasSelection && (
-                <Text style={styles.ctaPrice}>{formatCOP(selectedRoute.price_per_seat)} c/u</Text>
+                <Text style={styles.ctaPrice}>{formatCOP(route.price_per_seat)} c/u</Text>
               )}
             </>
           )}
