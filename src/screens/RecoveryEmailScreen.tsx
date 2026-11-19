@@ -14,7 +14,7 @@ export default function RecoveryEmailScreen() {
   const navigation = useNavigation()
   const [currentEmail, setCurrentEmail] = useState<string | null>(null)
   const [loadingCurrent, setLoadingCurrent] = useState(true)
-  const [step, setStep] = useState<'view' | 'input' | 'otp'>('view')
+  const [step, setStep] = useState<'view' | 'input' | 'otp' | 'otp_old'>('view')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
@@ -67,8 +67,42 @@ export default function RecoveryEmailScreen() {
     try {
       setBusy(true)
       setInlineError(null)
-      const { error } = await supabase.auth.verifyOtp({
+      const { data, error } = await supabase.auth.verifyOtp({
         email: email.trim(),
+        token: value,
+        type: 'email_change',
+      })
+      if (error) throw error
+
+      // Si ya había un correo configurado, Supabase manda un segundo código al
+      // correo VIEJO y no completa el cambio hasta que ese también se confirme
+      // (confirmación doble). Sin sesión devuelta es la señal de que todavía
+      // falta ese segundo paso -- si es la primera vez que se configura, no hay
+      // correo viejo que confirmar y esto no aplica.
+      if (!data.session && currentEmail) {
+        setStep('otp_old')
+        setCode('')
+        return
+      }
+
+      setCurrentEmail(email.trim())
+      setStep('view')
+      Alert.alert('Listo', 'Tu correo de recuperación quedó configurado.')
+    } catch (err: any) {
+      setInlineError('El código es inválido o expiró. Solicita uno nuevo.')
+      setCode('')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const verifyOldCode = async (value: string) => {
+    if (value.length !== 8 || !currentEmail) return
+    try {
+      setBusy(true)
+      setInlineError(null)
+      const { error } = await supabase.auth.verifyOtp({
+        email: currentEmail,
         token: value,
         type: 'email_change',
       })
@@ -156,10 +190,11 @@ export default function RecoveryEmailScreen() {
                 </LinearGradient>
               </TouchableOpacity>
             </>
-          ) : (
+          ) : step === 'otp' ? (
             <>
               <Text style={styles.body}>
                 Enviamos un código de 8 dígitos a <Text style={styles.bodyStrong}>{email.trim()}</Text>.
+                {currentEmail && ' Si ya tenías un correo configurado, también enviamos un código a ese correo anterior para confirmar el cambio.'}
               </Text>
 
               <OtpDigitsInput
@@ -181,6 +216,27 @@ export default function RecoveryEmailScreen() {
                   {resendIn > 0 ? `Reenviar código en ${resendIn}s` : 'Reenviar código'}
                 </Text>
               </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.body}>
+                Último paso: confirma también desde tu correo anterior,{' '}
+                <Text style={styles.bodyStrong}>{currentEmail}</Text>, con el código de 8 dígitos que te llegó ahí.
+              </Text>
+
+              <OtpDigitsInput
+                length={8}
+                value={code}
+                onChange={(clean) => {
+                  setCode(clean)
+                  setInlineError(null)
+                  if (clean.length === 8) verifyOldCode(clean)
+                }}
+                editable={!busy}
+                error={!!inlineError}
+              />
+              {!!inlineError && <Text style={styles.error}>{inlineError}</Text>}
+              {busy && <ActivityIndicator color={COLORS.primary} style={{ marginTop: SPACING.md }} />}
             </>
           )}
         </ScrollView>

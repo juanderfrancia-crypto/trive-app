@@ -4149,6 +4149,7 @@ export type Database = {
         Returns: undefined
       }
       mark_driver_verified: { Args: { driver_id: string }; Returns: undefined }
+      mark_password_set: { Args: never; Returns: undefined }
       membership_days_remaining: { Args: { user_id: string }; Returns: number }
       notify_user: {
         Args: {

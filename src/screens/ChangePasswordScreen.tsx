@@ -64,6 +64,7 @@ export default function ChangePasswordScreen() {
       const { error } = await supabase.auth.updateUser({ password: newPassword })
       if (error) throw error
 
+      await supabase.rpc('mark_password_set')
       if (user?.id) await logPasswordChange(user.id)
 
       Alert.alert('Contraseña actualizada', 'Tu contraseña se actualizó correctamente.')
