@@ -220,7 +220,7 @@ export default function CreateAirportRequestScreen() {
         </View>
       </View>
 
-      <KeyboardAvoidingScreen style={s.flex}>
+      <KeyboardAvoidingScreen measureKeyboard style={s.flex}>
         <View style={s.segmented}>
           <TouchableOpacity
             style={[s.segment, tripType === 'airport' && s.segmentActive]}
@@ -498,7 +498,11 @@ export default function CreateAirportRequestScreen() {
               <Text style={s.label}>Notas (opcional)</Text>
               <TextInput
                 style={s.notesInput}
-                placeholder="Ej: número de vuelo, equipaje grande, mascota, punto de referencia..."
+                placeholder={
+                  tripType === 'airport'
+                    ? 'Ej: número de vuelo, equipaje grande, mascota, punto de referencia...'
+                    : 'Ej: punto de referencia, equipaje grande, mascota, instrucciones especiales...'
+                }
                 placeholderTextColor={COLORS.textTertiary}
                 value={notes}
                 onChangeText={setNotes}
