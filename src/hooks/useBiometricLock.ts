@@ -11,13 +11,29 @@ export function useBiometricLock() {
   const [locked, setLocked] = useState(false)
   const [authenticating, setAuthenticating] = useState(false)
   const enabledRef = useRef(false)
+  const lockedRef = useRef(false)
+  const authenticatingRef = useRef(false)
   const appState = useRef(AppState.currentState)
 
+  const setLockedBoth = (value: boolean) => {
+    lockedRef.current = value
+    setLocked(value)
+  }
+
+  // El prompt de huella/rostro solo tiene sentido con la app visible en
+  // primer plano -- dispararlo justo cuando se va a fondo (que es cuando
+  // "locked" se pone en true) deja el intento colgado, porque el sistema no
+  // muestra el diálogo con la app en segundo plano. Por eso esta función se
+  // llama solo desde el arranque en frío y desde la transición a "active",
+  // nunca como reacción directa a que "locked" cambie.
   const unlock = useCallback(async () => {
+    if (authenticatingRef.current) return
+    authenticatingRef.current = true
     setAuthenticating(true)
     const success = await authenticateBiometric()
+    authenticatingRef.current = false
     setAuthenticating(false)
-    if (success) setLocked(false)
+    if (success) setLockedBoth(false)
   }, [])
 
   useEffect(() => {
@@ -25,27 +41,27 @@ export function useBiometricLock() {
       const enabled = await getStoredBiometricEnabled()
       const enrolled = enabled ? await isBiometricEnrolled() : false
       enabledRef.current = enabled && enrolled
-      setLocked(enabledRef.current)
+      setLockedBoth(enabledRef.current)
       setReady(true)
+      // Arranque en frío: el JS solo corre con la app ya en primer plano,
+      // así que aquí sí es seguro intentar de una vez.
+      if (enabledRef.current) unlock()
     })()
-  }, [])
-
-  // Intenta autenticar automáticamente apenas se bloquea, tanto en el arranque
-  // en frío como al volver de segundo plano.
-  useEffect(() => {
-    if (ready && locked) unlock()
-  }, [ready, locked, unlock])
+  }, [unlock])
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       const prev = appState.current
       appState.current = next
-      if (enabledRef.current && prev === 'active' && next !== 'active') {
-        setLocked(true)
+      if (!enabledRef.current) return
+      if (prev === 'active' && next !== 'active') {
+        setLockedBoth(true)
+      } else if (next === 'active' && prev !== 'active' && lockedRef.current) {
+        unlock()
       }
     })
     return () => sub.remove()
-  }, [])
+  }, [unlock])
 
   return { ready, locked, authenticating, retryUnlock: unlock }
 }

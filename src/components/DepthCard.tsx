@@ -8,12 +8,12 @@ interface Props {
   borderColor?: string
 }
 
-// Sombra en capas translúcidas: la elevación de Android sale cuadrada en algunos equipos.
+// Sombra real de una sola capa: shadow/elevation va en el contenedor exterior
+// (sin overflow:hidden, si no iOS se la recorta) y el recorte de esquinas en
+// el interior (sin shadow, si no en Android la sombra sale cuadrada).
 export default function DepthCard({ children, style, contentStyle, borderColor = COLORS.border }: Props) {
   return (
     <View style={[styles.wrap, style]}>
-      <View style={styles.shadowOuter} />
-      <View style={styles.shadowInner} />
       <View style={[styles.front, { borderColor }, contentStyle]}>{children}</View>
     </View>
   )
@@ -22,24 +22,13 @@ export default function DepthCard({ children, style, contentStyle, borderColor =
 const styles = StyleSheet.create({
   wrap: {
     marginBottom: SPACING.md,
-  },
-  shadowOuter: {
-    position: 'absolute',
-    top: SPACING.sm,
-    left: -SPACING.xs,
-    right: -SPACING.xs,
-    bottom: -SPACING.md,
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.shadowSoft,
-  },
-  shadowInner: {
-    position: 'absolute',
-    top: SPACING.xs,
-    left: SPACING.xs / 2,
-    right: SPACING.xs / 2,
-    bottom: -SPACING.sm,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.shadowSoftStrong,
+    backgroundColor: COLORS.white,
+    shadowColor: '#0F1A2E',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
   front: {
     borderRadius: RADIUS.lg,

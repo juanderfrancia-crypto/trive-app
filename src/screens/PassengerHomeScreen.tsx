@@ -423,8 +423,11 @@ export default function PassengerHomeScreen() {
                 <View style={styles.rideMiddle}>
                   <Text style={styles.rideDestination} numberOfLines={1}>Hacia {ride.destination}</Text>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
-                  <Text style={styles.rideSeats}>
-                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} · Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
+                  <Text style={styles.rideSeats} numberOfLines={1}>
+                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'}
+                  </Text>
+                  <Text style={styles.rideCountdown} numberOfLines={1}>
+                    Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
                   </Text>
                 </View>
                 <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>
@@ -602,6 +605,7 @@ const styles = StyleSheet.create({
   rideDestination: { fontSize: 12.5, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.3 },
   rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginTop: 1 },
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  rideCountdown: { fontSize: 12, color: COLORS.textTertiary, marginTop: 1 },
   ridePrice: {
     fontSize: 16, fontWeight: '800', color: COLORS.primary,
     alignSelf: 'center', paddingRight: SPACING.lg,
