@@ -189,7 +189,7 @@ export default function PassengerHomeScreen() {
   }
 
   const canSearch = !!origin.trim() && !!destination.trim()
-  const firstName = user?.name?.split(' ')[0] ?? 'Usuario'
+  const fullName = user?.name ?? 'Usuario'
   const initials = (user?.name || 'U').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const [avatarBroken, setAvatarBroken] = useState(false)
   const confirmarHoy = reservaPorConfirmar ? formatDia(reservaPorConfirmar.departureTime) === 'Hoy' : false
@@ -215,9 +215,9 @@ export default function PassengerHomeScreen() {
         )}
 
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1, marginRight: SPACING.md }}>
             <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.name}>{firstName}</Text>
+            <Text style={styles.name} numberOfLines={1}>{fullName}</Text>
           </View>
           <TouchableOpacity
             style={styles.avatar}

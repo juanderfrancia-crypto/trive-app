@@ -88,7 +88,7 @@ export default function DriverHomeScreen() {
     setRefreshing(false)
   }
 
-  const firstName = user?.name?.split(' ')[0] ?? 'Conductor'
+  const fullName = user?.name ?? 'Conductor'
   const initials = (user?.name || 'C').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const balance = (user?.balance ?? 0).toLocaleString('es-CO')
 
@@ -100,9 +100,9 @@ export default function DriverHomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1, marginRight: SPACING.md }}>
             <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.name}>{firstName}</Text>
+            <Text style={styles.name} numberOfLines={1}>{fullName}</Text>
           </View>
           <TouchableOpacity
             style={styles.avatar}
