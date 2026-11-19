@@ -87,8 +87,9 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
       activeOpacity={fits ? 0.85 : 1}
       onPress={() => { if (fits) onSelect(ride.id) }}
       accessibilityState={{ selected, disabled: !fits }}
-      style={[styles.ticket, selected && styles.ticketSelected, isFull && styles.ticketDimmed]}
+      style={[styles.ticketShadowWrap, isFull && styles.ticketDimmed]}
     >
+      <View style={[styles.ticket, selected && styles.ticketSelected]}>
       <View style={styles.ticketTop}>
         <View style={styles.ticketHead}>
           <View style={styles.timeGroup}>
@@ -127,9 +128,23 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
               <Icon name="Star" size={12} color={COLORS.warning} />
               <Text style={styles.ratingText}>{ride.driver_rating ? Number(ride.driver_rating).toFixed(1) : 'Nuevo'}</Text>
             </View>
-            {!!ride.vehicle_plate && (
-              <View style={styles.platePill}>
-                <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
+            {!!(ride.vehicle_make || ride.vehicle_plate || ride.vehicle_color) && (
+              <View style={styles.vehicleTagsRow}>
+                {!!ride.vehicle_make && (
+                  <View style={styles.platePill}>
+                    <Text style={styles.plateText}>{ride.vehicle_make}</Text>
+                  </View>
+                )}
+                {!!ride.vehicle_plate && (
+                  <View style={styles.platePill}>
+                    <Text style={styles.plateText}>{ride.vehicle_plate}</Text>
+                  </View>
+                )}
+                {!!ride.vehicle_color && (
+                  <View style={styles.platePill}>
+                    <Text style={styles.plateText}>{ride.vehicle_color}</Text>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -157,6 +172,7 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
           <Text style={styles.label}>POR CUPO</Text>
           <Text style={styles.price}>{formatCOP(ride.price_per_seat)}</Text>
         </View>
+      </View>
       </View>
     </TouchableOpacity>
   )
@@ -363,13 +379,21 @@ export default function AvailableRidesScreen() {
 }
 
 const styles = StyleSheet.create({
-  ticket: {
+  ticketShadowWrap: {
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.white,
+    marginBottom: SPACING.sm,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  ticket: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: 'hidden',
-    marginBottom: SPACING.sm,
   },
   ticketSelected: { borderColor: COLORS.primary, borderWidth: 2 },
   ticketDimmed: { opacity: 0.55 },
@@ -398,9 +422,9 @@ const styles = StyleSheet.create({
   driverRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   driverName: { fontSize: 13, color: COLORS.textSecondary, flexShrink: 1 },
   ratingText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  vehicleTagsRow: { flexDirection: 'row', gap: 6, marginTop: 2 },
   platePill: {
     alignSelf: 'flex-start',
-    marginTop: 2,
     paddingHorizontal: 9,
     paddingVertical: 3,
     borderRadius: RADIUS.sm,
@@ -418,22 +442,22 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.xs,
-    paddingBottom: SPACING.md,
+    paddingBottom: SPACING.sm,
     gap: SPACING.md,
   },
-  seatsCol: { flex: 1, gap: SPACING.xs },
-  label: { fontSize: 11, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.6 },
-  seatRow: { flexDirection: 'row', gap: 4 },
-  seatBox: { width: 16, height: 16, borderRadius: 4 },
+  seatsCol: { flex: 1, gap: 3 },
+  label: { fontSize: 10, fontWeight: '700', color: COLORS.textSecondary, letterSpacing: 0.6 },
+  seatRow: { flexDirection: 'row', gap: 3 },
+  seatBox: { width: 13, height: 13, borderRadius: 3 },
   seatFree: { backgroundColor: COLORS.primary },
   seatTaken: { backgroundColor: COLORS.border },
-  status: { fontSize: 12, fontWeight: '700' },
+  status: { fontSize: 11, fontWeight: '700' },
   priceCol: { alignItems: 'flex-end' },
   price: {
-    fontSize: 22,
+    fontSize: 19,
     fontWeight: '800',
     color: COLORS.textPrimary,
-    lineHeight: 26,
+    lineHeight: 22,
     textShadowColor: COLORS.shadowBlue,
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,

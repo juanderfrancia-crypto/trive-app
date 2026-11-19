@@ -17,6 +17,7 @@ export interface AvailableRide {
   vehicle_type: string
   vehicle_color: string
   vehicle_plate: string
+  vehicle_make: string | null
   status: string
   description: string | null
   pickup_point: string | null

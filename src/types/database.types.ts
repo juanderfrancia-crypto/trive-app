@@ -3507,6 +3507,7 @@ export type Database = {
           total_seats: number | null
           updated_at: string | null
           vehicle_color: string | null
+          vehicle_make: string | null
           vehicle_photo: string | null
           vehicle_plate: string | null
           vehicle_type: string | null

@@ -69,7 +69,8 @@ export function SkeletonRouteCard() {
 export function SkeletonRideCard() {
   const opacity = useShimmer()
   return (
-    <View style={sk.ticketSk}>
+    <View style={sk.ticketShadowWrapSk}>
+      <View style={sk.ticketSk}>
       <View style={sk.ticketTopSk}>
         <View style={sk.ticketHeadSk}>
           <Animated.View style={[sk.timePillSk, { opacity }]} />
@@ -82,6 +83,11 @@ export function SkeletonRideCard() {
             <View style={sk.ticketDriverRowSk}>
               <Animated.View style={[sk.barGray, { width: 70, height: 11, opacity }]} />
               <Animated.View style={[sk.barGray, { width: 30, height: 11, opacity }]} />
+            </View>
+            <View style={sk.ticketDriverRowSk}>
+              <Animated.View style={[sk.platePillSk, { opacity }]} />
+              <Animated.View style={[sk.platePillSk, { opacity }]} />
+              <Animated.View style={[sk.platePillSk, { opacity }]} />
             </View>
           </View>
           <Animated.View style={[sk.vehicleBoxSk, { opacity }]} />
@@ -101,8 +107,9 @@ export function SkeletonRideCard() {
         </View>
         <View style={{ alignItems: 'flex-end', gap: 6 }}>
           <Animated.View style={[sk.barGray, { width: 56, height: 10, opacity }]} />
-          <Animated.View style={[sk.barGray, { width: 70, height: 20, opacity }]} />
+          <Animated.View style={[sk.barGray, { width: 68, height: 18, opacity }]} />
         </View>
+      </View>
       </View>
     </View>
   )
@@ -212,13 +219,21 @@ const sk = StyleSheet.create({
   barGray: { borderRadius: 6, backgroundColor: GRAY },
 
   // ── Ride ticket card ──────────────────────────────────────────────────────
-  ticketSk: {
+  ticketShadowWrapSk: {
+    borderRadius: RADIUS.lg,
     backgroundColor: COLORS.white,
+    marginBottom: SPACING.md,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  ticketSk: {
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: COLORS.border,
     overflow: 'hidden',
-    marginBottom: SPACING.md,
   },
   ticketTopSk: { padding: SPACING.lg, gap: SPACING.sm },
   ticketHeadSk: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -226,6 +241,7 @@ const sk = StyleSheet.create({
   favBtnSk: { width: 34, height: 34, borderRadius: RADIUS.md, backgroundColor: GRAY },
   ticketBodySk: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   ticketDriverRowSk: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  platePillSk: { width: 44, height: 16, borderRadius: RADIUS.sm, backgroundColor: GRAY },
   vehicleBoxSk: { width: 84, height: 54, borderRadius: RADIUS.sm, backgroundColor: GRAY, flexShrink: 0 },
   perforationSk: {
     height: 1.5,
@@ -240,9 +256,9 @@ const sk = StyleSheet.create({
     alignItems: 'flex-end',
     paddingHorizontal: SPACING.lg,
     paddingTop: SPACING.sm,
-    paddingBottom: SPACING.lg,
+    paddingBottom: SPACING.sm,
     gap: SPACING.md,
   },
-  seatRowSk: { flexDirection: 'row', gap: 4 },
-  seatBoxSk: { width: 16, height: 16, borderRadius: 4, backgroundColor: GRAY },
+  seatRowSk: { flexDirection: 'row', gap: 3 },
+  seatBoxSk: { width: 13, height: 13, borderRadius: 3, backgroundColor: GRAY },
 })
