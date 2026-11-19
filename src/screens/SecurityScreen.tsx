@@ -6,6 +6,7 @@ import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
+import { supabase } from '../services/supabase'
 import {
   isBiometricSupported,
   isBiometricEnrolled,
@@ -24,6 +25,7 @@ export default function SecurityScreen() {
   const navigation = useNavigation()
   const [biometricAvailable, setBiometricAvailable] = useState(biometricStatusCache?.available ?? false)
   const [biometricEnabled, setBiometricEnabled] = useState(biometricStatusCache?.enabled ?? false)
+  const [hasPasswordAuth, setHasPasswordAuth] = useState(false)
 
   useEffect(() => {
     ;(async () => {
@@ -33,6 +35,20 @@ export default function SecurityScreen() {
       biometricStatusCache = { available: enrolled, enabled }
       setBiometricAvailable(enrolled)
       setBiometricEnabled(enabled)
+    })()
+  }, [])
+
+  useEffect(() => {
+    ;(async () => {
+      // Casi todas las cuentas se registran por teléfono+OTP y nunca tienen
+      // contraseña — "Cambiar/Recuperar contraseña" solo aplica a las pocas
+      // cuentas viejas de correo+contraseña (ej. admin1@trive.com). No se
+      // puede inferir por si la cuenta tiene una identidad de tipo "email":
+      // configurar un correo de recuperación también crea esa identidad sin
+      // que exista ninguna contraseña real, así que se chequea directo en
+      // el servidor si de verdad hay una contraseña guardada.
+      const { data } = await supabase.rpc('has_password_auth')
+      setHasPasswordAuth(data ?? false)
     })()
   }, [])
 
@@ -84,20 +100,24 @@ export default function SecurityScreen() {
               <Divider />
             </>
           )}
-          <Row
-            icon="Lock"
-            title="Cambiar contraseña"
-            sub="Actualiza tu contraseña"
-            onPress={() => navigation.navigate('ChangePassword' as never)}
-          />
-          <Divider />
-          <Row
-            icon="Mail"
-            title="Recuperar contraseña"
-            sub="Te enviamos un enlace a tu correo"
-            onPress={() => navigation.navigate('RecoveryAccount' as never)}
-          />
-          <Divider />
+          {hasPasswordAuth && (
+            <>
+              <Row
+                icon="Lock"
+                title="Cambiar contraseña"
+                sub="Actualiza tu contraseña"
+                onPress={() => navigation.navigate('ChangePassword' as never)}
+              />
+              <Divider />
+              <Row
+                icon="Mail"
+                title="Recuperar contraseña"
+                sub="Te enviamos un enlace a tu correo"
+                onPress={() => navigation.navigate('RecoveryAccount' as never)}
+              />
+              <Divider />
+            </>
+          )}
           <Row
             icon="ShieldCheck"
             title="Correo de recuperación"

@@ -4122,6 +4122,7 @@ export type Database = {
         Args: { p_a: string; p_b: string }
         Returns: boolean
       }
+      has_password_auth: { Args: never; Returns: boolean }
       has_staff_role: { Args: { p_role: string }; Returns: boolean }
       increment_wallet_balance: {
         Args: { p_amount: number; p_user_id: string }
