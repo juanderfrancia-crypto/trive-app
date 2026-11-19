@@ -424,10 +424,7 @@ export default function PassengerHomeScreen() {
                   <Text style={styles.rideDestination} numberOfLines={1}>Hacia {ride.destination}</Text>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
                   <Text style={styles.rideSeats} numberOfLines={1}>
-                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'}
-                  </Text>
-                  <Text style={styles.rideCountdown} numberOfLines={1}>
-                    Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
+                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} · Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
                   </Text>
                 </View>
                 <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>
@@ -503,11 +500,20 @@ const styles = StyleSheet.create({
     textShadowRadius: 8,
   },
 
-  searchCardWrap: { marginTop: SPACING.lg },
-  searchCardContent: { padding: SPACING.lg },
-  searchRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 48 },
+  searchCardWrap: {
+    marginTop: SPACING.lg,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    elevation: 10,
+  },
+  searchCardContent: { padding: SPACING.lg, backgroundColor: '#FAFBFE' },
+  searchRow: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 48,
+    backgroundColor: COLORS.white, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
+  },
   searchInput: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.textPrimary },
-  searchDivider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 30 },
+  searchDivider: { height: SPACING.sm },
   searchBtn: {
     marginTop: SPACING.md, height: 52, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
@@ -604,8 +610,7 @@ const styles = StyleSheet.create({
   rideMiddle: { flex: 1, justifyContent: 'center', paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   rideDestination: { fontSize: 12.5, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase', letterSpacing: 0.3 },
   rideDriver: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary, marginTop: 1 },
-  rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  rideCountdown: { fontSize: 12, color: COLORS.textTertiary, marginTop: 1 },
+  rideSeats: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
   ridePrice: {
     fontSize: 16, fontWeight: '800', color: COLORS.primary,
     alignSelf: 'center', paddingRight: SPACING.lg,

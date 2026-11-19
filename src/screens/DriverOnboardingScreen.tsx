@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import IllustratedCard from '../components/illustrations/IllustratedCard'
+import { Image } from 'expo-image'
 import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -81,7 +81,13 @@ export default function DriverOnboardingScreen() {
       <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
         {/* ── Hero ── */}
-        <IllustratedCard illustration="proudDriver" illustrationWidth={110} style={[s.hero, { borderRadius: RADIUS.xl }]}>
+        <View style={s.hero}>
+          <Image source={require('../../assets/proud-driver.png')} contentFit="cover" style={s.heroBgImage} />
+          <LinearGradient
+            colors={['rgba(5,15,40,0.15)', 'rgba(5,15,40,0.78)']}
+            start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+            style={s.heroScrim}
+          />
           <TouchableOpacity style={s.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.8}>
             <Icon name="ArrowLeft" size={20} color="#fff" />
           </TouchableOpacity>
@@ -93,7 +99,7 @@ export default function DriverOnboardingScreen() {
             <Text style={s.heroTitle}>Conviértete en{'\n'}conductor Trive</Text>
             <Text style={s.heroSub}>Gana dinero en tu tiempo libre compartiendo tus viajes</Text>
           </View>
-        </IllustratedCard>
+        </View>
 
         {/* ── Cómo funciona ── */}
         <View style={s.block}>
@@ -149,7 +155,7 @@ export default function DriverOnboardingScreen() {
             <Icon name="Gift" size={18} color={COLORS.primary} />
             <Text style={s.referralTitle}>¿Tienes un código de referido?</Text>
           </View>
-          <Text style={s.referralSub}>Si un conductor te invitó, ingresa su código y tu primera publicación costará solo $1.000</Text>
+          <Text style={s.referralSub}>Si un conductor te invitó, ingresa su código. Cuando completes y confirmes tu primera reserva, recibirás $1.000 en tu billetera.</Text>
           <View style={s.referralInputWrap}>
             <TextInput
               style={s.referralInput}
@@ -214,7 +220,10 @@ const s = StyleSheet.create({
     borderRadius: RADIUS.xl,
     overflow: 'hidden',
     justifyContent: 'space-between',
+    backgroundColor: COLORS.primary,
   },
+  heroBgImage: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.55 },
+  heroScrim: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   backBtn: {
     margin: SPACING.md,
     width: 38, height: 38, borderRadius: 19,
@@ -231,7 +240,7 @@ const s = StyleSheet.create({
   },
   heroBadgeText: { fontSize: 11, fontWeight: '800', color: '#fff', letterSpacing: 1 },
   heroTitle: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: -0.5, lineHeight: 32 },
-  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.82)', lineHeight: 18 },
+  heroSub: { fontSize: 13, color: 'rgba(255,255,255,0.85)', lineHeight: 18 },
 
   // Blocks
   block: { paddingHorizontal: SPACING.lg, marginTop: SPACING.xl },
@@ -276,7 +285,7 @@ const s = StyleSheet.create({
   reqRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: 14, gap: SPACING.md },
   reqCheck: {
     width: 22, height: 22, borderRadius: 11,
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center', alignItems: 'center',
     flexShrink: 0,
   },

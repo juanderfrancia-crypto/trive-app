@@ -12,6 +12,7 @@ type ProfileExtras = {
 
 interface PassengerProfileViewProps {
   userName?: string
+  userPhone?: string
   profile: Profile | null
   totalTrips: number
   pendingConfirmationCount: number
@@ -69,6 +70,7 @@ export default function PassengerProfileView(p: PassengerProfileViewProps) {
         </View>
         <View style={styles.profileInfo}>
           <Text style={styles.name} numberOfLines={1}>{p.userName || 'Usuario'}</Text>
+          {!!p.userPhone && <Text style={styles.phone} numberOfLines={1}>+{p.userPhone}</Text>}
           <Text style={styles.meta}>
             Pasajero · ★ {(p.profile?.rating ?? 0).toFixed(1)} · {p.totalTrips} {p.totalTrips === 1 ? 'viaje' : 'viajes'}
           </Text>
@@ -102,7 +104,7 @@ export default function PassengerProfileView(p: PassengerProfileViewProps) {
               <Text style={styles.ctaOportunidadText}>OPORTUNIDAD</Text>
             </View>
             <Text style={styles.ctaTitle}>Gana dinero con{'\n'}Trive</Text>
-            <Text style={styles.ctaSub}>Convierte tu tiempo libre en ingresos extra manejando con nosotros.</Text>
+            <Text style={styles.ctaSub}>Convierte tu tiempo libre en ayuda para tus gastos, compartiendo los viajes que ya vas a hacer.</Text>
             <View style={styles.ctaBtn}>
               <Text style={styles.ctaBtnText}>Cambiar a modo Conductor</Text>
             </View>
@@ -183,6 +185,7 @@ const styles = StyleSheet.create({
   },
   profileInfo: { flex: 1 },
   name: { fontSize: 19, fontWeight: '800', color: COLORS.textPrimary },
+  phone: { fontSize: 13, color: COLORS.textSecondary, marginTop: 1 },
   meta: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.sm },
   linkText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },

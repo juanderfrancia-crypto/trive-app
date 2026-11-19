@@ -348,6 +348,7 @@ export default function ProfileScreen() {
           ) : (
             <PassengerProfileView
               userName={user?.name}
+              userPhone={user?.phone}
               profile={profile}
               totalTrips={passengerStats?.totalTrips ?? 0}
               pendingConfirmationCount={passengerBookings.filter((b) => b.bookingStatus === 'awaiting_confirmation').length}

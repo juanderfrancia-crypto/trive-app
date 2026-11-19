@@ -113,6 +113,7 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
           <TouchableOpacity onPress={p.onEditName} activeOpacity={0.7}>
             <Text style={styles.name} numberOfLines={1}>{p.user?.name || 'Conductor'}</Text>
           </TouchableOpacity>
+          {!!p.user?.phone && <Text style={styles.phone} numberOfLines={1}>+{p.user.phone}</Text>}
           <Text style={styles.identitySub}>★ {p.rating} · {p.totalTrips} rutas</Text>
           {!!p.displayEmail && <Text style={styles.email} numberOfLines={1}>{p.displayEmail}</Text>}
           <TouchableOpacity onPress={p.onChangeAvatar} disabled={p.uploadingPhoto} activeOpacity={0.7} style={styles.linkRow}>
@@ -258,6 +259,7 @@ const styles = StyleSheet.create({
   },
   identityText: { flex: 1 },
   name: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  phone: { fontSize: 13, color: COLORS.textSecondary, marginTop: 1 },
   identitySub: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, marginTop: 2 },
   email: { fontSize: 13, color: COLORS.textTertiary, marginTop: 2 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.sm },
