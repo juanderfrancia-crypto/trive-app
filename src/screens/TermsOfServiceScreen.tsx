@@ -98,7 +98,7 @@ export default function TermsOfServiceScreen() {
 
         <Section title="9. Conducta prohibida">
           Está terminantemente prohibido:{'\n\n'}
-          • Utilizar la Plataforma para ofrecer servicio de taxi o de transporte público, o para ofrecer trayectos de forma habitual como actividad de transporte.{'\n'}
+          • Utilizar la Plataforma para ofrecer servicio de taxi, transporte público, o cualquier servicio de transporte remunerado por fuera del modelo de compartición de gastos que describen estos Términos.{'\n'}
           • Publicar información falsa o engañosa.{'\n'}
           • Discriminar a otros usuarios por razón de raza, sexo, religión, orientación sexual u otra condición.{'\n'}
           • Realizar actividades ilícitas durante los trayectos.{'\n'}
