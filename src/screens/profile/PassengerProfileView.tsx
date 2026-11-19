@@ -129,7 +129,7 @@ export default function PassengerProfileView(p: PassengerProfileViewProps) {
       <View style={styles.group}>
         <MenuRow title="Cómo pagas" sub="Efectivo o transferencia a tu conductor" onPress={p.onOpenPaymentMethods} />
         <View style={styles.rowDivider} />
-        <MenuRow title="Datos personales" sub="Nombre, correo y teléfono" onPress={p.onEditName} />
+        <MenuRow title="Datos personales" sub="Nombre y teléfono" onPress={p.onEditName} />
         <View style={styles.rowDivider} />
         <MenuRow title="Privacidad y eliminar cuenta" sub="Tus datos y tu cuenta" onPress={p.onOpenPrivacy} />
       </View>

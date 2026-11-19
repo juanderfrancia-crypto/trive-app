@@ -2,13 +2,11 @@ import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import PassengerProfileView from './profile/PassengerProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Modal, TextInput, StatusBar } from 'react-native'
-import { useKeyboardHeight } from '../hooks/useKeyboardHeight'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import { APP_VERSION_LABEL } from '../config/appInfo'
-import { LinearGradient } from 'expo-linear-gradient'
 import * as ImagePicker from 'expo-image-picker'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -36,14 +34,6 @@ export default function ProfileScreen() {
 
   const [isDriver, setIsDriver]           = useState(() => user?.role === 'driver')
   const [isLoading, setIsLoading]         = useState(false)
-  const [editNameVisible, setEditNameVisible] = useState(false)
-  // sheet está position:absolute (bottom:0), no reacciona a padding de un
-  // contenedor — se le mueve el "bottom" directamente con el alto real del teclado.
-  const keyboardHeight = useKeyboardHeight(editNameVisible)
-  const [newName, setNewName]             = useState('')
-  const [newEmail, setNewEmail]           = useState('')
-  const [emailConfirmationSent, setEmailConfirmationSent] = useState(false)
-  const [savingName, setSavingName]       = useState(false)
   const [uploadingPhoto, setUploadingPhoto] = useState(false)
   const [avatarBroken, setAvatarBroken] = useState(false)
   useEffect(() => { setAvatarBroken(false) }, [user?.avatar_url, profile?.avatar_url])
@@ -170,48 +160,9 @@ export default function ProfileScreen() {
     finally { setIsLoading(false) }
   }
 
-  // ── Datos personales (nombre + correo; el teléfono es la identidad de la cuenta y no se edita aquí) ──
+  // ── Datos personales (pantalla aparte: ver EditProfileScreen.tsx) ───────────
   const openEditName = () => {
-    setNewName(user?.name || '')
-    setNewEmail(user?.email || '')
-    setEmailConfirmationSent(false)
-    setEditNameVisible(true)
-  }
-
-  const handleSaveName = async () => {
-    if (!newName.trim() || newName.trim().length < 2) return
-    if (!user?.id) return
-
-    const trimmedEmail = newEmail.trim()
-    if (trimmedEmail && !/^\S+@\S+\.\S+$/.test(trimmedEmail)) {
-      showToast('Correo inválido', 'error')
-      return
-    }
-    const emailChanged = trimmedEmail && trimmedEmail !== (user.email || '')
-
-    try {
-      setSavingName(true)
-      const { error } = await supabase.from('profiles').update({ name: newName.trim() }).eq('id', user.id)
-      if (error) throw error
-      useAppStore.getState().setUser({ ...user, name: newName.trim() })
-
-      if (emailChanged) {
-        // Esto NO crea una cuenta nueva ni cambia el login (que sigue siendo el teléfono):
-        // solo actualiza el correo de contacto del mismo usuario, y Supabase no lo deja
-        // efectivo hasta que el dueño del correo confirme el enlace que le llega.
-        const { error: emailError } = await supabase.auth.updateUser({ email: trimmedEmail })
-        if (emailError) throw emailError
-        setEmailConfirmationSent(true)
-        showToast('Revisa tu correo para confirmar el cambio')
-      } else {
-        setEditNameVisible(false)
-        showToast('Nombre actualizado')
-      }
-    } catch (err: any) {
-      showToast(err?.message?.includes('already') ? 'Ese correo ya está en uso' : 'No se pudo guardar', 'error')
-    } finally {
-      setSavingName(false)
-    }
+    navigation.navigate('EditProfile')
   }
 
   // ── Photo ──────────────────────────────────────────────────────────────────
@@ -385,68 +336,6 @@ export default function ProfileScreen() {
       </ScrollView>
 
 
-      {/* Modal de datos personales */}
-      <Modal visible={editNameVisible} transparent animationType="fade" onRequestClose={() => setEditNameVisible(false)}>
-        <TouchableOpacity style={nm.backdrop} activeOpacity={1} onPress={() => setEditNameVisible(false)} />
-        <View style={[nm.sheet, { bottom: keyboardHeight }]}>
-            <Text style={nm.title}>Datos personales</Text>
-
-            <View>
-              <Text style={nm.fieldLabel}>Nombre</Text>
-              <TextInput
-                style={nm.input}
-                value={newName}
-                onChangeText={setNewName}
-                placeholder="Tu nombre completo"
-                placeholderTextColor={COLORS.textTertiary}
-                autoCapitalize="words"
-                autoFocus
-                maxLength={60}
-              />
-            </View>
-
-            <View>
-              <Text style={nm.fieldLabel}>Correo</Text>
-              <TextInput
-                style={nm.input}
-                value={newEmail}
-                onChangeText={setNewEmail}
-                placeholder="Tu correo (opcional)"
-                placeholderTextColor={COLORS.textTertiary}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                maxLength={120}
-              />
-              {emailConfirmationSent && (
-                <Text style={nm.hint}>Te enviamos un enlace de confirmación a {newEmail}. Ábrelo para que quede guardado.</Text>
-              )}
-            </View>
-
-            <View>
-              <Text style={nm.fieldLabel}>Teléfono</Text>
-              <View style={nm.readOnlyBox}>
-                <Text style={nm.readOnlyText}>{user?.phone || 'Sin verificar'}</Text>
-              </View>
-              <Text style={nm.hint}>Es tu identidad de acceso, no se puede cambiar aquí.</Text>
-            </View>
-
-            <View style={nm.btnRow}>
-              <TouchableOpacity style={nm.cancelBtn} onPress={() => setEditNameVisible(false)}>
-                <Text style={nm.cancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <LinearGradient
-                colors={(savingName || newName.trim().length < 2) ? [COLORS.border, COLORS.border] : [COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
-                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                style={[nm.saveBtn, (savingName || newName.trim().length < 2) && nm.saveBtnDisabled]}
-              >
-                <TouchableOpacity onPress={handleSaveName} disabled={savingName || newName.trim().length < 2} style={nm.saveBtnInner}>
-                  {savingName ? <ActivityIndicator color="#fff" size="small" /> : <Text style={nm.saveText}>Guardar</Text>}
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-        </View>
-      </Modal>
-
     </SafeAreaView>
   )
 }
@@ -502,35 +391,4 @@ const s = StyleSheet.create({
 })
 
 // ── Driver view styles ────────────────────────────────────────────────────────
-
-// ── Edit name modal styles ────────────────────────────────────────────────────
-const nm = StyleSheet.create({
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl,
-    padding: SPACING.xl, paddingBottom: 40, gap: SPACING.lg,
-    shadowColor: COLORS.primaryDark, shadowOffset: { width: 0, height: -6 }, shadowOpacity: 0.12, shadowRadius: 20, elevation: 16,
-  },
-  title:  { fontSize: 17, fontWeight: '700', color: COLORS.textPrimary },
-  fieldLabel: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
-  input:  {
-    height: 52, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight,
-    paddingHorizontal: SPACING.lg, fontSize: 15, color: COLORS.textPrimary, backgroundColor: COLORS.surface,
-  },
-  readOnlyBox: {
-    height: 52, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight,
-    paddingHorizontal: SPACING.lg, justifyContent: 'center', backgroundColor: COLORS.background,
-  },
-  readOnlyText: { fontSize: 15, color: COLORS.textSecondary },
-  hint: { fontSize: 12, color: COLORS.textTertiary, marginTop: 6 },
-  btnRow: { flexDirection: 'row', gap: SPACING.md },
-  cancelBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.borderLight, justifyContent: 'center', alignItems: 'center' },
-  cancelText: { fontSize: 15, fontWeight: '600', color: COLORS.textSecondary },
-  saveBtn: { flex: 1, height: 50, borderRadius: RADIUS.md, overflow: 'hidden', justifyContent: 'center', alignItems: 'center' },
-  saveBtnInner: { flex: 1, width: '100%', justifyContent: 'center', alignItems: 'center' },
-  saveBtnDisabled: { opacity: 0.55 },
-  saveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
-})
 

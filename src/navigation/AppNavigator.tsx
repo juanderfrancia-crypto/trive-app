@@ -32,6 +32,7 @@ import SessionHistoryScreen from '../screens/SessionHistoryScreen'
 import RecoveryAccountScreen from '../screens/RecoveryAccountScreen'
 import RecentActivityScreen from '../screens/RecentActivityScreen'
 import ChangePasswordScreen from '../screens/ChangePasswordScreen'
+import EditProfileScreen from '../screens/EditProfileScreen'
 import PrivacyScreen from '../screens/PrivacyScreen'
 import LoadingScreen from '../screens/LoadingScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
@@ -185,6 +186,7 @@ export default function AppNavigator() {
       <Stack.Screen name="RecoveryEmail" component={RecoveryEmailScreen} />
       <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
       <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
       <Stack.Screen name="RecentActivity" component={RecentActivityScreen} />
       <Stack.Screen name="GroupTrips" component={GroupTripsScreen} />
