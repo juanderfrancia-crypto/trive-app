@@ -138,7 +138,7 @@ export default function PassengerProfileView(p: PassengerProfileViewProps) {
             <View style={styles.helpIcon}><Icon name="Headset" size={20} color={COLORS.primary} /></View>
             <View style={styles.helpText}>
               <Text style={styles.payName}>Centro de Ayuda</Text>
-              <Text style={styles.paySub}>Soporte 24/7 disponible</Text>
+              <Text style={styles.paySub}>Lunes a viernes, 8 a. m. a 4 p. m.</Text>
             </View>
             <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
           </View>
