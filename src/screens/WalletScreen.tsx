@@ -22,6 +22,7 @@ const AMOUNTS = [
   { label: '$40.000', value: 40000, tag: 'Recomendado', highlight: true },
   { label: '$50.000', value: 50000, tag: 'Conductor dedicado' },
   { label: '$100.000', value: 100000, tag: 'Mejor precio' },
+  { label: '$150.000', value: 150000, tag: 'Rutas largas' },
 ]
 
 interface WalletTx {
