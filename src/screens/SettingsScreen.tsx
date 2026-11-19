@@ -24,7 +24,6 @@ export default function SettingsScreen() {
   const route = useRoute<any>()
   const { user } = useAuth()
   const [pushNotifications, setPushNotifications] = useState(true)
-  const [emailNotifications, setEmailNotifications] = useState(true)
   const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
   const [emergencyContact, setEmergencyContact] = useState<{name: string; phone: string} | null>(null)
@@ -87,7 +86,6 @@ export default function SettingsScreen() {
 
         if (prefs) {
           setPushNotifications(prefs.push_notifications)
-          setEmailNotifications(prefs.email_notifications)
         }
       } catch (err) {
         console.error('Error loading preferences:', err)
@@ -118,16 +116,6 @@ export default function SettingsScreen() {
     }
   }
 
-  const handleEmailNotificationsChange = async (value: boolean) => {
-    if (!user?.id) return
-    setEmailNotifications(value)
-    const success = await updateNotificationPreference(user.id, 'email_notifications', value)
-    if (!success) {
-      Alert.alert('Error', 'No se pudo guardar la preferencia')
-      setEmailNotifications(!value)
-    }
-  }
-
   const go = (screen: string) => () => navigation.navigate(screen as never)
 
   return (
@@ -150,14 +138,6 @@ export default function SettingsScreen() {
             sub="Alertas de viajes y reservas"
             value={pushNotifications}
             onChange={handlePushNotificationsChange}
-          />
-          <Divider />
-          <SwitchRow
-            icon="Mail"
-            title="Correo electrónico"
-            sub="Resúmenes y avisos por correo"
-            value={emailNotifications}
-            onChange={handleEmailNotificationsChange}
           />
         </Group>
 

@@ -18,7 +18,7 @@ const CONTACTS: { label: string; value: string; time: string; icon: IconName; co
   {
     label: 'WhatsApp',
     value: '+57 (302) 259-6951',
-    time: 'Lunes a viernes, 8 a. m. a 6 p. m.',
+    time: 'Lunes a viernes, 8 a. m. a 4 p. m.',
     icon: 'MessageCircle',
     color: COLORS.whatsapp,
     onPress: () => Linking.openURL('https://wa.me/573022596951'),
@@ -26,7 +26,7 @@ const CONTACTS: { label: string; value: string; time: string; icon: IconName; co
   {
     label: 'Llamada',
     value: '+57 (302) 259-6951',
-    time: 'Lunes a viernes, 8 a. m. a 6 p. m.',
+    time: 'Lunes a viernes, 8 a. m. a 4 p. m.',
     icon: 'Phone',
     color: COLORS.accent,
     onPress: () => Linking.openURL('tel:+573022596951'),
