@@ -21,7 +21,7 @@ export default function PrivacyScreen() {
   const handleDownloadData = () => {
     Alert.alert(
       'Descargar mis datos',
-      'Se generará un archivo JSON con toda tu información personal.',
+      'Se generará un archivo con toda tu información personal, que podrás guardar o compartir.',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
