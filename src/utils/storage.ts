@@ -1,7 +1,8 @@
 import * as SecureStore from 'expo-secure-store'
 
-// Claves que contienen datos sensibles → siempre en SecureStore cifrado
-const SECURE_KEYS = new Set(['trive_user_session_key', 'trive_device_id'])
+// Claves que contienen datos sensibles, o que deben sobrevivir a cerrar la
+// app → siempre en SecureStore cifrado, nunca en el fallback en memoria.
+const SECURE_KEYS = new Set(['trive_user_session_key', 'trive_device_id', 'trive_biometric_enabled'])
 
 // Fallback en memoria para web/entornos sin SecureStore
 const inMemory = new Map<string, string>()

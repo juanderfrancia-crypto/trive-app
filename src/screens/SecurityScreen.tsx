@@ -1,13 +1,53 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, StatusBar } from 'react-native'
+import { useState, useEffect } from 'react'
+import { View, TouchableOpacity, Switch, StyleSheet, ScrollView, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
+import {
+  isBiometricSupported,
+  isBiometricEnrolled,
+  authenticateBiometric,
+  getStoredBiometricEnabled,
+  setStoredBiometricEnabled,
+} from '../services/biometricAuth'
+
+// Fuera del componente: sobrevive a que la pantalla se desmonte y remonte al
+// navegar fuera y volver, para no repetir el chequeo de hardware/SecureStore
+// (y el parpadeo del switch en su valor por defecto) cada vez que se entra.
+// Se reinicia solo con un reload completo de la app, no entre pantallas.
+let biometricStatusCache: { available: boolean; enabled: boolean } | null = null
 
 export default function SecurityScreen() {
   const navigation = useNavigation()
+  const [biometricAvailable, setBiometricAvailable] = useState(biometricStatusCache?.available ?? false)
+  const [biometricEnabled, setBiometricEnabled] = useState(biometricStatusCache?.enabled ?? false)
+
+  useEffect(() => {
+    ;(async () => {
+      const supported = await isBiometricSupported()
+      const enrolled = supported && (await isBiometricEnrolled())
+      const enabled = enrolled ? await getStoredBiometricEnabled() : false
+      biometricStatusCache = { available: enrolled, enabled }
+      setBiometricAvailable(enrolled)
+      setBiometricEnabled(enabled)
+    })()
+  }, [])
+
+  const handleBiometric = async (value: boolean) => {
+    if (value) {
+      // Confirma que la huella/rostro enrolado funciona de verdad antes de
+      // activarlo — si no, el bloqueo que vamos a mostrar luego nunca dejaría
+      // entrar a nadie.
+      const success = await authenticateBiometric()
+      if (!success) return
+    }
+    await setStoredBiometricEnabled(value)
+    biometricStatusCache = { available: biometricAvailable, enabled: value }
+    setBiometricEnabled(value)
+  }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
@@ -27,6 +67,23 @@ export default function SecurityScreen() {
         </View>
 
         <Section title="Acceso">
+          {biometricAvailable && (
+            <>
+              <Row
+                icon="Fingerprint"
+                title="Acceso biométrico"
+                sub="Bloquea Trive con tu huella o rostro al abrirla"
+                trailing={
+                  <Switch
+                    value={biometricEnabled}
+                    onValueChange={handleBiometric}
+                    trackColor={{ true: COLORS.primary }}
+                  />
+                }
+              />
+              <Divider />
+            </>
+          )}
           <Row
             icon="Lock"
             title="Cambiar contraseña"

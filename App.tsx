@@ -11,6 +11,8 @@ import { toastConfig } from "./src/components/toastConfig";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import MaintenanceScreen from "./src/components/MaintenanceScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
+import BiometricLockScreen from "./src/screens/BiometricLockScreen";
+import { useBiometricLock } from "./src/hooks/useBiometricLock";
 import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
 import { initRemoteConfig, isMaintenanceMode, getMaintenanceMessage } from "./src/services/remoteConfig";
@@ -59,6 +61,7 @@ function App() {
   // activar desde Firebase Remote Config sin esperar una revisión nueva de
   // Play Store. Se revisa una vez al abrir la app, no en vivo durante la sesión.
   const [maintenance, setMaintenance] = useState<{ on: boolean; message: string }>({ on: false, message: "" });
+  const { ready: biometricReady, locked, authenticating, retryUnlock } = useBiometricLock();
 
   useEffect(() => {
     initRemoteConfig().then(() => {
@@ -66,11 +69,26 @@ function App() {
     });
   }, []);
 
+  // El splash nativo normalmente lo oculta AppNavigator cuando está listo, pero
+  // AppNavigator nunca se monta mientras la app está bloqueada — sin esto, el
+  // splash se quedaría pegado para siempre tapando la pantalla de bloqueo.
+  // hideAsync() no hace nada si ya está oculto, así que es seguro llamarlo
+  // desde los dos lugares.
+  useEffect(() => {
+    if (fontsLoaded && biometricReady) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, biometricReady]);
+
   // Mismo ícono que el splash nativo en vez de pantalla en blanco: si Android
   // suelta su splash apenas se dibuja el primer frame (puede pasar antes de
   // que preventAutoHideAsync surta efecto), lo que queda detrás debe verse
   // igual al splash, nunca vacío — si no, se percibe como "carga dos veces".
-  if (!fontsLoaded) return <LoadingScreen />;
+  if (!fontsLoaded || !biometricReady) return <LoadingScreen />;
+
+  if (locked) {
+    return <BiometricLockScreen authenticating={authenticating} onRetry={retryUnlock} />;
+  }
 
   if (maintenance.on) {
     return (
