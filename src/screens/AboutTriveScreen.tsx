@@ -50,7 +50,7 @@ export default function AboutTriveScreen() {
 
         <Card title="¿Cómo funciona?">
           <Text style={styles.body}>
-            El conductor publica su ruta con origen, destino, hora y precio por puesto. El pasajero la encuentra, reserva y acuerda el pago directamente con el conductor (efectivo, Nequi, Daviplata o Bre-B). Por cada publicación, Trive cobra al conductor $2.000 como tarifa de intermediación.
+            El conductor publica su ruta con origen, destino, hora y precio por puesto. El pasajero la encuentra, reserva y acuerda el pago directamente con el conductor (efectivo, Nequi, Daviplata o Bre-B). Por cada publicación, Trive cobra al conductor una tarifa de intermediación entre $2.500 y $20.000, según el valor total de la ruta.
           </Text>
         </Card>
 

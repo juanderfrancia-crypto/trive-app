@@ -100,7 +100,7 @@ export default function DriverTripsScreen() {
     setBusyRouteId(route.id)
 
     // Cancelar usa una función aparte porque es la única que decide si se
-    // devuelven los $2.000 de publicación (sin reservas, antes de salir, y
+    // devuelve la tarifa de publicación (sin reservas, antes de salir, y
     // dentro del límite diario de devoluciones) y explica el motivo al conductor.
     if (status === 'cancelled') {
       const { data, error } = await supabase.rpc('driver_cancel_route', { p_route_id: route.id })

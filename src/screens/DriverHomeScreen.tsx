@@ -188,7 +188,7 @@ export default function DriverHomeScreen() {
         <View style={styles.walletCard}>
           <Text style={styles.walletLabel}>Saldo para publicar</Text>
           <Text style={styles.walletValue}>${balance}</Text>
-          <Text style={styles.walletHint}>Cada ruta que publicas cuesta $2.000.</Text>
+          <Text style={styles.walletHint}>Cada ruta que publicas cuesta entre $2.500 y $20.000, según su valor.</Text>
           <TouchableOpacity
             style={styles.walletBtn}
             onPress={() => navigation.navigate('Wallet' as never)}

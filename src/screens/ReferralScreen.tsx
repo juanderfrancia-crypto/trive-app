@@ -10,14 +10,14 @@ import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import Icon from '../components/Icon'
 
-const REFERRER_REWARD = 2000
+const REFERRER_REWARD = 2500
 const REFERRED_REWARD = 1000
 
 interface ReferredDriver {
   id: string
   name: string
   created_at: string
-  first_route_published: boolean
+  bonus_earned: boolean
 }
 
 const generateCode = (userId: string) =>
@@ -34,7 +34,7 @@ export default function ReferralScreen() {
   const [savingCode,    setSavingCode]    = useState(false)
   const [copied,        setCopied]        = useState(false)
 
-  const totalEarned = referred.filter((r) => r.first_route_published).length * REFERRER_REWARD
+  const totalEarned = referred.filter((r) => r.bonus_earned).length * REFERRER_REWARD
 
   // ── Load code and referred list ────────────────────────────────────────────
   const load = useCallback(async () => {
@@ -62,30 +62,19 @@ export default function ReferralScreen() {
 
       setReferralCode(code)
 
-      // Load referred drivers
-      const { data: referredProfiles } = await supabase
-        .from('profiles')
-        .select('id, name, created_at')
-        .eq('referred_by', code)
-        .order('created_at', { ascending: false })
-
-      if (referredProfiles) {
-        // Check which ones have published at least one route
-        const withRoutes = await Promise.all(
-          referredProfiles.map(async (p: any) => {
-            const { count } = await supabase
-              .from('routes')
-              .select('id', { count: 'exact', head: true })
-              .eq('driver_id', p.id)
-            return {
-              id:                   p.id,
-              name:                 p.name || 'Conductor',
-              created_at:           p.created_at,
-              first_route_published: (count ?? 0) > 0,
-            }
-          })
+      // El bono se acredita cuando el referido completa y confirma su primera
+      // reserva (no cuando solo publica), así que el estado real viene de esta
+      // función (RLS no deja leer la billetera de otro usuario directamente).
+      const { data: referrals } = await supabase.rpc('get_my_referrals')
+      if (referrals) {
+        setReferred(
+          referrals.map((r: any) => ({
+            id: r.id,
+            name: r.name || 'Conductor',
+            created_at: r.created_at,
+            bonus_earned: r.bonus_earned,
+          }))
         )
-        setReferred(withRoutes)
       }
     } catch {}
     setLoading(false)
@@ -107,7 +96,7 @@ export default function ReferralScreen() {
     const message =
       `🚗 *¡Únete a Trive como conductor!*\n\n` +
       `Publica tus rutas y gana dinero llevando pasajeros.\n\n` +
-      `Usa mi código al registrarte y tu primera publicación te costará solo $${(2000 - REFERRED_REWARD).toLocaleString('es-CO')}:\n\n` +
+      `Usa mi código al registrarte: cuando completes y confirmes tu primera reserva, te regalamos $${REFERRED_REWARD.toLocaleString('es-CO')} en tu billetera:\n\n` +
       `🎁 *Código: ${referralCode}*\n\n` +
       `Descarga la app Trive y empieza hoy.`
     try {
@@ -133,7 +122,7 @@ export default function ReferralScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerTitle}>Referidos</Text>
-          <Text style={styles.headerSub}>Gana $2.000 por cada conductor que traigas</Text>
+          <Text style={styles.headerSub}>Gana $2.500 por cada conductor que traigas</Text>
         </View>
       </View>
 
@@ -177,7 +166,7 @@ export default function ReferralScreen() {
           <View style={styles.step}>
             <View style={styles.stepNum}><Text style={styles.stepNumText}>3</Text></View>
             <Text style={styles.stepText}>
-              Cuando publican su primera ruta, tú recibes{' '}
+              Cuando completan y confirman su primera reserva con un pasajero, tú recibes{' '}
               <Text style={styles.highlight}>${REFERRER_REWARD.toLocaleString('es-CO')}</Text> en tu billetera
             </Text>
           </View>
@@ -187,7 +176,7 @@ export default function ReferralScreen() {
             </View>
             <Text style={styles.stepText}>
               El conductor nuevo recibe{' '}
-              <Text style={styles.highlight}>${REFERRED_REWARD.toLocaleString('es-CO')}</Text> de descuento en su primera publicación
+              <Text style={styles.highlight}>${REFERRED_REWARD.toLocaleString('es-CO')}</Text> en su billetera en ese mismo momento
             </Text>
           </View>
         </View>
@@ -200,7 +189,7 @@ export default function ReferralScreen() {
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={styles.statVal}>{referred.filter((r) => r.first_route_published).length}</Text>
+            <Text style={styles.statVal}>{referred.filter((r) => r.bonus_earned).length}</Text>
             <Text style={styles.statLbl}>Activos</Text>
           </View>
           <View style={styles.statDivider} />
@@ -227,10 +216,10 @@ export default function ReferralScreen() {
                     Se unió {new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </Text>
                 </View>
-                {r.first_route_published ? (
+                {r.bonus_earned ? (
                   <View style={styles.activePill}>
                     <Icon name="CircleCheck" size={13} color={COLORS.success} />
-                    <Text style={styles.activePillText}>+$2.000</Text>
+                    <Text style={styles.activePillText}>+$2.500</Text>
                   </View>
                 ) : (
                   <View style={styles.pendingPill}>

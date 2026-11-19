@@ -120,7 +120,7 @@ export default function DriverOnboardingScreen() {
           </View>
           <View style={s.commissionInfo}>
             <Text style={s.commissionTitle}>Comisión por publicación</Text>
-            <Text style={s.commissionDesc}>Se descuentan <Text style={s.commissionAmount}>$2.000</Text> de tu billetera cada vez que publicas un viaje.</Text>
+            <Text style={s.commissionDesc}>Se descuentan entre <Text style={s.commissionAmount}>$2.500</Text> y <Text style={s.commissionAmount}>$20.000</Text> de tu billetera cada vez que publicas un viaje, según el valor de la ruta.</Text>
           </View>
         </View>
 

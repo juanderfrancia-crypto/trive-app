@@ -743,7 +743,7 @@ export const useAirportNegotiation = () => {
     }
   }
 
-  // ─── Aceptar solicitud directa (conductor). El servidor descuenta los $5.000 de la billetera ───
+  // ─── Aceptar solicitud directa (conductor). El servidor descuenta el 10% del precio ofrecido (mín. $3.000, máx. $25.000) de la billetera ───
   const acceptRequestDirect = async (requestId: string): Promise<void> => {
     try {
       setError(null)

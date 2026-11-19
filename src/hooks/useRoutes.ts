@@ -298,9 +298,10 @@ export const useRoutes = () => {
     }
   }, []);
 
-  // El cobro de $2.000 y la creación de la ruta ocurren en una sola transacción
-  // del servidor (publish_route). El servidor toma conductor, vehículo y saldo
-  // de la sesión; el cliente solo envía los datos del viaje.
+  // El cobro (entre $2.500 y $20.000 según precio_por_cupo x cupos) y la creación
+  // de la ruta ocurren en una sola transacción del servidor (publish_route). El
+  // servidor toma conductor, vehículo y saldo de la sesión; el cliente solo envía
+  // los datos del viaje.
   const createRoute = async (routeData: PublishRoutePayload) => {
     try {
       setError(null);

@@ -126,7 +126,7 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
         <View style={styles.walletText}>
           <Text style={styles.walletLabel}>Saldo de tu billetera</Text>
           <Text style={styles.walletValue}>${(p.user?.balance ?? 0).toLocaleString('es-CO')}</Text>
-          <Text style={styles.walletHint}>Cada ruta que publicas cuesta $2.000.</Text>
+          <Text style={styles.walletHint}>Cada ruta que publicas cuesta entre $2.500 y $20.000, según su valor.</Text>
           <TouchableOpacity style={styles.walletBtn} onPress={p.onOpenWallet} activeOpacity={0.85}>
             <Text style={styles.walletBtnText}>Ver billetera</Text>
           </TouchableOpacity>
@@ -208,7 +208,7 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
       <Text style={styles.section}>Cuenta</Text>
       <View style={styles.list}>
         <ListRow icon="Smartphone" title="Métodos de pago" subtitle="Nequi, Daviplata y llave Bre-B" onPress={p.onOpenPaymentMethods} />
-        <ListRow icon="Gift" title="Referidos" subtitle="Gana $2.000 por cada conductor que traigas" onPress={p.onOpenReferral} />
+        <ListRow icon="Gift" title="Referidos" subtitle="Gana $2.500 por cada conductor que traigas" onPress={p.onOpenReferral} />
         <ListRow icon="Settings" title="Configuración" subtitle="Preferencias y privacidad" onPress={p.onOpenSettings} />
         <ListRow icon="LifeBuoy" title="Centro de ayuda" onPress={p.onOpenHelp} />
         <ListRow icon="LogOut" title="Cerrar sesión" danger onPress={p.onLogout} />

@@ -12,6 +12,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
 import { insertNotificationForUser } from '../../services/notificationInsert'
 import { showSuccess } from '../../utils/showError'
+import { calculateRouteFee, ROUTE_FEE_MIN, ROUTE_FEE_MAX } from '../../utils/platformFees'
 
 export type VehicleTypeId = 'auto' | 'busetica' | 'buseta'
 export type PaymentMethodId = 'efectivo' | 'nequi' | 'daviplata'
@@ -27,9 +28,6 @@ const PAYMENT_METHODS: { id: PaymentMethodId; name: string }[] = [
   { id: 'nequi', name: 'Nequi' },
   { id: 'daviplata', name: 'Daviplata' },
 ]
-
-// Cobro por publicar. Solo para mostrarlo; el descuento lo hace publish_route en el servidor.
-export const ROUTE_FEE = 2000
 
 export const fmtMoney = (amount: number) => `$${amount.toLocaleString('es-CO')}`
 
@@ -133,6 +131,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
   const balance = user?.balance ?? 0
   const selectedType = VEHICLE_TYPES.find((v) => v.id === draft.vehicleType)
   const maxSeats = selectedType?.maxSeats ?? 0
+  const routeFee = calculateRouteFee(Number(draft.price) || 0, Number(draft.seats) || 0)
 
   useEffect(() => {
     if (!user?.id) return
@@ -329,7 +328,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <View style={styles.card}>
           <Text style={styles.rowTitle}>Saldo para publicar</Text>
           <Text style={styles.rowSub}>
-            {`Necesitas ${fmtMoney(ROUTE_FEE)} · tienes ${fmtMoney(balance)}`}
+            {`Necesitas entre ${fmtMoney(ROUTE_FEE_MIN)} y ${fmtMoney(ROUTE_FEE_MAX)} según tu ruta · tienes ${fmtMoney(balance)}`}
           </Text>
         </View>
       </View>
@@ -574,7 +573,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
           <Text style={styles.costLabel}>Cobro por publicar</Text>
           <View style={[styles.summaryLine, { marginTop: SPACING.md }]}>
             <Text style={styles.costItem}>Publicar esta ruta</Text>
-            <Text style={styles.costItemStrong}>{fmtMoney(ROUTE_FEE)}</Text>
+            <Text style={styles.costItemStrong}>{fmtMoney(routeFee)}</Text>
           </View>
           <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
           <View style={styles.summaryLine}>
@@ -583,7 +582,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
           </View>
           <View style={[styles.summaryLine, { marginTop: SPACING.sm }]}>
             <Text style={styles.summaryLabel}>Saldo después</Text>
-            <Text style={styles.summaryValue}>{fmtMoney(balance - ROUTE_FEE)}</Text>
+            <Text style={styles.summaryValue}>{fmtMoney(balance - routeFee)}</Text>
           </View>
         </View>
 
@@ -601,7 +600,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         </TouchableOpacity>
 
         <Text style={styles.legal}>
-          El cobro de {fmtMoney(ROUTE_FEE)} se descuenta de tu saldo al publicar. Los pasajeros te pagan directo por
+          El cobro de {fmtMoney(routeFee)} se descuenta de tu saldo al publicar. Los pasajeros te pagan directo por
           los medios que publicaste; Trive no retiene ese dinero.
         </Text>
       </>
@@ -655,7 +654,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
       return (
         <>
           <PrimaryButton
-            label={`Publicar viaje · ${fmtMoney(ROUTE_FEE)}`}
+            label={`Publicar viaje · ${fmtMoney(routeFee)}`}
             onPress={handlePublish}
             loading={submitting}
           />

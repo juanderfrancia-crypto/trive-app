@@ -12,8 +12,8 @@ import { supabase } from '../services/supabase'
 import Icon, { type IconName } from '../components/Icon'
 import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { ROUTE_FEE_MIN, ROUTE_FEE_MAX } from '../utils/platformFees'
 
-const ROUTE_COMMISSION = 2000
 const TX_PAGE_SIZE = 15
 const RECHARGE_MIN = 20000
 
@@ -201,7 +201,7 @@ export default function WalletScreen() {
     }
   }
 
-  const tripsAvailable = Math.floor(balance / ROUTE_COMMISSION)
+  const tripsAvailable = Math.floor(balance / ROUTE_FEE_MIN)
 
   const initials = (user?.name ?? 'C').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
 
@@ -247,7 +247,7 @@ export default function WalletScreen() {
                 <Icon name="Car" size={15} color="rgba(255,255,255,0.8)" />
                 <Text style={s.tripsText}>
                   {tripsAvailable > 0
-                    ? `Puedes publicar ${tripsAvailable} viaje${tripsAvailable !== 1 ? 's' : ''}`
+                    ? `Puedes publicar al menos ${tripsAvailable} viaje${tripsAvailable !== 1 ? 's' : ''}`
                     : 'Saldo insuficiente para publicar viajes'}
                 </Text>
               </View>
@@ -264,8 +264,8 @@ export default function WalletScreen() {
             <View style={s.infoText}>
               <Text style={s.infoTitle}>Comisión por viaje publicado</Text>
               <Text style={s.infoSub}>
-                Se descuentan $2.000 de tu saldo cada vez que publicas una ruta.
-                Si cancelas antes de pulsar "Salir" y la ruta no tiene reservas confirmadas, se devuelven a tu saldo.
+                Se descuentan entre {`$${ROUTE_FEE_MIN.toLocaleString('es-CO')}`} y {`$${ROUTE_FEE_MAX.toLocaleString('es-CO')}`} de tu saldo al publicar una ruta, según el precio y los cupos.
+                Si cancelas antes de pulsar "Salir" y la ruta no tiene reservas confirmadas, se devuelve a tu saldo.
               </Text>
             </View>
           </View>
@@ -296,7 +296,7 @@ export default function WalletScreen() {
                     {a.label}
                   </Text>
                   <Text style={s.amountChipSub}>
-                    {Math.floor(a.value / ROUTE_COMMISSION)} publicaciones
+                    al menos {Math.floor(a.value / ROUTE_FEE_MIN)} publicaciones
                   </Text>
                 </TouchableOpacity>
               ))}

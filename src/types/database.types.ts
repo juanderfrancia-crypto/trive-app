@@ -3973,6 +3973,15 @@ export type Database = {
       }
       get_my_cedula: { Args: never; Returns: string }
       get_my_phone: { Args: never; Returns: string }
+      get_my_referrals: {
+        Args: never
+        Returns: {
+          bonus_earned: boolean
+          created_at: string
+          id: string
+          name: string
+        }[]
+      }
       get_open_tickets_count: { Args: never; Returns: number }
       get_pending_documents_for_admin: {
         Args: never

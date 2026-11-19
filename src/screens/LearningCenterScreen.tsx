@@ -77,7 +77,7 @@ const TUTORIALS: Tutorial[] = [
         "2. Elige \"Crear ruta\", o \"Rutas frecuentes\" si ya guardaste una plantilla",
         "3. Ingresa origen, destino, fecha, hora de salida y precio por puesto",
         "4. Indica los asientos disponibles y el vehículo",
-        "5. Publica la ruta: se descuentan $2.000 de tu billetera",
+        "5. Publica la ruta: se descuenta entre $2.500 y $20.000 de tu billetera, según el valor de la ruta",
         "6. Espera a que se reserven tus pasajeros y coordina con ellos"
       ],
     },
@@ -138,13 +138,13 @@ const TUTORIALS: Tutorial[] = [
       description: 'Gestiona tu saldo y gana créditos invitando conductores',
       steps: [
         "1. En tu perfil de conductor, toca \"Ver billetera\" para ver tu saldo",
-        "2. Cada publicación de ruta descuenta $2.000",
+        "2. Cada publicación de ruta descuenta entre $2.500 y $20.000, según el valor de la ruta",
         "3. Para recargar, toca \"Recargar\" y elige el monto",
         "4. Tu código de referido está en tu perfil, en \"Referidos\"",
         "5. Compártelo con otros conductores",
-        "6. Cuando el conductor referido publique su primer viaje, recibes $2.000 en tu billetera",
-        "7. Él recibe $1.000 de descuento en esa primera publicación",
-        '8. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, los $2.000 vuelven a tu saldo. Con reservas, o si la ruta sale, no hay devolución'
+        "6. Cuando el conductor referido complete y confirme su primera reserva con un pasajero, recibes $2.500 en tu billetera",
+        "7. Él recibe $1.000 en su billetera en ese mismo momento",
+        '8. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, la tarifa de publicación vuelve a tu saldo. Con reservas, o si la ruta sale, no hay devolución'
       ],
     },
     {
@@ -180,12 +180,12 @@ const TUTORIALS: Tutorial[] = [
         "2. Verás las solicitudes activas con origen, destino, fecha, hora y precio ofrecido",
         "3. Revisa el número de personas, las notas y el precio",
         "4. Si el precio te sirve, toca \"Aceptar viaje\". Si prefieres cobrar otro valor, toca \"Proponer otro precio\", escribe tu propuesta y envíala — el pasajero decide si la acepta",
-        "5. Si aceptas directo, se descontarán $5.000 de tu billetera Trive de inmediato",
-        "6. Si propusiste un precio distinto, los $5.000 se descuentan solo cuando el pasajero acepta tu propuesta",
+        "5. Si aceptas directo, se descuenta de inmediato el 10% del precio ofrecido (mínimo $3.000, máximo $25.000) de tu billetera Trive",
+        "6. Si propusiste un precio distinto, esa comisión se descuenta sobre tu precio propuesto, solo cuando el pasajero lo acepta",
         "7. Si no tienes saldo suficiente al aceptar, la solicitud no se acepta: recarga tu billetera y vuelve a intentarlo",
         "8. El pasajero recibe una notificación de que aceptaste",
         "9. Coordina con el pasajero el punto de encuentro y la forma de pago",
-        "10. Si el pasajero cancela antes del viaje, los $5.000 vuelven a tu saldo"
+        "10. Si el pasajero cancela antes del viaje, esa comisión vuelve a tu saldo"
       ],
     },
       {

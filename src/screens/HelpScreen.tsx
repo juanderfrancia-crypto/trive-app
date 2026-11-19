@@ -69,7 +69,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Conductores',
     question: '¿Cuánto dinero puedo ganar?',
     answer:
-      'Depende de tus rutas, la demanda y el precio que establezcas por asiento. Cada vez que publicas un viaje se descuentan $2.000 de tu billetera Trive. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, esos $2.000 vuelven a tu saldo. Si ya tienes reservas, o si la ruta sale, no hay devolución. El dinero que cobras a los pasajeros lo recibes tú directamente.',
+      'Depende de tus rutas, la demanda y el precio que establezcas por asiento. Cada vez que publicas un viaje se descuenta entre $2.500 y $20.000 de tu billetera Trive, según el valor total de la ruta. Si cancelas antes de pulsar "Salir" y no tienes reservas confirmadas, esa tarifa vuelve a tu saldo. Si ya tienes reservas, o si la ruta sale, no hay devolución. El dinero que cobras a los pasajeros lo recibes tú directamente.',
   },
   {
     id: '9',
@@ -104,14 +104,14 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Conductores',
     question: '¿Cómo funciona la billetera de conductor?',
     answer:
-      'La billetera virtual de Trive almacena el saldo que usas para publicar rutas. Cada publicación descuenta $2.000 automáticamente. Puedes recargar saldo desde la sección "Billetera" en tu perfil. Los créditos del programa de referidos también se acreditan aquí.',
+      'La billetera virtual de Trive almacena el saldo que usas para publicar rutas. Cada publicación descuenta automáticamente entre $2.500 y $20.000, según el valor de la ruta. Puedes recargar saldo desde la sección "Billetera" en tu perfil. Los créditos del programa de referidos también se acreditan aquí.',
   },
   {
     id: '14',
     category: 'Conductores',
     question: '¿Qué es el programa de referidos?',
     answer:
-      'Cada conductor activo tiene un código de referido único. Cuando otro conductor se registra en modo conductor usando tu código y publica su primer viaje, tú recibes $2.000 en tu billetera y él obtiene $1.000 de descuento en esa primera publicación. El beneficio aplica una sola vez por conductor nuevo.',
+      'Cada conductor activo tiene un código de referido único. Cuando otro conductor se registra en modo conductor usando tu código y completa y confirma su primera reserva con un pasajero, tú recibes $2.500 en tu billetera y él recibe $1.000 en la suya. El beneficio aplica una sola vez por conductor nuevo.',
   },
   {
     id: '15',
@@ -139,14 +139,14 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Aeropuerto',
     question: '¿Cómo acepto una solicitud de aeropuerto como conductor?',
     answer:
-      'En tu inicio de conductor toca "Rutas personalizadas". Verás las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar" en la solicitud que te interese y confirma. Se descontarán $5.000 de tu billetera Trive como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y ambos podrán coordinar los detalles del recorrido.',
+      'En tu inicio de conductor toca "Rutas personalizadas". Verás las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar" en la solicitud que te interese y confirma. Se descontará de tu billetera Trive el 10% del precio acordado (mínimo $3.000, máximo $25.000) como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y ambos podrán coordinar los detalles del recorrido.',
   },
   {
     id: '19',
     category: 'Aeropuerto',
-    question: '¿Por qué se descuentan $5.000 al conductor en viajes de aeropuerto?',
+    question: '¿Por qué se descuenta una comisión al conductor en viajes personalizados/aeropuerto?',
     answer:
-      'Los $5.000 son el costo de intermediación tecnológica que Trive cobra al conductor al aceptar una solicitud de aeropuerto. Este valor es diferente a los $2.000 de las rutas regulares y no es una comisión sobre el precio del trayecto: lo que el pasajero paga es para el conductor. Si el pasajero cancela antes de que inicie el viaje, los $5.000 vuelven a tu saldo. Asegúrate de tener saldo suficiente antes de aceptar.',
+      'Es el costo de intermediación tecnológica que Trive cobra al conductor al aceptar una solicitud: el 10% del precio acordado del viaje, con un mínimo de $3.000 y un máximo de $25.000. Este modelo es distinto al de las rutas regulares (que cobran entre $2.500 y $20.000 por publicación, no por viaje) y no es una comisión sobre el precio del trayecto que ve el pasajero: lo que el pasajero paga es para el conductor. Si el pasajero cancela antes de que inicie el viaje, esa comisión vuelve a tu saldo. Asegúrate de tener saldo suficiente antes de aceptar.',
   },
   {
     id: '20',

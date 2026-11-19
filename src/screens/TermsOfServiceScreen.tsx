@@ -59,9 +59,9 @@ export default function TermsOfServiceScreen() {
           • Mantener documentos del vehículo al día: SOAT y revisión técnico-mecánica vigentes.{'\n'}
           • Publicar únicamente trayectos que efectivamente vayan a realizar.{'\n'}
           • Ser aprobado por Trive, que verifica la identidad del conductor y el estado de su vehículo antes de habilitarle la publicación. Trive puede retirar esta habilitación si los documentos vencen o si el conductor incumple estos términos.{'\n'}
-          • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación de ruta descuenta automáticamente $2.000 del saldo disponible; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
+          • Contar con saldo suficiente en su billetera de Trive antes de publicar. Cada publicación de ruta descuenta automáticamente del saldo disponible entre $2.500 y $20.000, según el precio por cupo y la cantidad de cupos de la ruta; si el saldo es insuficiente, la publicación no se procesará.{'\n'}
           • No cobrar un valor superior al de los gastos reales del trayecto (combustible, peajes y desgaste del vehículo). Trive es una plataforma de compartición de gastos, no de lucro por transporte.{'\n\n'}
-          <B>Rutas personalizadas:</B> los conductores aprobados pueden aceptar solicitudes de ruta al aeropuerto o particulares publicadas por pasajeros. Al aceptar una solicitud, o una oferta de precio sobre ella, se descuentan automáticamente $5.000 de la billetera del conductor como costo de uso de la Plataforma para esta modalidad. Si el saldo es insuficiente, el conductor no podrá aceptar hasta recargar su billetera. El precio del trayecto lo acuerdan directamente pasajero y conductor.
+          <B>Rutas personalizadas:</B> los conductores aprobados pueden aceptar solicitudes de ruta al aeropuerto o particulares publicadas por pasajeros. Al aceptar una solicitud, o una oferta de precio sobre ella, se descuenta automáticamente de la billetera del conductor el 10% del valor acordado del viaje (mínimo $3.000, máximo $25.000), como costo de uso de la Plataforma para esta modalidad. Si el saldo es insuficiente, el conductor no podrá aceptar hasta recargar su billetera. El precio del trayecto lo acuerdan directamente pasajero y conductor.
         </Section>
 
         <Section title="6. Pasajeros">
@@ -74,18 +74,18 @@ export default function TermsOfServiceScreen() {
 
         <Section title="7. Tarifas y pagos">
           El precio de cada ruta lo fija el conductor y el pago se acuerda y realiza directamente entre conductor y pasajero (efectivo, Nequi, Daviplata u otros). Trive no intermedia ni retiene ese dinero, y no garantiza devoluciones de pagos hechos entre usuarios.{'\n\n'}
-          <B>Saldo de la billetera:</B> Trive cobra únicamente los $2.000 por publicar una ruta y los $5.000 por aceptar una ruta personalizada. Ambos se descuentan del saldo del conductor. El saldo se recarga mediante los medios de pago habilitados en la aplicación.{'\n\n'}
+          <B>Saldo de la billetera:</B> Trive cobra únicamente entre $2.500 y $20.000 por publicar una ruta (según su valor total) y el 10% del valor acordado por aceptar una ruta personalizada (mínimo $3.000, máximo $25.000). Ambos se descuentan del saldo del conductor. El saldo se recarga mediante los medios de pago habilitados en la aplicación.{'\n\n'}
           El saldo es de uso exclusivo dentro de Trive. <B>No es retirable, no se transfiere a terceros y no se convierte en dinero en efectivo.</B> Las recargas no son reembolsables. Esta regla aplica también si la cuenta se cierra: el saldo que quede se pierde al cierre, salvo los casos de error de la aplicación descritos en la sección 8.{'\n\n'}
-          <B>Referidos:</B> cuando un conductor nuevo se registra con el código de otro conductor y completa y confirma su primera reserva, el conductor que refirió recibe $2.000 de crédito en su saldo y el conductor nuevo recibe $1.000 de crédito. Este beneficio aplica una sola vez por conductor nuevo y se otorga solo si Trive confirma la reserva.
+          <B>Referidos:</B> cuando un conductor nuevo se registra con el código de otro conductor y completa y confirma su primera reserva, el conductor que refirió recibe $2.500 de crédito en su saldo y el conductor nuevo recibe $1.000 de crédito. Este beneficio aplica una sola vez por conductor nuevo y se otorga solo si Trive confirma la reserva.
         </Section>
 
         <Section title="8. Cancelaciones y reembolsos">
-          <B>Publicación de ruta ($2.000):</B>{'\n'}
+          <B>Publicación de ruta (entre $2.500 y $20.000):</B>{'\n'}
           • Se devuelven automáticamente al saldo si el conductor cancela antes de pulsar "Salir" y la ruta no tiene reservas confirmadas. Máximo tres devoluciones automáticas por conductor al día.{'\n'}
           • No se devuelven si hay reservas confirmadas, si el conductor pulsa "Salir", o si pasa la hora de salida sin que el conductor pulse "Salir". En ese caso la ruta se cierra y los pasajeros reservados son avisados.{'\n'}
           • Se devuelven si hubo un error de la aplicación, como un cobro duplicado.{'\n\n'}
-          <B>Ruta personalizada aceptada ($5.000):</B>{'\n'}
-          • Si el pasajero cancela antes del inicio del viaje, los $5.000 se devuelven al saldo del conductor.{'\n'}
+          <B>Ruta personalizada aceptada (10% del valor acordado, mín. $3.000, máx. $25.000):</B>{'\n'}
+          • Si el pasajero cancela antes del inicio del viaje, esa comisión se devuelve al saldo del conductor.{'\n'}
           • Si el conductor cancela, o el viaje se realiza, no hay devolución.{'\n'}
           • Si hubo un error de la aplicación, se devuelve el monto cobrado.{'\n\n'}
           En casos de emergencia documentada, Trive puede revisar y aprobar una devolución adicional, dejando constancia del motivo.{'\n\n'}

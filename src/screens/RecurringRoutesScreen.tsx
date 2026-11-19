@@ -18,10 +18,10 @@ import { showSuccess, showError } from '../utils/showError'
 import {
   VEHICLE_TYPES,
   VehicleTypeId,
-  ROUTE_FEE,
   fmtMoney,
   toLocalISO,
 } from './driver/PublishRouteFlow'
+import { calculateRouteFee, ROUTE_FEE_MIN } from '../utils/platformFees'
 
 const TYPE_ICON: Record<VehicleTypeId, 'Car' | 'Bus'> = {
   auto: 'Car',
@@ -273,7 +273,7 @@ export default function RecurringRoutesScreen() {
           Saldo: <Text style={styles.balanceStrong}>{fmtMoney(user?.balance ?? 0)}</Text>
         </Text>
         <View style={styles.costPill}>
-          <Text style={styles.costPillText}>Publicar = {fmtMoney(ROUTE_FEE)}</Text>
+          <Text style={styles.costPillText}>Publicar desde {fmtMoney(ROUTE_FEE_MIN)}</Text>
         </View>
       </View>
 
@@ -428,7 +428,7 @@ export default function RecurringRoutesScreen() {
                 <View style={styles.costNote}>
                   <Icon name="Info" size={16} color={COLORS.primary} />
                   <Text style={styles.costNoteText}>
-                    Se descontarán {fmtMoney(ROUTE_FEE)} de tu saldo. Saldo disponible: {fmtMoney(user?.balance ?? 0)}.
+                    Se descontarán {fmtMoney(calculateRouteFee(publishTarget.price_per_seat, publishTarget.total_seats))} de tu saldo. Saldo disponible: {fmtMoney(user?.balance ?? 0)}.
                   </Text>
                 </View>
 

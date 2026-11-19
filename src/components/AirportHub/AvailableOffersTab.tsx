@@ -14,6 +14,7 @@ import { showSuccess, showError } from '../../utils/showError'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
+import { calculateTripAcceptFee } from '../../utils/platformFees'
 
 export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const user = useAppStore((s) => s.user)
@@ -82,7 +83,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const handleAccept = (item: AirportRequest) => {
     Alert.alert(
       'Aceptar viaje',
-      `¿Aceptas el viaje de ${item.passenger_name ?? 'el pasajero'} por ${formatPrice(item.offered_price)}? Se descontarán $5.000 de tu billetera.`,
+      `¿Aceptas el viaje de ${item.passenger_name ?? 'el pasajero'} por ${formatPrice(item.offered_price)}? Se descontarán ${formatPrice(calculateTripAcceptFee(item.offered_price))} de tu billetera.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -177,7 +178,7 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
           </View>
           <View style={styles.costBox}>
             <Text style={styles.priceLabel}>Tu costo</Text>
-            <Text style={styles.costValue}>$5.000 de tu billetera</Text>
+            <Text style={styles.costValue}>{formatPrice(calculateTripAcceptFee(item.offered_price))} de tu billetera</Text>
           </View>
         </View>
 
