@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
@@ -69,8 +69,14 @@ export default function DriverTripsScreen() {
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 10
 
-  // Cambiar de pestaña (En curso/Programados/Historial) vuelve a la página 1.
-  useEffect(() => { setPage(1) }, [tab])
+  // Cambia de pestaña y vuelve a la página 1 en el mismo toque (no en un
+  // useEffect aparte) -- si no, se alcanza a pintar un instante la página
+  // vieja sobre los datos de la pestaña nueva antes de corregirse, y ese
+  // parpadeo se siente como que tarda en cambiar.
+  const selectTab = (key: Tab) => {
+    setTab(key)
+    setPage(1)
+  }
 
   const fetchRoutes = useCallback(async () => {
     if (!user?.id) return
@@ -250,7 +256,7 @@ export default function DriverTripsScreen() {
                 <TouchableOpacity
                   key={t.key}
                   style={[styles.segment, tab === t.key && styles.segmentActive]}
-                  onPress={() => setTab(t.key)}
+                  onPress={() => selectTab(t.key)}
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.segmentText, tab === t.key && styles.segmentTextActive]}>{t.label}</Text>

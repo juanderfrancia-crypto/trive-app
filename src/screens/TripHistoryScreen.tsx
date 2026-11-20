@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -71,9 +71,14 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
   const [page, setPage] = useState(1)
   const PAGE_SIZE = 10
 
-  // Cambiar de filtro vuelve a la página 1 -- si no, se podía quedar en una
-  // página que ya no existe para el nuevo subconjunto filtrado.
-  useEffect(() => { setPage(1) }, [filter])
+  // Cambia de filtro y vuelve a la página 1 en el mismo toque (no en un
+  // useEffect aparte) -- si no, se alcanza a pintar un instante la página
+  // vieja sobre los datos del filtro nuevo antes de corregirse, y ese
+  // parpadeo se siente como que tarda en cambiar.
+  const selectFilter = (id: FilterType) => {
+    setFilter(id)
+    setPage(1)
+  }
 
   useFocusEffect(useCallback(() => {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
@@ -410,7 +415,7 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
           return (
             <TouchableOpacity
               key={f.id}
-              onPress={() => setFilter(f.id)}
+              onPress={() => selectFilter(f.id)}
               style={[s.filterChip, isActive && s.filterChipActive]}
               activeOpacity={0.8}
             >

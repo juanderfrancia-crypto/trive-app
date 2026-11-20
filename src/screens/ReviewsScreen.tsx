@@ -45,7 +45,14 @@ export default function ReviewsScreen() {
 
   // Cambiar de filtro vuelve a la página 1 -- si no, se podía quedar en una
   // página que ya no existe para el nuevo subconjunto filtrado.
-  useEffect(() => { setPage(1) }, [filterType])
+  // Cambia de filtro y vuelve a la página 1 en el mismo toque (no en un
+  // useEffect aparte) -- si no, se alcanza a pintar un instante la página
+  // vieja sobre los datos del filtro nuevo antes de corregirse, y ese
+  // parpadeo se siente como que tarda en cambiar.
+  const selectFilterType = (f: 'all' | 'given' | 'received') => {
+    setFilterType(f)
+    setPage(1)
+  }
 
   const loadReviews = async () => {
     try {
@@ -274,7 +281,7 @@ export default function ReviewsScreen() {
                   <TouchableOpacity
                     key={f}
                     style={styles.filterTab}
-                    onPress={() => setFilterType(f)}
+                    onPress={() => selectFilterType(f)}
                   >
                     <Text
                       style={[
