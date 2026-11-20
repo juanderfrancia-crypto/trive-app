@@ -54,8 +54,9 @@ Para **conducir** (publicar rutas, aceptar solicitudes, hacer ofertas y chatear 
 - Cédula registrada y conductor aprobado por Trive.
 - Al menos un **vehículo activo y verificado**.
 - Documentos revisados por un admin: licencia, tarjeta de propiedad, SOAT y revisión técnico-mecánica. Esta revisión es manual; `puede_conducir` no la verifica automáticamente.
-- **Certificado de antecedentes judiciales: requisito obligatorio** para conducir, decidido por el dueño. Se trata con las mismas reglas que la cédula: almacenamiento privado, acceso solo para verificación y consentimiento explícito según la Ley 1581 de 2012. Su plazo de conservación lo define el abogado. **Estado:** el requisito todavía no está implementado en `puede_conducir` ni en la carga de documentos.
 - Cuenta activa, sin suspensiones.
+
+**Certificado de antecedentes judiciales (revertido 2026-11-19):** ya NO es requisito. Se había decidido exigirlo, pero el dueño lo quitó: pedirlo es una señal propia de transporte comercial regulado (Uber/DiDi), no del modelo de gastos compartidos (BlaBlaCar) que Trive busca ser.
 
 El **pasajero** solo necesita su número de teléfono para registrarse. No requiere documentos.
 

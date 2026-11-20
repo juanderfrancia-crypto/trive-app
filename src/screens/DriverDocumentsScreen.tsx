@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
-import { LinearGradient } from 'expo-linear-gradient'
 import * as DocumentPicker from 'expo-document-picker'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -59,29 +58,22 @@ const REQUIRED_DOCUMENTS: DocumentItem[] = [
     icon: 'Settings',
     description: 'Revisión técnico-mecánica',
   },
-  {
-    id: 'antecedentes',
-    documentType: 'antecedentes',
-    name: 'Certificado de Antecedentes',
-    icon: 'CircleCheck',
-    description: 'En proceso de verificación',
-  },
 ]
 
 const getStatusInfo = (status: string) => {
   switch (status) {
     case 'verified':
-      return { label: 'Verificado ✓', color: COLORS.textPrimary, icon: 'checkmark-circle', bgOpacity: '20' }
+      return { label: 'Verificado ✓', color: COLORS.textPrimary, bg: COLORS.surfaceAlt, icon: 'CircleCheck' }
     case 'verifying':
-      return { label: 'En análisis...', color: COLORS.primary, icon: 'time', bgOpacity: '20' }
+      return { label: 'En análisis...', color: COLORS.primary, bg: COLORS.primaryTint, icon: 'Clock' }
     case 'pending':
-      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'Clock', bgOpacity: '20' }
+      return { label: 'Pendiente de subida', color: COLORS.warning, bg: COLORS.warningLight, icon: 'Clock' }
     case 'rejected':
-      return { label: 'Rechazado', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
+      return { label: 'Rechazado', color: COLORS.error, bg: COLORS.errorLight, icon: 'CircleX' }
     case 'expired':
-      return { label: 'Vencido', color: COLORS.error, icon: 'alert-circle', bgOpacity: '20' }
+      return { label: 'Vencido', color: COLORS.error, bg: COLORS.errorLight, icon: 'TriangleAlert' }
     default:
-      return { label: 'Pendiente de subida', color: COLORS.warning, icon: 'Clock', bgOpacity: '20' }
+      return { label: 'Pendiente de subida', color: COLORS.warning, bg: COLORS.warningLight, icon: 'Clock' }
   }
 }
 
@@ -268,19 +260,22 @@ export default function DriverDocumentsScreen() {
     const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
     if (daysLeft < 0) {
-      return { label: 'VENCIDO', color: COLORS.error, daysLeft: 0, isExpired: true }
+      return { label: 'VENCIDO', color: COLORS.error, bg: COLORS.errorLight, daysLeft: 0, isExpired: true }
     } else if (daysLeft === 0) {
-      return { label: 'Vence hoy', color: COLORS.error, daysLeft: 0, isExpired: false }
+      return { label: 'Vence hoy', color: COLORS.error, bg: COLORS.errorLight, daysLeft: 0, isExpired: false }
     } else if (daysLeft <= 30) {
-      return { label: `Vence en ${daysLeft} días`, color: COLORS.warning, daysLeft, isExpired: false }
+      return { label: `Vence en ${daysLeft} días`, color: COLORS.warning, bg: COLORS.warningLight, daysLeft, isExpired: false }
     } else {
-      return { label: `Vence en ${daysLeft} días`, color: COLORS.textSecondary, daysLeft, isExpired: false }
+      return { label: `Vence en ${daysLeft} días`, color: COLORS.textSecondary, bg: COLORS.surfaceAlt, daysLeft, isExpired: false }
     }
   }
 
   // Calculate verification percentage
-  const verifiedCount = Array.from(backendDocuments.values()).filter(
-    (d) => d.status === 'verified'
+  // Solo cuenta documentos que siguen siendo requeridos — un conductor puede tener
+  // en la base un documento ya verificado de un requisito que se quitó después
+  // (ej. antecedentes), y eso no debe contar ni como verificado ni como pendiente.
+  const verifiedCount = REQUIRED_DOCUMENTS.filter(
+    (doc) => getDocumentStatus(doc.documentType) === 'verified'
   ).length
   const totalDocuments = REQUIRED_DOCUMENTS.length
   const verificationPercentage = Math.round((verifiedCount / totalDocuments) * 100)
@@ -392,6 +387,7 @@ export default function DriverDocumentsScreen() {
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <View style={styles.restrictedContainer}>
           {/* Icon */}
           <View style={styles.restrictedIcon}>
@@ -446,6 +442,7 @@ export default function DriverDocumentsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -466,12 +463,7 @@ export default function DriverDocumentsScreen() {
           <Illustration name="personalFile" width={170} />
         </View>
         {/* Verification Progress */}
-        <LinearGradient
-          colors={[COLORS.primary + 'F5', COLORS.primary + 'A0']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.progressCard}
-        >
+        <View style={styles.progressCard}>
           <View style={styles.progressHeader}>
             <View>
               <Text style={styles.progressLabel}>Verificación completa</Text>
@@ -498,7 +490,7 @@ export default function DriverDocumentsScreen() {
               ? '✓ ¡Todos tus documentos están verificados!'
               : `${totalDocuments - verifiedCount} documento${totalDocuments - verifiedCount > 1 ? 's' : ''} pendiente${totalDocuments - verifiedCount > 1 ? 's' : ''} de verificación`}
           </Text>
-        </LinearGradient>
+        </View>
 
         {/* Número de cédula: único por cuenta */}
         <View style={styles.documentsSection}>
@@ -563,7 +555,7 @@ export default function DriverDocumentsScreen() {
                   </View>
 
                   <View style={styles.documentStatus}>
-                    <View style={[styles.statusBadge, { backgroundColor: statusInfo.color + statusInfo.bgOpacity }]}>
+                    <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
                       <Icon
                         name={statusInfo.icon as any}
                         size={16}
@@ -611,14 +603,7 @@ export default function DriverDocumentsScreen() {
                       }
 
                       return (
-                        <View style={[
-                          styles.expiryBadge,
-                          { 
-                            backgroundColor: expiryInfo.color + '20',
-                            borderColor: expiryInfo.color,
-                            borderWidth: 1
-                          }
-                        ]}>
+                        <View style={[styles.expiryBadge, { backgroundColor: expiryInfo.bg }]}>
                           <Icon 
                             name={expiryInfo.isExpired ? "CircleAlert" : "Calendar"} 
                             size={16} 
@@ -736,7 +721,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.error + '15',
+    backgroundColor: COLORS.errorLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.lg,
@@ -758,13 +743,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    backgroundColor: COLORS.primary + '20',
+    backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     marginBottom: SPACING.xl,
-    borderWidth: 1,
-    borderColor: COLORS.primary + '30',
   },
   roleBadgeText: {
     ...TYPOGRAPHY.bodyMedium,
@@ -807,40 +790,38 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
+    paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
-    ...SHADOWS.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: RADIUS.full,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: SPACING.md,
+    marginLeft: -SPACING.sm,
+    marginRight: SPACING.sm,
   },
   headerContent: {
     flex: 1,
   },
   title: {
     ...TYPOGRAPHY.h4,
-    fontSize: 22,
     color: COLORS.textPrimary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   subtitle: {
-    ...TYPOGRAPHY.bodySmall,
-    fontSize: 14,
+    ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
     marginTop: SPACING.xs,
   },
   content: {
     flex: 1,
-    padding: SPACING.md,
+    padding: SPACING.lg,
   },
   progressCard: {
-    ...SHADOWS.sm,
+    backgroundColor: COLORS.primary,
     padding: SPACING.lg,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.lg,
@@ -853,21 +834,20 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.textInverse + 'CC',
   },
   progressValue: {
     ...TYPOGRAPHY.h3,
     fontSize: 28,
-    color: '#fff',
+    color: COLORS.textInverse,
     marginTop: SPACING.xs,
     fontWeight: '700',
   },
   progressPercentage: {
     ...TYPOGRAPHY.bodyMedium,
     fontSize: 14,
-    color: '#fff',
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    color: COLORS.textInverse,
+    backgroundColor: COLORS.primaryLight,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
     borderRadius: RADIUS.md,
@@ -875,19 +855,18 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.primaryLight,
     borderRadius: RADIUS.full,
     marginBottom: SPACING.md,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.textInverse,
   },
   progressDescription: {
     ...TYPOGRAPHY.bodySmall,
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.8)',
+    color: COLORS.textInverse + 'CC',
   },
   documentsSection: {
     backgroundColor: COLORS.surface,
@@ -904,7 +883,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   documentCard: {
-    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: SPACING.md,
@@ -913,7 +891,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: SPACING.md,
@@ -959,7 +937,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -967,11 +945,11 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   renewBtn: {
-    backgroundColor: COLORS.warning + '15',
+    backgroundColor: COLORS.warningLight,
   },
   rejectionBanner: {
     flexDirection: 'row',
-    backgroundColor: COLORS.error + '10',
+    backgroundColor: COLORS.errorLight,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.error,
     paddingHorizontal: SPACING.lg,
@@ -1006,7 +984,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.md,
-    backgroundColor: COLORS.primary + '10',
+    backgroundColor: COLORS.primaryTint,
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.md,
@@ -1027,7 +1005,7 @@ const styles = StyleSheet.create({
   infoCard: {
     ...SHADOWS.sm,
     flexDirection: 'row',
-    backgroundColor: COLORS.warning + '15',
+    backgroundColor: COLORS.warningLight,
     borderLeftWidth: 4,
     borderLeftColor: COLORS.warning,
     padding: SPACING.lg,

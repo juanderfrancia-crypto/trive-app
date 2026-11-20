@@ -68,7 +68,7 @@ Orden propuesto: probar el flujo del conductor con aprobaciones por SQL, y despu
 
 ## Requisito: verificación por expedientes de conductor
 
-La unidad de revisión es el **expediente del conductor**, no cada documento. Un conductor tiene seis documentos (cédula, licencia, tarjeta de propiedad, SOAT, técnico-mecánica y antecedentes).
+La unidad de revisión es el **expediente del conductor**, no cada documento. Un conductor tiene cinco documentos (cédula, licencia, tarjeta de propiedad, SOAT y técnico-mecánica). El certificado de antecedentes judiciales se quitó como requisito (2026-11-19): es una señal de transporte comercial regulado, no del modelo de gastos compartidos que Trive busca ser.
 
 - Cola de **conductores**, no de documentos. Orden: el conductor que lleva más tiempo con el expediente completo, primero.
 - Una tarjeta por conductor con el estado de cada documento y el avance (ej. 4/6).
