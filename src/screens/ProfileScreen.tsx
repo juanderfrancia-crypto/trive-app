@@ -16,7 +16,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePassengerStats } from '../hooks/usePassengerStats'
 import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import { showSuccess, showError, showInfo } from '../utils/showError'
-import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl } from '../services/photoUpload'
+import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl, deleteProfilePhoto } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
 import Button from '../components/Button'
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
   }
 
   // ── Photo ──────────────────────────────────────────────────────────────────
-  const handleProfilePhotoUpload = async () => {
+  const pickAndUploadPhoto = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'] as any, allowsEditing: true, aspect: [1, 1], quality: 0.8,
@@ -188,6 +188,31 @@ export default function ProfileScreen() {
       }
     } catch (e: any) { showToast(e.message || 'Error al subir la foto', 'error') }
     finally { setUploadingPhoto(false) }
+  }
+
+  const handleRemovePhoto = async () => {
+    const currentUrl = user?.avatar_url || profile?.avatar_url
+    if (!user?.id || !currentUrl) return
+    try {
+      setUploadingPhoto(true)
+      await deleteProfilePhoto(user.id, currentUrl)
+      await fetchProfile(user.id)
+      showToast('Foto de perfil eliminada')
+    } catch (e: any) { showToast(e.message || 'Error al quitar la foto', 'error') }
+    finally { setUploadingPhoto(false) }
+  }
+
+  // Si ya hay foto, preguntar qué hacer -- antes solo se podía reemplazar una
+  // foto por otra, sin manera de quitarla y quedar con las iniciales.
+  const handleProfilePhotoUpload = () => {
+    const hasPhoto = !!(user?.avatar_url || profile?.avatar_url)
+    if (!hasPhoto) { pickAndUploadPhoto(); return }
+
+    Alert.alert('Foto de perfil', '¿Qué quieres hacer?', [
+      { text: 'Cambiar foto', onPress: pickAndUploadPhoto },
+      { text: 'Quitar foto', style: 'destructive', onPress: handleRemovePhoto },
+      { text: 'Cancelar', style: 'cancel' },
+    ])
   }
 
   const handleVehiclePhotoUpload = async () => {

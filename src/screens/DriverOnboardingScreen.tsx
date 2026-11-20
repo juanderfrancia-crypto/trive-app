@@ -16,7 +16,7 @@ const STEPS = [
     number: '1',
     icon: 'FileText' as const,
     title: 'Sube tus documentos',
-    desc: 'Licencia de conducir y SOAT vigentes',
+    desc: 'Cédula, licencia, SOAT y más',
     color: COLORS.primary,
   },
   {
@@ -29,8 +29,8 @@ const STEPS = [
   {
     number: '3',
     icon: 'Banknote' as const,
-    title: '¡Publica y gana!',
-    desc: 'Crea rutas y recibe pasajeros',
+    title: '¡Publica y comparte!',
+    desc: 'Crea tu ruta y comparte el viaje',
     color: COLORS.success,
   },
 ]
@@ -96,7 +96,7 @@ export default function DriverOnboardingScreen() {
               <Icon name="Car" size={13} color="#fff" />
               <Text style={s.heroBadgeText}>MODO CONDUCTOR</Text>
             </View>
-            <Text style={s.heroTitle}>Conviértete en{'\n'}conductor Trive</Text>
+            <Text style={s.heroTitle}>Comparte tus{'\n'}viajes con Trive</Text>
             <Text style={s.heroSub}>Gana dinero en tu tiempo libre compartiendo tus viajes</Text>
           </View>
         </View>

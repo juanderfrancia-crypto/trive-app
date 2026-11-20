@@ -91,27 +91,12 @@ export default function DriverDocumentsScreen() {
   const authUser = useAppStore((s) => s.authUser)
   const [loading, setLoading] = useState(true)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
-  const [nationalId, setNationalId] = useState('')
-  const [identitySaved, setIdentitySaved] = useState(false)
-  const [savingIdentity, setSavingIdentity] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [backendDocuments, setBackendDocuments] = useState<Map<string, DriverDocument>>(new Map())
 
   // Load documents from backend on mount and setup real-time listener
   useEffect(() => {
     if (!authUser?.id) return
-    supabase
-      .from('drivers')
-      .select('national_id')
-      .eq('id', authUser.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.national_id) {
-          setNationalId(data.national_id)
-          setIdentitySaved(true)
-        }
-      })
-
     loadDocuments()
 
     // Defensa contra canales del mismo nombre sin limpiar de un montaje anterior
@@ -492,39 +477,17 @@ export default function DriverDocumentsScreen() {
           </Text>
         </View>
 
-        {/* Número de cédula: único por cuenta */}
+        {/* Número de cédula: viene de profiles.cedula (ya obligatoria y única
+            desde el registro) -- aquí solo se muestra, no se vuelve a pedir
+            ni se puede editar, es la misma cédula de la cuenta. */}
         <View style={styles.documentsSection}>
           <Text style={styles.sectionTitle}>Número de cédula</Text>
           <Text style={styles.identityHint}>
-            Cada cédula solo puede estar en una cuenta de Trive. Se guarda una vez.
+            Esta es la cédula con la que te registraste en Trive.
           </Text>
-          <View style={styles.identityRow}>
-            <TextInput
-              style={styles.identityInput}
-              value={nationalId}
-              onChangeText={setNationalId}
-              keyboardType="number-pad"
-              placeholder="Número de cédula"
-              placeholderTextColor={COLORS.textTertiary}
-              editable={!identitySaved}
-              maxLength={10}
-            />
-            <TouchableOpacity
-              style={[styles.identityButton, (identitySaved || savingIdentity) && styles.identityButtonDisabled]}
-              disabled={identitySaved || savingIdentity}
-              onPress={async () => {
-                setSavingIdentity(true)
-                const { error } = await supabase.rpc('set_driver_identity', { p_national_id: nationalId })
-                setSavingIdentity(false)
-                if (error) {
-                  Alert.alert('No se pudo guardar', error.message)
-                  return
-                }
-                setIdentitySaved(true)
-              }}
-            >
-              <Text style={styles.identityButtonText}>{identitySaved ? 'Guardada' : 'Guardar'}</Text>
-            </TouchableOpacity>
+          <View style={styles.identityDisplay}>
+            <Icon name="CreditCard" size={18} color={COLORS.textSecondary} />
+            <Text style={styles.identityDisplayText}>{user?.cedula || 'No registrada'}</Text>
           </View>
         </View>
 
@@ -558,7 +521,7 @@ export default function DriverDocumentsScreen() {
                     <View style={[styles.statusBadge, { backgroundColor: statusInfo.bg }]}>
                       <Icon
                         name={statusInfo.icon as any}
-                        size={16}
+                        size={13}
                         color={statusInfo.color}
                       />
                       <Text style={[styles.statusLabel, { color: statusInfo.color }]}>
@@ -566,7 +529,8 @@ export default function DriverDocumentsScreen() {
                       </Text>
                     </View>
 
-                    {(status === 'pending' || status === 'rejected' || status === 'verified' || status === 'expired') && (
+                    {/* Rechazado tiene su propio botón "Subsanar documento" en el aviso de abajo, más claro que este ícono suelto. */}
+                    {(status === 'pending' || status === 'verified' || status === 'expired') && (
                       <TouchableOpacity
                         style={[
                           styles.uploadBtn, 
@@ -625,7 +589,19 @@ export default function DriverDocumentsScreen() {
                     <View style={styles.rejectionContent}>
                       <Text style={styles.rejectionTitle}>Documento Rechazado</Text>
                       <Text style={styles.rejectionReason}>{rejectionReason}</Text>
-                      <Text style={styles.rejectionSubtext}>Por favor, sube nuevamente tu documento</Text>
+                      <TouchableOpacity
+                        style={styles.subsanarBtn}
+                        onPress={() => handleUploadDocument(doc.documentType, doc.name)}
+                        disabled={isUploading}
+                        activeOpacity={0.8}
+                      >
+                        {isUploading ? (
+                          <ActivityIndicator size="small" color={COLORS.white} />
+                        ) : (
+                          <Icon name="CloudUpload" size={14} color={COLORS.white} />
+                        )}
+                        <Text style={styles.subsanarBtnText}>Subsanar documento</Text>
+                      </TouchableOpacity>
                     </View>
                   </View>
                 )}
@@ -685,25 +661,18 @@ export default function DriverDocumentsScreen() {
 
 const styles = StyleSheet.create({
   identityHint: { fontSize: 13, color: COLORS.textTertiary, marginBottom: SPACING.sm },
-  identityRow: { flexDirection: 'row', gap: SPACING.sm, alignItems: 'center' },
-  identityInput: {
-    flex: 1,
+  identityDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     borderWidth: 1,
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    fontSize: 15,
-    color: COLORS.textPrimary,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.surfaceAlt,
   },
-  identityButton: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-  },
-  identityButtonDisabled: { opacity: 0.5 },
-  identityButtonText: { color: COLORS.surface, fontWeight: '600' },
+  identityDisplayText: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -923,15 +892,15 @@ const styles = StyleSheet.create({
   },
   statusBadge: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 3,
     borderRadius: RADIUS.md,
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: 4,
   },
   statusLabel: {
     ...TYPOGRAPHY.label,
-    fontSize: 11,
+    fontSize: 10,
   },
   uploadBtn: {
     width: 32,
@@ -975,10 +944,21 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
     fontStyle: 'italic',
   },
-  rejectionSubtext: {
+  subsanarBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.xs,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.error,
+  },
+  subsanarBtnText: {
     ...TYPOGRAPHY.label,
-    fontSize: 11,
-    color: COLORS.textSecondary,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.white,
   },
   verifyingBanner: {
     flexDirection: 'row',
