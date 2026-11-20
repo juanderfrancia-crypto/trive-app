@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -49,6 +49,7 @@ interface RouteTemplate {
   pickup_point: string | null
   route_via: string | null
   dropoff_point: string | null
+  last_duration_minutes: number | null
   created_at: string
 }
 
@@ -73,13 +74,38 @@ export default function RecurringRoutesScreen() {
   const [fSeats, setFSeats] = useState('')
   const [fVehicle, setFVehicle] = useState<VehicleTypeId>('auto')
   const [fVia, setFVia] = useState('')
+  const [fPickup, setFPickup] = useState('')
+  const [fDropoff, setFDropoff] = useState('')
 
   // ── Modal publicar desde plantilla ─────────────────────────────────────────
   const [publishTarget, setPublishTarget] = useState<RouteTemplate | null>(null)
   const [departureTime, setDepartureTime] = useState('')
+  const [quickPick, setQuickPick] = useState<number | null>(0) // minutos desde ahora; null = hora escrita a mano
   const [durationMinutes, setDurationMinutes] = useState(180) // 3 horas por defecto
   const [pubVia, setPubVia] = useState('')
   const [publishing, setPublishing] = useState(false)
+
+  const QUICK_DEPARTURES = [
+    { label: 'Ahora', minutes: 0 },
+    { label: 'En 15 min', minutes: 15 },
+    { label: 'En 30 min', minutes: 30 },
+    { label: 'En 1 h', minutes: 60 },
+  ]
+  const quickDepartureClock = (minutes: number) => {
+    const d = new Date(Date.now() + minutes * 60000)
+    return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  }
+  const pickQuickDeparture = (minutes: number) => {
+    setQuickPick(minutes)
+    setDepartureTime(minutes === 0 ? '' : quickDepartureClock(minutes))
+  }
+  const closePublishModal = () => {
+    setPublishTarget(null)
+    setDepartureTime('')
+    setQuickPick(0)
+    setDurationMinutes(180)
+    setPubVia('')
+  }
 
   const loadTemplates = useCallback(async () => {
     if (!user?.id) return
@@ -99,6 +125,7 @@ export default function RecurringRoutesScreen() {
   const resetForm = () => {
     setFName(''); setFOrigin(''); setFDest(''); setFPrice('')
     setFSeats(''); setFVehicle('auto'); setFVia('')
+    setFPickup(''); setFDropoff('')
     setEditTarget(null)
   }
 
@@ -109,14 +136,16 @@ export default function RecurringRoutesScreen() {
     setFPrice(String(tpl.price_per_seat))
     setFSeats(String(tpl.total_seats))
     setFVehicle(tpl.vehicle_type as VehicleTypeId)
-    setFVia(tpl.description ?? '')
+    setFVia(tpl.route_via ?? '')
+    setFPickup(tpl.pickup_point ?? '')
+    setFDropoff(tpl.dropoff_point ?? '')
     setEditTarget(tpl)
     setShowCreate(true)
   }
 
   const handleSaveTemplate = async () => {
-    if (!fOrigin.trim() || !fDest.trim()) {
-      Alert.alert('Campos requeridos', 'Completa origen y destino.')
+    if (!fOrigin.trim() || !fDest.trim() || !fPickup.trim() || !fDropoff.trim()) {
+      Alert.alert('Campos requeridos', 'Completa origen, destino, punto de salida y punto de llegada.')
       return
     }
     const price = parseFloat(fPrice)
@@ -139,7 +168,9 @@ export default function RecurringRoutesScreen() {
       price_per_seat: price,
       total_seats: seats,
       vehicle_type: fVehicle,
-      description: fVia.trim() || null,
+      pickup_point: fPickup.trim(),
+      dropoff_point: fDropoff.trim(),
+      route_via: fVia.trim() || null,
     }
 
     try {
@@ -218,6 +249,16 @@ export default function RecurringRoutesScreen() {
         .from('profiles').select('balance').eq('id', user.id).single()
       if (prof?.balance !== undefined) setBalance(prof.balance ?? 0)
 
+      // Guarda la duración real usada para que la próxima vez el estimado por
+      // defecto nazca de la experiencia del conductor en esta ruta, no de un
+      // número genérico igual para rutas cortas y largas.
+      if (duration !== publishTarget.last_duration_minutes) {
+        supabase.from('route_templates').update({ last_duration_minutes: duration }).eq('id', publishTarget.id)
+          .then(({ error }) => {
+            if (!error) setTemplates((prev) => prev.map((t) => t.id === publishTarget.id ? { ...t, last_duration_minutes: duration } : t))
+          })
+      }
+
       // Autoconfirmación: el conductor ya ve "¡Viaje publicado!" en pantalla,
       // así que queda en su centro de notificaciones sin disparar push.
       insertNotificationForUser(user.id, {
@@ -230,8 +271,7 @@ export default function RecurringRoutesScreen() {
         send_push: false,
       }).catch(() => {})
 
-      setPublishTarget(null)
-      setDepartureTime(''); setDurationMinutes(180); setPubVia('')
+      closePublishModal()
       showSuccess('¡Viaje publicado! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
       showError(err.message || 'No se pudo publicar la ruta.')
@@ -243,6 +283,7 @@ export default function RecurringRoutesScreen() {
   if (tmplLoading) {
     return (
       <View style={[styles.safe, styles.center, { paddingTop: insets.top }]}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     )
@@ -250,6 +291,7 @@ export default function RecurringRoutesScreen() {
 
   return (
     <View style={[styles.safe, { paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
@@ -323,17 +365,17 @@ export default function RecurringRoutesScreen() {
                   <Icon name="Users" size={13} color={COLORS.primary} />
                   <Text style={styles.metaText}>{tpl.total_seats} cupos</Text>
                 </View>
-                {!!tpl.description && (
+                {!!tpl.route_via && (
                   <View style={styles.metaChip}>
                     <Icon name="Route" size={13} color={COLORS.primary} />
-                    <Text style={styles.metaText} numberOfLines={1}>{tpl.description}</Text>
+                    <Text style={styles.metaText} numberOfLines={1}>{tpl.route_via}</Text>
                   </View>
                 )}
               </View>
 
               <TouchableOpacity
                 style={styles.primaryBtn}
-                onPress={() => { setPublishTarget(tpl); setPubVia(tpl.route_via ?? '') }}
+                onPress={() => { setPublishTarget(tpl); setPubVia(tpl.route_via ?? ''); setDepartureTime(''); setQuickPick(0); setDurationMinutes(tpl.last_duration_minutes ?? 180) }}
                 activeOpacity={0.85}
               >
                 <Text style={styles.primaryBtnText}>Publicar ahora</Text>
@@ -345,6 +387,7 @@ export default function RecurringRoutesScreen() {
 
       {/* ── Modal crear/editar plantilla ── */}
       <Modal visible={showCreate} animationType="slide" transparent onRequestClose={() => setShowCreate(false)}>
+        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <KeyboardAvoidingScreen style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
@@ -357,8 +400,11 @@ export default function RecurringRoutesScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <FormField label="Nombre (opcional)" placeholder='Ej: "Armenia → Cali mañana"' value={fName} onChangeText={setFName} />
-              <FormField label="Origen *" placeholder="Ej: Armenia - Centro" value={fOrigin} onChangeText={setFOrigin} />
-              <FormField label="Destino *" placeholder="Ej: Cali - Terminal" value={fDest} onChangeText={setFDest} />
+              <FormField label="Origen *" placeholder="Ej: Armenia" value={fOrigin} onChangeText={setFOrigin} />
+              <FormField label="Destino *" placeholder="Ej: Cali" value={fDest} onChangeText={setFDest} />
+              <FormField label="Punto de salida *" placeholder="Ej: Parque principal de Armenia" value={fPickup} onChangeText={setFPickup} />
+              <FormField label="Punto de llegada *" placeholder="Ej: Terminal de Cali" value={fDropoff} onChangeText={setFDropoff} />
+              <FormField label="Vía / parada (opcional)" placeholder="Ej: La Paila" value={fVia} onChangeText={setFVia} />
               <FormField label="Precio por cupo *" placeholder="Ej: 25000" value={fPrice} onChangeText={setFPrice} keyboardType="numeric" />
               <FormField label="Cupos *" placeholder="Ej: 4" value={fSeats} onChangeText={setFSeats} keyboardType="numeric" />
 
@@ -374,8 +420,6 @@ export default function RecurringRoutesScreen() {
                 })}
               </View>
 
-              <FormField label="Vía / parada (opcional)" placeholder="Ej: La Paila" value={fVia} onChangeText={setFVia} />
-
               <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveTemplate} activeOpacity={0.85}>
                 <Text style={styles.primaryBtnText}>{editTarget ? 'Actualizar plantilla' : 'Guardar plantilla'}</Text>
               </TouchableOpacity>
@@ -387,13 +431,14 @@ export default function RecurringRoutesScreen() {
 
       {/* ── Modal publicar desde plantilla ── */}
       {publishTarget && (
-        <Modal visible animationType="slide" transparent onRequestClose={() => setPublishTarget(null)}>
+        <Modal visible animationType="slide" transparent onRequestClose={closePublishModal}>
+          <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
           <View style={styles.modalOverlay}>
             <View style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
               <View style={styles.handle} />
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Publicar viaje</Text>
-                <TouchableOpacity onPress={() => { setPublishTarget(null); setDepartureTime(''); setDurationMinutes(180); setPubVia('') }} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <TouchableOpacity onPress={closePublishModal} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                   <Icon name="X" size={22} color={COLORS.textPrimary} />
                 </TouchableOpacity>
               </View>
@@ -402,11 +447,11 @@ export default function RecurringRoutesScreen() {
                 <View style={styles.pubSummary}>
                   <View style={styles.pubPoint}>
                     <Icon name="CircleDot" size={16} color={COLORS.primary} />
-                    <Text style={styles.pubRoute}>{publishTarget.origin}</Text>
+                    <Text style={styles.pubRoute}>{publishTarget.pickup_point || publishTarget.origin}</Text>
                   </View>
                   <View style={styles.pubPoint}>
                     <Icon name="MapPin" size={16} color={COLORS.textPrimary} />
-                    <Text style={styles.pubRoute}>{publishTarget.destination}</Text>
+                    <Text style={styles.pubRoute}>{publishTarget.dropoff_point || publishTarget.destination}</Text>
                   </View>
                   <View style={styles.pubChips}>
                     <View style={styles.metaChip}>
@@ -420,13 +465,46 @@ export default function RecurringRoutesScreen() {
                   </View>
                 </View>
 
-                <TimeInput12h label="Hora de salida (vacío = ahora)" value={departureTime} onChangeText={setDepartureTime} placeholder="02:30" style={styles.marginTopSm} />
+                <Text style={[styles.formLabel, styles.marginTopSm]}>¿Cuándo sales?</Text>
+                <View style={[styles.chipRow, styles.marginTopXs]}>
+                  {QUICK_DEPARTURES.map((q) => {
+                    const active = quickPick === q.minutes
+                    return (
+                      <TouchableOpacity
+                        key={q.minutes}
+                        style={[styles.chip, active && styles.chipActive]}
+                        onPress={() => pickQuickDeparture(q.minutes)}
+                        activeOpacity={0.85}
+                      >
+                        <Text style={[styles.chipText, active && styles.chipTextActive]}>{q.label}</Text>
+                      </TouchableOpacity>
+                    )
+                  })}
+                </View>
+                {quickPick === 0 && (
+                  <Text style={styles.quickHint}>"Ahora" publica en el momento en que confirmes abajo, no en el momento en que tocaste el chip.</Text>
+                )}
+                <TimeInput12h
+                  label="Hora exacta"
+                  value={departureTime}
+                  onChangeText={(t) => { setDepartureTime(t); setQuickPick(null) }}
+                  placeholder="02:30"
+                  style={styles.marginTopSm}
+                />
                 <DurationInput label="Duración del viaje" valueMinutes={durationMinutes} onChangeMinutes={setDurationMinutes} style={styles.marginTopSm} />
 
                 <FormField label="Por donde voy (opcional)" placeholder="Ej: La Paila, autopista sur" value={pubVia} onChangeText={setPubVia} />
 
                 <View style={styles.costNote}>
-                  <Icon name="Info" size={16} color={COLORS.primary} />
+                  <TouchableOpacity
+                    onPress={() => Alert.alert(
+                      '¿Cómo se calcula?',
+                      'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.'
+                    )}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Icon name="Info" size={16} color={COLORS.primary} />
+                  </TouchableOpacity>
                   <Text style={styles.costNoteText}>
                     Se descontarán {fmtMoney(calculateRouteFee(publishTarget.price_per_seat, publishTarget.total_seats))} de tu saldo. Saldo disponible: {fmtMoney(user?.balance ?? 0)}.
                   </Text>
@@ -535,6 +613,8 @@ const styles = StyleSheet.create({
   pubRoute: { ...TYPOGRAPHY.subtitle2, fontWeight: '800', color: COLORS.textPrimary },
 
   marginTopSm: { marginTop: SPACING.sm },
+  marginTopXs: { marginTop: SPACING.xs },
+  quickHint: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, marginTop: SPACING.xs },
   formField: {
     borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.lg,
     paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
