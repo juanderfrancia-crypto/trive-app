@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
   proposeText: {
-    fontSize: TYPOGRAPHY.size.xs,
+    fontSize: TYPOGRAPHY.size.sm,
     fontWeight: '700',
     color: COLORS.primary,
   },
