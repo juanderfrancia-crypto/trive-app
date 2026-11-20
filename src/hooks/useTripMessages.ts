@@ -5,11 +5,10 @@ import {
   subscribeTripMessages,
   subscribeTripMessageUpdates,
   markTripMessagesAsRead,
-  getTripUnreadCount,
+  markTripMessageAsRead,
   TripMessage,
 } from '../services/trip_messages'
-import { insertNotificationForUser } from '../services/notificationInsert'
-import { useAppStore } from '../store/useAppStore'
+import { supabase } from '../services/supabase'
 
 interface UseTripMessagesOptions {
   autoMarkAsRead?: boolean
@@ -20,7 +19,6 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const currentUser = useAppStore((s) => s.user)
 
   const messagesChannelRef = useRef<(() => void) | null>(null)
   const updatesChannelRef = useRef<(() => void) | null>(null)
@@ -38,18 +36,23 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
         setError(null)
         setLoading(true)
 
-        // Cargar mensajes de esta conversación específica
+        // Cargar mensajes de esta conversación específica -- la única llamada
+        // que de verdad hace falta esperar para poder mostrar algo en pantalla.
         const data = await getTripMessages(tripId, userId, otherUserId)
         setMessages(data)
 
-        // Cargar unread count
-        const unread = await getTripUnreadCount(tripId, userId)
+        // El conteo de no leídos ya se puede sacar de los mensajes recién
+        // cargados, sin una segunda vuelta al servidor solo para eso.
+        const unread = data.filter((m) => m.to_user_id === userId && !m.is_read).length
         setUnreadCount(unread)
 
-        // Marcar como leídos si está habilitado
+        // Marcar como leídos es un efecto secundario -- no bloquea mostrar
+        // los mensajes, así que no se espera (antes sí, sumando una tercera
+        // vuelta al servidor antes de que se viera nada).
         if (autoMarkAsRead && unread > 0) {
-          await markTripMessagesAsRead(tripId, userId)
-          setUnreadCount(0)
+          markTripMessagesAsRead(tripId, userId)
+            .then(() => setUnreadCount(0))
+            .catch(() => {})
         }
       } catch (err: any) {
         setError(err.message)
@@ -84,6 +87,11 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
 
       if (autoMarkAsRead && newMessage.to_user_id === userId && !newMessage.is_read) {
         setUnreadCount((prev) => Math.max(0, prev - 1))
+        // El chat está abierto y se está viendo en vivo -- sin esto, is_read se
+        // queda en false en la base (nunca se marcó, solo se restó al contador
+        // local en memoria), y el badge de "no leídos" vuelve a aparecer en
+        // cuanto se sale de esta pantalla, aunque el mensaje sí se vio.
+        markTripMessageAsRead(newMessage.id).catch(() => {})
       }
     })
 
@@ -175,23 +183,20 @@ export const useTripMessages = (tripId?: string, userId?: string, otherUserId?: 
         // Reemplazar temp con el mensaje real del servidor
         setMessages((prev) => prev.map((m) => (m.id === tempId ? sent : m)))
 
-        // Insertar notificación en la tabla para que aparezca en Alertas → Chat
-        const senderName = currentUser?.name || 'Usuario'
-        insertNotificationForUser(otherUserId, {
-          user_id: otherUserId,
-          type: 'message' as const,
-          title: `Mensaje de ${senderName}`,
-          message: message.trim(),
-          is_read: false,
-          data: { sender_id: userId, sender_name: senderName, trip_id: tripId },
-        }).catch(() => {})
+        // Vía RPC (SECURITY DEFINER), no insert directo -- insertar para OTRO usuario
+        // desde el cliente chocaba con RLS de la tabla notifications.
+        supabase
+          .rpc('notify_trip_message', { p_trip_id: tripId, p_to_user_id: otherUserId, p_message: message.trim() })
+          .then(({ error: notifyError }) => {
+            if (notifyError) console.error('No se pudo insertar la notificación de mensaje:', notifyError)
+          })
       } catch (err: any) {
         // Revertir optimistic update
         setMessages((prev) => prev.filter((m) => m.id !== tempId))
         setError(err.message)
       }
     },
-    [tripId, userId, otherUserId, currentUser]
+    [tripId, userId, otherUserId]
   )
 
   return {

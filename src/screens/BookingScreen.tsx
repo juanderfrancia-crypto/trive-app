@@ -112,11 +112,13 @@ export default function BookingScreen() {
             ))}
           </View>
 
-          <Illustration name="allChecked" width={180} />
-          <Text style={styles.confirmTitle}>Reserva confirmada</Text>
-          <Text style={styles.confirmSubtitle}>
-            {count === 1 ? 'Tu asiento está listo.' : `Tus ${count} asientos están listos.`} Los verás en Viajes.
-          </Text>
+          <View style={styles.confirmHero}>
+            <Illustration name="allChecked" width={180} />
+            <Text style={styles.confirmTitle}>Reserva confirmada</Text>
+            <Text style={styles.confirmSubtitle}>
+              {count === 1 ? 'Tu asiento está listo.' : `Tus ${count} asientos están listos.`} Los verás en Viajes.
+            </Text>
+          </View>
 
           <View style={styles.summaryCard}>
             <Text style={styles.summaryRoute}>{selectedRoute.origin} → {selectedRoute.destination}</Text>
@@ -695,8 +697,9 @@ const styles = StyleSheet.create({
   },
   secondaryCtaText: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
 
-  confirmTitle: { marginTop: 18, fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4 },
-  confirmSubtitle: { marginTop: 6, fontSize: 14, color: COLORS.textSecondary, lineHeight: 20 },
+  confirmHero: { alignItems: 'center', marginTop: SPACING.xl },
+  confirmTitle: { marginTop: 18, fontSize: 26, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.4, textAlign: 'center' },
+  confirmSubtitle: { marginTop: 6, fontSize: 14, color: COLORS.textSecondary, lineHeight: 20, textAlign: 'center' },
 
   summaryCard: { marginTop: 22, borderWidth: 1, borderColor: COLORS.border, borderRadius: 22, padding: 18 },
   summaryRoute: { fontSize: 15, fontWeight: '800', color: COLORS.textPrimary },

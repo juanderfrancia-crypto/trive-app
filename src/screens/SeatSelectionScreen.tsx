@@ -24,7 +24,7 @@ export default function SeatSelectionScreen() {
   const setBookingData = useAppStore((s) => s.setBookingData)
   const authUser = useAppStore((s) => s.authUser)
   const user = useAppStore((s) => s.user)
-  const { getRouteBookings, reservePendingBookings, loading } = useBookings()
+  const { getRouteBookings, reservePendingBookings, releasePendingBookings, loading } = useBookings()
   const { getRouteById } = useRoutes()
   const [bookings, setBookings] = useState<any[]>([])
   // selectedRoute (del store global) puede venir de distintas pantallas con distinta forma
@@ -81,6 +81,11 @@ export default function SeatSelectionScreen() {
       setInitialLoading(true)
 
       const currentRoute = await getRouteById(selectedRoute.id)
+      // El usuario puede haberse ido de esta pantalla mientras esta consulta
+      // viajaba (por ej. justo cuando la ruta pasó de "scheduled" a "in_progress"
+      // a medianoche) -- sin esto, el aviso de "ruta no disponible" aparece igual,
+      // aunque ya esté en otra pantalla y ni le importe esa ruta vieja.
+      if (!isMountedRef.current) return
       if (!currentRoute) {
         if (!skipValidation) {
           errorHandler.handle(
@@ -112,6 +117,7 @@ export default function SeatSelectionScreen() {
       }
 
       const routeBookings = await getRouteBookings(selectedRoute.id)
+      if (!isMountedRef.current) return
       const normalizedBookings = routeBookings.map((booking: any) => ({
         ...booking,
         seat_number: Number(booking.seat_number),
@@ -274,6 +280,10 @@ export default function SeatSelectionScreen() {
     try {
       setValidating(true)
       const currentRoute = await getRouteById(selectedRoute.id)
+      // Igual que en loadBookings: si el usuario ya se fue de esta pantalla
+      // mientras se validaba, no tiene sentido mostrarle un aviso ni, peor,
+      // mandarlo a "Reserva confirmada" por una reserva que ya ni está viendo.
+      if (!isMountedRef.current) return
       if (!currentRoute) {
         errorHandler.handle(
           'Esta ruta ya no está disponible',
@@ -299,6 +309,7 @@ export default function SeatSelectionScreen() {
       }
 
       const latestBookings = await getRouteBookings(selectedRoute.id)
+      if (!isMountedRef.current) return
       const latestOccupiedSeats = new Set(latestBookings.map((b: any) => Number(b.seat_number)))
       const invalidSeat = selectedSeats.find((seat) => latestOccupiedSeats.has(seat))
 
@@ -315,6 +326,13 @@ export default function SeatSelectionScreen() {
       }
 
       const reservedBookings = await reservePendingBookings(selectedRoute.id, selectedSeats)
+      if (!isMountedRef.current) {
+        // Ya se fue de la pantalla -- no lo mandamos a Booking por una reserva
+        // que no está viendo, pero sí hay que soltar los cupos que quedaron
+        // apartados en el servidor, o se pierden hasta que expiren solos.
+        releasePendingBookings(reservedBookings.map((b) => b.id)).catch(() => {})
+        return
+      }
 
       // El total y el código los entrega el servidor en las reservas pendientes.
       const serverTotal = reservedBookings.reduce((sum, b) => sum + (Number(b.price) || 0), 0)
@@ -372,11 +390,15 @@ export default function SeatSelectionScreen() {
     }
   }
 
-  const departureTime = new Date(route.departure_time).toLocaleTimeString('es-CO', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  })
+  // route puede venir incompleta (sin departure_time) mientras routeDetails
+  // todavía está cargando — sin esto se alcanza a ver "Invalid Date" un instante.
+  const departureTime = route.departure_time
+    ? new Date(route.departure_time).toLocaleTimeString('es-CO', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      })
+    : null
   const seatCount = selectedSeats.length
   const hasSelection = seatCount > 0
 
@@ -400,7 +422,7 @@ export default function SeatSelectionScreen() {
 
         <Text style={styles.title}>Elige tus asientos</Text>
         <Text style={styles.subtitle}>
-          {route.driver_name || 'Conductor'} · {departureTime} · Se actualiza en vivo
+          {route.driver_name || 'Conductor'}{departureTime ? ` · ${departureTime}` : ''} · Se actualiza en vivo
         </Text>
 
         {initialLoading ? (
