@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
 import Icon from '../Icon'
@@ -26,8 +26,17 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
     await loadPassengerRequests(user.id)
   }, [user?.id, isDriver, loadPassengerRequests])
 
+  // Una solicitud enviada solo cambia cuando el conductor responde — se omite la
+  // recarga si se vuelve a esta pestaña antes de este tiempo (el pull-to-refresh
+  // manual, abajo, llama a load() directo y siempre recarga).
+  const FOCUS_RELOAD_THROTTLE_MS = 30000
+  const lastLoadRef = useRef(0)
+
   useFocusEffect(
     useCallback(() => {
+      const now = Date.now()
+      if (now - lastLoadRef.current < FOCUS_RELOAD_THROTTLE_MS) return
+      lastLoadRef.current = now
       load()
     }, [load])
   )

@@ -1,14 +1,13 @@
 import { useCallback, useState } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, Modal, TextInput, RefreshControl } from 'react-native'
 import { Text } from '../AppText'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Icon from '../Icon'
 import KeyboardAvoidingScreen from '../KeyboardAvoidingScreen'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
-import { NegotiationChatModal } from '../NegotiationChatModal'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../../utils/showError'
 import { supabase } from '../../services/supabase'
@@ -17,6 +16,7 @@ import { formatDeparture, formatPrice } from './formatters'
 import { calculateTripAcceptFee } from '../../utils/platformFees'
 
 export default function AvailableOffersTab({ isDriver }: HubTabProps) {
+  const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
   const {
     requests,
@@ -32,7 +32,6 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   const [showProposalModal, setShowProposalModal] = useState(false)
   const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
   const [proposedPrice, setProposedPrice] = useState('')
-  const [chatRequest, setChatRequest] = useState<AirportRequest | null>(null)
 
   const availableRequests = requests.filter((r) => r.status === 'pending')
 
@@ -177,7 +176,18 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
             <Text style={styles.priceValue}>{formatPrice(item.offered_price)}</Text>
           </View>
           <View style={styles.costBox}>
-            <Text style={styles.priceLabel}>Tu costo</Text>
+            <View style={styles.costLabelRow}>
+              <Text style={styles.priceLabel}>Tu costo</Text>
+              <TouchableOpacity
+                onPress={() => Alert.alert(
+                  '¿Cómo se calcula?',
+                  'Es el 10% del precio acordado con el pasajero, con un mínimo de $3.000 y un máximo de $25.000. Se cobra al aceptar el viaje y se devuelve a tu saldo si el pasajero cancela antes de iniciarlo.'
+                )}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Icon name="Info" size={13} color={COLORS.textSecondary} />
+              </TouchableOpacity>
+            </View>
             <Text style={styles.costValue}>{formatPrice(calculateTripAcceptFee(item.offered_price))} de tu billetera</Text>
           </View>
         </View>
@@ -197,7 +207,12 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
 
           <TouchableOpacity
             style={[styles.btnOutline, !!processing && styles.btnDisabled]}
-            onPress={() => setChatRequest(item)}
+            onPress={() => navigation.navigate('NegotiationChat', {
+              requestId: item.id,
+              driverId: user?.id ?? '',
+              driverName: item.passenger_name ?? 'Pasajero',
+              otherUserId: item.passenger_id,
+            })}
             disabled={!!processing}
           >
             <Text style={styles.btnOutlineText}>Chatear</Text>
@@ -248,17 +263,6 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />
           }
           scrollEnabled={availableRequests.length > 0}
-        />
-      )}
-
-      {chatRequest && (
-        <NegotiationChatModal
-          visible={!!chatRequest}
-          onClose={() => setChatRequest(null)}
-          requestId={chatRequest.id}
-          driverId={user?.id ?? ''}
-          driverName={chatRequest.passenger_name ?? 'Pasajero'}
-          otherUserId={chatRequest.passenger_id}
         />
       )}
 
@@ -374,6 +378,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   costBox: { alignItems: 'flex-end' },
+  costLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   costValue: {
     fontSize: 13,
     fontWeight: '700',

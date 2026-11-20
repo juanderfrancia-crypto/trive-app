@@ -2,12 +2,11 @@ import { useState, useCallback } from 'react'
 import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../AppText'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
-import { NegotiationChatModal } from '../NegotiationChatModal'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
 import Icon from '../Icon'
@@ -26,12 +25,11 @@ interface ChatPreview {
 }
 
 export default function ActiveChatsTab({ isDriver }: HubTabProps) {
+  const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
   const [chats, setChats] = useState<ChatPreview[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [selectedChat, setSelectedChat] = useState<ChatPreview | null>(null)
-  const [chatModalVisible, setChatModalVisible] = useState(false)
 
   const loadChats = useCallback(async () => {
     if (!user?.id) return
@@ -48,7 +46,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
              profiles!passenger_id (id, name, avatar_url)`
           )
           .eq('driver_id', user.id)
-          .eq('status', 'accepted')
+          .in('status', ['accepted', 'in_progress'])
           .order('created_at', { ascending: false })
 
         for (const trip of driverTrips ?? []) {
@@ -73,7 +71,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
              profiles!driver_id (id, name, avatar_url)`
           )
           .eq('passenger_id', user.id)
-          .eq('status', 'accepted')
+          .in('status', ['accepted', 'in_progress'])
           .order('created_at', { ascending: false })
 
         for (const trip of passengerTrips ?? []) {
@@ -161,10 +159,12 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
   const renderChatItem = ({ item: chat }: { item: ChatPreview }) => (
     <TouchableOpacity
       style={styles.chatCard}
-      onPress={() => {
-        setSelectedChat(chat)
-        setChatModalVisible(true)
-      }}
+      onPress={() => navigation.navigate('NegotiationChat', {
+        requestId: chat.requestId,
+        driverId: chat.driverId,
+        driverName: chat.otherUserName,
+        otherUserId: chat.otherUserId,
+      })}
       activeOpacity={0.7}
     >
       <View style={styles.avatarContainer}>
@@ -231,21 +231,6 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
             loadChats()
           }}
           scrollEnabled={chats.length > 0}
-        />
-      )}
-
-      {selectedChat && (
-        <NegotiationChatModal
-          visible={chatModalVisible}
-          onClose={() => {
-            setChatModalVisible(false)
-            setSelectedChat(null)
-            loadChats()
-          }}
-          requestId={selectedChat.requestId}
-          driverId={selectedChat.driverId}
-          driverName={selectedChat.otherUserName}
-          otherUserId={selectedChat.otherUserId}
         />
       )}
     </View>

@@ -1,14 +1,15 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../AppText'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
-import { NegotiationChatModal } from '../NegotiationChatModal'
 import { TripDetailsModal } from '../TripDetailsModal'
 import { supabase } from '../../services/supabase'
+import { useAirportNegotiation } from '../../hooks/useAirportNegotiation'
+import { showError } from '../../utils/showError'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
 
@@ -18,19 +19,23 @@ interface ActiveTrip {
   destination: string
   price: number
   departureTime: string
+  status: 'accepted' | 'in_progress'
   otherUserName: string
   otherUserAvatar: string | null
   otherUserId: string
 }
 
 export default function ActiveTripsTab({ isDriver }: HubTabProps) {
+  const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
+  const { startTrip, completeTrip } = useAirportNegotiation()
   const [trips, setTrips] = useState<ActiveTrip[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [selectedTrip, setSelectedTrip] = useState<ActiveTrip | null>(null)
-  const [chatModalVisible, setChatModalVisible] = useState(false)
   const [detailsModalVisible, setDetailsModalVisible] = useState(false)
+  const [completingId, setCompletingId] = useState<string | null>(null)
+  const [startingId, setStartingId] = useState<string | null>(null)
 
   const loadTrips = useCallback(async () => {
     if (!user?.id) return
@@ -43,11 +48,11 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
         const { data: driverTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, passenger_id, origin, destination, offered_price, departure_time,
+            `id, passenger_id, origin, destination, offered_price, departure_time, status,
              profiles!passenger_id (name, avatar_url)`
           )
           .eq('driver_id', user.id)
-          .eq('status', 'accepted')
+          .in('status', ['accepted', 'in_progress'])
           .order('departure_time', { ascending: true })
 
         for (const trip of driverTrips ?? []) {
@@ -57,6 +62,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             destination: trip.destination,
             price: trip.offered_price,
             departureTime: trip.departure_time,
+            status: trip.status as ActiveTrip['status'],
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
             otherUserAvatar: (trip.profiles as any)?.avatar_url ?? null,
             otherUserId: trip.passenger_id,
@@ -66,11 +72,11 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
         const { data: passengerTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, driver_id, origin, destination, offered_price, departure_time,
+            `id, driver_id, origin, destination, offered_price, departure_time, status,
              profiles!driver_id (name, avatar_url)`
           )
           .eq('passenger_id', user.id)
-          .eq('status', 'accepted')
+          .in('status', ['accepted', 'in_progress'])
           .order('departure_time', { ascending: true })
 
         for (const trip of passengerTrips ?? []) {
@@ -81,6 +87,7 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
             destination: trip.destination,
             price: trip.offered_price,
             departureTime: trip.departure_time,
+            status: trip.status as ActiveTrip['status'],
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
             otherUserAvatar: (trip.profiles as any)?.avatar_url ?? null,
             otherUserId: trip.driver_id,
@@ -103,12 +110,48 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
     }, [loadTrips])
   )
 
+  const handleStart = async (trip: ActiveTrip) => {
+    setStartingId(trip.id)
+    try {
+      await startTrip(trip.id)
+      setTrips((prev) => prev.map((t) => (t.id === trip.id ? { ...t, status: 'in_progress' } : t)))
+    } catch (err: any) {
+      showError(err.message || 'No se pudo iniciar el viaje')
+    } finally {
+      setStartingId(null)
+    }
+  }
+
+  const handleComplete = (trip: ActiveTrip) => {
+    Alert.alert(
+      'Marcar como completado',
+      `¿Confirmas que el viaje con ${trip.otherUserName} ya se realizó? Pasará a tu historial.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            setCompletingId(trip.id)
+            try {
+              await completeTrip(trip.id)
+              setTrips((prev) => prev.filter((t) => t.id !== trip.id))
+            } catch (err: any) {
+              showError(err.message || 'No se pudo marcar como completado')
+            } finally {
+              setCompletingId(null)
+            }
+          },
+        },
+      ]
+    )
+  }
+
   const renderTripItem = ({ item: trip }: { item: ActiveTrip }) => (
     <View style={styles.card}>
       <View style={styles.cardTop}>
         <Text style={styles.when}>{formatDeparture(trip.departureTime)}</Text>
         <View style={styles.acceptedPill}>
-          <Text style={styles.acceptedPillText}>Aceptada</Text>
+          <Text style={styles.acceptedPillText}>{trip.status === 'in_progress' ? 'En curso' : 'Aceptada'}</Text>
         </View>
       </View>
 
@@ -124,10 +167,12 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
       <View style={styles.buttonRow}>
         <TouchableOpacity
           style={styles.chatButton}
-          onPress={() => {
-            setSelectedTrip(trip)
-            setChatModalVisible(true)
-          }}
+          onPress={() => navigation.navigate('NegotiationChat', {
+            requestId: trip.id,
+            driverId: isDriver ? (user?.id ?? '') : trip.otherUserId,
+            driverName: trip.otherUserName,
+            otherUserId: trip.otherUserId,
+          })}
           activeOpacity={0.85}
         >
           <Text style={styles.chatButtonText}>{isDriver ? 'Abrir chat' : 'Chatear'}</Text>
@@ -143,6 +188,36 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
           <Text style={styles.detailButtonText}>Ver detalle</Text>
         </TouchableOpacity>
       </View>
+
+      {isDriver && trip.status === 'accepted' && new Date(trip.departureTime).getTime() <= Date.now() && (
+        <TouchableOpacity
+          style={styles.completeButton}
+          onPress={() => handleStart(trip)}
+          disabled={startingId === trip.id}
+          activeOpacity={0.85}
+        >
+          {startingId === trip.id ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
+            <Text style={styles.completeButtonText}>Iniciar viaje</Text>
+          )}
+        </TouchableOpacity>
+      )}
+
+      {isDriver && trip.status === 'in_progress' && (
+        <TouchableOpacity
+          style={styles.completeButton}
+          onPress={() => handleComplete(trip)}
+          disabled={completingId === trip.id}
+          activeOpacity={0.85}
+        >
+          {completingId === trip.id ? (
+            <ActivityIndicator size="small" color={COLORS.white} />
+          ) : (
+            <Text style={styles.completeButtonText}>Marcar como completado</Text>
+          )}
+        </TouchableOpacity>
+      )}
     </View>
   )
 
@@ -179,37 +254,23 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
       )}
 
       {selectedTrip && (
-        <>
-          <TripDetailsModal
-            visible={detailsModalVisible}
-            onClose={() => {
-              setDetailsModalVisible(false)
-              setSelectedTrip(null)
-            }}
-            trip={{
-              id: selectedTrip.id,
-              origin: selectedTrip.origin,
-              destination: selectedTrip.destination,
-              price: selectedTrip.price,
-              status: 'accepted',
-              otherUserName: selectedTrip.otherUserName,
-              otherUserAvatar: selectedTrip.otherUserAvatar ?? undefined,
-              userRole: isDriver ? 'conductor' : 'pasajero',
-            }}
-          />
-          <NegotiationChatModal
-            visible={chatModalVisible}
-            onClose={() => {
-              setChatModalVisible(false)
-              setSelectedTrip(null)
-              loadTrips()
-            }}
-            requestId={selectedTrip.id}
-            driverId={isDriver ? (user?.id ?? '') : selectedTrip.otherUserId}
-            driverName={selectedTrip.otherUserName}
-            otherUserId={selectedTrip.otherUserId}
-          />
-        </>
+        <TripDetailsModal
+          visible={detailsModalVisible}
+          onClose={() => {
+            setDetailsModalVisible(false)
+            setSelectedTrip(null)
+          }}
+          trip={{
+            id: selectedTrip.id,
+            origin: selectedTrip.origin,
+            destination: selectedTrip.destination,
+            price: selectedTrip.price,
+            status: selectedTrip.status,
+            otherUserName: selectedTrip.otherUserName,
+            otherUserAvatar: selectedTrip.otherUserAvatar ?? undefined,
+            userRole: isDriver ? 'conductor' : 'pasajero',
+          }}
+        />
       )}
     </View>
   )
@@ -241,7 +302,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   acceptedPill: {
-    backgroundColor: COLORS.successLight,
+    backgroundColor: COLORS.primaryTint,
     borderRadius: RADIUS.full,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs,
@@ -249,7 +310,7 @@ const styles = StyleSheet.create({
   acceptedPillText: {
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
-    color: COLORS.success,
+    color: COLORS.primary,
   },
   route: {
     fontSize: TYPOGRAPHY.size.md,
@@ -293,6 +354,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: COLORS.textPrimary,
+  },
+  completeButton: {
+    height: 40,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: SPACING.sm,
+  },
+  completeButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.white,
   },
   emptyContainer: {
     flex: 1,

@@ -33,16 +33,17 @@ import RecoveryAccountScreen from '../screens/RecoveryAccountScreen'
 import RecentActivityScreen from '../screens/RecentActivityScreen'
 import ChangePasswordScreen from '../screens/ChangePasswordScreen'
 import EditProfileScreen from '../screens/EditProfileScreen'
+import AddPaymentMethodScreen from '../screens/AddPaymentMethodScreen'
+import NegotiationChatScreen from '../screens/NegotiationChatScreen'
+import RatingScreen from '../screens/RatingScreen'
+import RatePassengersScreen from '../screens/RatePassengersScreen'
 import PrivacyScreen from '../screens/PrivacyScreen'
 import LoadingScreen from '../screens/LoadingScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
-import GroupTripsScreen from '../screens/GroupTripsScreen'
 import FavoriteRoutesScreen from '../screens/FavoriteRoutesScreen'
 import TripHistoryScreen from '../screens/TripHistoryScreen'
-import { VehicleInfoScreen } from '../screens/VehicleInfoScreen'
 import { EditVehicleScreen } from '../screens/EditVehicleScreen'
 import DriverEarningsScreen from '../screens/DriverEarningsScreen'
-import { StatsScreen } from '../screens/StatsScreen'
 import AboutTriveScreen from '../screens/AboutTriveScreen'
 import TermsOfServiceScreen from '../screens/TermsOfServiceScreen'
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen'
@@ -56,8 +57,6 @@ import PaymentMethodsScreen from '../screens/PaymentMethodsScreen'
 import WalletScreen from '../screens/WalletScreen'
 import DriverPaymentMethodsScreen from '../screens/DriverPaymentMethodsScreen'
 import CancellationHistoryScreen from '../screens/CancellationHistoryScreen'
-import RatingAnalyticsDashboard from '../screens/RatingAnalyticsDashboard'
-import TravelPreferencesScreen from '../screens/TravelPreferencesScreen'
 import ReviewsScreen from '../screens/ReviewsScreen'
 import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
 import ReferralScreen from '../screens/ReferralScreen'
@@ -189,23 +188,22 @@ export default function AppNavigator() {
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
       <Stack.Screen name="RecentActivity" component={RecentActivityScreen} />
-      <Stack.Screen name="GroupTrips" component={GroupTripsScreen} />
       <Stack.Screen name="FavoriteRoutes" component={FavoriteRoutesScreen} />
       <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
       <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
       <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
       <Stack.Screen name="DriverPaymentMethods" component={DriverPaymentMethodsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="NegotiationChat" component={NegotiationChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="RatingScreen" component={RatingScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="RatePassengers" component={RatePassengersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CancellationHistory" component={CancellationHistoryScreen} />
-      <Stack.Screen name="RatingAnalytics" component={RatingAnalyticsDashboard} />
-      <Stack.Screen name="TravelPreferences" component={TravelPreferencesScreen} />
       <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
       <Stack.Screen name="Reviews" component={ReviewsScreen} />
       <Stack.Screen name="RecurringRoutes" component={RecurringRoutesScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="VehicleInfo" component={VehicleInfoScreen} />
       <Stack.Screen name="EditVehicle" component={EditVehicleScreen} />
       <Stack.Screen name="Earnings" component={DriverEarningsScreen} />
-      <Stack.Screen name="Stats" component={StatsScreen} />
       <Stack.Screen name="AboutTrive" component={AboutTriveScreen} />
       <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
       <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />

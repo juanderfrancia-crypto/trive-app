@@ -8,7 +8,7 @@ import { getExpiryStatus, DOCUMENT_LABELS } from '../../utils/documentHelpers'
 import Illustration from '../../components/illustrations/Illustration'
 import { APP_VERSION_LABEL } from '../../config/appInfo'
 
-const REQUIRED_DOCS = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica', 'antecedentes']
+const REQUIRED_DOCS = ['cedula', 'licencia', 'tarjeta_propiedad', 'soat', 'tecnomecanica']
 
 type DocState = {
   label: string
@@ -73,6 +73,7 @@ export type DriverProfileViewProps = {
   onOpenReferral: () => void
   onOpenSettings: () => void
   onOpenHelp: () => void
+  onOpenDocuments: () => void
   onEditVehicle: () => void
   onLogout: () => void
 }
@@ -110,8 +111,9 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
           </View>
         </TouchableOpacity>
         <View style={styles.identityText}>
-          <TouchableOpacity onPress={p.onEditName} activeOpacity={0.7}>
+          <TouchableOpacity onPress={p.onEditName} activeOpacity={0.7} style={styles.nameRow}>
             <Text style={styles.name} numberOfLines={1}>{p.user?.name || 'Conductor'}</Text>
+            <Icon name="Pencil" size={13} color={COLORS.textTertiary} />
           </TouchableOpacity>
           {!!p.user?.phone && <Text style={styles.phone} numberOfLines={1}>+{p.user.phone}</Text>}
           <Text style={styles.identitySub}>★ {p.rating} · {p.totalTrips} rutas</Text>
@@ -156,29 +158,37 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
             </View>
           </View>
         ))}
+        <TouchableOpacity style={styles.rowAction} onPress={p.onOpenDocuments} activeOpacity={0.7}>
+          <Text style={styles.rowActionText}>{approvedCount < REQUIRED_DOCS.length ? 'Subir o actualizar documentos' : 'Ver documentos'}</Text>
+          <Icon name="ChevronRight" size={14} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.section}>Mi vehículo</Text>
       <View style={styles.card}>
+        <TouchableOpacity
+          style={styles.vehiclePhotoWrap}
+          onPress={p.onChangeVehiclePhoto}
+          disabled={p.uploadingVehiclePhoto}
+          activeOpacity={0.85}
+          accessibilityLabel="Cambiar foto del vehículo"
+        >
+          {p.uploadingVehiclePhoto ? (
+            <View style={[styles.vehiclePhoto, styles.vehiclePhotoEmpty]}><ActivityIndicator color={COLORS.primary} /></View>
+          ) : p.vehiclePhotoUrl ? (
+            <Image source={{ uri: p.vehiclePhotoUrl }} style={styles.vehiclePhoto} onError={p.onVehiclePhotoError} />
+          ) : (
+            <View style={[styles.vehiclePhoto, styles.vehiclePhotoEmpty]}>
+              <Icon name="Camera" size={26} color={COLORS.primary} />
+              <Text style={styles.vehiclePhotoEmptyText}>Subir foto del vehículo</Text>
+            </View>
+          )}
+          <View style={styles.vehiclePhotoBadge}>
+            <Icon name="Camera" size={13} color={COLORS.white} />
+          </View>
+        </TouchableOpacity>
+
         <View style={styles.vehicleRow}>
-          <TouchableOpacity
-            style={styles.vehicleThumb}
-            onPress={p.onChangeVehiclePhoto}
-            disabled={p.uploadingVehiclePhoto}
-            activeOpacity={0.85}
-            accessibilityLabel="Cambiar foto del vehículo"
-          >
-            {p.uploadingVehiclePhoto ? (
-              <ActivityIndicator color={COLORS.primary} />
-            ) : p.vehiclePhotoUrl ? (
-              <Image source={{ uri: p.vehiclePhotoUrl }} style={styles.vehicleImg} onError={p.onVehiclePhotoError} />
-            ) : (
-              <View style={styles.thumbEmpty}>
-                <Icon name="Camera" size={18} color={COLORS.primary} />
-                <Text style={styles.thumbHint}>Subir foto</Text>
-              </View>
-            )}
-          </TouchableOpacity>
           <View style={styles.vehicleText}>
             <Text style={styles.cardTitle} numberOfLines={1}>{vehicleName}</Text>
             <Text style={styles.cardMeta} numberOfLines={1}>
@@ -258,7 +268,8 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
   },
   identityText: { flex: 1 },
-  name: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, flexShrink: 1 },
   phone: { fontSize: 13, color: COLORS.textSecondary, marginTop: 1 },
   identitySub: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, marginTop: 2 },
   email: { fontSize: 13, color: COLORS.textTertiary, marginTop: 2 },
@@ -289,14 +300,19 @@ const styles = StyleSheet.create({
   docStatusText: { fontSize: 13, fontWeight: '700' },
   docExpiry: { fontSize: 13, fontWeight: '600', marginTop: 2 },
 
-  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
-  vehicleThumb: {
-    width: 72, height: 60, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
+  vehiclePhotoWrap: {
+    width: '100%', height: 140, borderRadius: RADIUS.lg, backgroundColor: COLORS.primaryTint,
+    overflow: 'hidden', marginBottom: SPACING.md,
   },
-  thumbEmpty: { alignItems: 'center', gap: 2 },
-  thumbHint: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
-  vehicleImg: { width: '100%', height: '100%' },
+  vehiclePhoto: { width: '100%', height: '100%' },
+  vehiclePhotoEmpty: { alignItems: 'center', justifyContent: 'center', gap: SPACING.xs },
+  vehiclePhotoEmptyText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  vehiclePhotoBadge: {
+    position: 'absolute', right: SPACING.sm, bottom: SPACING.sm, width: 28, height: 28, borderRadius: 14,
+    backgroundColor: COLORS.textPrimary, borderWidth: 2, borderColor: COLORS.white,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  vehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
   vehicleText: { flex: 1 },
   statusPill: { paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
   statusPillText: { fontSize: 13, fontWeight: '700' },

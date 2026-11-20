@@ -11,16 +11,15 @@ import { useNotificationCenter } from '../context/NotificationsContext'
 import { Notification } from '../hooks/useNotifications'
 import { useAppStore } from '../store/useAppStore'
 import { isDriverRole } from '../utils/userRole'
-import RatingModal from '../components/RatingModal'
-import { createReview } from '../services/reviews'
 import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
 import { showError } from '../utils/showError'
+import { supabase } from '../services/supabase'
 
 type NotifType = Notification['type']
 type IconName = IconNameType
-type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas'
+type FilterId = 'all' | 'solicitudes' | 'reservas' | 'viajes' | 'ofertas' | 'cuenta'
 type FilterDef = { id: FilterId; label: string; types: NotifType[] | null }
 type DayGroup = 'Hoy' | 'Ayer' | 'Anteriores'
 
@@ -30,19 +29,25 @@ interface NotificationWithSender extends Notification {
 
 const TRIP_TYPES: NotifType[] = [
   'booking', 'trip_update', 'driver_arrived', 'trip_completed', 'trip_confirm', 'trip_confirmed',
-  'trip_started', 'review_pending', 'review_received', 'trip_rated',
+  'trip_started', 'review_pending', 'review_received', 'trip_rated', 'message',
 ]
+
+// Avisos de cuenta/sistema -- no son de un viaje ni de una oferta puntual,
+// mezclarlos ahí los esconde entre notificaciones que no tienen nada que ver.
+const ACCOUNT_TYPES: NotifType[] = ['profile_incomplete']
 
 const DRIVER_FILTERS: FilterDef[] = [
   { id: 'all', label: 'Todas', types: null },
   { id: 'solicitudes', label: 'Solicitudes', types: ['trip_published', 'offer_received', 'offer_accepted'] },
   { id: 'reservas', label: 'Reservas', types: TRIP_TYPES },
+  { id: 'cuenta', label: 'Cuenta', types: ACCOUNT_TYPES },
 ]
 
 const PASSENGER_FILTERS: FilterDef[] = [
   { id: 'all', label: 'Todas', types: null },
   { id: 'viajes', label: 'Viajes', types: TRIP_TYPES },
   { id: 'ofertas', label: 'Ofertas', types: ['offer_received', 'offer_accepted'] },
+  { id: 'cuenta', label: 'Cuenta', types: ACCOUNT_TYPES },
 ]
 
 const DAY_GROUPS: DayGroup[] = ['Hoy', 'Ayer', 'Anteriores']
@@ -158,12 +163,7 @@ export default function NotificationsScreen() {
   const [replyText, setReplyText] = useState('')
   const [replySending, setReplySending] = useState(false)
   const [replySent, setReplySent] = useState(false)
-  const [ratingTarget, setRatingTarget] = useState<{
-    bookingId: string
-    driverId: string
-    driverName: string
-    notifId: string
-  } | null>(null)
+  const [alreadyRated, setAlreadyRated] = useState(false)
 
   const filters = isDriver ? DRIVER_FILTERS : PASSENGER_FILTERS
   const activeFilter = filters.find((f) => f.id === selectedCategory) ?? filters[0]
@@ -173,6 +173,24 @@ export default function NotificationsScreen() {
     setReplySending(false)
     setReplySent(false)
   }, [detailNotif?.id])
+
+  // Si ya existe una reseña de este usuario para esta reserva, no mostrar de
+  // nuevo "Calificar" — el servidor igual lo bloquearía, pero esto evita que
+  // el pasajero toque el botón y se encuentre con el error en vez de ver que
+  // ya estaba calificado.
+  useEffect(() => {
+    setAlreadyRated(false)
+    const bookingId = detailNotif?.data?.booking_id as string | undefined
+    const isRatable = detailNotif?.type === 'trip_completed' || detailNotif?.type === 'review_pending'
+    if (!isRatable || !bookingId || !currentUser?.id) return
+    supabase
+      .from('reviews')
+      .select('id')
+      .eq('booking_id', bookingId)
+      .eq('reviewer_id', currentUser.id)
+      .maybeSingle()
+      .then(({ data }) => setAlreadyRated(!!data))
+  }, [detailNotif?.id, currentUser?.id])
 
   const handleReply = async () => {
     if (!replyText.trim() || replySending || !detailNotif || !currentUser?.id) return
@@ -598,18 +616,22 @@ export default function NotificationsScreen() {
 
 
                   {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
-                    <>
+                    alreadyRated ? (
+                      <View style={styles.alreadyRatedBadge}>
+                        <Icon name="CircleCheck" size={16} color={COLORS.success} />
+                        <Text style={styles.alreadyRatedText}>Ya calificaste este viaje</Text>
+                      </View>
+                    ) : (
                       <TouchableOpacity
                         style={styles.rateDriverBtn}
                         activeOpacity={0.85}
                         onPress={() => {
-                          setRatingTarget({
+                          setDetailNotif(null)
+                          ;(navigation as any).navigate('RatingScreen', {
                             bookingId: _dBookingId!,
-                            driverId: _dDriverId!,
-                            driverName: _dDriver || 'Conductor',
+                            otherUserName: _dDriver || 'Conductor',
                             notifId: detailNotif.id,
                           })
-                          setDetailNotif(null)
                         }}
                       >
                         <Icon name="Star" size={16} color={COLORS.white} />
@@ -617,7 +639,7 @@ export default function NotificationsScreen() {
                           {_dIsReviewPending ? 'Calificar ahora' : 'Calificar conductor'}
                         </Text>
                       </TouchableOpacity>
-                    </>
+                    )
                   )}
 
                   <View style={{ height: 24 }} />
@@ -676,21 +698,6 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {ratingTarget && (
-        <RatingModal
-          visible={!!ratingTarget}
-          userName={ratingTarget.driverName}
-          isDriver
-          onClose={() => setRatingTarget(null)}
-          onSubmit={async (rating, comment, recommend) => {
-            if (!currentUser?.id) throw new Error('Usuario no autenticado')
-            const saved = await createReview(ratingTarget.bookingId, rating, comment, recommend)
-            if (!saved) throw new Error('No se pudo guardar la calificación')
-            await deleteNotifications([ratingTarget.notifId])
-            setRatingTarget(null)
-          }}
-        />
-      )}
     </SafeAreaView>
   )
 }
@@ -987,6 +994,21 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodyMedium,
     fontWeight: TYPOGRAPHY.weight.bold,
     color: COLORS.white,
+  },
+  alreadyRatedBadge: {
+    marginTop: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    backgroundColor: COLORS.successLight,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+  },
+  alreadyRatedText: {
+    ...TYPOGRAPHY.bodyMedium,
+    fontWeight: TYPOGRAPHY.weight.bold,
+    color: COLORS.success,
   },
   replyBar: {
     flexDirection: 'row',

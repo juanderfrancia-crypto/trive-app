@@ -23,7 +23,6 @@ const airportDetailTypes = new Set([
 const airportActiveTypes = new Set([
   'offer_accepted',
   'trip_confirmed',
-  'trip_started',
 ])
 
 export function getNotificationRoute(
@@ -96,13 +95,28 @@ export function getNotificationRoute(
     case 'trip_confirm':
       return { screenName: 'Main', params: { screen: 'Search' } }
 
+    // El conductor inició el viaje normal (driver_set_route_status) -- solo existe
+    // para rutas normales, nunca personalizadas, así que no hace falta distinguir
+    // por request_id. La tarjeta "Tu próximo viaje" está en Mis viajes.
+    case 'trip_started':
+      return { screenName: 'Main', params: { screen: 'Search' } }
+
     case 'review_received':
       return { screenName: 'Reviews', params: {} }
 
-    case 'trip_completed':
+    // Rating de ruta personalizada: vive en el historial del hub de Solicitudes.
     case 'trip_rated':
-      // Las rutas personalizadas completadas viven en el historial del hub de Solicitudes.
       return { screenName: 'Main', params: { screen: 'Requests' } }
+
+    // trip_completed lo usan tanto rutas normales (complete_booking_internal) como
+    // personalizadas (completeTrip) -- request_id solo viene en las personalizadas.
+    // Para la ruta normal se deja caer al detalle (return null más abajo), que ya
+    // tiene el botón "Calificar conductor" para ese caso.
+    case 'trip_completed':
+      if (requestId) {
+        return { screenName: 'Main', params: { screen: 'Requests' } }
+      }
+      return null
 
     case 'booking':
       if (requestId) {

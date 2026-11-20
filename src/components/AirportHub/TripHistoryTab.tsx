@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
@@ -17,9 +17,12 @@ interface CompletedTrip {
   price: number
   completedAt: string
   otherUserName: string
+  otherUserId: string
+  hasRated: boolean
 }
 
 export default function TripHistoryTab({ isDriver }: HubTabProps) {
+  const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
   const [trips, setTrips] = useState<CompletedTrip[]>([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +39,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
         const { data: driverTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, origin, destination, offered_price, completed_at,
+            `id, origin, destination, offered_price, completed_at, passenger_id,
              profiles!passenger_id (name)`
           )
           .eq('driver_id', user.id)
@@ -52,13 +55,15 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
             price: trip.offered_price,
             completedAt: trip.completed_at || '',
             otherUserName: (trip.profiles as any)?.name || 'Pasajero',
+            otherUserId: trip.passenger_id,
+            hasRated: false,
           })
         }
       } else {
         const { data: passengerTrips } = await supabase
           .from('airport_requests')
           .select(
-            `id, origin, destination, offered_price, completed_at,
+            `id, origin, destination, offered_price, completed_at, driver_id,
              profiles!driver_id (name)`
           )
           .eq('passenger_id', user.id)
@@ -67,6 +72,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
           .limit(50)
 
         for (const trip of passengerTrips ?? []) {
+          if (!trip.driver_id) continue
           tripsList.push({
             id: trip.id,
             origin: trip.origin,
@@ -74,8 +80,20 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
             price: trip.offered_price,
             completedAt: trip.completed_at || '',
             otherUserName: (trip.profiles as any)?.name || 'Conductor',
+            otherUserId: trip.driver_id,
+            hasRated: false,
           })
         }
+      }
+
+      if (tripsList.length > 0) {
+        const { data: ratings } = await supabase
+          .from('trip_ratings')
+          .select('trip_id')
+          .eq('rater_id', user.id)
+          .in('trip_id', tripsList.map((t) => t.id))
+        const ratedIds = new Set((ratings ?? []).map((r) => r.trip_id))
+        tripsList.forEach((t) => { t.hasRated = ratedIds.has(t.id) })
       }
 
       setTrips(tripsList)
@@ -87,8 +105,17 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
     }
   }, [user?.id, isDriver, refreshing])
 
+  // El historial de viajes completados no cambia en segundos — se omite la
+  // recarga si se vuelve a esta pestaña antes de este tiempo (el pull-to-refresh
+  // manual, arriba, no pasa por aquí y siempre recarga).
+  const FOCUS_RELOAD_THROTTLE_MS = 30000
+  const lastLoadRef = useRef(0)
+
   useFocusEffect(
     useCallback(() => {
+      const now = Date.now()
+      if (now - lastLoadRef.current < FOCUS_RELOAD_THROTTLE_MS) return
+      lastLoadRef.current = now
       loadHistory()
     }, [loadHistory])
   )
@@ -121,6 +148,25 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
             </Text>
           ) : null}
         </View>
+        {trip.hasRated ? (
+          <View style={styles.ratedRow}>
+            <Icon name="CircleCheck" size={13} color={COLORS.success} />
+            <Text style={styles.ratedText}>Calificado</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            style={styles.rateBtn}
+            activeOpacity={0.85}
+            onPress={() => navigation.navigate('RatingScreen', {
+              tripId: trip.id,
+              otherUserName: trip.otherUserName,
+              ratedIsDriver: !isDriver,
+            })}
+          >
+            <Icon name="Star" size={13} color={COLORS.primary} />
+            <Text style={styles.rateBtnText}>{isDriver ? 'Calificar pasajero' : 'Calificar conductor'}</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   )
@@ -218,6 +264,20 @@ const styles = StyleSheet.create({
   tripDate: {
     fontSize: TYPOGRAPHY.size.xs,
     color: COLORS.textTertiary,
+  },
+  ratedRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: SPACING.sm,
+  },
+  ratedText: {
+    fontSize: TYPOGRAPHY.size.xs, fontWeight: '600', color: COLORS.success,
+  },
+  rateBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    marginTop: SPACING.sm, backgroundColor: COLORS.primaryTint,
+    borderRadius: RADIUS.md, paddingVertical: SPACING.xs + 2,
+  },
+  rateBtnText: {
+    fontSize: TYPOGRAPHY.size.sm, fontWeight: '700', color: COLORS.primary,
   },
   emptyContainer: {
     flex: 1,

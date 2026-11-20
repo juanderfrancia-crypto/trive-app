@@ -48,15 +48,7 @@ export default function AirportHubScreen() {
 
   const ActiveComponent = showHistory ? TripHistoryTab : tabs[activeTab].component
 
-  const handlePrimaryAction = () => {
-    if (isDriver) {
-      // "Nuevas" ya es el primer tab del conductor; solo asegura que se vea.
-      setShowHistory(false)
-      setActiveTab(0)
-    } else {
-      navigation.navigate('AirportRequest')
-    }
-  }
+  const handlePrimaryAction = () => navigation.navigate('AirportRequest')
 
   const subtitle = showHistory
     ? 'Viajes completados'
@@ -73,9 +65,11 @@ export default function AirportHubScreen() {
             <TouchableOpacity style={styles.historyBtn} onPress={() => setShowHistory((v) => !v)} activeOpacity={0.85}>
               <Text style={styles.historyBtnText}>{showHistory ? 'Volver' : 'Historial'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.headerAction} onPress={handlePrimaryAction} activeOpacity={0.85}>
-              <Icon name={isDriver ? 'Search' : 'CirclePlus'} size={22} color={COLORS.primary} />
-            </TouchableOpacity>
+            {!isDriver && (
+              <TouchableOpacity style={styles.headerAction} onPress={handlePrimaryAction} activeOpacity={0.85}>
+                <Icon name="CirclePlus" size={22} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
         <Text style={styles.subtitle}>{subtitle}</Text>

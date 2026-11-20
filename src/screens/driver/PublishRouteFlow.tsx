@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, StatusBar } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
@@ -599,10 +599,21 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
           <Text style={styles.toggleText}>Guardar como ruta frecuente</Text>
         </TouchableOpacity>
 
-        <Text style={styles.legal}>
-          El cobro de {fmtMoney(routeFee)} se descuenta de tu saldo al publicar. Los pasajeros te pagan directo por
-          los medios que publicaste; Trive no retiene ese dinero.
-        </Text>
+        <View style={styles.legalRow}>
+          <TouchableOpacity
+            onPress={() => Alert.alert(
+              '¿Cómo se calcula?',
+              'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.'
+            )}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Icon name="Info" size={14} color={COLORS.textSecondary} />
+          </TouchableOpacity>
+          <Text style={styles.legal}>
+            El cobro de {fmtMoney(routeFee)} se descuenta de tu saldo al publicar. Los pasajeros te pagan directo por
+            los medios que publicaste; Trive no retiene ese dinero.
+          </Text>
+        </View>
       </>
     )
   }
@@ -679,6 +690,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + SPACING.sm, paddingBottom: insets.bottom }]}>
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingScreen>
       {step < 3 && (
         <TouchableOpacity
@@ -777,7 +789,8 @@ const styles = StyleSheet.create({
 
   noteBox: { borderRadius: RADIUS.md, padding: SPACING.md, backgroundColor: COLORS.surfaceAlt },
   noteText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
-  legal: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
+  legal: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, flex: 1 },
+  legalRow: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.xs },
 
   errorBox: { borderRadius: RADIUS.md, padding: SPACING.md, backgroundColor: COLORS.errorLight, gap: SPACING.xs },
   errorTitle: { ...TYPOGRAPHY.bodySmall, fontWeight: '700', color: COLORS.error },

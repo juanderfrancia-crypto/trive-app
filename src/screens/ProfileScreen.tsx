@@ -119,8 +119,17 @@ export default function ProfileScreen() {
   const isDriverRef = useRef(isDriver)
   isDriverRef.current = isDriver
 
+  // El vehículo, los documentos y las ganancias casi no cambian en segundos —
+  // no tiene sentido repetir las consultas cada vez que se cambia de pestaña y
+  // se vuelve a Perfil. Si pasó menos de este tiempo desde la última carga, se omite.
+  const FOCUS_RELOAD_THROTTLE_MS = 30000
+  const lastFocusLoadRef = useRef(0)
+
   useFocusEffect(useCallback(() => {
     if (!user?.id) return
+    const now = Date.now()
+    if (now - lastFocusLoadRef.current < FOCUS_RELOAD_THROTTLE_MS) return
+    lastFocusLoadRef.current = now
     fetchProfile(user.id)
     if (isDriverRef.current) {
       loadEarnings()
@@ -293,6 +302,7 @@ export default function ProfileScreen() {
               onOpenReferral={() => navigation.navigate('Referral' as never)}
               onOpenSettings={() => navigation.navigate('Settings' as never)}
               onOpenHelp={() => navigation.navigate('Help' as never)}
+              onOpenDocuments={() => navigation.navigate('DriverDocuments' as never)}
               onEditVehicle={() => navigation.navigate('EditVehicle' as never, { vehicle: driverVehicle } as never)}
               onLogout={handleLogout}
             />

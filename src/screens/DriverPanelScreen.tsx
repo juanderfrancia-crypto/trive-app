@@ -669,7 +669,7 @@ export default function DriverPanelScreen() {
                                   {passenger.pickup_point_custom && (
                                     <View style={styles.pickupHint}>
                                       <Icon name="Flag" size={10} color={COLORS.primary} />
-                                      <Text style={styles.pickupHintText} numberOfLines={1}>
+                                      <Text style={styles.pickupHintText}>
                                         Recoger en: {passenger.pickup_point}
                                       </Text>
                                     </View>
@@ -1234,7 +1234,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', gap: 6,
   },
   pickupHint: {
-    flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2, marginBottom: 2,
+    flexDirection: 'row', alignItems: 'flex-start', gap: 4, marginTop: 2, marginBottom: 2,
   },
   pickupHintText: {
     fontSize: 11, color: COLORS.primary, fontWeight: '600', flexShrink: 1,

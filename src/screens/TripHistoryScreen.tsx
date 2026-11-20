@@ -7,8 +7,6 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
-import { createReview } from '../services/reviews'
-import RatingModal from '../components/RatingModal'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
@@ -24,6 +22,7 @@ interface TripItem {
   departureTime: string
   driverName: string
   driverId: string | null
+  passengerCount: number
   price: number
   status: string
   routeStatus: string
@@ -69,7 +68,6 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
-  const [ratingTrip, setRatingTrip] = useState<TripItem | null>(null)
 
   useFocusEffect(useCallback(() => {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
@@ -130,6 +128,7 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
           departureTime: route.departure_time || '',
           driverName: route.profiles?.name || 'Conductor',
           driverId: route.driver_id || null,
+          passengerCount: 0,
           price: b.price || route.price_per_seat || 0,
           status: b.booking_status,
           routeStatus: route.status || 'scheduled',
@@ -161,17 +160,34 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
       const routeIds = routes.map((r: any) => r.id)
       const { data: bookings } = await supabase
         .from('bookings')
-        .select('route_id, booking_status')
+        .select('id, route_id, booking_status')
         .in('route_id', routeIds)
         .in('booking_status', ['completed', 'confirmed'])
 
       const passengersByRoute: Record<string, number> = {}
+      const bookingIdsByRoute: Record<string, string[]> = {}
       ;(bookings ?? []).forEach((b: any) => {
         passengersByRoute[b.route_id] = (passengersByRoute[b.route_id] ?? 0) + 1
+        ;(bookingIdsByRoute[b.route_id] ??= []).push(b.id)
       })
+
+      // Para saber si ya calificó a todos los pasajeros de cada ruta (y no
+      // mostrarle de nuevo el botón si ya terminó con esa ruta).
+      const allBookingIds = (bookings ?? []).map((b: any) => b.id)
+      const ratedBookingIds = new Set<string>()
+      if (allBookingIds.length > 0) {
+        const { data: reviews } = await supabase
+          .from('reviews')
+          .select('booking_id')
+          .eq('reviewer_id', driverId)
+          .in('booking_id', allBookingIds)
+        ;(reviews ?? []).forEach((rv: any) => ratedBookingIds.add(rv.booking_id))
+      }
 
       const formatted: TripItem[] = routes.map((r: any) => {
         const count = passengersByRoute[r.id] ?? 0
+        const routeBookingIds = bookingIdsByRoute[r.id] ?? []
+        const allRated = routeBookingIds.length > 0 && routeBookingIds.every((id) => ratedBookingIds.has(id))
         return {
           id:            r.id,
           origin:        r.origin,
@@ -179,10 +195,11 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
           departureTime: r.departure_time,
           driverName:    `${count} pasajero${count !== 1 ? 's' : ''}`,
           driverId:      null,
+          passengerCount: count,
           price:         r.price_per_seat * count,
           status:        r.status,
           routeStatus:   r.status,
-          hasRated:      false,
+          hasRated:      allRated,
         }
       })
 
@@ -236,25 +253,6 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
     )
   }
 
-  const handleRatingSubmit = async (rating: number, comment: string, recommend: boolean) => {
-    if (!ratingTrip || !user) return
-    try {
-      const result = await createReview(
-        ratingTrip.id, rating, comment || undefined, recommend,
-      )
-      if (result) {
-        setTrips((prev) => prev.map((t) =>
-          t.id === ratingTrip.id ? { ...t, hasRated: true } : t
-        ))
-        showSuccess(`Calificado con ${rating} estrellas`)
-      }
-    } catch {
-      showError('Error al enviar calificación')
-    } finally {
-      setRatingTrip(null)
-    }
-  }
-
   const filtered = trips.filter((t) => {
     if (hiddenIds.has(t.id)) return false
     if (filter === 'active') return ['scheduled', 'in_progress'].includes(t.routeStatus) && t.status !== 'cancelled'
@@ -283,75 +281,93 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
     const accentColor = STATUS_COLOR[status] ?? COLORS.textSecondary
     const statusBg = STATUS_BG[status] ?? COLORS.surfaceAlt
     const canRate = status === 'completed' && !item.hasRated && !!item.driverId
+    const canRatePassengers = isDriver && status === 'completed' && !item.hasRated && item.passengerCount > 0
 
     return (
       <View style={s.card}>
-        <View style={s.routeIcon}>
-          <Icon name="Navigation" size={18} color={COLORS.primary} />
-        </View>
-
-        <View style={s.cardContent}>
-          <View style={s.routeRow}>
-            <View style={s.routePoints}>
-              <View style={s.routePoint}>
-                <View style={s.dotOrigin} />
-                <Text style={s.routeText} numberOfLines={1}>{item.origin}</Text>
-              </View>
-              <View style={s.routeLine} />
-              <View style={s.routePoint}>
-                <View style={s.dotDest} />
-                <Text style={s.routeText} numberOfLines={1}>{item.destination}</Text>
-              </View>
+        <View style={s.cardHeader}>
+          <View style={s.routePoints}>
+            <View style={s.routePoint}>
+              <View style={s.dotOrigin} />
+              <Text style={s.routeText} numberOfLines={1}>
+                <Text style={s.routeLabel}>Desde </Text>{item.origin}
+              </Text>
             </View>
+            <View style={s.routeLine} />
+            <View style={s.routePoint}>
+              <View style={s.dotDest} />
+              <Text style={s.routeText} numberOfLines={1}>
+                <Text style={s.routeLabel}>Hasta </Text>{item.destination}
+              </Text>
+            </View>
+          </View>
+          <View style={s.cardHeaderRight}>
             <Text style={s.price}>
               {isDriver && item.price === 0 ? '—' : `$${item.price.toLocaleString('es-CO')}`}
             </Text>
-          </View>
-
-          <View style={s.metaRow}>
-            <Icon name={isDriver ? 'Users' : 'User'} size={12} color={COLORS.textTertiary} />
-            <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
-            {item.departureTime ? (
-              <>
-                <View style={s.metaDot} />
-                <Icon name="Calendar" size={12} color={COLORS.textTertiary} />
-                <Text style={s.metaText}>{formatDate(item.departureTime)}</Text>
-                <View style={s.metaDot} />
-                <Icon name="Clock" size={12} color={COLORS.textTertiary} />
-                <Text style={s.metaText}>{formatTime(item.departureTime)}</Text>
-              </>
-            ) : null}
-          </View>
-
-          <View style={s.bottomRow}>
-            <View style={[s.statusChip, { backgroundColor: statusBg }]}>
-              <View style={[s.statusDot, { backgroundColor: accentColor }]} />
-              <Text style={[s.statusText, { color: accentColor }]}>
-                {STATUS_LABEL[status] ?? status}
-              </Text>
-            </View>
-
-            {!isDriver && canRate ? (
-              <TouchableOpacity style={s.rateBtn} onPress={() => setRatingTrip(item)} activeOpacity={0.85}>
-                <Icon name="Star" size={12} color={COLORS.warning} />
-                <Text style={s.rateBtnText}>Calificar conductor</Text>
-              </TouchableOpacity>
-            ) : !isDriver && item.hasRated ? (
-              <View style={s.ratedBadge}>
-                <Icon name="CircleCheck" size={12} color={COLORS.success} />
-                <Text style={s.ratedText}>Calificado</Text>
-              </View>
-            ) : null}
+            <TouchableOpacity
+              style={s.deleteIconBtn}
+              onPress={() => hideTrip(item.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Icon name="X" size={16} color={COLORS.textTertiary} />
+            </TouchableOpacity>
           </View>
         </View>
 
-        <TouchableOpacity
-          style={s.deleteBtn}
-          onPress={() => hideTrip(item.id)}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Icon name="Trash2" size={14} color={COLORS.textTertiary} />
-        </TouchableOpacity>
+        <View style={s.metaRow}>
+          <Icon name={isDriver ? 'Users' : 'User'} size={12} color={COLORS.textTertiary} />
+          <Text style={s.metaText} numberOfLines={1}>{item.driverName}</Text>
+          {item.departureTime ? (
+            <>
+              <View style={s.metaDot} />
+              <Icon name="Calendar" size={12} color={COLORS.textTertiary} />
+              <Text style={s.metaText}>{formatDate(item.departureTime)}</Text>
+              <View style={s.metaDot} />
+              <Icon name="Clock" size={12} color={COLORS.textTertiary} />
+              <Text style={s.metaText}>{formatTime(item.departureTime)}</Text>
+            </>
+          ) : null}
+        </View>
+
+        <View style={s.bottomRow}>
+          <View style={[s.statusChip, { backgroundColor: statusBg }]}>
+            <View style={[s.statusDot, { backgroundColor: accentColor }]} />
+            <Text style={[s.statusText, { color: accentColor }]}>
+              {STATUS_LABEL[status] ?? status}
+            </Text>
+          </View>
+
+          {!isDriver && canRate ? (
+            <TouchableOpacity
+              style={s.rateBtn}
+              onPress={() => navigation.navigate('RatingScreen', { bookingId: item.id, otherUserName: item.driverName })}
+              activeOpacity={0.85}
+            >
+              <Icon name="Star" size={12} color={COLORS.white} />
+              <Text style={s.rateBtnText}>Calificar conductor</Text>
+            </TouchableOpacity>
+          ) : !isDriver && item.hasRated ? (
+            <View style={s.ratedBadge}>
+              <Icon name="CircleCheck" size={12} color={COLORS.success} />
+              <Text style={s.ratedText}>Calificado</Text>
+            </View>
+          ) : canRatePassengers ? (
+            <TouchableOpacity
+              style={s.rateBtn}
+              onPress={() => navigation.navigate('RatePassengers', { routeId: item.id })}
+              activeOpacity={0.85}
+            >
+              <Icon name="Star" size={12} color={COLORS.white} />
+              <Text style={s.rateBtnText}>Calificar pasajeros</Text>
+            </TouchableOpacity>
+          ) : isDriver && status === 'completed' && item.hasRated ? (
+            <View style={s.ratedBadge}>
+              <Icon name="CircleCheck" size={12} color={COLORS.success} />
+              <Text style={s.ratedText}>Calificados</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
     )
   }
@@ -416,15 +432,6 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
         />
       )}
 
-      {ratingTrip && (
-        <RatingModal
-          visible
-          userName={ratingTrip.driverName}
-          isDriver
-          onClose={() => setRatingTrip(null)}
-          onSubmit={handleRatingSubmit}
-        />
-      )}
     </SafeAreaView>
   )
 }
@@ -455,6 +462,7 @@ const s = StyleSheet.create({
   filters: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.md,
     paddingBottom: SPACING.md,
     gap: SPACING.sm,
   },
@@ -481,36 +489,28 @@ const s = StyleSheet.create({
 
   card: {
     ...SHADOWS.sm,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     padding: SPACING.md,
-    gap: SPACING.md,
+    gap: SPACING.sm,
   },
-  routeIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primaryTint,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
-  cardContent: { flex: 1, gap: SPACING.sm },
-
-  routeRow: {
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     gap: SPACING.sm,
   },
+  cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 0 },
+  deleteIconBtn: { padding: 2 },
   routePoints: { flex: 1, gap: 3 },
   routePoint: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
   dotOrigin: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.primaryLight, flexShrink: 0 },
   dotDest: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.success, flexShrink: 0 },
   routeLine: { width: 2, height: 8, backgroundColor: COLORS.primaryTint, marginLeft: 2.5 },
   routeText: { ...TYPOGRAPHY.bodySmall, flex: 1, fontWeight: '700', color: COLORS.textPrimary },
+  routeLabel: { fontWeight: '600', color: COLORS.textTertiary },
   price: { ...TYPOGRAPHY.bodySmall, fontWeight: '800', color: COLORS.primary, flexShrink: 0 },
 
   metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 },
@@ -553,16 +553,6 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.successLight,
   },
   ratedText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.success },
-
-  deleteBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: RADIUS.sm,
-    backgroundColor: COLORS.surfaceAlt,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexShrink: 0,
-  },
 
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.md },
   loadingText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, fontWeight: '500' },

@@ -7,7 +7,6 @@ import { useRoute, useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import DepthCard from '../components/DepthCard'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
-import { NegotiationChatModal } from '../components/NegotiationChatModal'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
@@ -35,7 +34,6 @@ export default function AirportRequestDetailsScreen() {
   } = useAirportNegotiation()
 
   const [showPriceModal, setShowPriceModal] = useState(false)
-  const [chatWith, setChatWith] = useState<{ driverId: string; driverName: string } | null>(null)
   const [newPrice, setNewPrice] = useState('')
   const [updatingPrice, setUpdatingPrice] = useState(false)
   const [loadingRequest, setLoadingRequest] = useState(!requests.find(r => r.id === requestId))
@@ -286,7 +284,12 @@ export default function AirportRequestDetailsScreen() {
                 <View style={styles.offerActions}>
                   <TouchableOpacity
                     style={styles.chatBtn}
-                    onPress={() => setChatWith({ driverId: offer.driver_id, driverName: offer.driver_name || 'Conductor' })}
+                    onPress={() => navigation.navigate('NegotiationChat', {
+                      requestId,
+                      driverId: offer.driver_id,
+                      driverName: offer.driver_name || 'Conductor',
+                      otherUserId: offer.driver_id,
+                    })}
                     activeOpacity={0.75}
                   >
                     <Icon name="MessageCircle" size={16} color={COLORS.primary} />
@@ -314,17 +317,6 @@ export default function AirportRequestDetailsScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
-
-      {chatWith && (
-        <NegotiationChatModal
-          visible={!!chatWith}
-          onClose={() => setChatWith(null)}
-          requestId={requestId}
-          driverId={chatWith.driverId}
-          driverName={chatWith.driverName}
-          otherUserId={chatWith.driverId}
-        />
-      )}
 
       <Modal visible={showPriceModal} animationType="slide" transparent onRequestClose={() => setShowPriceModal(false)}>
         <KeyboardAvoidingScreen measureKeyboard active={showPriceModal} style={styles.modalOverlay}>

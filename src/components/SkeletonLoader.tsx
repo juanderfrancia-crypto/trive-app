@@ -102,7 +102,7 @@ export function SkeletonOfferCard() {
   )
 }
 
-// Matches ActiveTripsTab card: hora + pill, ruta, meta, dos botones
+// Matches ActiveTripsTab card: hora + pill, ruta, meta, dos botones, botón de estado
 export function SkeletonTripCard() {
   return (
     <View style={cards.base}>
@@ -116,6 +116,7 @@ export function SkeletonTripCard() {
         <SkeletonItem width="48%" height={40} borderRadius={RADIUS.md} marginBottom={0} />
         <SkeletonItem width="48%" height={40} borderRadius={RADIUS.md} marginBottom={0} />
       </View>
+      <SkeletonItem width="100%" height={40} borderRadius={RADIUS.md} marginBottom={0} />
     </View>
   )
 }
@@ -135,7 +136,7 @@ export function SkeletonChatCard() {
   )
 }
 
-// Matches TripHistoryTab row: ícono + nombre/badge + ruta + precio/fecha
+// Matches TripHistoryTab row: ícono + nombre/badge + ruta + precio/fecha + botón de calificar
 export function SkeletonHistoryCard() {
   return (
     <View style={cards.chatRow}>
@@ -150,6 +151,7 @@ export function SkeletonHistoryCard() {
           <SkeletonItem width={70} height={14} marginBottom={0} />
           <SkeletonItem width={60} height={11} marginBottom={0} />
         </View>
+        <SkeletonItem width="100%" height={30} borderRadius={RADIUS.md} marginBottom={0} />
       </View>
     </View>
   )

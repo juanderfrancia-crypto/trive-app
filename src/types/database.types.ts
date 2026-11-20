@@ -2085,6 +2085,7 @@ export type Database = {
           membership_type: string | null
           name: string
           notification_preferences: Json | null
+          password_set_manually: boolean
           phone: string | null
           preferred_municipality: string | null
           preferred_payment_method: string | null
@@ -2124,6 +2125,7 @@ export type Database = {
           membership_type?: string | null
           name: string
           notification_preferences?: Json | null
+          password_set_manually?: boolean
           phone?: string | null
           preferred_municipality?: string | null
           preferred_payment_method?: string | null
@@ -2163,6 +2165,7 @@ export type Database = {
           membership_type?: string | null
           name?: string
           notification_preferences?: Json | null
+          password_set_manually?: boolean
           phone?: string | null
           preferred_municipality?: string | null
           preferred_payment_method?: string | null
@@ -2385,6 +2388,7 @@ export type Database = {
           driver_id: string
           dropoff_point: string | null
           id: string
+          last_duration_minutes: number | null
           name: string
           origin: string
           pickup_point: string | null
@@ -2400,6 +2404,7 @@ export type Database = {
           driver_id: string
           dropoff_point?: string | null
           id?: string
+          last_duration_minutes?: number | null
           name: string
           origin: string
           pickup_point?: string | null
@@ -2415,6 +2420,7 @@ export type Database = {
           driver_id?: string
           dropoff_point?: string | null
           id?: string
+          last_duration_minutes?: number | null
           name?: string
           origin?: string
           pickup_point?: string | null
@@ -3698,6 +3704,14 @@ export type Database = {
       }
       approve_vehicle: { Args: { p_vehicle_id: string }; Returns: undefined }
       auto_confirm_expired_trips: { Args: never; Returns: number }
+      calculate_route_fee: {
+        Args: { p_price_per_seat: number; p_total_seats: number }
+        Returns: number
+      }
+      calculate_trip_accept_fee: {
+        Args: { p_trip_value: number }
+        Returns: number
+      }
       can_trip_chat: {
         Args: { p_other_user: string; p_route_id: string }
         Returns: boolean
@@ -4152,6 +4166,10 @@ export type Database = {
       mark_driver_verified: { Args: { driver_id: string }; Returns: undefined }
       mark_password_set: { Args: never; Returns: undefined }
       membership_days_remaining: { Args: { user_id: string }; Returns: number }
+      notify_trip_message: {
+        Args: { p_message: string; p_to_user_id: string; p_trip_id: string }
+        Returns: undefined
+      }
       notify_user: {
         Args: {
           p_data?: Json

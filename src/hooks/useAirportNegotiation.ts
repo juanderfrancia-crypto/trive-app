@@ -21,7 +21,7 @@ export interface AirportRequest {
   vehicle_type: 'auto' | 'busetica' | 'buseta'
   initial_price: number
   offered_price: number
-  status: 'pending' | 'accepted' | 'completed' | 'cancelled'
+  status: 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled'
   trip_type: 'airport' | 'city_destination' | 'custom'
   notes: string | null
   created_at: string
@@ -997,6 +997,23 @@ export const useAirportNegotiation = () => {
     }
   }, [])
 
+  // ─── Iniciar viaje (conductor marca "En curso", paso previo a completar) ──
+  const startTrip = async (requestId: string): Promise<void> => {
+    try {
+      setError(null)
+      const { error: rpcError } = await supabase.rpc('start_trip', { v_request_id: requestId })
+      if (rpcError) throw rpcError
+
+      setRequests(prev =>
+        prev.map(r => r.id === requestId ? { ...r, status: 'in_progress' } : r)
+      )
+    } catch (err: any) {
+      const message = err.message || 'Error al iniciar viaje'
+      setError(message)
+      throw err
+    }
+  }
+
   // ─── Completar viaje (conductor marca como "Completado") ─────────────────
   const completeTrip = async (requestId: string, notes?: string): Promise<void> => {
     try {
@@ -1162,6 +1179,7 @@ export const useAirportNegotiation = () => {
     acceptPassengerOffer,
     updateRequestPrice,
     cancelRequest,
+    startTrip,
     completeTrip,
     rateTrip,
     loadTripRatings,
