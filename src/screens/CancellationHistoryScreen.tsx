@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
 import { useCancellationHistory } from '../hooks/useCancellationHistory'
+import { parseServerDate } from '../utils/serverDate'
 
 export default function CancellationHistoryScreen() {
   const navigation = useNavigation()
@@ -52,7 +53,7 @@ export default function CancellationHistoryScreen() {
               <View style={styles.cardFooter}>
                 <View style={styles.dateRow}>
                   <Icon name="Calendar" size={14} color={COLORS.textTertiary} />
-                  <Text style={styles.date}>{new Date(item.cancelled_at).toLocaleDateString('es-CO')}</Text>
+                  <Text style={styles.date}>{parseServerDate(item.cancelled_at).toLocaleDateString('es-CO')}</Text>
                 </View>
               </View>
             </View>

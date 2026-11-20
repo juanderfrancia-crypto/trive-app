@@ -9,6 +9,7 @@ import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import Icon from '../components/Icon'
+import { parseServerDate } from '../utils/serverDate'
 
 const REFERRER_REWARD = 2500
 const REFERRED_REWARD = 1000
@@ -213,7 +214,7 @@ export default function ReferralScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.referredName}>{r.name}</Text>
                   <Text style={styles.referredDate}>
-                    Se unió {new Date(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    Se unió {parseServerDate(r.created_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
                   </Text>
                 </View>
                 {r.bonus_earned ? (

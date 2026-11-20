@@ -3,7 +3,9 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Flat
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
+import Illustration from '../components/illustrations/Illustration'
 import { useNavigation } from '@react-navigation/native'
+import { parseServerDate } from '../utils/serverDate'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -32,12 +34,18 @@ export default function ReviewsScreen() {
   const [filterType, setFilterType] = useState<'all' | 'given' | 'received'>('all')
   const [avgRating, setAvgRating] = useState<number>(0)
   const [totalReviews, setTotalReviews] = useState<number>(0)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
 
   useEffect(() => {
     if (user?.id) {
       loadReviews()
     }
   }, [user?.id])
+
+  // Cambiar de filtro vuelve a la página 1 -- si no, se podía quedar en una
+  // página que ya no existe para el nuevo subconjunto filtrado.
+  useEffect(() => { setPage(1) }, [filterType])
 
   const loadReviews = async () => {
     try {
@@ -106,7 +114,7 @@ export default function ReviewsScreen() {
       })
 
       const allReviews = [...enrichedReceived, ...enrichedGiven].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        (a, b) => parseServerDate(b.createdAt).getTime() - parseServerDate(a.createdAt).getTime()
       )
 
       setReviews(allReviews)
@@ -133,13 +141,19 @@ export default function ReviewsScreen() {
     return true
   })
 
+  const totalPages = Math.max(1, Math.ceil(filteredReviews.length / PAGE_SIZE))
+  const pagedReviews = filteredReviews.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr)
+    const date = parseServerDate(dateStr)
     const now = new Date()
     const diffMs = now.getTime() - date.getTime()
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 0) return 'Hoy'
+    // diffDays puede salir negativo por un desfase mínimo de reloj entre el
+    // teléfono y el servidor (una reseña creada hace segundos) -- cualquier
+    // diferencia de 0 o menos cuenta como "Hoy", nunca "-1 días".
+    if (diffDays <= 0) return 'Hoy'
     if (diffDays === 1) return 'Ayer'
     if (diffDays < 7) return `Hace ${diffDays} días`
     if (diffDays < 30) return `Hace ${Math.floor(diffDays / 7)} semanas`
@@ -164,94 +178,65 @@ export default function ReviewsScreen() {
     const isReceived = review.type === 'received'
 
     return (
-      <View style={[styles.reviewCard, isReceived && styles.reviewCardReceived]}>
+      <View style={styles.reviewCard}>
         {/* Encabezado */}
-        <View style={styles.cardHeader}>
-          <View style={styles.userInfo}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {(isReceived ? review.reviewerName : review.revieweeName).charAt(0).toUpperCase()}
+        <View style={styles.userInfo}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {(isReceived ? review.reviewerName : review.revieweeName).charAt(0).toUpperCase()}
+            </Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.nameRow}>
+              <Text style={styles.userName} numberOfLines={1}>
+                {isReceived ? review.reviewerName : review.revieweeName}
+              </Text>
+              <Text style={[styles.typeText, isReceived && styles.typeTextReceived]}>
+                {isReceived ? 'Recibida' : 'Dada'}
               </Text>
             </View>
-            <View style={{ flex: 1 }}>
-              <View style={styles.nameRow}>
-                <Text style={styles.userName} numberOfLines={1}>
-                  {isReceived ? review.reviewerName : review.revieweeName}
-                </Text>
-                <View style={styles.typeBadge}>
-                  <Text style={styles.typeBadgeText}>
-                    {isReceived ? '← Recibido' : 'Dado →'}
-                  </Text>
-                </View>
-              </View>
-              <Text style={styles.dateText}>{formatDate(review.createdAt)}</Text>
-            </View>
+            <Text style={styles.dateText}>{formatDate(review.createdAt)}</Text>
           </View>
         </View>
 
         {/* Rating */}
         <View style={styles.ratingSection}>
-          <RatingStars rating={review.rating} size={18} />
-          <Text style={styles.ratingNumber}>
-            {review.rating.toFixed(1)} / 5
-          </Text>
+          <RatingStars rating={review.rating} size={15} />
+          <Text style={styles.ratingNumber}>{review.rating.toFixed(1)}</Text>
         </View>
 
         {/* Comentario */}
         {review.comment && (
-          <View style={styles.commentSection}>
-            <Text style={styles.commentText}>{review.comment}</Text>
-          </View>
+          <Text style={styles.commentText}>{review.comment}</Text>
         )}
 
-        {/* Badges de contexto */}
-        <View style={styles.badgesRow}>
-          <View style={styles.contextBadge}>
-            <Icon name="CircleCheck" size={12} color={COLORS.success} />
-            <Text style={styles.contextText}>Verificado</Text>
+        {review.recommend && (
+          <View style={styles.recommendRow}>
+            <Icon name="ThumbsUp" size={13} color={COLORS.primary} />
+            <Text style={styles.recommendText}>Recomendado</Text>
           </View>
-          {review.recommend && (
-            <View style={styles.recommendBadge}>
-              <Icon name="ThumbsUp" size={12} color={COLORS.primary} />
-              <Text style={styles.recommendText}>Recomendado</Text>
-            </View>
-          )}
-        </View>
+        )}
       </View>
     )
   }
 
   const StatsCard = () => (
-    <View style={styles.statsCard}>
-      <View style={styles.statItem}>
-        <Text style={styles.statLabel}>Rating Promedio</Text>
-        <View style={styles.statValue}>
-          <Text style={styles.statNumber}>{avgRating.toFixed(1)}</Text>
-          <Icon name="Star" size={20} color={COLORS.warning} />
-        </View>
+    <View style={styles.statsRow}>
+      <View style={styles.statCol}>
+        <Text style={styles.statNumber}>{avgRating.toFixed(1)}</Text>
+        <Text style={styles.statLabel}>Promedio</Text>
       </View>
-
-      <View style={[styles.statItem, styles.statItemBorder]}>
-        <Text style={styles.statLabel}>Total de Reseñas</Text>
+      <View style={styles.statCol}>
         <Text style={styles.statNumber}>{totalReviews}</Text>
+        <Text style={styles.statLabel}>Reseñas</Text>
       </View>
-
-      <View style={styles.statItem}>
-        <Text style={styles.statLabel}>Dadas vs Recibidas</Text>
-        <View style={styles.ratioContainer}>
-          <View style={styles.ratioItem}>
-            <Text style={styles.ratioLabel}>Dadas</Text>
-            <Text style={styles.ratioNumber}>
-              {reviews.filter((r) => r.type === 'given').length}
-            </Text>
-          </View>
-          <View style={[styles.ratioItem, { borderLeftWidth: 1, borderLeftColor: COLORS.border }]}>
-            <Text style={styles.ratioLabel}>Recibidas</Text>
-            <Text style={styles.ratioNumber}>
-              {reviews.filter((r) => r.type === 'received').length}
-            </Text>
-          </View>
-        </View>
+      <View style={styles.statCol}>
+        <Text style={styles.statNumber}>{reviews.filter((r) => r.type === 'given').length}</Text>
+        <Text style={styles.statLabel}>Dadas</Text>
+      </View>
+      <View style={styles.statCol}>
+        <Text style={styles.statNumber}>{reviews.filter((r) => r.type === 'received').length}</Text>
+        <Text style={styles.statLabel}>Recibidas</Text>
       </View>
     </View>
   )
@@ -276,7 +261,7 @@ export default function ReviewsScreen() {
         </View>
       ) : (
         <FlatList
-          data={filteredReviews}
+          data={pagedReviews}
           keyExtractor={(item) => item.id}
           ListHeaderComponent={
             <>
@@ -288,7 +273,7 @@ export default function ReviewsScreen() {
                 {(['all', 'given', 'received'] as const).map((f) => (
                   <TouchableOpacity
                     key={f}
-                    style={[styles.filterTab, filterType === f && styles.filterTabActive]}
+                    style={styles.filterTab}
                     onPress={() => setFilterType(f)}
                   >
                     <Text
@@ -299,6 +284,7 @@ export default function ReviewsScreen() {
                     >
                       {f === 'all' ? 'Todas' : f === 'given' ? 'Dadas' : 'Recibidas'}
                     </Text>
+                    {filterType === f && <View style={styles.filterIndicator} />}
                   </TouchableOpacity>
                 ))}
               </View>
@@ -306,7 +292,7 @@ export default function ReviewsScreen() {
               {/* Mensaje si no hay reseñas */}
               {filteredReviews.length === 0 && (
                 <View style={styles.emptyContainer}>
-                  <Icon name="Star" size={48} color={COLORS.textTertiary} />
+                  <Illustration name="noData" width={170} />
                   <Text style={styles.emptyTitle}>
                     {filterType === 'given'
                       ? 'No has dejado reseñas'
@@ -324,6 +310,27 @@ export default function ReviewsScreen() {
             </>
           }
           renderItem={({ item }) => <ReviewCard review={item} />}
+          ListFooterComponent={
+            totalPages > 1 ? (
+              <View style={styles.pagination}>
+                <TouchableOpacity
+                  style={[styles.pageBtn, page === 1 && styles.pageBtnDisabled]}
+                  onPress={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <Icon name="ChevronLeft" size={18} color={page === 1 ? COLORS.textTertiary : COLORS.textPrimary} />
+                </TouchableOpacity>
+                <Text style={styles.pageText}>Página {page} de {totalPages}</Text>
+                <TouchableOpacity
+                  style={[styles.pageBtn, page === totalPages && styles.pageBtnDisabled]}
+                  onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  <Icon name="ChevronRight" size={18} color={page === totalPages ? COLORS.textTertiary : COLORS.textPrimary} />
+                </TouchableOpacity>
+              </View>
+            ) : null
+          }
           contentContainerStyle={styles.listContainer}
           onRefresh={handleRefresh}
           refreshing={refreshing}
@@ -377,37 +384,25 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: 100,
-    gap: SPACING.md,
   },
 
-  statsCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    ...SHADOWS.md,
-  },
-
-  statItem: {
-    paddingVertical: SPACING.md,
-  },
-
-  statItemBorder: {
-    borderTopWidth: 1,
+  statsRow: {
+    flexDirection: 'row',
+    paddingBottom: SPACING.lg,
+    marginBottom: SPACING.md,
     borderBottomWidth: 1,
-    borderColor: COLORS.border,
+    borderBottomColor: COLORS.border,
+  },
+
+  statCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
   },
 
   statLabel: {
-    ...TYPOGRAPHY.labelMedium,
+    ...TYPOGRAPHY.caption,
     color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
-  },
-
-  statValue: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.md,
   },
 
   statNumber: {
@@ -415,92 +410,60 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
 
-  ratioContainer: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-  },
-
-  ratioItem: {
-    flex: 1,
-    paddingLeft: SPACING.md,
-  },
-
-  ratioLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-
-  ratioNumber: {
-    ...TYPOGRAPHY.h4,
-    color: COLORS.textPrimary,
-  },
-
   filterTabs: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: SPACING.xl,
     marginBottom: SPACING.lg,
   },
 
   filterTab: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.surface,
     alignItems: 'center',
   },
 
-  filterTabActive: {
-    backgroundColor: COLORS.primary,
-  },
-
   filterText: {
-    ...TYPOGRAPHY.label,
-    color: COLORS.textSecondary,
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textTertiary,
     fontWeight: '600',
   },
 
   filterTextActive: {
-    color: '#fff',
+    color: COLORS.textPrimary,
+    fontWeight: '700',
+  },
+
+  filterIndicator: {
+    marginTop: 5,
+    width: '100%',
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: COLORS.primary,
   },
 
   reviewCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    borderLeftWidth: 3,
-    borderLeftColor: COLORS.success,
-    ...SHADOWS.sm,
-  },
-
-  reviewCardReceived: {
-    borderLeftColor: COLORS.warning,
-    backgroundColor: COLORS.primary + '08',
-  },
-
-  cardHeader: {
-    marginBottom: SPACING.md,
+    paddingBottom: SPACING.lg,
+    marginBottom: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
 
   userInfo: {
     flexDirection: 'row',
     gap: SPACING.md,
+    marginBottom: SPACING.sm,
   },
 
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: COLORS.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.primaryTint,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   avatarText: {
-    ...TYPOGRAPHY.h4,
-    color: '#fff',
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.primary,
     fontWeight: '700',
   },
 
@@ -516,17 +479,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  typeBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.sm,
+  typeText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textTertiary,
+    fontWeight: '600',
   },
 
-  typeBadgeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.textSecondary,
-    fontWeight: '600',
+  typeTextReceived: {
+    color: COLORS.primary,
   },
 
   dateText: {
@@ -538,73 +498,65 @@ const styles = StyleSheet.create({
   ratingSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
-    marginBottom: SPACING.md,
-    paddingBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
   },
 
   starsContainer: {
     flexDirection: 'row',
-    gap: SPACING.xs,
+    gap: 2,
   },
 
   ratingNumber: {
-    ...TYPOGRAPHY.bodyMedium,
-    color: COLORS.textPrimary,
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textSecondary,
     fontWeight: '600',
-  },
-
-  commentSection: {
-    marginBottom: SPACING.md,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.md,
   },
 
   commentText: {
     ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
     lineHeight: 20,
+    marginBottom: SPACING.sm,
   },
 
-  badgesRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-    flexWrap: 'wrap',
-  },
-
-  contextBadge: {
+  recommendRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.success + '15',
-    borderRadius: RADIUS.md,
-  },
-
-  contextText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.success,
-    fontWeight: '600',
-  },
-
-  recommendBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    backgroundColor: COLORS.primary + '15',
-    borderRadius: RADIUS.md,
   },
 
   recommendText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.primary,
+    fontWeight: '600',
+  },
+
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingTop: SPACING.md,
+  },
+
+  pageBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  pageBtnDisabled: {
+    opacity: 0.4,
+  },
+
+  pageText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.textSecondary,
     fontWeight: '600',
   },
 

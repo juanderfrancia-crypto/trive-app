@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { supabase } from '../services/supabase';
+import { parseServerDate } from '../utils/serverDate';
 
 export interface MonthlyBalance {
   key: string;           // "2026-05"
@@ -125,7 +126,7 @@ export const useDriverEarnings = (driverId?: string) => {
         const totalEarnings = earnedBookings.reduce((s, b) => s + (b.price || 0), 0);
 
         const thisMonthEarnings = earnedBookings
-          .filter((b) => new Date(b.created_at ?? 0) >= thisMonth)
+          .filter((b) => parseServerDate(b.created_at) >= thisMonth)
           .reduce((s, b) => s + (b.price || 0), 0);
 
         const upcomingAmount = upcomingBookings.reduce((s, b) => s + (b.price || 0), 0);
@@ -147,7 +148,7 @@ export const useDriverEarnings = (driverId?: string) => {
           day.setDate(day.getDate() - i);
           const dayStr = localDateStr(day);
           const dayTotal = earnedBookings
-            .filter((b) => localDateStr(new Date(b.created_at ?? 0)) === dayStr)
+            .filter((b) => localDateStr(parseServerDate(b.created_at)) === dayStr)
             .reduce((s, b) => s + (b.price || 0), 0);
           rawDays.push(dayTotal);
         }
@@ -178,13 +179,13 @@ export const useDriverEarnings = (driverId?: string) => {
         };
 
         earnedBookings.forEach((b) => {
-          const entry = getOrCreate(new Date(b.created_at ?? 0));
+          const entry = getOrCreate(parseServerDate(b.created_at));
           entry.earned += b.price || 0;
           entry.tripsCompleted += 1;
         });
 
         cancelledBookings.forEach((b) => {
-          const entry = getOrCreate(new Date(b.cancelled_at || b.created_at || 0));
+          const entry = getOrCreate(parseServerDate(b.cancelled_at || b.created_at));
           entry.cancelledAmount += b.price || 0;
           entry.cancelledCount += 1;
         });
@@ -201,7 +202,7 @@ export const useDriverEarnings = (driverId?: string) => {
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
           transactionsList.push({
             id: b.id,
-            date: new Date(b.created_at ?? 0).toISOString().split('T')[0],
+            date: parseServerDate(b.created_at).toISOString(),
             type: 'trip',
             amount: b.price || 0,
             description: `Pasajero a bordo · ${label}`,
@@ -215,10 +216,10 @@ export const useDriverEarnings = (driverId?: string) => {
         cancelledBookings.forEach((b) => {
           const route = routeMap.get(b.route_id);
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
-          const cancelDate = b.cancelled_at || b.created_at || 0;
+          const cancelDate = b.cancelled_at || b.created_at;
           transactionsList.push({
             id: `cancel-${b.id}`,
-            date: new Date(cancelDate).toISOString().split('T')[0],
+            date: parseServerDate(cancelDate).toISOString(),
             type: 'cancellation',
             amount: b.price || 0,
             description: `Reserva cancelada · ${label}`,
@@ -234,7 +235,7 @@ export const useDriverEarnings = (driverId?: string) => {
           const label = route ? `${route.origin} → ${route.destination}` : b.id.substring(0, 8);
           transactionsList.push({
             id: `upcoming-${b.id}`,
-            date: new Date(b.created_at ?? 0).toISOString().split('T')[0],
+            date: parseServerDate(b.created_at).toISOString(),
             type: 'upcoming',
             amount: b.price || 0,
             description: `Próximo viaje · ${label}`,

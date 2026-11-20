@@ -310,7 +310,7 @@ export default function DriverEarningsScreen() {
                       <View style={styles.transactionInfo}>
                         <Text style={styles.transactionDesc}>{transaction.description}</Text>
                         <Text style={styles.transactionDate}>
-                          {date.toLocaleDateString('es-CO')} · {date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                          {date.toLocaleDateString('es-CO', { timeZone: 'America/Bogota' })} · {date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Bogota' })}
                         </Text>
                       </View>
                       <Text style={[styles.transactionAmount, { color }]}>

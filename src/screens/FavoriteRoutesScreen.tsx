@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
+import { parseServerDate } from '../utils/serverDate'
 
 export default function FavoriteRoutesScreen() {
   const navigation = useNavigation<any>()
@@ -70,7 +71,7 @@ export default function FavoriteRoutesScreen() {
             </View>
 
             <Text style={styles.savedDate}>
-              Guardada el {new Date(fav.saved_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
+              Guardada el {parseServerDate(fav.saved_at).toLocaleDateString('es-CO', { day: 'numeric', month: 'long' })}
             </Text>
 
             <View style={styles.cardActions}>

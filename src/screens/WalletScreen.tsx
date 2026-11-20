@@ -13,6 +13,7 @@ import Icon, { type IconName } from '../components/Icon'
 import { MIN_REVIEWS_TO_SHOW_RATING } from '../config/reputation'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { ROUTE_FEE_MIN, ROUTE_FEE_MAX } from '../utils/platformFees'
+import { parseServerDate } from '../utils/serverDate'
 
 const TX_PAGE_SIZE = 15
 const RECHARGE_MIN = 20000
@@ -62,7 +63,7 @@ const WALLET_ICONS: Record<string, { icon: IconName; color: string }> = {
 // "Hoy", "Ayer" o el mes (con año si ya no es el actual), para agrupar el historial
 // igual que las apps de billetera: nada de una lista plana sin fin.
 function txGroupLabel(iso: string): string {
-  const d = new Date(iso)
+  const d = parseServerDate(iso)
   const now = new Date()
   const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
   const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86400000)
@@ -386,7 +387,7 @@ export default function WalletScreen() {
                           {WALLET_LABELS[tx.type] ?? 'Movimiento'}
                         </Text>
                         <Text style={s.txDate}>
-                          {new Date(tx.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' })}
+                          {parseServerDate(tx.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' })}
                         </Text>
                       </View>
                       <View style={s.txRight}>

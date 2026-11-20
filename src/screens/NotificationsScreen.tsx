@@ -16,6 +16,7 @@ import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
 import { showError } from '../utils/showError'
 import { supabase } from '../services/supabase'
+import { parseServerDate } from '../utils/serverDate'
 
 type NotifType = Notification['type']
 type IconName = IconNameType
@@ -108,7 +109,7 @@ const ctaOf = (notification: NotificationWithSender): string | null => {
   return null
 }
 
-const timestampOf = (iso: string): Date => new Date(/(Z|[+-]\d{2}:?\d{2})$/.test(iso) ? iso : `${iso}Z`)
+const timestampOf = parseServerDate
 
 function EmptyState({ isAllFilter }: { isAllFilter: boolean }) {
   return (

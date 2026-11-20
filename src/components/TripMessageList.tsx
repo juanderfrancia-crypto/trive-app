@@ -4,6 +4,7 @@ import { Image } from 'expo-image'
 import { Text } from './AppText'
 import { TripMessage } from '../services/trip_messages'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
+import { parseServerDate } from '../utils/serverDate'
 
 interface TripMessageListProps {
   messages: TripMessage[]
@@ -45,7 +46,7 @@ export const TripMessageList = React.memo(({ messages, userId, otherUserName, ot
     const out: ListItem[] = []
     let lastLabel: string | null = null
     for (const m of messages) {
-      const label = dayLabel(new Date(m.created_at))
+      const label = dayLabel(parseServerDate(m.created_at))
       if (label !== lastLabel) {
         out.push({ kind: 'separator', id: `sep-${m.id}`, label })
         lastLabel = label
@@ -68,7 +69,7 @@ export const TripMessageList = React.memo(({ messages, userId, otherUserName, ot
 
     const msg = item.message
     const isFromMe = msg.from_user_id === userId
-    const timestamp = new Date(msg.created_at).toLocaleTimeString('es-CO', {
+    const timestamp = parseServerDate(msg.created_at).toLocaleTimeString('es-CO', {
       hour: '2-digit',
       minute: '2-digit',
     })

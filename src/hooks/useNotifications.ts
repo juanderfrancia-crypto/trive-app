@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { withTimeout } from '../utils/withTimeout';
+import { parseServerDate } from '../utils/serverDate';
 import type { Tables } from '../types/database.types';
 
 export interface Notification {
@@ -239,7 +240,7 @@ export const useNotifications = (userId?: string) => {
                   .map((n) => (n.id === updated.id ? updated : n))
                   // Un mensaje nuevo en una alerta ya existente le cambia la fecha --
                   // sin reordenar se quedaría abajo en su posición vieja.
-                  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                  .sort((a, b) => parseServerDate(b.created_at).getTime() - parseServerDate(a.created_at).getTime())
               );
             } else if (payload.eventType === 'DELETE') {
               const deleted = payload.old as Notification;
