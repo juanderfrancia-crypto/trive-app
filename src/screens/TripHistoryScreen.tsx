@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -30,7 +30,7 @@ interface TripItem {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  completed: COLORS.success,
+  completed: COLORS.white,
   cancelled: COLORS.error,
   scheduled: COLORS.primaryLight,
   in_progress: COLORS.warning,
@@ -46,7 +46,7 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_BG: Record<string, string> = {
-  completed: COLORS.successLight,
+  completed: COLORS.textPrimary,
   cancelled: COLORS.errorLight,
   scheduled: COLORS.primaryTint,
   in_progress: COLORS.warningLight,
@@ -68,6 +68,12 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
   const [loading, setLoading] = useState(false)
   const [filter, setFilter] = useState<FilterType>('all')
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set())
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  // Cambiar de filtro vuelve a la página 1 -- si no, se podía quedar en una
+  // página que ya no existe para el nuevo subconjunto filtrado.
+  useEffect(() => { setPage(1) }, [filter])
 
   useFocusEffect(useCallback(() => {
     AsyncStorage.getItem(HIDDEN_KEY).then((raw) => {
@@ -261,6 +267,9 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
     return true
   })
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const pagedTrips = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
   const formatDate = (iso: string) => {
     if (!iso) return ''
     return new Date(iso).toLocaleDateString('es-CO', {
@@ -424,9 +433,30 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
         </View>
       ) : (
         <FlatList
-          data={filtered}
+          data={pagedTrips}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
+          ListFooterComponent={
+            totalPages > 1 ? (
+              <View style={s.pagination}>
+                <TouchableOpacity
+                  style={[s.pageBtn, page === 1 && s.pageBtnDisabled]}
+                  onPress={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                >
+                  <Icon name="ChevronLeft" size={18} color={page === 1 ? COLORS.textTertiary : COLORS.textPrimary} />
+                </TouchableOpacity>
+                <Text style={s.pageText}>Página {page} de {totalPages}</Text>
+                <TouchableOpacity
+                  style={[s.pageBtn, page === totalPages && s.pageBtnDisabled]}
+                  onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                >
+                  <Icon name="ChevronRight" size={18} color={page === totalPages ? COLORS.textTertiary : COLORS.textPrimary} />
+                </TouchableOpacity>
+              </View>
+            ) : null
+          }
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
         />
@@ -553,6 +583,25 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.successLight,
   },
   ratedText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.success },
+
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingTop: SPACING.md,
+  },
+  pageBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageBtnDisabled: { opacity: 0.4 },
+  pageText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, fontWeight: '600' },
 
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: SPACING.md },
   loadingText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, fontWeight: '500' },

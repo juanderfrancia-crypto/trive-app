@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
+import Icon from '../../components/Icon'
 import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
@@ -43,7 +44,7 @@ const PAYMENT_LABEL: Record<string, string> = { cash: 'Efectivo', digital: 'Tran
 const STATUS_LABEL: Record<Route['status'], { label: string; bg: string; color: string }> = {
   in_progress: { label: 'En curso', bg: COLORS.primaryTint, color: COLORS.primary },
   scheduled: { label: 'Programado', bg: COLORS.surfaceAlt, color: COLORS.textSecondary },
-  completed: { label: 'Completado', bg: COLORS.successLight, color: COLORS.success },
+  completed: { label: 'Completado', bg: COLORS.textPrimary, color: COLORS.white },
   cancelled: { label: 'Cancelado', bg: COLORS.errorLight, color: COLORS.error },
 }
 
@@ -65,6 +66,11 @@ export default function DriverTripsScreen() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [busyRouteId, setBusyRouteId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 10
+
+  // Cambiar de pestaña (En curso/Programados/Historial) vuelve a la página 1.
+  useEffect(() => { setPage(1) }, [tab])
 
   const fetchRoutes = useCallback(async () => {
     if (!user?.id) return
@@ -95,6 +101,9 @@ export default function DriverTripsScreen() {
     if (tab === 'scheduled') return r.status === 'scheduled'
     return r.status === 'completed' || r.status === 'cancelled'
   })
+
+  const totalPages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE))
+  const pagedRoutes = visible.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   const changeStatus = async (route: Route, status: 'in_progress' | 'completed' | 'cancelled') => {
     setBusyRouteId(route.id)
@@ -205,12 +214,33 @@ export default function DriverTripsScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <FlatList
-        data={loading ? [] : visible}
+        data={loading ? [] : pagedRoutes}
         keyExtractor={(route) => route.id}
         renderItem={renderCard}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchRoutes() }} tintColor={COLORS.primary} />}
+        ListFooterComponent={
+          !loading && totalPages > 1 ? (
+            <View style={styles.pagination}>
+              <TouchableOpacity
+                style={[styles.pageBtn, page === 1 && styles.pageBtnDisabled]}
+                onPress={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                <Icon name="ChevronLeft" size={18} color={page === 1 ? COLORS.textTertiary : COLORS.textPrimary} />
+              </TouchableOpacity>
+              <Text style={styles.pageText}>Página {page} de {totalPages}</Text>
+              <TouchableOpacity
+                style={[styles.pageBtn, page === totalPages && styles.pageBtnDisabled]}
+                onPress={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                <Icon name="ChevronRight" size={18} color={page === totalPages ? COLORS.textTertiary : COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>Mis viajes</Text>
@@ -261,6 +291,24 @@ const styles = StyleSheet.create({
   segmentTextActive: { fontWeight: '800', color: COLORS.primary },
 
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxxl, gap: SPACING.md },
+  pagination: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.lg,
+    paddingTop: SPACING.sm,
+  },
+  pageBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pageBtnDisabled: { opacity: 0.4 },
+  pageText: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary, fontWeight: '600' },
   center: { paddingVertical: SPACING.xxxl, alignItems: 'center' },
   empty: { paddingVertical: SPACING.xxxl, alignItems: 'center', gap: SPACING.sm },
   emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
