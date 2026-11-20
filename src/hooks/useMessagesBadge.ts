@@ -32,11 +32,13 @@ export function useMessagesBadgeCount(userId?: string) {
     const stale = supabase.getChannels().find((c) => c.topic === topic)
     if (stale) supabase.removeChannel(stale)
 
+    // Filtrado por to_user_id -- antes escuchaba TODA la tabla sin filtro, así que
+    // un mensaje de cualquier otro usuario en toda la app disparaba un refetch aquí.
     const channel = supabase
       .channel(`messages_badge_${userId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'trip_messages' },
+        { event: '*', schema: 'public', table: 'trip_messages', filter: `to_user_id=eq.${userId}` },
         () => load()
       )
       .subscribe()

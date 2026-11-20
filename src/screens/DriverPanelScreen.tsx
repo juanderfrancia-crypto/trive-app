@@ -132,16 +132,19 @@ export default function DriverPanelScreen() {
 
       if (error) throw error
 
-      // Teléfonos de pasajeros confirmados: la base solo los libera al conductor de cada ruta
-      const phoneRows = await withTimeout(
-        Promise.all(
-          (data || []).map(async (route: any) => {
-            const { data: rows } = await supabase.rpc('get_route_passenger_phones', { p_route_id: route.id })
-            return [route.id, new Map(((rows as any[]) || []).map((r) => [r.passenger_id, r.phone]))] as const
-          })
+      // Teléfonos de pasajeros confirmados: la base solo los libera al conductor de cada ruta.
+      // Una sola llamada con todos los IDs de ruta, en vez de una llamada por ruta.
+      const routeIds = (data || []).map((route: any) => route.id)
+      const phonesByRoute = new Map<string, Map<string, string>>()
+      if (routeIds.length > 0) {
+        const { data: phoneRows } = await withTimeout(
+          Promise.resolve(supabase.rpc('get_route_passenger_phones_batch', { p_route_ids: routeIds }))
         )
-      )
-      const phonesByRoute = new Map(phoneRows)
+        for (const row of (phoneRows as any[]) || []) {
+          if (!phonesByRoute.has(row.route_id)) phonesByRoute.set(row.route_id, new Map())
+          phonesByRoute.get(row.route_id)!.set(row.passenger_id, row.phone)
+        }
+      }
 
       const routesWithPassengers = (data || []).map((route: any) => {
         const routePhones = phonesByRoute.get(route.id) ?? new Map()

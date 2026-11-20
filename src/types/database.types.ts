@@ -3998,6 +3998,10 @@ export type Database = {
         }[]
       }
       get_open_tickets_count: { Args: never; Returns: number }
+      get_pending_airport_request_count: {
+        Args: { p_driver_id: string }
+        Returns: number
+      }
       get_pending_documents_for_admin: {
         Args: never
         Returns: {
@@ -4059,6 +4063,14 @@ export type Database = {
         Returns: {
           passenger_id: string
           phone: string
+        }[]
+      }
+      get_route_passenger_phones_batch: {
+        Args: { p_route_ids: string[] }
+        Returns: {
+          passenger_id: string
+          phone: string
+          route_id: string
         }[]
       }
       get_staff_alerts: {

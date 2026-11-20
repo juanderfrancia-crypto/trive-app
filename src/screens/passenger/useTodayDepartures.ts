@@ -3,30 +3,11 @@ import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../../services/supabase'
 import { withTimeout } from '../../utils/withTimeout'
 import { sortByRelevance } from '../../utils/rideRelevance'
+import { getTodayBoundsBogota } from '../../utils/todayBoundsBogota'
 import type { AvailableRide } from '../../hooks/useAvailableRides'
 
 const SALIDAS_MOSTRADAS = 2
 const FETCH_CAP = 20
-
-const pad = (n: number) => String(n).padStart(2, '0')
-
-// Límites de "hoy" anclados a la hora del servidor (Bogotá), no al reloj del celular,
-// para que un celular con la hora u horario mal configurado no muestre salidas que no aplican.
-const getTodayBoundsBogota = async (): Promise<{ start: string; end: string }> => {
-  let datePart: string
-  try {
-    const { data, error } = await supabase.rpc('now_bogota')
-    if (error || !data) throw error ?? new Error('now_bogota sin datos')
-    datePart = String(data).slice(0, 10)
-  } catch {
-    const d = new Date()
-    datePart = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-  }
-  const [y, m, d] = datePart.split('-').map(Number)
-  const tomorrow = new Date(y, m - 1, d + 1)
-  const endPart = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
-  return { start: `${datePart}T00:00:00`, end: `${endPart}T00:00:00` }
-}
 
 const escapeRegex = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 

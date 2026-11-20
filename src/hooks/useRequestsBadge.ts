@@ -29,31 +29,16 @@ export function useRequestsBadgeCount(userId?: string, isDriver?: boolean) {
     setMessagesCount(unread ?? 0)
   }, [userId])
 
+  // Filtro y conteo hechos en la base (get_pending_airport_request_count) en vez
+  // de traer todas las solicitudes pendientes del país al teléfono para filtrarlas ahí.
   const loadAirportRequests = useCallback(async () => {
     if (!userId || !isDriver) {
       setAirportCount(0)
       return
     }
 
-    const [{ data: profileRow }, { data: dismissals }, { data: requests }] = await Promise.all([
-      supabase.from('profiles').select('preferred_municipality').eq('id', userId).maybeSingle(),
-      supabase.from('airport_request_dismissals').select('request_id').eq('driver_id', userId),
-      supabase.from('airport_requests').select('id, origin, destination').eq('status', 'pending'),
-    ])
-
-    const municipality = profileRow?.preferred_municipality ?? null
-    const dismissedIds = new Set((dismissals ?? []).map((d) => d.request_id))
-    const municipalityPattern = municipality
-      ? new RegExp(`\\b${municipality.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
-      : null
-
-    const count = (requests ?? []).filter((r) => {
-      if (dismissedIds.has(r.id)) return false
-      if (!municipalityPattern) return true
-      return municipalityPattern.test(r.origin) || municipalityPattern.test(r.destination)
-    }).length
-
-    setAirportCount(count)
+    const { data, error } = await supabase.rpc('get_pending_airport_request_count', { p_driver_id: userId })
+    setAirportCount(error ? 0 : (data ?? 0))
   }, [userId, isDriver])
 
   useEffect(() => {
@@ -68,11 +53,20 @@ export function useRequestsBadgeCount(userId?: string, isDriver?: boolean) {
     const stale = supabase.getChannels().find((c) => c.topic === topic)
     if (stale) supabase.removeChannel(stale)
 
+    // Filtrado por driver_id/passenger_id (dos suscripciones, porque el filtro de
+    // postgres_changes no soporta un OR entre columnas) -- antes escuchaba TODA la
+    // tabla sin filtro, así que un mensaje de cualquier otro usuario en toda la app
+    // disparaba un refetch en este dispositivo.
     const channel = supabase
       .channel(`requests_badge_${userId}`)
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'negotiation_messages' },
+        { event: '*', schema: 'public', table: 'negotiation_messages', filter: `driver_id=eq.${userId}` },
+        () => loadMessages()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'negotiation_messages', filter: `passenger_id=eq.${userId}` },
         () => loadMessages()
       )
       .subscribe()

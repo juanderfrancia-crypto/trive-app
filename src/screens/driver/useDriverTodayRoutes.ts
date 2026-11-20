@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { useFocusEffect } from '@react-navigation/native'
 import { supabase } from '../../services/supabase'
+import { getTodayBoundsBogota } from '../../utils/todayBoundsBogota'
 
 export type DriverTodayRoute = {
   id: string
@@ -10,26 +11,6 @@ export type DriverTodayRoute = {
   total_seats: number
   available_seats: number
   status: 'scheduled' | 'in_progress'
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
-
-// Mismo criterio que useTodayDepartures: "hoy" según la hora del servidor (Bogotá),
-// no el reloj del celular.
-const getTodayBoundsBogota = async (): Promise<{ start: string; end: string }> => {
-  let datePart: string
-  try {
-    const { data, error } = await supabase.rpc('now_bogota')
-    if (error || !data) throw error ?? new Error('now_bogota sin datos')
-    datePart = String(data).slice(0, 10)
-  } catch {
-    const d = new Date()
-    datePart = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-  }
-  const [y, m, d] = datePart.split('-').map(Number)
-  const tomorrow = new Date(y, m - 1, d + 1)
-  const endPart = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
-  return { start: `${datePart}T00:00:00`, end: `${endPart}T00:00:00` }
 }
 
 // Rutas del conductor que salen hoy (programadas o ya en curso), para mostrarlas
