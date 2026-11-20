@@ -39,6 +39,100 @@ let _profileChannel: ReturnType<typeof supabase.channel> | null = null
 let _sessionChannel: ReturnType<typeof supabase.channel> | null = null
 let _sessionRegisteredForUserId: string | null = null
 
+// Mismo problema que arriba, pero con el perfil/cédula: las 17 copias pedían
+// cada una su propia vuelta a profiles + get_my_cedula() en paralelo. Si una
+// de esas 17 llamadas simultáneas tardaba o fallaba de forma transitoria
+// (carga momentánea justo al autenticar), esa copia escribía cedula=null
+// encima del valor correcto que otra copia ya había puesto -- se veía como
+// un parpadeo de 1-2 segundos en "Confirma tu cédula" al volver a iniciar
+// sesión, hasta que otra copia (o la suscripción de Realtime) la corregía.
+// Con esto, solo la primera copia que llega hace el trabajo real; el resto
+// espera ese mismo resultado en vez de pedirlo de nuevo por su cuenta.
+let _appUserFetch: { userId: string; promise: Promise<AppUser> } | null = null
+
+async function fetchAppUserForSession(currentSession: Session): Promise<AppUser> {
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select(PROFILE_COLUMNS)
+    .eq("id", currentSession.user.id)
+    .maybeSingle();
+
+  if (profileError && profileError.code !== "PGRST116") {
+    throw profileError;
+  }
+
+  if (profile) {
+    const cedula = await getMyCedula()
+    await checkDeviceVerification(cedula)
+    return {
+      id: profile.id,
+      name: profile.name,
+      email: profile.email ?? '',
+      phone: (await getMyPhone()) ?? undefined,
+      cedula,
+      role: toAppRole(profile.role),
+      rating: profile.rating ?? 0,
+      avatar_url: profile.avatar_url ?? undefined,
+      membership_type: toAppMembership(profile.membership_type),
+      membership_expiry: profile.membership_expiry,
+      balance: profile.balance ?? 0,
+      is_admin: profile.is_admin ?? false,
+    };
+  }
+
+  const userName = currentSession.user.user_metadata?.full_name || "Usuario";
+  const userEmail = currentSession.user.email || `${currentSession.user.id}@trive.local`;
+  const userPhone = currentSession.user.phone || currentSession.user.user_metadata?.phone || undefined;
+
+  // Registro auditable del consentimiento a Términos/Privacidad (Ley 1581 de 2012,
+  // art. 9) -- este es el único momento en que se crea la cuenta, justo después de
+  // que el usuario vio el texto "Al continuar aceptas..." (TermsText en
+  // LoginPhoneScreen.tsx) y completó el OTP.
+  const { error: saveError } = await saveMyProfile(currentSession.user.id, {
+    name: userName,
+    email: userEmail,
+    phone: userPhone,
+    role: "passenger",
+    rating: 0,
+    terms_accepted_at: new Date().toISOString(),
+    terms_version: CURRENT_TERMS_VERSION,
+  });
+  if (saveError) throw saveError;
+
+  const { data: insertedProfile, error: insertError } = await supabase
+    .from("profiles")
+    .select(PROFILE_COLUMNS)
+    .eq("id", currentSession.user.id)
+    .single();
+
+  if (insertError) throw insertError;
+
+  // Cuenta recién creada, todavía sin cédula -- nada que verificar aún.
+  useAppStore.getState().setDeviceVerificationStatus('recognized')
+
+  return {
+    id: insertedProfile.id,
+    name: insertedProfile.name,
+    email: insertedProfile.email ?? '',
+    phone: userPhone ?? null,
+    cedula: null,
+    role: toAppRole(insertedProfile.role),
+    rating: insertedProfile.rating ?? 0,
+    avatar_url: insertedProfile.avatar_url ?? undefined,
+  };
+}
+
+function getOrFetchAppUser(currentSession: Session): Promise<AppUser> {
+  if (_appUserFetch && _appUserFetch.userId === currentSession.user.id) {
+    return _appUserFetch.promise
+  }
+  const promise = fetchAppUserForSession(currentSession).finally(() => {
+    if (_appUserFetch?.promise === promise) _appUserFetch = null
+  })
+  _appUserFetch = { userId: currentSession.user.id, promise }
+  return promise
+}
+
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -67,75 +161,8 @@ export const useAuth = () => {
     }
 
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select(PROFILE_COLUMNS)
-        .eq("id", currentSession.user.id)
-        .maybeSingle();
-
-      if (profileError && profileError.code !== "PGRST116") {
-        throw profileError;
-      }
-
-      if (profile) {
-        const cedula = await getMyCedula()
-        await checkDeviceVerification(cedula)
-        setAppUser({
-          id: profile.id,
-          name: profile.name,
-          email: profile.email ?? '',
-          phone: (await getMyPhone()) ?? undefined,
-          cedula,
-          role: toAppRole(profile.role),
-          rating: profile.rating ?? 0,
-          avatar_url: profile.avatar_url ?? undefined,
-          membership_type: toAppMembership(profile.membership_type),
-          membership_expiry: profile.membership_expiry,
-          balance: profile.balance ?? 0,
-          is_admin: profile.is_admin ?? false,
-        });
-      } else {
-        const userName = currentSession.user.user_metadata?.full_name || "Usuario";
-        const userEmail = currentSession.user.email || `${currentSession.user.id}@trive.local`;
-        const userPhone = currentSession.user.phone || currentSession.user.user_metadata?.phone || undefined;
-
-        // Registro auditable del consentimiento a Términos/Privacidad (Ley 1581 de 2012,
-        // art. 9) -- este es el único momento en que se crea la cuenta, justo después de
-        // que el usuario vio el texto "Al continuar aceptas..." (TermsText en
-        // LoginPhoneScreen.tsx) y completó el OTP.
-        const { error: saveError } = await saveMyProfile(currentSession.user.id, {
-          name: userName,
-          email: userEmail,
-          phone: userPhone,
-          role: "passenger",
-          rating: 0,
-          terms_accepted_at: new Date().toISOString(),
-          terms_version: CURRENT_TERMS_VERSION,
-        });
-        if (saveError) throw saveError;
-
-        const { data: insertedProfile, error: insertError } = await supabase
-          .from("profiles")
-          .select(PROFILE_COLUMNS)
-          .eq("id", currentSession.user.id)
-          .single();
-
-        if (insertError) throw insertError;
-
-        // Cuenta recién creada, todavía sin cédula -- nada que verificar aún.
-        setDeviceVerificationStatus('recognized')
-
-        setAppUser({
-          id: insertedProfile.id,
-          name: insertedProfile.name,
-          email: insertedProfile.email ?? '',
-          phone: userPhone ?? null,
-          cedula: null,
-          role: toAppRole(insertedProfile.role),
-          rating: insertedProfile.rating ?? 0,
-          avatar_url: insertedProfile.avatar_url ?? undefined,
-        });
-      }
+      const appUser = await getOrFetchAppUser(currentSession)
+      setAppUser(appUser);
 
       // Session is set AFTER the profile is ready — AppNavigator only transitions
       // to TabNavigator once both session and complete user data are available.

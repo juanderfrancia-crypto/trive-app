@@ -7,6 +7,7 @@ import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
 import { supabase } from '../services/supabase'
+import { useAppStore } from '../store/useAppStore'
 import {
   isBiometricSupported,
   isBiometricEnrolled,
@@ -18,25 +19,29 @@ import {
 // Fuera del componente: sobrevive a que la pantalla se desmonte y remonte al
 // navegar fuera y volver, para no repetir el chequeo de hardware/SecureStore
 // (y el parpadeo del switch en su valor por defecto) cada vez que se entra.
-// Se reinicia solo con un reload completo de la app, no entre pantallas.
-let biometricStatusCache: { available: boolean; enabled: boolean } | null = null
+// Se reinicia solo con un reload completo de la app, o si cambia la cuenta
+// activa — el bloqueo es por cuenta, no por dispositivo.
+let biometricStatusCache: { userId: string; available: boolean; enabled: boolean } | null = null
 
 export default function SecurityScreen() {
   const navigation = useNavigation()
-  const [biometricAvailable, setBiometricAvailable] = useState(biometricStatusCache?.available ?? false)
-  const [biometricEnabled, setBiometricEnabled] = useState(biometricStatusCache?.enabled ?? false)
+  const userId = useAppStore((s) => s.user?.id)
+  const cached = biometricStatusCache?.userId === userId ? biometricStatusCache : null
+  const [biometricAvailable, setBiometricAvailable] = useState(cached?.available ?? false)
+  const [biometricEnabled, setBiometricEnabled] = useState(cached?.enabled ?? false)
   const [hasPasswordAuth, setHasPasswordAuth] = useState(false)
 
   useEffect(() => {
+    if (!userId) return
     ;(async () => {
       const supported = await isBiometricSupported()
       const enrolled = supported && (await isBiometricEnrolled())
-      const enabled = enrolled ? await getStoredBiometricEnabled() : false
-      biometricStatusCache = { available: enrolled, enabled }
+      const enabled = enrolled ? await getStoredBiometricEnabled(userId) : false
+      biometricStatusCache = { userId, available: enrolled, enabled }
       setBiometricAvailable(enrolled)
       setBiometricEnabled(enabled)
     })()
-  }, [])
+  }, [userId])
 
   useEffect(() => {
     ;(async () => {
@@ -53,6 +58,7 @@ export default function SecurityScreen() {
   }, [])
 
   const handleBiometric = async (value: boolean) => {
+    if (!userId) return
     if (value) {
       // Confirma que la huella/rostro enrolado funciona de verdad antes de
       // activarlo — si no, el bloqueo que vamos a mostrar luego nunca dejaría
@@ -60,8 +66,8 @@ export default function SecurityScreen() {
       const success = await authenticateBiometric()
       if (!success) return
     }
-    await setStoredBiometricEnabled(value)
-    biometricStatusCache = { available: biometricAvailable, enabled: value }
+    await setStoredBiometricEnabled(userId, value)
+    biometricStatusCache = { userId, available: biometricAvailable, enabled: value }
     setBiometricEnabled(value)
   }
 

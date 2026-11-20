@@ -1,7 +1,11 @@
 import * as LocalAuthentication from 'expo-local-authentication'
 import { getItem, removeItem, setItem } from '../utils/storage'
 
-const BIOMETRIC_KEY = 'trive_biometric_enabled'
+// Una clave por cuenta (SecureStore es del dispositivo, no de la cuenta) —
+// sin esto, activar el bloqueo en una cuenta "se hereda" en cualquier otra
+// que inicie sesión después en el mismo teléfono. SecureStore solo acepta
+// alfanuméricos, '.', '-' y '_' en la clave, por eso '_' como separador y no ':'.
+const biometricKey = (userId: string) => `trive_biometric_enabled_${userId}`
 
 export const isBiometricSupported = async (): Promise<boolean> => {
   try {
@@ -38,15 +42,15 @@ export const authenticateBiometric = async (): Promise<boolean> => {
   }
 }
 
-export const getStoredBiometricEnabled = async (): Promise<boolean> => {
-  const value = await getItem(BIOMETRIC_KEY)
+export const getStoredBiometricEnabled = async (userId: string): Promise<boolean> => {
+  const value = await getItem(biometricKey(userId))
   return value === 'true'
 }
 
-export const setStoredBiometricEnabled = async (enabled: boolean): Promise<void> => {
+export const setStoredBiometricEnabled = async (userId: string, enabled: boolean): Promise<void> => {
   if (enabled) {
-    await setItem(BIOMETRIC_KEY, 'true')
+    await setItem(biometricKey(userId), 'true')
   } else {
-    await removeItem(BIOMETRIC_KEY)
+    await removeItem(biometricKey(userId))
   }
 }
