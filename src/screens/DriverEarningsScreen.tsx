@@ -178,60 +178,50 @@ export default function DriverEarningsScreen() {
         <View style={{ alignItems: 'center' }}>
           <Illustration name="savingMoney" width={190} />
         </View>
-        {/* Main Balance Card */}
-        <View style={styles.balanceCard}>
-          <View style={styles.balanceTop}>
-            <View style={styles.balanceCardIcon}>
-              <Icon name="Wallet" size={36} color={COLORS.primary} />
+        {/* Total histórico -- texto plano, sin caja: es el número más importante
+            de la pantalla, no necesita un borde para destacar. */}
+        <View style={styles.balanceBlock}>
+          <Text style={styles.balanceLabel}>Estimado de ingresos</Text>
+          <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
+          <View style={styles.balanceStats}>
+            <View style={styles.balanceStat}>
+              <Text style={styles.balanceStatValue}>{earnings?.completedTrips || 0}</Text>
+              <Text style={styles.balanceStatLabel}>Viajes</Text>
             </View>
-            <Text style={styles.balanceLabel}>ESTIMADO DE INGRESOS</Text>
-            <Text style={styles.balanceAmount}>{formatCOP(earnings?.totalEarnings || 0)}</Text>
-            <View style={styles.balanceStats}>
-              <View style={styles.balanceStat}>
-                <Text style={styles.balanceStatValue}>{earnings?.completedTrips || 0}</Text>
-                <Text style={styles.balanceStatLabel}>Viajes</Text>
-              </View>
-              <View style={styles.balanceStatDivider} />
-              <View style={styles.balanceStat}>
-                <Text style={styles.balanceStatValue}>{earnings?.completedPassengers || 0}</Text>
-                <Text style={styles.balanceStatLabel}>Pasajeros</Text>
-              </View>
-              <View style={styles.balanceStatDivider} />
-              <View style={styles.balanceStat}>
-                <Text style={styles.balanceStatValue}>{formatCOP(earnings?.averagePerTrip || 0)}</Text>
-                <Text style={styles.balanceStatLabel}>Promedio/viaje</Text>
-              </View>
+            <View style={styles.balanceStatDivider} />
+            <View style={styles.balanceStat}>
+              <Text style={styles.balanceStatValue}>{earnings?.completedPassengers || 0}</Text>
+              <Text style={styles.balanceStatLabel}>Pasajeros</Text>
+            </View>
+            <View style={styles.balanceStatDivider} />
+            <View style={styles.balanceStat}>
+              <Text style={styles.balanceStatValue}>{formatCOP(earnings?.averagePerTrip || 0)}</Text>
+              <Text style={styles.balanceStatLabel}>Promedio/viaje</Text>
             </View>
           </View>
         </View>
 
-        {/* Este mes + Próximos */}
-        <View style={styles.subCardsRow}>
-          <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
-            <Icon name="Calendar" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
-            <Text style={styles.subCardLabel}>Este mes</Text>
-            <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
-              {formatCOP(earnings?.thisMonthEarnings || 0)}
-            </Text>
-          </View>
-          {(earnings?.upcomingAmount || 0) > 0 && (
-            <View style={[styles.subCard, { borderLeftColor: COLORS.primary }]}>
-              <Icon name="Clock" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
-              <Text style={styles.subCardLabel}>Próximos</Text>
-              <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
-                {formatCOP(earnings?.upcomingAmount || 0)}
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* Nota aclaratoria */}
+        {/* Nota aclaratoria -- justo debajo del total, para que se entienda
+            "estimado" antes de ver cualquier otro número. */}
         <View style={styles.disclaimerBox}>
           <Icon name="Info" size={16} color={COLORS.primary} />
           <Text style={styles.disclaimerText}>
             Los pagos son directos entre conductor y pasajero. Este resumen es un estimado basado en tus reservas.
           </Text>
         </View>
+
+        {/* Próximos ingresos (reservas confirmadas aún no completadas) -- "Este mes"
+            se quitó de aquí porque ya es la primera card de Balance Mensual abajo,
+            marcada "MES ACTUAL"; mostrarlo dos veces no sumaba información. */}
+        {(earnings?.upcomingAmount || 0) > 0 && (
+          <View style={[styles.subCard, { borderLeftColor: COLORS.primary, marginHorizontal: SPACING.lg, marginBottom: SPACING.lg }]}>
+            <Icon name="Clock" size={20} color={COLORS.primary} style={{ marginBottom: 6 }} />
+            <Text style={styles.subCardLabel}>Próximos (reservas por completar)</Text>
+            <Text style={[styles.subCardValue, { color: COLORS.primary }]}>
+              {formatCOP(earnings?.upcomingAmount || 0)}
+            </Text>
+          </View>
+        )}
 
         {/* Balance Mensual */}
         {(earnings?.monthlyBalances?.length ?? 0) > 0 && (
@@ -253,6 +243,10 @@ export default function DriverEarningsScreen() {
                   )}
                 </View>
 
+                {/* Antes había una tercera columna "Balance" que repetía el mismo
+                    número de "Ingresos" (una cancelación no le cuesta dinero real
+                    al conductor, así que el balance ya ES los ingresos) -- se quitó
+                    por ser un duplicado exacto, no un dato nuevo. */}
                 <View style={styles.monthStats}>
                   <View style={styles.monthStat}>
                     <Text style={styles.monthStatLabel}>Ingresos</Text>
@@ -270,16 +264,6 @@ export default function DriverEarningsScreen() {
                       {month.cancelledCount > 0 ? `-${formatCOP(month.cancelledAmount)}` : '$0'}
                     </Text>
                     <Text style={styles.monthStatSub}>{month.cancelledCount} cancelac.</Text>
-                  </View>
-
-                  <View style={styles.monthDivider} />
-
-                  <View style={styles.monthStat}>
-                    <Text style={styles.monthStatLabel}>Balance</Text>
-                    <Text style={[styles.monthStatValue, { color: COLORS.primary }]}>
-                      {formatCOP(month.earned)}
-                    </Text>
-                    <Text style={styles.monthStatSub}>neto</Text>
                   </View>
                 </View>
               </View>
@@ -469,38 +453,21 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.md,
   },
-  balanceCard: {
-    margin: SPACING.lg,
-    backgroundColor: COLORS.surface,
-    borderRadius: RADIUS.xl,
-    padding: SPACING.xl,
+  balanceBlock: {
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...SHADOWS.md,
-  },
-  balanceTop: {
-    alignItems: 'center',
-    width: '100%',
-  },
-  balanceCardIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: COLORS.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.xl,
   },
   balanceLabel: {
-    ...TYPOGRAPHY.label,
+    ...TYPOGRAPHY.bodySmall,
     color: COLORS.textSecondary,
-    letterSpacing: 1,
-    marginBottom: SPACING.sm,
+    fontWeight: '600',
+    marginBottom: SPACING.xs,
   },
   balanceAmount: {
-    fontSize: 32,
-    fontWeight: '900',
+    fontSize: 34,
+    fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -1,
     marginBottom: SPACING.lg,
@@ -527,12 +494,6 @@ const styles = StyleSheet.create({
     width: 1,
     height: 32,
     backgroundColor: COLORS.borderLight,
-  },
-  subCardsRow: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
   },
   subCard: {
     flex: 1,

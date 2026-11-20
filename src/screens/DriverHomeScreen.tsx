@@ -147,7 +147,7 @@ export default function DriverHomeScreen() {
         <Text style={styles.sectionTitle}>Tus rutas de hoy</Text>
         {todayRoutes.length === 0 ? (
           <View style={styles.emptyToday}>
-            <Illustration name="proudDriver" width={150} />
+            <Illustration name="proudDriver" width={100} />
             <Text style={styles.emptyTodayText}>No tienes rutas programadas para hoy</Text>
           </View>
         ) : (
@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   switchModeText: { fontSize: 13, fontWeight: '700', color: COLORS.white },
 
   sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginTop: SPACING.xl },
-  emptyToday: { alignItems: 'center', marginTop: SPACING.sm, paddingVertical: SPACING.md },
+  emptyToday: { alignItems: 'center', marginTop: 0, paddingVertical: SPACING.xs },
   emptyTodayText: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.sm },
   ridesList: { marginTop: SPACING.sm + 2, gap: SPACING.sm + 2 },
   rideRow: {
