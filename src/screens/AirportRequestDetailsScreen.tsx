@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Modal, TextInput, Alert } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute, useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
-import DepthCard from '../components/DepthCard'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../utils/showError'
 import Icon from '../components/Icon'
-import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { VEHICLE_TYPES } from './driver/PublishRouteFlow'
 
 const vehicleName = (id?: string | null) => VEHICLE_TYPES.find((v) => v.id === id)?.name ?? 'Auto'
@@ -27,15 +25,11 @@ export default function AirportRequestDetailsScreen() {
     error,
     loadOffersForRequest,
     loadSingleRequest,
-    updateRequestPrice,
     acceptPassengerOffer,
     rejectOffer,
     cancelRequest,
   } = useAirportNegotiation()
 
-  const [showPriceModal, setShowPriceModal] = useState(false)
-  const [newPrice, setNewPrice] = useState('')
-  const [updatingPrice, setUpdatingPrice] = useState(false)
   const [loadingRequest, setLoadingRequest] = useState(!requests.find(r => r.id === requestId))
 
   const request = requests.find(r => r.id === requestId)
@@ -55,26 +49,6 @@ export default function AirportRequestDetailsScreen() {
       loadOffersForRequest(requestId)
     }
   }, [requestId, request, loadOffersForRequest])
-
-  const handleUpdatePrice = async () => {
-    const price = parseInt(newPrice.replace(/\D/g, ''), 10)
-    if (!price || price <= 0) {
-      showError('Ingresa un precio válido')
-      return
-    }
-
-    try {
-      setUpdatingPrice(true)
-      await updateRequestPrice(requestId, price)
-      showSuccess('Precio actualizado. Los conductores verán el cambio al instante.')
-      setNewPrice('')
-      setShowPriceModal(false)
-    } catch (err: any) {
-      showError(err.message)
-    } finally {
-      setUpdatingPrice(false)
-    }
-  }
 
   const handleRejectOffer = async (offerId: string) => {
     try {
@@ -143,6 +117,10 @@ export default function AirportRequestDetailsScreen() {
 
   const pendingOffers = offers.filter(o => o.status === 'pending')
   const acceptedOffer = offers.find(o => o.status === 'accepted')
+  // Una notificación vieja ("Ver solicitud") puede seguir apuntando aquí
+  // después de cancelarla -- sin esto, la pantalla mostraba los botones de
+  // gestión (subir oferta, aceptar, cancelar) como si siguiera activa.
+  const isCancelled = request.status === 'cancelled'
 
   const renderAvatar = (name?: string | null, url?: string | null) =>
     url ? (
@@ -173,7 +151,7 @@ export default function AirportRequestDetailsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <DepthCard style={styles.section} contentStyle={styles.cardContent}>
+        <View style={[styles.flatCard, styles.section]}>
           <View style={styles.routeRows}>
             <View style={styles.routeRow}>
               <Icon name="CircleDot" size={16} color={COLORS.primary} />
@@ -209,36 +187,44 @@ export default function AirportRequestDetailsScreen() {
               <Text style={styles.metaValue}>{new Date(request.departure_time).toLocaleString('es-CO')}</Text>
             </View>
           </View>
-        </DepthCard>
+        </View>
+
+        {isCancelled && (
+          <View style={styles.cancelledBanner}>
+            <Icon name="CircleX" size={18} color={COLORS.error} />
+            <Text style={styles.cancelledBannerText}>Esta solicitud fue cancelada.</Text>
+          </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Precio ofrecido</Text>
-          <DepthCard contentStyle={styles.priceContent}>
+          <View style={[styles.flatCard, styles.priceContent]}>
             <View style={styles.priceInfo}>
               <Text style={styles.priceLabel}>Precio actual</Text>
               <Text style={styles.priceValue}>${request.offered_price.toLocaleString('es-CO')}</Text>
               <Text style={styles.priceHint}>Publicado: ${request.initial_price.toLocaleString('es-CO')}</Text>
             </View>
-            {!acceptedOffer && (
+            {!acceptedOffer && !isCancelled && (
               <TouchableOpacity
                 style={styles.priceEditBtn}
-                onPress={() => {
-                  setNewPrice(request.offered_price.toString())
-                  setShowPriceModal(true)
-                }}
+                onPress={() => navigation.navigate('SetTripPrice', {
+                  requestId,
+                  mode: 'update',
+                  currentPrice: request.offered_price,
+                })}
                 activeOpacity={0.7}
               >
                 <Icon name="SquarePen" size={16} color={COLORS.primary} />
                 <Text style={styles.priceEditBtnText}>Subir oferta</Text>
               </TouchableOpacity>
             )}
-          </DepthCard>
+          </View>
         </View>
 
-        {acceptedOffer ? (
+        {isCancelled ? null : acceptedOffer ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Viaje confirmado</Text>
-            <DepthCard borderColor={COLORS.success} contentStyle={styles.cardContent}>
+            <View style={[styles.flatCard, styles.cardContent, { borderColor: COLORS.success }]}>
               <View style={styles.driverRow}>
                 {renderAvatar(acceptedOffer.driver_name, acceptedOffer.driver_avatar_url)}
                 <View style={styles.driverInfo}>
@@ -253,13 +239,13 @@ export default function AirportRequestDetailsScreen() {
                   ${(acceptedOffer.proposed_price || request.offered_price).toLocaleString('es-CO')}
                 </Text>
               </View>
-            </DepthCard>
+            </View>
           </View>
         ) : pendingOffers.length > 0 ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Propuestas de conductores ({pendingOffers.length})</Text>
             {pendingOffers.map(offer => (
-              <DepthCard key={offer.id} style={styles.offerWrap} contentStyle={styles.cardContent}>
+              <View key={offer.id} style={[styles.flatCard, styles.cardContent, styles.offerWrap]}>
                 <View style={styles.offerTop}>
                   <View style={styles.driverRow}>
                     {renderAvatar(offer.driver_name, offer.driver_avatar_url)}
@@ -299,65 +285,24 @@ export default function AirportRequestDetailsScreen() {
                     <Text style={styles.rejectBtnText}>Rechazar</Text>
                   </TouchableOpacity>
                 </View>
-              </DepthCard>
+              </View>
             ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Illustration name="theSearch" width={170} />
+            <Illustration name="theSearch" width={130} />
             <Text style={styles.emptyTitle}>Sin propuestas aún</Text>
             <Text style={styles.emptyText}>Los conductores verán tu solicitud y podrán hacer propuestas</Text>
           </View>
         )}
 
-        {!acceptedOffer && (
+        {!acceptedOffer && !isCancelled && (
           <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel} activeOpacity={0.7}>
             <Icon name="CircleX" size={18} color={COLORS.error} />
             <Text style={styles.cancelBtnText}>Cancelar solicitud</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
-
-      <Modal visible={showPriceModal} animationType="slide" transparent onRequestClose={() => setShowPriceModal(false)}>
-        <KeyboardAvoidingScreen measureKeyboard active={showPriceModal} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Subir oferta</Text>
-              <TouchableOpacity onPress={() => setShowPriceModal(false)} hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                <Icon name="X" size={22} color={COLORS.textPrimary} />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.modalBody}>
-              <Text style={styles.label}>Nuevo precio</Text>
-              <View style={styles.priceInput}>
-                <Text style={styles.currency}>$</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ingresa el nuevo precio"
-                  placeholderTextColor={COLORS.textTertiary}
-                  value={newPrice}
-                  onChangeText={(t) => setNewPrice(t.replace(/\D/g, ''))}
-                  keyboardType="numeric"
-                  editable={!updatingPrice}
-                />
-              </View>
-              <Text style={styles.priceHint}>Precio actual: ${request.offered_price.toLocaleString('es-CO')}</Text>
-
-              <TouchableOpacity style={styles.updateBtn} onPress={handleUpdatePrice} disabled={updatingPrice} activeOpacity={0.85}>
-                {updatingPrice ? (
-                  <ActivityIndicator color={COLORS.white} />
-                ) : (
-                  <>
-                    <Icon name="Check" size={18} color={COLORS.white} />
-                    <Text style={styles.updateBtnText}>Actualizar precio</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingScreen>
-      </Modal>
     </SafeAreaView>
   )
 }
@@ -385,11 +330,17 @@ const styles = StyleSheet.create({
   },
   headerSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
 
-  scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
-  section: { marginBottom: SPACING.lg },
-  sectionTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, marginBottom: SPACING.md },
-  cardContent: { padding: SPACING.lg },
-  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.md },
+  scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.lg },
+  section: { marginBottom: SPACING.md },
+  sectionTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
+  flatCard: {
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
+  },
+  cardContent: { padding: SPACING.md },
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.sm },
 
   routeRows: { gap: SPACING.md },
   routeRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
@@ -400,7 +351,7 @@ const styles = StyleSheet.create({
   metaCell: { gap: 4 },
   metaValue: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
 
-  priceContent: { padding: SPACING.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md },
+  priceContent: { padding: SPACING.md, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md },
   priceInfo: { flex: 1, gap: 2 },
   priceLabel: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
   priceValue: {
@@ -475,7 +426,7 @@ const styles = StyleSheet.create({
   },
   rejectBtnText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
 
-  emptyState: { alignItems: 'center', paddingVertical: SPACING.md, gap: SPACING.sm, marginBottom: SPACING.lg },
+  emptyState: { alignItems: 'center', paddingVertical: SPACING.sm, gap: SPACING.xs, marginBottom: SPACING.md },
   emptyTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, marginTop: SPACING.sm },
   emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textTertiary, textAlign: 'center', maxWidth: 260 },
 
@@ -491,46 +442,14 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.error },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 26, 46, 0.4)', justifyContent: 'flex-end' },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    paddingBottom: SPACING.xxl,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  modalTitle: { ...TYPOGRAPHY.h4, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary },
-  modalBody: { padding: SPACING.lg, gap: SPACING.sm },
-  label: { ...TYPOGRAPHY.labelSmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary },
-  priceInput: {
+  cancelledBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 56,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.xs,
-  },
-  currency: { ...TYPOGRAPHY.h4, color: COLORS.primary },
-  input: { flex: 1, ...TYPOGRAPHY.h4, color: COLORS.textPrimary, paddingVertical: 0 },
-  updateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
     gap: SPACING.sm,
-    height: 56,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.primary,
-    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.errorLight,
   },
-  updateBtnText: { ...TYPOGRAPHY.button, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
+  cancelledBannerText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.error },
 })

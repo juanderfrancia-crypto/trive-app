@@ -61,9 +61,11 @@ export default function NegotiationChatScreen() {
 
   const user = useAppStore((state) => state.user)
 
+  // El chat se abre solo cuando el pasajero ACEPTA la oferta, no con solo
+  // proponerla (eso es gratis y sin compromiso) -- ver useNegotiationChat.ts.
   const closedMessage = isUserDriver
-    ? 'Este hilo está cerrado: tu oferta no fue aceptada o el viaje ya no está disponible.'
-    : 'Este chat ya no está disponible.'
+    ? 'El pasajero debe aceptar tu oferta para que se abra el chat.'
+    : 'Acepta esta oferta para poder chatear con el conductor.'
 
   useEffect(() => {
     if (messages.length > 0) markMessagesAsRead()
@@ -172,8 +174,15 @@ export default function NegotiationChatScreen() {
             </View>
           ) : (
             <View style={s.closedBanner}>
-              <Icon name="Lock" size={16} color={COLORS.textSecondary} />
-              <Text style={s.closedText}>{closedMessage}</Text>
+              <View style={s.closedTextRow}>
+                <Icon name="Lock" size={16} color={COLORS.textSecondary} />
+                <Text style={s.closedText}>{closedMessage}</Text>
+              </View>
+              {!isUserDriver && (
+                <TouchableOpacity style={s.closedBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+                  <Text style={s.closedBtnText}>Ver propuesta</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </KeyboardAvoidingScreen>
@@ -300,18 +309,33 @@ const s = {
   },
 
   closedBanner: {
-    flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     gap: SPACING.sm,
     padding: SPACING.md,
     backgroundColor: COLORS.surface,
   },
+  closedTextRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: SPACING.sm,
+  },
   closedText: {
     fontSize: 13,
     color: COLORS.textSecondary,
     textAlign: 'center' as const,
     flexShrink: 1,
+  },
+  closedBtn: {
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primary,
+  },
+  closedBtnText: {
+    fontSize: 13,
+    fontWeight: '700' as const,
+    color: COLORS.white,
   },
   inputContainer: {
     flexDirection: 'row' as const,

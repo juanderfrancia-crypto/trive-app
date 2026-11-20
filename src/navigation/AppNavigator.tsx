@@ -35,6 +35,7 @@ import ChangePasswordScreen from '../screens/ChangePasswordScreen'
 import EditProfileScreen from '../screens/EditProfileScreen'
 import AddPaymentMethodScreen from '../screens/AddPaymentMethodScreen'
 import NegotiationChatScreen from '../screens/NegotiationChatScreen'
+import SetTripPriceScreen from '../screens/SetTripPriceScreen'
 import RatingScreen from '../screens/RatingScreen'
 import RatePassengersScreen from '../screens/RatePassengersScreen'
 import PrivacyScreen from '../screens/PrivacyScreen'
@@ -195,6 +196,7 @@ export default function AppNavigator() {
       <Stack.Screen name="DriverPaymentMethods" component={DriverPaymentMethodsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} options={{ headerShown: false }} />
       <Stack.Screen name="NegotiationChat" component={NegotiationChatScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="SetTripPrice" component={SetTripPriceScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RatingScreen" component={RatingScreen} options={{ headerShown: false }} />
       <Stack.Screen name="RatePassengers" component={RatePassengersScreen} options={{ headerShown: false }} />
       <Stack.Screen name="CancellationHistory" component={CancellationHistoryScreen} />

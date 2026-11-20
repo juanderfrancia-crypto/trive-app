@@ -48,6 +48,8 @@ function TripsTab() {
 export default function TabNavigator() {
   const notificationUnreadCount = useAppStore((s) => s.notificationUnreadCount)
   const userId = useAppStore((s) => s.user?.id)
+  // viewingAsPassenger: ver docs/MODO_CONDUCTOR_PASAJERO.md.
+  const isDriver = useAppStore((s) => isDriverRole(s.user) && !s.viewingAsPassenger)
   const insets = useSafeAreaInsets()
   const alertsBadge =
     notificationUnreadCount > 0
@@ -56,7 +58,7 @@ export default function TabNavigator() {
         : notificationUnreadCount
       : undefined
 
-  const requestsUnreadCount = useRequestsBadgeCount(userId)
+  const requestsUnreadCount = useRequestsBadgeCount(userId, isDriver)
   const requestsBadge =
     requestsUnreadCount > 0
       ? requestsUnreadCount > 99

@@ -1,10 +1,9 @@
 import { useCallback, useState } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, Modal, TextInput, RefreshControl } from 'react-native'
+import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
 import { Text } from '../AppText'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
 import Icon from '../Icon'
-import KeyboardAvoidingScreen from '../KeyboardAvoidingScreen'
 import Illustration from '../illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
@@ -22,16 +21,12 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
     requests,
     loading,
     loadDriverFeed,
-    createOffer,
     acceptRequestDirect,
     dismissRequest,
   } = useAirportNegotiation()
 
   const [refreshing, setRefreshing] = useState(false)
   const [processing, setProcessing] = useState<string | null>(null)
-  const [showProposalModal, setShowProposalModal] = useState(false)
-  const [selectedRequest, setSelectedRequest] = useState<AirportRequest | null>(null)
-  const [proposedPrice, setProposedPrice] = useState('')
 
   const availableRequests = requests.filter((r) => r.status === 'pending')
 
@@ -53,30 +48,11 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   }
 
   const handlePropose = (item: AirportRequest) => {
-    setSelectedRequest(item)
-    setProposedPrice(item.offered_price.toString())
-    setShowProposalModal(true)
-  }
-
-  const handleSubmitProposal = async () => {
-    if (!user?.id || !selectedRequest) return
-    const price = parseInt(proposedPrice.replace(/\D/g, ''), 10)
-    if (!price || price <= 0) {
-      showError('Ingresa un precio válido')
-      return
-    }
-    try {
-      setProcessing('proposal')
-      await createOffer(selectedRequest.id, user.id, price)
-      showSuccess('Tu propuesta fue enviada. El pasajero la verá al instante.')
-      setShowProposalModal(false)
-      setSelectedRequest(null)
-      setProposedPrice('')
-    } catch (err: any) {
-      showError(err.message || 'Error al enviar propuesta')
-    } finally {
-      setProcessing(null)
-    }
+    navigation.navigate('SetTripPrice', {
+      requestId: item.id,
+      mode: 'propose',
+      currentPrice: item.offered_price,
+    })
   }
 
   const handleAccept = (item: AirportRequest) => {
@@ -152,12 +128,14 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
               <Text style={styles.newPillText}>Nueva</Text>
             </View>
             <TouchableOpacity
+              style={styles.dismissBtn}
               onPress={() => handleDismiss(item)}
               disabled={!!processing}
               hitSlop={8}
               accessibilityLabel="No me interesa"
             >
-              <Icon name="X" size={16} color={COLORS.textTertiary} />
+              <Icon name="X" size={12} color={COLORS.white} />
+              <Text style={styles.dismissBtnText}>No me interesa</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -266,42 +244,6 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
         />
       )}
 
-      <Modal visible={showProposalModal} transparent animationType="slide" onRequestClose={() => setShowProposalModal(false)}>
-        <KeyboardAvoidingScreen measureKeyboard active={showProposalModal} style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Proponer precio</Text>
-            {selectedRequest && (
-              <Text style={styles.modalSub}>
-                Precio del pasajero: {formatPrice(selectedRequest.offered_price)}
-              </Text>
-            )}
-            <TextInput
-              style={styles.modalInput}
-              value={proposedPrice}
-              onChangeText={(t) => setProposedPrice(t.replace(/\D/g, ''))}
-              keyboardType="numeric"
-              placeholder="Tu precio"
-              placeholderTextColor={COLORS.textTertiary}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancel} onPress={() => setShowProposalModal(false)}>
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.modalConfirm}
-                onPress={handleSubmitProposal}
-                disabled={processing === 'proposal'}
-              >
-                {processing === 'proposal' ? (
-                  <ActivityIndicator color={COLORS.white} />
-                ) : (
-                  <Text style={styles.modalConfirmText}>Enviar propuesta</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingScreen>
-      </Modal>
     </View>
   )
 }
@@ -346,6 +288,20 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
     color: COLORS.warningDark,
+  },
+  dismissBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: COLORS.textPrimary,
+    borderRadius: RADIUS.full,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  dismissBtnText: {
+    fontSize: TYPOGRAPHY.size.xs,
+    fontWeight: '700',
+    color: COLORS.white,
   },
   route: {
     fontSize: TYPOGRAPHY.size.md,
@@ -444,50 +400,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: `${COLORS.textPrimary}73`,
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: COLORS.white,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    paddingBottom: SPACING.xxl,
-  },
-  modalTitle: {
-    fontSize: TYPOGRAPHY.size.lg,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.sm,
-  },
-  modalSub: { fontSize: 13, color: COLORS.textSecondary, marginBottom: SPACING.md },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    padding: SPACING.md,
-    fontSize: TYPOGRAPHY.size.md,
-    fontWeight: '600',
-    marginBottom: SPACING.lg,
-  },
-  modalActions: { flexDirection: 'row', gap: SPACING.md },
-  modalCancel: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  modalCancelText: { fontWeight: '600', color: COLORS.textSecondary },
-  modalConfirm: {
-    flex: 1,
-    paddingVertical: SPACING.md,
-    alignItems: 'center',
-    borderRadius: RADIUS.md,
-    backgroundColor: COLORS.primary,
-  },
-  modalConfirmText: { fontWeight: '700', color: COLORS.white },
 })

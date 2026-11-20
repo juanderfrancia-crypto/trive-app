@@ -152,7 +152,13 @@ export const useAirportNegotiation = () => {
         console.error(' [HOOK] Error enviando notificación de publicación:', notifErr)
       })
       console.log(' [HOOK] Notificación de viaje publicado enviada')
-      
+
+      // Avisa a los conductores del municipio -- antes nadie se enteraba por
+      // Alertas, solo veían la ruta si entraban a la pestaña "Nuevas" por su cuenta.
+      supabase.rpc('notify_drivers_new_airport_request', { p_request_id: newRequest.id }).then(({ error: notifyErr }) => {
+        if (notifyErr) console.error(' [HOOK] Error avisando a conductores:', notifyErr)
+      })
+
       return newRequest
     } catch (err: any) {
       const message = err.message || 'Error al publicar solicitud'

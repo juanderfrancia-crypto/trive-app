@@ -35,7 +35,14 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
   const user = useAppStore(state => state.user);
   const isUserDriver = user?.id === driverId;
 
-  // Estado del hilo: abierto si la oferta está pendiente o aceptada y la solicitud sigue activa
+  // Estado del hilo: abierto solo si la oferta ya fue ACEPTADA (no basta con que
+  // esté pendiente) y la solicitud sigue activa. Antes bastaba con una oferta
+  // pendiente para abrir el chat -- pero ofertar es gratis y sin compromiso, así
+  // que un conductor podía ofertar cualquier cosa solo para conseguir el
+  // contacto del pasajero por chat y cerrar el viaje por fuera de la app, sin
+  // pagar nunca la comisión (que solo se cobra al aceptar). El chat de viajes
+  // normales ya exige una reserva confirmada de verdad; esto iguala ese mismo
+  // criterio aquí.
   const loadThreadState = useCallback(async () => {
     const [{ data: offer }, { data: request }] = await Promise.all([
       supabase
@@ -53,7 +60,7 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
         .maybeSingle(),
     ]);
 
-    const offerActive = offer?.status === 'pending' || offer?.status === 'accepted';
+    const offerActive = offer?.status === 'accepted';
     const requestActive = !!request && request.status !== 'cancelled' && request.status !== 'completed';
     setIsOpen(offerActive && requestActive);
   }, [requestId, driverId]);
