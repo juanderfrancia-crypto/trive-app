@@ -376,8 +376,8 @@ const styles = StyleSheet.create({
 
   pill: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs, borderRadius: RADIUS.full },
   pillText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold },
-  pillOk: { backgroundColor: COLORS.successLight },
-  pillOkText: { color: COLORS.success },
+  pillOk: { backgroundColor: COLORS.primaryTint },
+  pillOkText: { color: COLORS.primary },
   pillWarn: { backgroundColor: COLORS.warningLight },
   pillWarnText: { color: COLORS.warningDark },
   pillNeutral: { backgroundColor: COLORS.surfaceAlt },

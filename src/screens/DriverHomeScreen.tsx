@@ -127,8 +127,9 @@ export default function DriverHomeScreen() {
             <Icon name="Car" size={13} color={COLORS.primary} />
             <Text style={styles.modeText}>Conductor</Text>
           </View>
-          <TouchableOpacity onPress={() => setViewingAsPassenger(true)} activeOpacity={0.7}>
-            <Text style={styles.switchModeLinkText}>Usar como pasajero</Text>
+          <TouchableOpacity style={styles.switchModePill} onPress={() => setViewingAsPassenger(true)} activeOpacity={0.85}>
+            <Icon name="User" size={13} color={COLORS.white} />
+            <Text style={styles.switchModeText}>Usar como pasajero</Text>
           </TouchableOpacity>
         </View>
 
@@ -178,7 +179,7 @@ export default function DriverHomeScreen() {
                       {route.status === 'in_progress' ? ' · En curso' : ''}
                     </Text>
                   </View>
-                  <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
+                  <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} style={styles.rideChevron} />
                 </TouchableOpacity>
               )
             })}
@@ -287,7 +288,7 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary },
-  name: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3 },
+  name: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primaryTint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
@@ -301,7 +302,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full,
   },
   modeText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
-  switchModeLinkText: { fontSize: 13, fontWeight: '600', color: COLORS.primary, textDecorationLine: 'underline' },
+  switchModePill: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs,
+    backgroundColor: COLORS.primary, paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full,
+  },
+  switchModeText: { fontSize: 13, fontWeight: '700', color: COLORS.white },
 
   sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary, marginTop: SPACING.xl },
   emptyToday: { alignItems: 'center', marginTop: SPACING.sm, paddingVertical: SPACING.md },
@@ -326,6 +331,7 @@ const styles = StyleSheet.create({
   rideMiddle: { flex: 1, justifyContent: 'center', paddingVertical: SPACING.sm, paddingHorizontal: SPACING.lg },
   rideRoute: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  rideChevron: { alignSelf: 'center', marginRight: SPACING.md },
 
   walletCard: { ...SHADOWS.md, shadowColor: COLORS.primary, shadowOpacity: 0.28, marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary },
   walletLabel: { fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85 },

@@ -327,56 +327,53 @@ export default function PassengerHomeScreen() {
 
         {upcomingTrip && (
           <TouchableOpacity style={styles.tripCard} onPress={goToTripStatus} activeOpacity={0.92}>
-            <View style={styles.tripHeader}>
-              <Text style={styles.tripLabel}>Tu próximo viaje</Text>
-              <View style={styles.countdown}>
-                <Icon name="Clock" size={12} color={COLORS.textPrimary} />
-                <Text style={styles.countdownText}>Sale en {formatCountdown(upcomingTrip.minutesUntil)}</Text>
+            <View style={styles.tripHeaderRow}>
+              <Svg width={56} height={44} viewBox="0 0 56 40" style={styles.tripIcon}>
+                <Ellipse cx="28" cy="36" rx="22" ry="2.5" fill={COLORS.primary} opacity={0.15} />
+                <Path d="M6 26 Q6 20 12 19 L18 13 Q21 9 28 9 L36 9 Q41 9 44 13 L49 19 Q53 20 53 26 L53 30 Q53 33 50 33 L9 33 Q6 33 6 30 Z" fill={COLORS.primary} />
+                <Path d="M20 19 Q23 14 28 14 L36 14 Q40 14 42 19 Z" fill={COLORS.primaryTint} />
+                <Circle cx="16" cy="33" r="5" fill={COLORS.textPrimary} />
+                <Circle cx="16" cy="33" r="2" fill={COLORS.primaryTint} />
+                <Circle cx="43" cy="33" r="5" fill={COLORS.textPrimary} />
+                <Circle cx="43" cy="33" r="2" fill={COLORS.primaryTint} />
+                <Ellipse cx="50" cy="24" rx="2" ry="1.5" fill={COLORS.white} />
+              </Svg>
+              <View style={styles.tripHeaderText}>
+                <Text style={styles.tripRouteTitle} numberOfLines={1}>{upcomingTrip.origin} → {upcomingTrip.destination}</Text>
+                <Text style={styles.tripCountdownSub}>
+                  {upcomingTrip.minutesUntil <= 1 ? 'En camino' : `Sale en ${formatCountdown(upcomingTrip.minutesUntil)}`}
+                </Text>
               </View>
             </View>
-            <Text style={styles.tripRoute} numberOfLines={1}>{upcomingTrip.origin} → {upcomingTrip.destination}</Text>
 
-            <View style={styles.driverVehicleCard}>
-              <View style={styles.driverVehicleCardRow}>
-                {upcomingTrip.driverPhotoUrl ? (
-                  <Image source={{ uri: upcomingTrip.driverPhotoUrl }} style={styles.tripDriverAvatar} />
-                ) : (
-                  <View style={styles.tripDriverAvatar}>
-                    <Text style={styles.tripDriverAvatarText}>{upcomingTrip.driverName.charAt(0).toUpperCase()}</Text>
-                  </View>
-                )}
-                <Text style={styles.tripDriver} numberOfLines={1}>
-                  {upcomingTrip.driverName} · ★ {upcomingTrip.driverRating.toFixed(1)}
+            <View style={styles.tripDetails}>
+              <View style={styles.tripVehicleRow}>
+                <Text style={styles.tripDriverLine} numberOfLines={1}>
+                  {upcomingTrip.driverName} te lleva · ★ {upcomingTrip.driverRating.toFixed(1)} · Asiento {upcomingTrip.seatNumber}
                 </Text>
-                <View style={styles.seatBadge}>
-                  <Text style={styles.seatBadgeText}>Asiento {upcomingTrip.seatNumber}</Text>
-                </View>
+                {!(upcomingTrip.vehicleMake || upcomingTrip.vehiclePlate) && (
+                  <TouchableOpacity style={styles.sosBtn} onPress={handleSOS} activeOpacity={0.85}>
+                    <Text style={styles.sosBtnText}>Enviar SOS</Text>
+                  </TouchableOpacity>
+                )}
               </View>
               {(upcomingTrip.vehicleMake || upcomingTrip.vehiclePlate) && (
-                <>
-                  <View style={styles.driverVehicleCardDivider} />
-                  <View style={styles.driverVehicleCardRow}>
-                    {upcomingTrip.vehiclePhotoUrl ? (
-                      <Image source={{ uri: upcomingTrip.vehiclePhotoUrl }} style={styles.tripVehicleThumb} />
-                    ) : (
-                      <View style={styles.tripVehicleThumb}>
-                        <Icon name="Car" size={20} color={COLORS.primary} />
-                      </View>
-                    )}
-                    <Text style={styles.tripVehicleText} numberOfLines={1}>
-                      {[upcomingTrip.vehicleMake, upcomingTrip.vehicleModel, upcomingTrip.vehicleColor].filter(Boolean).join(' ')}
-                      {upcomingTrip.vehiclePlate ? ` · Placa ${upcomingTrip.vehiclePlate}` : ''}
-                    </Text>
-                  </View>
-                </>
+                <View style={styles.tripVehicleRow}>
+                  {upcomingTrip.vehiclePhotoUrl ? (
+                    <Image source={{ uri: upcomingTrip.vehiclePhotoUrl }} style={styles.tripVehicleThumb} />
+                  ) : (
+                    <Icon name="Car" size={16} color={COLORS.primary} />
+                  )}
+                  <Text style={styles.tripVehicleText} numberOfLines={1}>
+                    {[upcomingTrip.vehicleMake, upcomingTrip.vehicleModel, upcomingTrip.vehicleColor].filter(Boolean).join(' ')}
+                    {upcomingTrip.vehiclePlate ? ` · Placa ${upcomingTrip.vehiclePlate}` : ''}
+                  </Text>
+                  <TouchableOpacity style={styles.sosBtn} onPress={handleSOS} activeOpacity={0.85}>
+                    <Text style={styles.sosBtnText}>Enviar SOS</Text>
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
-
-            <TouchableOpacity style={styles.sosRow} onPress={handleSOS} activeOpacity={0.75}>
-              <Icon name="CircleAlert" size={16} color={COLORS.textPrimary} />
-              <Text style={styles.sosText}>Enviar mi ubicación por SOS</Text>
-              <Icon name="ChevronRight" size={14} color={COLORS.textPrimary} />
-            </TouchableOpacity>
           </TouchableOpacity>
         )}
 
@@ -424,7 +421,11 @@ export default function PassengerHomeScreen() {
                   <Text style={styles.rideDestination} numberOfLines={1}>Hacia {ride.destination}</Text>
                   <Text style={styles.rideDriver} numberOfLines={1}>{ride.driver_name} · {ride.driver_rating ? `★ ${Number(ride.driver_rating).toFixed(1)}` : 'Nuevo'}</Text>
                   <Text style={styles.rideSeats} numberOfLines={1}>
-                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} · Sale en {formatCountdown(Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000)))}
+                    {ride.available_seats} {ride.available_seats === 1 ? 'cupo libre' : 'cupos libres'} ·{' '}
+                    {(() => {
+                      const mins = Math.max(0, Math.round((new Date(ride.departure_time).getTime() - Date.now()) / 60000))
+                      return mins <= 0 ? 'En camino' : `Sale en ${formatCountdown(mins)}`
+                    })()}
                   </Text>
                 </View>
                 <Text style={styles.ridePrice}>{formatPrecio(ride.price_per_seat)}</Text>
@@ -545,41 +546,24 @@ const styles = StyleSheet.create({
   confirmBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.white },
 
   tripCard: {
-    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primary,
+    marginTop: SPACING.lg, borderRadius: RADIUS.lg, padding: SPACING.lg, backgroundColor: COLORS.primaryTint,
   },
-  tripHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  tripLabel: { fontSize: 12, fontWeight: '700', color: COLORS.primaryTint, textTransform: 'uppercase', letterSpacing: 0.5 },
-  countdown: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.xs, backgroundColor: COLORS.white,
-    paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.full,
+  tripHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md },
+  tripIcon: { flexShrink: 0 },
+  tripHeaderText: { flex: 1 },
+  tripRouteTitle: { fontSize: 16, fontWeight: '800', color: COLORS.textPrimary },
+  tripCountdownSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  sosBtn: {
+    marginLeft: 'auto', flexShrink: 0,
+    paddingHorizontal: SPACING.sm, paddingVertical: 3,
+    borderRadius: RADIUS.sm, backgroundColor: COLORS.primary,
   },
-  countdownText: { fontSize: 12, fontWeight: '700', color: COLORS.textPrimary },
-  tripRoute: { fontSize: 18, fontWeight: '800', color: COLORS.white, marginTop: SPACING.sm },
-  driverVehicleCard: {
-    marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden',
-    shadowColor: COLORS.textPrimary, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1,
-  },
-  driverVehicleCardRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, padding: SPACING.sm + 2 },
-  driverVehicleCardDivider: { height: 1, backgroundColor: COLORS.borderLight },
-  tripDriverAvatar: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0,
-  },
-  tripDriverAvatarText: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.primary },
-  tripDriver: { ...TYPOGRAPHY.body2, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textPrimary, flex: 1 },
-  seatBadge: { backgroundColor: COLORS.primaryTint, paddingHorizontal: SPACING.sm, paddingVertical: SPACING.xs, borderRadius: RADIUS.sm },
-  seatBadgeText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
-  tripVehicleThumb: {
-    width: 52, height: 40, borderRadius: RADIUS.sm + 1, backgroundColor: COLORS.surfaceAlt,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0,
-  },
-  tripVehicleText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary, flex: 1 },
-  sosRow: {
-    marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
-    backgroundColor: COLORS.white, borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.sm + 2, paddingVertical: SPACING.sm,
-  },
-  sosText: { flex: 1, fontSize: 13, fontWeight: '600', color: COLORS.textPrimary },
+  sosBtnText: { fontSize: 11, fontWeight: '700', color: COLORS.white },
+  tripDetails: { marginTop: SPACING.md, gap: SPACING.xs },
+  tripDriverLine: { fontSize: 13, fontWeight: '700', color: COLORS.textPrimary, flex: 1 },
+  tripVehicleRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.xs },
+  tripVehicleThumb: { width: 28, height: 22, borderRadius: RADIUS.sm, flexShrink: 0 },
+  tripVehicleText: { fontSize: 13, color: COLORS.textSecondary, flex: 1 },
 
   sectionHead: { marginTop: SPACING.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
