@@ -16,6 +16,13 @@ import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
 const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
 
+// departure_time se guarda como hora de Bogotá sin zona (ver nota en utils/serverDate.ts),
+// por eso se compara con new Date() normal, no con parseServerDate. Una ruta puede seguir
+// en status 'scheduled' mucho después de su hora de salida si nadie la marcó "en curso"
+// o "completada" -- sin este chequeo, una notificación vieja de "nueva ruta publicada"
+// seguía llevando a reservar asientos de un viaje que ya salió.
+const hasDeparted = (departureTime: string) => new Date(departureTime).getTime() <= Date.now()
+
 // Reserva3: elegir asientos en vivo. Los asientos ocupados vienen del servidor
 // y se recargan cuando la ruta cambia.
 export default function SeatSelectionScreen() {
@@ -102,7 +109,7 @@ export default function SeatSelectionScreen() {
 
       setRouteDetails(currentRoute)
 
-      if (currentRoute.status !== 'scheduled') {
+      if (currentRoute.status !== 'scheduled' || hasDeparted(currentRoute.departure_time)) {
         if (!skipValidation) {
           errorHandler.handle(
             'Esta ruta ya no está disponible para reservas. Por favor selecciona otra.',
@@ -296,7 +303,7 @@ export default function SeatSelectionScreen() {
         return
       }
 
-      if (currentRoute.status !== 'scheduled') {
+      if (currentRoute.status !== 'scheduled' || hasDeparted(currentRoute.departure_time)) {
         errorHandler.handle(
           'Esta ruta ya no está disponible para reservas',
           ErrorType.VALIDATION,

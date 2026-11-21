@@ -14,7 +14,7 @@ import { isDriverRole } from '../utils/userRole'
 import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
-import { showError } from '../utils/showError'
+import { showError, showInfo } from '../utils/showError'
 import { supabase } from '../services/supabase'
 import { parseServerDate } from '../utils/serverDate'
 
@@ -297,7 +297,7 @@ export default function NotificationsScreen() {
     )
   }
 
-  const handlePress = (item: NotificationWithSender) => {
+  const handlePress = async (item: NotificationWithSender) => {
     if (selectionMode) { toggleSelect(item.id); return }
     if (!item.is_read) markAsRead(item.id)
 
@@ -305,6 +305,20 @@ export default function NotificationsScreen() {
     if (route?.screenName) {
       if (route.screenName === 'SeatSelection') {
         const { routeId, origin, destination } = route.params as { routeId: string; origin?: string; destination?: string }
+        // Una notificación de "nueva ruta publicada" puede ser de días atrás y esa
+        // ruta ya haberse realizado -- una sola consulta aquí (no por cada notificación
+        // de la lista) evita entrar a Seleccionar asientos solo para rebotar de inmediato
+        // con un error, que se siente como que la app está rota.
+        const { data } = await supabase
+          .from('routes')
+          .select('status, departure_time')
+          .eq('id', routeId)
+          .maybeSingle()
+        const departed = !data || data.status !== 'scheduled' || new Date(data.departure_time).getTime() <= Date.now()
+        if (departed) {
+          showInfo('Este viaje ya se realizó')
+          return
+        }
         setSelectedRoute({ id: routeId, origin, destination })
         ;(navigation as any).navigate('SeatSelection')
       } else if (route.screenName === 'Main') {
