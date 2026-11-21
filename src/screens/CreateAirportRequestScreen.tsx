@@ -5,7 +5,6 @@ import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
-import DepthCard from '../components/DepthCard'
 import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
@@ -248,7 +247,7 @@ export default function CreateAirportRequestScreen() {
         </View>
 
         <ScrollView contentContainerStyle={s.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <DepthCard style={s.formWrap} contentStyle={s.formContent}>
+          <View style={[s.formWrap, s.formContent]}>
             <View style={s.field}>
               <Text style={s.label}>Origen</Text>
               <View style={s.inputRow}>
@@ -511,7 +510,7 @@ export default function CreateAirportRequestScreen() {
                 onFocus={() => setShowDropdown(false)}
               />
             </View>
-          </DepthCard>
+          </View>
 
           <TouchableOpacity
             style={[s.publishBtn, loading && s.publishBtnDisabled]}
