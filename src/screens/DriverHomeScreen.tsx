@@ -348,8 +348,9 @@ const styles = StyleSheet.create({
   primaryCtaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.white },
   primaryCtaSub: { fontSize: 13, color: COLORS.white, opacity: 0.75, marginTop: 2 },
 
+  // Ya tenía borde, se le quita la sombra además (mismo motivo que en
+  // PassengerTripsScreen.tsx) -- ya alcanza a notarse como contorno sin sombra.
   card: {
-    ...SHADOWS.sm,
     marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
     backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
   },

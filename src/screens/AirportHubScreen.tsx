@@ -171,9 +171,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: SPACING.xs,
   },
+  // Sin sombra (ver PassengerTripsScreen.tsx): la elevation de Android puede
+  // pintar solo la sombra -- negra por defecto -- un instante antes que el
+  // fondo blanco durante una transición de pantalla.
   segItemActive: {
     backgroundColor: COLORS.white,
-    ...SHADOWS.xs,
   },
   segText: {
     fontSize: 13,

@@ -6,8 +6,13 @@ import { COLORS } from '../theme/theme'
 
 const navigationTheme = {
   ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: COLORS.white, card: COLORS.white },
+  colors: { ...DefaultTheme.colors, background: COLORS.background, card: COLORS.background },
 }
+
+// Mismo color en las 3 capas (tema de navegación, contentStyle del stack, y el
+// propio fondo de cada pantalla) para que no se vea un destello de otro color
+// en el instante entre que una pantalla termina de salir y la otra de entrar.
+const commonScreenOptions = { headerShown: false, contentStyle: { backgroundColor: COLORS.background } }
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import TabNavigator from './TabNavigator'
 import LoginPhoneScreen from '../screens/LoginPhoneScreen'
@@ -236,23 +241,23 @@ export default function AppNavigator() {
   return (
     <NavigationContainer theme={navigationTheme}>
       {needsPhoneVerification ? (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={commonScreenOptions}>
           <Stack.Screen name="VerifyPhone" component={VerifyPhoneScreen} />
         </Stack.Navigator>
       ) : needsCedula ? (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={commonScreenOptions}>
           <Stack.Screen name="CompleteCedula" component={CompleteCedulaScreen} />
         </Stack.Navigator>
       ) : needsDeviceVerification ? (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
+        <Stack.Navigator screenOptions={commonScreenOptions}>
           <Stack.Screen name="DeviceVerification" component={DeviceVerificationScreen} />
         </Stack.Navigator>
       ) : isUserAuthenticated ? (
         <NotificationsProvider userId={session?.user?.id}>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>{authStack}</Stack.Navigator>
+          <Stack.Navigator screenOptions={commonScreenOptions}>{authStack}</Stack.Navigator>
         </NotificationsProvider>
       ) : (
-        <Stack.Navigator screenOptions={{ headerShown: false }}>{guestStack}</Stack.Navigator>
+        <Stack.Navigator screenOptions={commonScreenOptions}>{guestStack}</Stack.Navigator>
       )}
     </NavigationContainer>
   )

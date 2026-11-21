@@ -286,7 +286,8 @@ const styles = StyleSheet.create({
 
   section: { ...TYPOGRAPHY.bold, fontSize: 11, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: SPACING.xl, marginBottom: SPACING.sm },
 
-  card: { ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg },
+  // Borde en vez de sombra (mismo motivo que en PassengerProfileView.tsx).
+  card: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   cardMeta: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary, marginTop: 2 },
@@ -319,7 +320,7 @@ const styles = StyleSheet.create({
   rowAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: SPACING.xs, marginTop: SPACING.md, paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   rowActionText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
-  list: { ...SHADOWS.sm, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  list: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md + 2, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   listText: { flex: 1 },
   listTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },

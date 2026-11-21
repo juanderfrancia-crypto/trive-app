@@ -190,8 +190,12 @@ const styles = StyleSheet.create({
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: SPACING.sm },
   linkText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
+  // Borde en vez de sombra: es de las primeras tarjetas visibles al entrar a
+  // Perfil, la elevation de Android puede parpadear en negro durante la
+  // transición de pestaña antes de asentarse.
   card: {
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.md,
     backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg,
   },
@@ -207,7 +211,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl, fontSize: 13, fontWeight: '700', color: COLORS.textSecondary,
     textTransform: 'uppercase', letterSpacing: 0.8,
   },
-  group: { ...SHADOWS.sm, marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  group: { borderWidth: 1, borderColor: COLORS.border, marginTop: SPACING.sm + 2, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
   menuRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg },
   menuText: { flex: 1 },
   menuTitle: { fontSize: 15, fontWeight: '700', color: COLORS.textPrimary },

@@ -1,4 +1,5 @@
 import "react-native-gesture-handler";
+import { enableScreens } from "react-native-screens";
 import { useState, useEffect } from "react";
 import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
@@ -17,6 +18,12 @@ import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
 import { initRemoteConfig, isMaintenanceMode, getMaintenanceMessage } from "./src/services/remoteConfig";
 import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold } from "@expo-google-fonts/manrope";
+
+// react-native-screens está instalado pero nunca se activaba -- sin esto, los
+// navegadores (stack, tabs, drawer) no usan las vistas nativas optimizadas y
+// pierden varias optimizaciones reales (incluida detachInactiveScreens del
+// TabNavigator, que no hace nada sin esta llamada).
+enableScreens();
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}

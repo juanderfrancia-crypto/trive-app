@@ -110,7 +110,7 @@ export default function ProfileScreen() {
   // Configure StatusBar when profile screen gets focus
   useFocusEffect(useCallback(() => {
     StatusBar.setBarStyle('dark-content')
-    StatusBar.setBackgroundColor(COLORS.white)
+    StatusBar.setBackgroundColor(COLORS.background)
   }, []))
 
   // ── Focus refresh ──────────────────────────────────────────────────────────

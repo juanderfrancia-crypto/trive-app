@@ -76,6 +76,12 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
+      // Por defecto en Android las pestañas inactivas se desprenden de la vista
+      // nativa para ahorrar memoria, y se vuelven a montar al volver a ellas --
+      // con el corte instantáneo de antes no se notaba, pero con la transición
+      // (fade/shift) se alcanza a ver ese remontaje a medio camino. Se desactiva
+      // para que las 5 pestañas se queden "calientes" (son pocas y livianas).
+      detachInactiveScreens={false}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: IconName = 'House'
@@ -120,8 +126,16 @@ export default function TabNavigator() {
         },
         tabBarIconSize: 22,
         sceneContainerStyle: {
-          backgroundColor: COLORS.surface,
+          backgroundColor: COLORS.background,
         },
+        // Se probaron 'shift' y 'fade' -- cualquier animación, por corta que sea,
+        // obliga a un mínimo de tiempo viendo la pantalla a medio aparecer, lo cual
+        // ya se siente como demora. Apps como WhatsApp/Facebook no animan el cambio
+        // de pestaña -- cortan al instante y se sienten fluidas porque no hay nada
+        // roto que la animación tuviera que disimular. Ahora que se corrigieron las
+        // causas reales del "salto" (barra de estado y sombras desalineadas), 'none'
+        // debería sentirse instantáneo sin volver a verse mal.
+        animation: 'none',
         // El ícono activo se ve sobre la pastilla blanca (por eso usa tabBarActiveTintColor,
         // azul primario, ahí sí se lee bien) — pero el texto de la pestaña va directo sobre
         // el fondo azul de la barra, sin pastilla debajo. Si usara el mismo tinte azul,

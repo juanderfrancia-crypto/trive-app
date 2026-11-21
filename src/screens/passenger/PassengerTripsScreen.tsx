@@ -334,8 +334,12 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: SPACING.xs,
   },
+  // Sin sombra: la elevation de Android (base de SHADOWS.*) a veces pinta solo
+  // la sombra -- que por defecto tira a negro -- un instante antes que el fondo
+  // blanco, durante una transición de pantalla. Se ve como un cuadro negro que
+  // "cae" a la forma correcta. El resto de pestañas segmentadas de la app
+  // (DriverTripsScreen, CreateAirportRequestScreen) ya no llevan sombra aquí.
   segmentActive: {
-    ...SHADOWS.xs,
     flex: 1,
     height: 42,
     borderRadius: RADIUS.md,
@@ -349,8 +353,11 @@ const styles = StyleSheet.create({
 
   loader: { marginTop: SPACING.xxl },
 
+  // Borde en vez de sombra (mismo motivo que segmentActive más arriba): es la
+  // primera tarjeta visible al entrar a la pestaña, mayor riesgo de notarse.
   card: {
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     padding: SPACING.lg,
