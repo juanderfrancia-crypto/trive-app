@@ -136,10 +136,11 @@ export function SkeletonChatCard() {
   )
 }
 
-// Matches TripHistoryTab row: ícono + nombre/badge + ruta + precio/fecha + botón de calificar
+// Matches TripHistoryTab row (ahora fila plana con línea divisoria, sin
+// tarjeta/sombra): ícono + nombre/badge + ruta + precio/fecha + botón de calificar
 export function SkeletonHistoryCard() {
   return (
-    <View style={cards.chatRow}>
+    <View style={cards.historyRow}>
       <SkeletonItem width={50} height={50} borderRadius={RADIUS.lg} marginBottom={0} />
       <View style={cards.chatContent}>
         <View style={cards.rowBetween}>
@@ -172,8 +173,14 @@ export function SkeletonCardList({
     history: SkeletonHistoryCard,
   }[variant]
 
+  // "history" ya no es una lista de tarjetas separadas por espacio, sino filas
+  // contiguas separadas por su propia línea divisoria (igual que el contenido
+  // real) -- sin esto, los esqueletos se veían con un espacio entre ellos que
+  // el contenido real ya no tiene.
+  const containerStyle = variant === 'history' ? styles.flatListContainer : styles.cardListContainer
+
   return (
-    <View style={styles.cardListContainer}>
+    <View style={containerStyle}>
       {Array.from({ length: count }).map((_, i) => (
         <Card key={i} />
       ))}
@@ -191,6 +198,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     gap: SPACING.md,
+  },
+  flatListContainer: {
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
   },
   skeleton: {
     backgroundColor: COLORS.border,
@@ -232,6 +243,14 @@ const cards = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: SPACING.md,
     ...SHADOWS.md,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   chatContent: { flex: 1, gap: SPACING.xs },
 })
