@@ -172,7 +172,7 @@ export default function AirportRequestDetailsScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={[styles.flatCard, styles.section]}>
+        <View style={[styles.flatCard, styles.section, styles.cardContent]}>
           <View style={styles.routeRows}>
             <View style={styles.routeRow}>
               <Icon name="CircleDot" size={16} color={COLORS.primary} />
