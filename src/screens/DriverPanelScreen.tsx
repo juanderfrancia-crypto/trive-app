@@ -397,7 +397,7 @@ export default function DriverPanelScreen() {
       case 'in_progress':
         return { label: 'En curso', color: COLORS.warning, icon: 'Car' }
       case 'completed':
-        return { label: 'Completado', color: COLORS.success, icon: 'CircleCheck' }
+        return { label: 'Completado', color: COLORS.primary, icon: 'CircleCheck' }
       case 'cancelled':
         return { label: 'Cancelado', color: COLORS.error, icon: 'CircleX' }
       default:
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   },
   confirmedBadge: {
     width: 24, height: 24, borderRadius: RADIUS.full,
-    backgroundColor: COLORS.success + '20',
+    backgroundColor: COLORS.primary + '20',
     justifyContent: 'center', alignItems: 'center',
   },
   passengerActions: { flexDirection: 'row', gap: SPACING.xs },

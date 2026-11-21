@@ -83,7 +83,7 @@ const tileOf = (type: NotifType): { icon: IconName; bg: string; fg: string } => 
     case 'review_pending':
     case 'review_received':
     case 'trip_rated':
-      return { icon: 'Star', bg: COLORS.successLight, fg: COLORS.success }
+      return { icon: 'Star', bg: COLORS.primaryTint, fg: COLORS.primary }
     case 'message':
       return { icon: 'User', bg: COLORS.primaryTint, fg: COLORS.primary }
     case 'profile_incomplete':
@@ -619,7 +619,7 @@ export default function NotificationsScreen() {
                   {(_dIsTripCompleted || _dIsReviewPending) && _dBookingId && _dDriverId && (
                     alreadyRated ? (
                       <View style={styles.alreadyRatedBadge}>
-                        <Icon name="CircleCheck" size={16} color={COLORS.success} />
+                        <Icon name="CircleCheck" size={16} color={COLORS.primary} />
                         <Text style={styles.alreadyRatedText}>Ya calificaste este viaje</Text>
                       </View>
                     ) : (
@@ -999,7 +999,7 @@ const styles = StyleSheet.create({
   alreadyRatedBadge: {
     marginTop: SPACING.lg,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.successLight,
+    backgroundColor: COLORS.primaryTint,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
   alreadyRatedText: {
     ...TYPOGRAPHY.bodyMedium,
     fontWeight: TYPOGRAPHY.weight.bold,
-    color: COLORS.success,
+    color: COLORS.primary,
   },
   replyBar: {
     flexDirection: 'row',

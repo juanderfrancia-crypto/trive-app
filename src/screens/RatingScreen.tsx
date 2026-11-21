@@ -268,7 +268,7 @@ const s = StyleSheet.create({
     borderWidth: 0,
   },
   toggleButtonActiveYes: {
-    backgroundColor: COLORS.success,
+    backgroundColor: COLORS.primary,
     borderWidth: 0,
   },
   toggleButtonText: {

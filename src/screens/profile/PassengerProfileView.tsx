@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
   cardText: { flex: 1 },
   cardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
   cardSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  pillOk: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.successLight },
-  pillOkText: { fontSize: 12, fontWeight: '700', color: COLORS.success },
+  pillOk: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.primaryTint },
+  pillOkText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
   pillWarn: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.xs + 2, borderRadius: RADIUS.full, backgroundColor: COLORS.warningLight },
   pillWarnText: { fontSize: 12, fontWeight: '700', color: COLORS.warningDark },
 

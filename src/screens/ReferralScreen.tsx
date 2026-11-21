@@ -219,7 +219,7 @@ export default function ReferralScreen() {
                 </View>
                 {r.bonus_earned ? (
                   <View style={styles.activePill}>
-                    <Icon name="CircleCheck" size={13} color={COLORS.success} />
+                    <Icon name="CircleCheck" size={13} color={COLORS.primary} />
                     <Text style={styles.activePillText}>+$2.500</Text>
                   </View>
                 ) : (
@@ -335,10 +335,10 @@ const styles = StyleSheet.create({
   referredDate:    { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
   activePill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: COLORS.successLight, borderRadius: RADIUS.full,
+    backgroundColor: COLORS.primaryTint, borderRadius: RADIUS.full,
     paddingHorizontal: 8, paddingVertical: 4,
   },
-  activePillText:  { fontSize: 11, fontWeight: '700', color: COLORS.success },
+  activePillText:  { fontSize: 11, fontWeight: '700', color: COLORS.primary },
   pendingPill: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     backgroundColor: COLORS.warningLight, borderRadius: RADIUS.full,

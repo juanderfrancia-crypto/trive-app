@@ -363,7 +363,7 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
             </TouchableOpacity>
           ) : !isDriver && item.hasRated ? (
             <View style={s.ratedBadge}>
-              <Icon name="CircleCheck" size={12} color={COLORS.success} />
+              <Icon name="CircleCheck" size={12} color={COLORS.primary} />
               <Text style={s.ratedText}>Calificado</Text>
             </View>
           ) : canRatePassengers ? (
@@ -377,7 +377,7 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
             </TouchableOpacity>
           ) : isDriver && status === 'completed' && item.hasRated ? (
             <View style={s.ratedBadge}>
-              <Icon name="CircleCheck" size={12} color={COLORS.success} />
+              <Icon name="CircleCheck" size={12} color={COLORS.primary} />
               <Text style={s.ratedText}>Calificados</Text>
             </View>
           ) : null}
@@ -585,9 +585,9 @@ const s = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.successLight,
+    backgroundColor: COLORS.primaryTint,
   },
-  ratedText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.success },
+  ratedText: { ...TYPOGRAPHY.caption, fontWeight: '700', color: COLORS.primary },
 
   pagination: {
     flexDirection: 'row',

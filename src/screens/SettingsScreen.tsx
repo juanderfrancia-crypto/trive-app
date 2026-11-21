@@ -370,10 +370,10 @@ const styles = StyleSheet.create({
   rowSub: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: 2 },
 
   pill: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: RADIUS.full },
-  pillOk: { backgroundColor: COLORS.successLight },
+  pillOk: { backgroundColor: COLORS.primaryTint },
   pillWarn: { backgroundColor: COLORS.warningLight },
   pillText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.bold },
-  pillOkText: { color: COLORS.success },
+  pillOkText: { color: COLORS.primary },
   pillWarnText: { color: COLORS.warningDark },
 
   footer: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, textAlign: 'center', marginTop: SPACING.xl },

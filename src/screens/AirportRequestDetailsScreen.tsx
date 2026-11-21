@@ -224,7 +224,7 @@ export default function AirportRequestDetailsScreen() {
         {isCancelled ? null : acceptedOffer ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Viaje confirmado</Text>
-            <View style={[styles.flatCard, styles.cardContent, { borderColor: COLORS.success }]}>
+            <View style={[styles.flatCard, styles.cardContent, { borderColor: COLORS.primary }]}>
               <View style={styles.driverRow}>
                 {renderAvatar(acceptedOffer.driver_name, acceptedOffer.driver_avatar_url)}
                 <View style={styles.driverInfo}>
@@ -385,7 +385,7 @@ const styles = StyleSheet.create({
   ratingText: { ...TYPOGRAPHY.caption, fontWeight: TYPOGRAPHY.weight.semibold, color: COLORS.textSecondary },
 
   acceptedPrice: { alignItems: 'center', gap: 2 },
-  successText: { color: COLORS.success },
+  successText: { color: COLORS.primary },
 
   offerWrap: { marginBottom: SPACING.md },
   offerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: SPACING.md, marginBottom: SPACING.md },

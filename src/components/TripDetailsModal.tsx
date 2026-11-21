@@ -28,7 +28,7 @@ export const TripDetailsModal: React.FC<TripDetailsModalProps> = ({
 }) => {
   const getStatusInfo = () => {
     if (trip.status === 'accepted') {
-      return { label: 'Aceptado', sub: 'Viaje confirmado', icon: 'CircleCheck', color: COLORS.success, bg: COLORS.successLight }
+      return { label: 'Aceptado', sub: 'Viaje confirmado', icon: 'CircleCheck', color: COLORS.primary, bg: COLORS.primaryTint }
     }
     return { label: 'En Progreso', sub: 'En camino', icon: 'Navigation', color: COLORS.warning, bg: COLORS.warningLight }
   }

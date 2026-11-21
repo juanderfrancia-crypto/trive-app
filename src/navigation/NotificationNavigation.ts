@@ -162,8 +162,8 @@ export function getNotificationColor(notificationType: Notification['type']): st
   const colors: Record<string, string> = {
     trip_published: COLORS.primaryDark,
     offer_received: COLORS.warning,
-    offer_accepted: COLORS.success,
-    trip_confirmed: COLORS.success,
+    offer_accepted: COLORS.primary,
+    trip_confirmed: COLORS.primary,
     trip_started: COLORS.primary,
     trip_completed: COLORS.primary,
     trip_rated: COLORS.primary,

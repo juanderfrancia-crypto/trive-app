@@ -145,7 +145,7 @@ export default function RatePassengersScreen() {
                   <Text style={s.name} numberOfLines={1}>{p.name}</Text>
                   {p.alreadyRated ? (
                     <View style={s.ratedRow}>
-                      <Icon name="CircleCheck" size={13} color={COLORS.success} />
+                      <Icon name="CircleCheck" size={13} color={COLORS.primary} />
                       <Text style={s.ratedText}>Ya calificado</Text>
                     </View>
                   ) : (
@@ -210,7 +210,7 @@ const s = StyleSheet.create({
   starsRow: { flexDirection: 'row' },
   star: { marginRight: 4 },
   ratedRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  ratedText: { fontSize: 13, fontWeight: '600', color: COLORS.success },
+  ratedText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
   footer: {
     padding: SPACING.lg, borderTopWidth: 1, borderTopColor: COLORS.borderLight, gap: SPACING.sm,
   },
