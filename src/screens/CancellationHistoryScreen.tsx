@@ -94,11 +94,9 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
 
   card: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.lg,
     gap: SPACING.sm,
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm },

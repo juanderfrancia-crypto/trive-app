@@ -207,17 +207,15 @@ const styles = StyleSheet.create({
   listContainer: {
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
-    gap: SPACING.md,
     flexGrow: 1,
   },
   tripCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.background,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.md,
+    paddingVertical: SPACING.md,
     alignItems: 'center',
     gap: SPACING.md,
-    ...SHADOWS.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   tripLeft: { justifyContent: 'center' },
   statusBadge: {

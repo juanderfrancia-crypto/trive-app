@@ -199,11 +199,9 @@ const styles = StyleSheet.create({
   emptyText: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, textAlign: 'center' },
 
   sessionCard: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.lg,
   },
   sessionHeader: {
     flexDirection: 'row',

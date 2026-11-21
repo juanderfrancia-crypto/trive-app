@@ -188,14 +188,12 @@ const styles = StyleSheet.create({
   sectionSubtitle: { ...TYPOGRAPHY.labelMedium, color: COLORS.textSecondary, marginBottom: SPACING.md },
 
   activityCard: {
-    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.md,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   iconContainer: {
     width: 40,

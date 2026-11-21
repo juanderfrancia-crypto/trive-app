@@ -791,15 +791,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.lg,
     marginBottom: SPACING.sm,
   },
+  // Antes era una tarjeta flotante (sombra + esquinas redondeadas + fondo propio),
+  // ahora son filas planas separadas por una línea delgada -- mismo contenido,
+  // más liviano, igual que el resto de listas de la app.
   card: {
-    ...SHADOWS.sm,
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: SPACING.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   cardUnread: {
     backgroundColor: COLORS.surfaceAlt,

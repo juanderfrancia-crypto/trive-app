@@ -519,16 +519,15 @@ const s = StyleSheet.create({
   list: {
     paddingHorizontal: SPACING.lg,
     paddingBottom: 100,
-    gap: SPACING.md,
   },
 
+  // Antes era una tarjeta flotante (sombra + borde + esquinas redondeadas),
+  // ahora son filas planas separadas por una línea delgada -- mismo contenido,
+  // más liviano, igual que el resto de listas de la app.
   card: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingVertical: SPACING.md,
     gap: SPACING.sm,
   },
   cardHeader: {
