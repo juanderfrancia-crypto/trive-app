@@ -105,11 +105,32 @@ export default function AirportRequestDetailsScreen() {
     )
   }
 
-  if (loadingRequest || !request) {
+  if (loadingRequest) {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={COLORS.primary} />
+        </View>
+      </SafeAreaView>
+    )
+  }
+
+  // Una notificación de "Ver solicitud" puede apuntar a un requestId que ya no
+  // existe (nunca se borra de verdad, pero esto cubre cualquier caso raro: id
+  // inválido, error de red persistente, etc.) -- antes, si loadSingleRequest
+  // terminaba sin encontrarla, esta pantalla se quedaba con el spinner girando
+  // para siempre (loadingRequest ya en false, pero request seguía undefined).
+  if (!request) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
+            <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.center}>
+          <Illustration name="theSearch" width={130} />
+          <Text style={styles.emptyTitle}>Esta solicitud ya no está disponible</Text>
         </View>
       </SafeAreaView>
     )
