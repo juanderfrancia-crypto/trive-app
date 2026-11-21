@@ -203,7 +203,7 @@ export default function TripHistoryTab({ isDriver }: HubTabProps) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.surface },
+  container: { flex: 1, backgroundColor: COLORS.background },
   listContainer: {
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,

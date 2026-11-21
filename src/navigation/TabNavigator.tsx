@@ -98,10 +98,6 @@ export default function TabNavigator() {
         },
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: 'rgba(255,255,255,0.75)',
-        tabBarContainerStyle: {
-          backgroundColor: COLORS.white,
-          borderTopWidth: 0,
-        },
         tabBarBackground: () => (
           <View style={styles.barBackground}>
             <View style={styles.barSurface} />
@@ -230,7 +226,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 32,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

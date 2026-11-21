@@ -40,7 +40,7 @@ export const COLORS = {
   info: '#1230B8', // Igual al primary para consistencia
   
   // Fondos - Tonos grises sutiles con tech feel
-  background: '#FFFFFF', // Blanco: color principal de la interfaz
+  background: '#f8fcff', // Azul casi blanco (~98.7% blanco), decidido 2026-11-21 -- antes '#FFFFFF'
   surface: '#FFFFFF', // Blanco puro para cards/containers
   surfaceAlt: '#F4F6FA', // Superficie secundaria
   surfaceHover: '#F0F0F0', // Gris claro para hover states
