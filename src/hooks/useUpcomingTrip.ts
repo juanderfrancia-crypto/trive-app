@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { supabase } from '../services/supabase'
 import { withTimeout } from '../utils/withTimeout'
 
@@ -22,8 +22,17 @@ export interface UpcomingTrip {
 }
 
 export const useUpcomingTrip = (passengerId?: string) => {
-  const [trip, setTrip]     = useState<UpcomingTrip | null>(null)
+  const [trip, setTrip]     = useState<Omit<UpcomingTrip, 'minutesUntil'> | null>(null)
   const [loading, setLoading] = useState(false)
+  // `minutesUntil` se guardaba fijo en el momento en que se cargaban los datos y
+  // nunca se volvía a calcular mientras el pasajero se quedaba quieto en Inicio
+  // (el contador de "Sale en" se veía congelado hasta el próximo refetch real).
+  // Este tick solo recalcula el conteo localmente, sin pedir nada al servidor.
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   const load = useCallback(async () => {
     if (!passengerId) { setTrip(null); return }
@@ -63,8 +72,6 @@ export const useUpcomingTrip = (passengerId?: string) => {
 
       const booking = candidatas[0]
       const route   = booking.routes
-      const depTime      = new Date(route.departure_time)
-      const minutesUntil = Math.max(0, Math.round((depTime.getTime() - Date.now()) / 60000))
 
       setTrip({
         bookingId:     booking.id,
@@ -81,7 +88,6 @@ export const useUpcomingTrip = (passengerId?: string) => {
         vehicleColor:  route.vehicle_color ?? null,
         vehiclePlate:  route.vehicle_plate ?? null,
         seatNumber:    booking.seat_number,
-        minutesUntil,
         routeObj:      route,
       })
     } catch {
@@ -93,7 +99,13 @@ export const useUpcomingTrip = (passengerId?: string) => {
 
   useEffect(() => { load() }, [load])
 
-  return { trip, loading, refetch: load }
+  const tripWithCountdown = useMemo<UpcomingTrip | null>(() => {
+    if (!trip) return null
+    const minutesUntil = Math.max(0, Math.round((new Date(trip.departureTime).getTime() - now) / 60000))
+    return { ...trip, minutesUntil }
+  }, [trip, now])
+
+  return { trip: tripWithCountdown, loading, refetch: load }
 }
 
 export const formatCountdown = (minutes: number): string => {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
@@ -49,6 +49,17 @@ export default function PassengerHomeScreen() {
   const { bookings, refetch: refetchBookings } = usePassengerBookings(user?.id)
   const { rides: salidasHoy, reload: reloadDepartures, hasMore: masSalidasHoy } = useTodayDepartures(preferredMunicipality)
   const [refreshing, setRefreshing] = useState(false)
+
+  // El conteo de "Sale en" de cada salida de hoy se recalcula en el render leyendo
+  // Date.now() -- correcto, pero sin esto nada vuelve a dibujar la pantalla mientras
+  // el pasajero se queda quieto en Inicio, así que se veía congelado igual que le
+  // pasaba a "Tu próximo viaje" (arreglado en useUpcomingTrip.ts). Esto solo fuerza
+  // un re-render local cada 30s, sin pedir nada al servidor.
+  const [, forceCountdownTick] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => forceCountdownTick((n) => n + 1), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   const handleRefresh = async () => {
     setRefreshing(true)
