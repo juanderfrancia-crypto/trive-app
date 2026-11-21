@@ -68,15 +68,20 @@ export const useNegotiationChat = (requestId: string, driverId: string) => {
   const loadMessages = useCallback(async () => {
     setLoadingInitial(true);
     try {
+      // Mismo tope que el chat de viaje real (TripMessageList): sin esto no había
+      // límite arquitectónico -- una negociación que se alargue traería todo el
+      // historial completo cada vez. Se pide en orden descendente para quedarse con
+      // los 500 más recientes (no los 500 más viejos) y se revierte para mostrarlos.
       const { data, error } = await supabase
         .from('negotiation_messages')
         .select('*')
         .eq('request_id', requestId)
         .eq('driver_id', driverId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: false })
+        .limit(500);
 
       if (error) throw error;
-      setMessages((data || []).map(toNegotiationMessage));
+      setMessages((data || []).reverse().map(toNegotiationMessage));
     } catch (error) {
       console.error('Error cargando mensajes:', error);
       showError('Error al cargar mensajes');

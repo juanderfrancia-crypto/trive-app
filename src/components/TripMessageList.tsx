@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from 'react'
+import React, { useRef, useEffect, useMemo, useCallback } from 'react'
 import { View, FlatList, StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from './AppText'
@@ -56,7 +56,7 @@ export const TripMessageList = React.memo(({ messages, userId, otherUserName, ot
     return out
   }, [messages])
 
-  const renderItem = ({ item }: { item: ListItem }) => {
+  const renderItem = useCallback(({ item }: { item: ListItem }) => {
     if (item.kind === 'separator') {
       return (
         <View style={styles.separatorRow}>
@@ -102,7 +102,7 @@ export const TripMessageList = React.memo(({ messages, userId, otherUserName, ot
         </View>
       </View>
     )
-  }
+  }, [userId, otherUserPhotoUrl, otherInitial])
 
   if (loading) {
     return (

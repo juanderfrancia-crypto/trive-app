@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../services/supabase';
 import { useAppStore } from '../store/useAppStore';
 import { withTimeout } from '../utils/withTimeout';
@@ -104,7 +104,7 @@ export const useNotifications = (userId?: string) => {
   }, [userId]);
 
   // Marcar como leída
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = useCallback(async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -117,10 +117,10 @@ export const useNotifications = (userId?: string) => {
     } catch (err: any) {
       console.error('Error marking as read:', err.message);
     }
-  };
+  }, []);
 
   // Marcar todas como leídas
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!userId) return;
     try {
       const { error } = await supabase
@@ -133,10 +133,10 @@ export const useNotifications = (userId?: string) => {
     } catch (err: any) {
       console.error('Error marking all as read:', err.message);
     }
-  };
+  }, [userId]);
 
   // Eliminar notificación
-  const deleteNotification = async (notificationId: string) => {
+  const deleteNotification = useCallback(async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -147,10 +147,10 @@ export const useNotifications = (userId?: string) => {
     } catch (err: any) {
       console.error('Error deleting notification:', err.message);
     }
-  };
+  }, []);
 
   // Eliminar múltiples notificaciones
-  const deleteNotifications = async (notificationIds: string[]) => {
+  const deleteNotifications = useCallback(async (notificationIds: string[]) => {
     if (!notificationIds.length) return;
     try {
       const { error } = await supabase
@@ -163,10 +163,10 @@ export const useNotifications = (userId?: string) => {
       console.error('Error deleting selected notifications:', err.message);
       throw err;
     }
-  };
+  }, []);
 
   // Eliminar todas las notificaciones del usuario
-  const deleteAllNotifications = async () => {
+  const deleteAllNotifications = useCallback(async () => {
     if (!userId) return;
     try {
       const { error } = await supabase
@@ -179,10 +179,10 @@ export const useNotifications = (userId?: string) => {
       console.error('Error deleting all notifications:', err.message);
       throw err;
     }
-  };
+  }, [userId]);
 
   // Crear notificación
-  const createNotification = async (
+  const createNotification = useCallback(async (
     userId: string,
     notificationData: Omit<Notification, 'id' | 'created_at'>
   ) => {
@@ -199,7 +199,7 @@ export const useNotifications = (userId?: string) => {
       console.error('Error creating notification:', err.message);
       throw err;
     }
-  };
+  }, []);
 
   // Escuchar cambios en tiempo real
   useEffect(() => {
@@ -266,7 +266,11 @@ export const useNotifications = (userId?: string) => {
     };
   }, [userId, fetchNotifications]);
 
-  return {
+  // Memoizado: NotificationsContext envuelve toda la app con este valor -- sin esto,
+  // cada render del Provider crea un objeto nuevo y re-renderiza a todos sus consumidores
+  // aunque nada haya cambiado. Ahora solo cambia cuando realmente cambia algún dato,
+  // porque las funciones de arriba ya son estables (useCallback).
+  return useMemo(() => ({
     notifications,
     loading,
     error,
@@ -278,5 +282,17 @@ export const useNotifications = (userId?: string) => {
     deleteNotifications,
     deleteAllNotifications,
     createNotification,
-  };
+  }), [
+    notifications,
+    loading,
+    error,
+    unreadCount,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    deleteNotifications,
+    deleteAllNotifications,
+    createNotification,
+  ]);
 };

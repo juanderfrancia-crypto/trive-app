@@ -10,6 +10,7 @@ module.exports = ({ config }) => {
       'expo-secure-store',
       '@react-native-community/datetimepicker',
       '@sentry/react-native',
+      ['expo-build-properties', { android: { enableProguardInReleaseBuilds: true, shrinkResources: true } }],
     ],
   };
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, RefreshControl, Share, StatusBar, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -430,6 +430,18 @@ export default function DriverPanelScreen() {
       .sort((a, b) => b.count - a.count)
   }
 
+  // Antes se llamaba directo en el JSX (línea del .map() de pasajeros), recalculando
+  // el agrupamiento + sort en cada render de la pantalla aunque no cambiaran los
+  // pasajeros. Ahora se precalcula una sola vez por ruta y solo se recalcula cuando
+  // cambia `routes`.
+  const passengersByDropoffByRoute = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof groupPassengersByDropoff>>()
+    for (const route of routes) {
+      map.set(route.id, groupPassengersByDropoff(route.passengers ?? []))
+    }
+    return map
+  }, [routes])
+
   if (loading) {
     return (
       <View style={[styles.safeContainer, styles.centered]}>
@@ -633,7 +645,7 @@ export default function DriverPanelScreen() {
                           <Text style={styles.passengerCountText}>{route.passengers.length}</Text>
                         </View>
                       </View>
-                      {groupPassengersByDropoff(route.passengers).map((dropoffGroup, idx) => (
+                      {(passengersByDropoffByRoute.get(route.id) ?? []).map((dropoffGroup, idx) => (
                         <View key={idx} style={styles.dropoffGroupItem}>
                           <View style={styles.dropoffHeader}>
                             <View style={styles.dropoffIconContainer}>

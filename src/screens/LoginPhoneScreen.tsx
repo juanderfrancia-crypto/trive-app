@@ -22,7 +22,8 @@ type Step = 'input' | 'otp' | 'name'
 
 export default function LoginPhoneScreen() {
   const navigation = useNavigation()
-  const { setUser, setAuthUser } = useAppStore()
+  const setUser = useAppStore((s) => s.setUser)
+  const setAuthUser = useAppStore((s) => s.setAuthUser)
   const { signInWithOTP, verifyOTP, login, loading: authLoading } = useAuth()
   const scrollRef = useRef<ScrollView>(null)
   const otpRefs = useRef<(TextInput | null)[]>([])

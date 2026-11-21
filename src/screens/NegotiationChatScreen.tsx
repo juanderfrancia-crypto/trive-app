@@ -1,10 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react'
-import { View, TextInput, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { View, TextInput, TouchableOpacity, FlatList, ActivityIndicator } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useRoute } from '@react-navigation/native'
-import { useNegotiationChat } from '../hooks/useNegotiationChat'
+import { useNegotiationChat, NegotiationMessage } from '../hooks/useNegotiationChat'
 import { useAppStore } from '../store/useAppStore'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
 import Icon from '../components/Icon'
@@ -30,7 +30,7 @@ export default function NegotiationChatScreen() {
   const [messageText, setMessageText] = useState('')
   const [sending, setSending] = useState(false)
   const [otherPhotoUrl, setOtherPhotoUrl] = useState<string | null>(null)
-  const scrollRef = useRef<ScrollView>(null)
+  const listRef = useRef<FlatList>(null)
 
   // Foto real del otro usuario para el encabezado, no un ícono genérico.
   useEffect(() => {
@@ -71,12 +71,6 @@ export default function NegotiationChatScreen() {
     if (messages.length > 0) markMessagesAsRead()
   }, [messages.length, markMessagesAsRead])
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100)
-    }
-  }, [messages])
-
   const handleSendMessage = async () => {
     if (!messageText.trim()) return
     setSending(true)
@@ -85,10 +79,23 @@ export default function NegotiationChatScreen() {
     setSending(false)
   }
 
-  const isOwnMessage = (fromUserId: string) => fromUserId === user?.id
-
   const formatTime = (timestamp: string) =>
     new Date(timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })
+
+  // FlatList en vez de ScrollView+.map() -- sin tope arquitectónico de antes, una
+  // negociación que se alargue no re-renderizaba todo el hilo en cada mensaje nuevo
+  // (mismo patrón que TripMessageList, el chat de viaje real).
+  const renderMessage = useCallback(({ item: msg }: { item: NegotiationMessage }) => {
+    const own = msg.sent_by_user_id === user?.id
+    return (
+      <View style={[s.messageRow, own && s.ownMessageRow]}>
+        <View style={[s.messageBubble, own && s.ownMessageBubble]}>
+          <Text style={[s.messageText, own && s.ownMessageText]}>{msg.message_text}</Text>
+          <Text style={[s.messageTime, own && s.ownMessageTime]}>{formatTime(msg.created_at)}</Text>
+        </View>
+      </View>
+    )
+  }, [user?.id])
 
   return (
     <SafeAreaView style={s.container} edges={['top', 'left', 'right', 'bottom']}>
@@ -117,34 +124,21 @@ export default function NegotiationChatScreen() {
         <KeyboardAvoidingScreen measureKeyboard style={s.keyboardArea}>
           <View style={s.messagesWrap}>
             <ChatDoodleBackground />
-            <ScrollView
-              ref={scrollRef}
+            <FlatList
+              ref={listRef}
               style={s.messagesContainer}
+              data={messages}
+              keyExtractor={(msg) => msg.id}
+              renderItem={renderMessage}
               contentContainerStyle={s.messagesContent}
-            >
-              {messages.length === 0 ? (
+              onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
+              ListEmptyComponent={
                 <View style={s.emptyMessages}>
                   <Icon name="MessageCircle" size={40} color={COLORS.textTertiary} />
                   <Text style={s.emptyText}>Sin mensajes aún</Text>
                 </View>
-              ) : (
-                messages.map((msg) => (
-                  <View
-                    key={msg.id}
-                    style={[s.messageRow, isOwnMessage(msg.sent_by_user_id) && s.ownMessageRow]}
-                  >
-                    <View style={[s.messageBubble, isOwnMessage(msg.sent_by_user_id) && s.ownMessageBubble]}>
-                      <Text style={[s.messageText, isOwnMessage(msg.sent_by_user_id) && s.ownMessageText]}>
-                        {msg.message_text}
-                      </Text>
-                      <Text style={[s.messageTime, isOwnMessage(msg.sent_by_user_id) && s.ownMessageTime]}>
-                        {formatTime(msg.created_at)}
-                      </Text>
-                    </View>
-                  </View>
-                ))
-              )}
-            </ScrollView>
+              }
+            />
           </View>
 
           {isOpen ? (

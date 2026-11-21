@@ -138,7 +138,14 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { setUser: setAppUser, setAuthUser, setDeviceVerificationStatus, setJustRecoveredAccount } = useAppStore();
+  // Selectores individuales (no desestructurar el store completo): useAuth() se monta
+  // en ~17 pantallas, incluida la raíz de navegación -- traer el store entero suscribía
+  // a todas esas pantallas a CUALQUIER cambio global (saldo, notificaciones, búsqueda...),
+  // no solo a los 4 setters que realmente usa.
+  const setAppUser = useAppStore((s) => s.setUser)
+  const setAuthUser = useAppStore((s) => s.setAuthUser)
+  const setDeviceVerificationStatus = useAppStore((s) => s.setDeviceVerificationStatus)
+  const setJustRecoveredAccount = useAppStore((s) => s.setJustRecoveredAccount)
   const currentSessionRef = useRef<Session | null>(null)
 
   const restoreSession = async (currentSession: Session | null) => {

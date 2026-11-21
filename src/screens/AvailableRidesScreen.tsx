@@ -49,10 +49,14 @@ type RideCardProps = {
   selected: boolean
   favorite: boolean
   onSelect: (id: string) => void
-  onToggleFavorite: () => void
+  onToggleFavorite: (ride: AvailableRide) => void
 }
 
-function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, onToggleFavorite }: RideCardProps) {
+// React.memo + callbacks estables (ver onToggleFavorite más abajo): esta es la pantalla
+// de más tráfico de la app ("Viajes ahora") y refetchea seguido (cualquier reserva de
+// cualquier pasajero en cualquier ciudad la dispara) -- sin memo, cada refetch
+// re-renderizaba TODAS las tarjetas visibles aunque no hubieran cambiado.
+const RideCard = React.memo(function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, onToggleFavorite }: RideCardProps) {
   const seats = ride.seats_available_count ?? 0
   const fits = seats >= passengers
   const isFull = seats === 0
@@ -103,7 +107,7 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
             )}
           </View>
           <TouchableOpacity
-            onPress={onToggleFavorite}
+            onPress={() => onToggleFavorite(ride)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             style={styles.favBtn}
             accessibilityLabel={favorite ? 'Quitar de favoritas' : 'Guardar en favoritas'}
@@ -176,7 +180,7 @@ function RideCard({ ride, passengers, isSearch, selected, favorite, onSelect, on
       </View>
     </TouchableOpacity>
   )
-}
+})
 
 export default function AvailableRidesScreen() {
   const navigation = useNavigation()
@@ -187,7 +191,10 @@ export default function AvailableRidesScreen() {
   const authUser = useAppStore((s) => s.authUser)
   const { isFavorite, addFavorite, removeFavorite } = useFavoriteRoutes(authUser?.id)
 
-  const toggleFavorite = (ride: AvailableRide) => {
+  // Referencia estable (useCallback) -- se pasa igual a TODAS las filas de la lista
+  // (ver renderItem) para que React.memo en RideCard pueda saltarse el re-render de
+  // filas sin cambios en vez de recibir una función nueva por fila en cada pasada.
+  const toggleFavorite = useCallback((ride: AvailableRide) => {
     if (isFavorite(ride.id)) {
       removeFavorite(ride.id)
       showSuccess('Ruta quitada de favoritas')
@@ -195,7 +202,7 @@ export default function AvailableRidesScreen() {
       addFavorite({ id: ride.id, origin: ride.origin, destination: ride.destination })
       showSuccess('Ruta guardada en favoritas')
     }
-  }
+  }, [isFavorite, addFavorite, removeFavorite])
   const user = useAppStore((s) => s.user)
   const [refreshing, setRefreshing] = useState(false)
   const [municipality, setMunicipality] = useState<string | null>(params.municipality ?? null)
@@ -341,7 +348,7 @@ export default function AvailableRidesScreen() {
               selected={item.id === selectedId}
               favorite={isFavorite(item.id)}
               onSelect={setSelectedId}
-              onToggleFavorite={() => toggleFavorite(item)}
+              onToggleFavorite={toggleFavorite}
             />
           )}
           keyExtractor={(item) => item.id}
