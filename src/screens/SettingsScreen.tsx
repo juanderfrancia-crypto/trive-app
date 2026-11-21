@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
   },
   groupCard: {
     ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
   },

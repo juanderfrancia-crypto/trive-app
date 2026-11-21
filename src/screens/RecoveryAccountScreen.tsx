@@ -117,7 +117,7 @@ export default function RecoveryAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.white },
+  safe: { flex: 1, backgroundColor: COLORS.background },
 
   header: {
     flexDirection: 'row',

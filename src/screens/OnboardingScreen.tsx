@@ -93,7 +93,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
+      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={[styles.topBar, { paddingTop: insets.top > 0 ? SPACING.sm : SPACING.md }]}>
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
@@ -175,7 +175,7 @@ export default function OnboardingScreen({ onComplete }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.white },
+  root: { flex: 1, backgroundColor: COLORS.background },
 
   topBar: {
     flexDirection: 'row',

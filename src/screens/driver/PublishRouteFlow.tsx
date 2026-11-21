@@ -756,7 +756,7 @@ function SecondaryButton({ label, onPress }: { label: string; onPress: () => voi
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: COLORS.white, paddingHorizontal: SPACING.xl },
+  root: { flex: 1, backgroundColor: COLORS.background, paddingHorizontal: SPACING.xl },
   flex: { flex: 1 },
   backBtn: { width: 40, height: 40, justifyContent: 'center', marginLeft: -SPACING.sm },
   progressRow: { flexDirection: 'row', gap: SPACING.sm },

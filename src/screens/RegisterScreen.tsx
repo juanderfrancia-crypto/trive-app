@@ -212,7 +212,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   safeContainer: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,

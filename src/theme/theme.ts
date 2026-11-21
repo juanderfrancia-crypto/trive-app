@@ -41,7 +41,7 @@ export const COLORS = {
   
   // Fondos - Tonos grises sutiles con tech feel
   background: '#f8fcff', // Azul casi blanco (~98.7% blanco), decidido 2026-11-21 -- antes '#FFFFFF'
-  surface: '#FFFFFF', // Blanco puro para cards/containers
+  surface: '#fbfdff', // Prueba: antes '#FFFFFF' -- blanco puro para cards/containers
   surfaceAlt: '#F4F6FA', // Superficie secundaria
   surfaceHover: '#F0F0F0', // Gris claro para hover states
   backgroundAlt: '#F5F5F5', // Alias de surfaceAlt

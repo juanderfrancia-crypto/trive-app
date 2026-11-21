@@ -537,7 +537,7 @@ export default function CreateAirportRequestScreen() {
 }
 
 const s = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: COLORS.surface },
+  safe: { flex: 1, backgroundColor: COLORS.background },
   flex: { flex: 1 },
 
   header: {

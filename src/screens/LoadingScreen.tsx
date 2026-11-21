@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.background,
   },
   // Mismo ícono y mismo "imageWidth" del splash nativo (app.json), para que el
   // paso del splash nativo a esta pantalla sea invisible (sin salto de imagen).
