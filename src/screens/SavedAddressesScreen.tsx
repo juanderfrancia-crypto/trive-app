@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, StatusBar, ScrollView } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -199,7 +199,6 @@ export default function SavedAddressesScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>

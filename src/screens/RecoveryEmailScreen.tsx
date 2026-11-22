@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, StatusBar, ScrollView } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -120,7 +120,6 @@ export default function RecoveryEmailScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>

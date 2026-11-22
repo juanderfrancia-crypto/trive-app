@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, StatusBar } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
@@ -690,7 +690,6 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + SPACING.sm, paddingBottom: insets.bottom }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingScreen>
       {step < 3 && (
         <TouchableOpacity

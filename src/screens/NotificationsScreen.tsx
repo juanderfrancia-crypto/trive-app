@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, StatusBar, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon, { type IconName as IconNameType } from '../components/Icon'
@@ -485,7 +485,6 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeContainer} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <TouchableOpacity

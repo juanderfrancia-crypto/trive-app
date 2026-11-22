@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -283,7 +283,6 @@ export default function RecurringRoutesScreen() {
   if (tmplLoading) {
     return (
       <View style={[styles.safe, styles.center, { paddingTop: insets.top }]}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     )
@@ -291,7 +290,6 @@ export default function RecurringRoutesScreen() {
 
   return (
     <View style={[styles.safe, { paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
@@ -387,7 +385,6 @@ export default function RecurringRoutesScreen() {
 
       {/* ── Modal crear/editar plantilla ── */}
       <Modal visible={showCreate} animationType="slide" transparent onRequestClose={() => setShowCreate(false)}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <KeyboardAvoidingScreen style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <View style={styles.handle} />
@@ -432,7 +429,6 @@ export default function RecurringRoutesScreen() {
       {/* ── Modal publicar desde plantilla ── */}
       {publishTarget && (
         <Modal visible animationType="slide" transparent onRequestClose={closePublishModal}>
-          <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
           <View style={styles.modalOverlay}>
             <View style={[styles.modalSheet, { paddingBottom: insets.bottom + SPACING.lg }]}>
               <View style={styles.handle} />

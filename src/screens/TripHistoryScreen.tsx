@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -393,7 +393,6 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
 
   return (
     <SafeAreaView style={s.safe} edges={embedded ? [] : ['top', 'left', 'right']}>
-      {!embedded && <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />}
 
       {!embedded && <View style={s.header}>
         <TouchableOpacity style={s.headerBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>

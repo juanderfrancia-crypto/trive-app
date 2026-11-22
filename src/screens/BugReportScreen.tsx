@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -94,7 +94,6 @@ export default function BugReportScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>

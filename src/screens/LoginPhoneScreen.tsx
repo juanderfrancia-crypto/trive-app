@@ -1,6 +1,6 @@
 import { PROFILE_COLUMNS, getMyPhone, saveMyProfile } from '../services/profileColumns'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, StatusBar, Image } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Image } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -262,7 +262,6 @@ export default function LoginPhoneScreen() {
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
       <OfflineBanner />
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <KeyboardAvoidingView
         style={s.kav}

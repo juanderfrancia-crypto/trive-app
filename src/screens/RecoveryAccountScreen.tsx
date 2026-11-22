@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, Alert, TextInput, ActivityIndicator, ScrollView, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, Alert, TextInput, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -41,7 +41,6 @@ export default function RecoveryAccountScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.white} />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
           <Icon name="ChevronLeft" size={22} color={COLORS.textPrimary} />

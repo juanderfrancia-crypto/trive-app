@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList, StatusBar } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -372,7 +372,6 @@ export default function DriverDocumentsScreen() {
   if (!user) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
         <View style={styles.restrictedContainer}>
           {/* Icon */}
           <View style={styles.restrictedIcon}>
@@ -427,7 +426,6 @@ export default function DriverDocumentsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}

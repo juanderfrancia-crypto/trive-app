@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, StatusBar, ScrollView } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Image, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
@@ -83,7 +83,6 @@ export default function VerifyPhoneScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
       <KeyboardAvoidingScreen>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />

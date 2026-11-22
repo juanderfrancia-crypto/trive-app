@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react'
-import { View, StyleSheet, Dimensions, TouchableOpacity, StatusBar, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image, ScrollView } from 'react-native'
+import { View, StyleSheet, Dimensions, TouchableOpacity, FlatList, NativeScrollEvent, NativeSyntheticEvent, Image, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SvgXml } from 'react-native-svg'
@@ -93,7 +93,6 @@ export default function OnboardingScreen({ onComplete }: Props) {
 
   return (
     <SafeAreaView style={styles.root} edges={['top', 'left', 'right', 'bottom']}>
-      <StatusBar barStyle="dark-content" backgroundColor={COLORS.background} />
 
       <View style={[styles.topBar, { paddingTop: insets.top > 0 ? SPACING.sm : SPACING.md }]}>
         <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />

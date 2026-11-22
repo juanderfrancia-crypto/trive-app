@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { View, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, StatusBar } from 'react-native'
+import { View, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal } from 'react-native'
 import { Text } from './AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { COLORS, SPACING, RADIUS } from '../theme/theme'
@@ -43,7 +43,6 @@ export function MunicipalityPickerModal({ visible, current, onSelect, onClose }:
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
       <View style={[styles.container, { paddingTop: insets.top }]}>
         {/* Header */}
         <View style={styles.header}>

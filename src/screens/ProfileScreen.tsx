@@ -2,7 +2,7 @@ import { usePassengerBookings } from './passenger/usePassengerBookings'
 import DriverProfileView from './profile/DriverProfileView'
 import PassengerProfileView from './profile/PassengerProfileView'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, StatusBar } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -105,13 +105,6 @@ export default function ProfileScreen() {
       setDriverDocs(docsMap)
     }
   }, [user?.id])
-
-  // ── Focus refresh ──────────────────────────────────────────────────────────
-  // Configure StatusBar when profile screen gets focus
-  useFocusEffect(useCallback(() => {
-    StatusBar.setBarStyle('dark-content')
-    StatusBar.setBackgroundColor(COLORS.background)
-  }, []))
 
   // ── Focus refresh ──────────────────────────────────────────────────────────
   // isDriverRef lets useFocusEffect read the current value without being a dep,
