@@ -451,11 +451,12 @@ export default function PassengerHomeScreen() {
           )}
         </View>
 
-        <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
-          <Text style={styles.airportText}>
-            ¿Vas a otro lugar? <Text style={styles.airportLinkText}>Publica una ruta personalizada</Text>
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.airportRow}>
+          <Text style={styles.airportText}>¿Vas a otro lugar?</Text>
+          <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
+            <Text style={styles.airportLinkText} numberOfLines={1}>Pide un viaje a donde quieras</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       </KeyboardAvoidingScreen>
 
@@ -578,7 +579,14 @@ const styles = StyleSheet.create({
 
   sectionHead: { marginTop: SPACING.xl, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
-  sectionLink: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
+  sectionLink: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: COLORS.primary,
+    textShadowColor: 'rgba(18, 48, 184, 0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
   ridesList: { marginTop: SPACING.sm + 2, gap: SPACING.sm + 2 },
   rideRow: {
     flexDirection: 'row', alignItems: 'stretch',
@@ -615,7 +623,28 @@ const styles = StyleSheet.create({
   moreRidesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: SPACING.sm },
   moreRidesText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
-  airportLink: { marginTop: SPACING.lg },
+  // Misma posición/margen que antes (fila única, alineada a la izquierda) --
+  // solo cambia que la parte de acción ahora es una pastilla con fondo en vez
+  // de texto azul suelto, para que se sienta como un botón.
+  // Texto más largo a propósito (pidió más peso de CTA) -- se deja envolver a
+  // una segunda línea si no cabe en una sola, en vez de forzarlo/truncarlo.
+  airportRow: {
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.xxl,
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: SPACING.xs,
+    columnGap: 6,
+  },
   airportText: { fontSize: 13, color: COLORS.textSecondary },
-  airportLinkText: { color: COLORS.primary, fontWeight: '700' },
+  airportLink: {},
+  airportLinkText: {
+    fontSize: 15,
+    color: COLORS.primary,
+    fontWeight: '800',
+    textShadowColor: 'rgba(18, 48, 184, 0.35)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+  },
 })

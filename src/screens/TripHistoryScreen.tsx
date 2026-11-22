@@ -300,20 +300,10 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
     return (
       <View style={s.card}>
         <View style={s.cardHeader}>
-          <View style={s.routePoints}>
-            <View style={s.routePoint}>
-              <View style={s.dotOrigin} />
-              <Text style={s.routeText} numberOfLines={1}>
-                <Text style={s.routeLabel}>Desde </Text>{item.origin}
-              </Text>
-            </View>
-            <View style={s.routeLine} />
-            <View style={s.routePoint}>
-              <View style={s.dotDest} />
-              <Text style={s.routeText} numberOfLines={1}>
-                <Text style={s.routeLabel}>Hasta </Text>{item.destination}
-              </Text>
-            </View>
+          <View style={s.routeRow}>
+            <Text style={s.routeText} numberOfLines={1}>{item.origin}</Text>
+            <Icon name="ArrowRight" size={13} color={COLORS.textTertiary} />
+            <Text style={s.routeText} numberOfLines={1}>{item.destination}</Text>
           </View>
           <View style={s.cardHeaderRight}>
             <Text style={s.price}>
@@ -527,6 +517,7 @@ const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     gap: SPACING.sm,
   },
   cardHeader: {
@@ -537,13 +528,10 @@ const s = StyleSheet.create({
   },
   cardHeaderRight: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, flexShrink: 0 },
   deleteIconBtn: { padding: 2 },
-  routePoints: { flex: 1, gap: 3 },
-  routePoint: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },
-  dotOrigin: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.primaryLight, flexShrink: 0 },
-  dotDest: { width: 7, height: 7, borderRadius: 3.5, backgroundColor: COLORS.success, flexShrink: 0 },
-  routeLine: { width: 2, height: 8, backgroundColor: COLORS.primaryTint, marginLeft: 2.5 },
-  routeText: { ...TYPOGRAPHY.bodySmall, flex: 1, fontWeight: '700', color: COLORS.textPrimary },
-  routeLabel: { fontWeight: '600', color: COLORS.textTertiary },
+  // Origen y destino en una sola línea (antes apiladas en dos, dejando la mitad
+  // derecha de la segunda línea vacía -- se sentía "ancho"/desaprovechado).
+  routeRow: { flex: 1, flexShrink: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  routeText: { ...TYPOGRAPHY.bodySmall, flexShrink: 1, fontWeight: '700', color: COLORS.textPrimary },
   price: { ...TYPOGRAPHY.bodySmall, fontWeight: '800', color: COLORS.primary, flexShrink: 0 },
 
   metaRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 },

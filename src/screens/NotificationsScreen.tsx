@@ -390,7 +390,7 @@ export default function NotificationsScreen() {
                 ])
               }}
             >
-              <Icon name="Trash2" size={15} color={COLORS.textTertiary} />
+              <Icon name="Trash2" size={20} color={COLORS.primary} />
             </TouchableOpacity>
           )}
         </View>
