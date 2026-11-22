@@ -16,6 +16,7 @@ import { VehicleVector } from '../components/illustrations/VehicleVector'
 import { useFavoriteRoutes } from '../hooks/useFavoriteRoutes'
 import { showSuccess } from '../utils/showError'
 import { sortByRelevance } from '../utils/rideRelevance'
+import { matchesQuery } from '../utils/textMatch'
 
 // Reserva2: elegir conductor. Llega con origen, destino y pasajeros (búsqueda)
 // o solo con municipio (Viajes ahora desde Inicio).
@@ -25,9 +26,6 @@ type RideParams = {
   destination?: string
   passengers?: number
 }
-
-const normalizeText = (text: string): string =>
-  text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
 const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
 
@@ -236,19 +234,16 @@ export default function AvailableRidesScreen() {
     const now = Date.now()
     let filtered: AvailableRide[]
     if (isSearch) {
-      const originQ = normalizeText(params.origin ?? '')
-      const destQ = normalizeText(params.destination ?? '')
       filtered = rides.filter((r) =>
         isToday(r.departure_time) &&
         new Date(r.departure_time).getTime() > now &&
-        normalizeText(r.origin).includes(originQ) &&
-        normalizeText(r.destination).includes(destQ)
+        matchesQuery(r.origin, params.origin ?? '') &&
+        matchesQuery(r.destination, params.destination ?? '')
       )
     } else if (!municipality) {
       filtered = rides
     } else {
-      const mun = normalizeText(municipality)
-      filtered = rides.filter((r) => normalizeText(r.origin).includes(mun) || normalizeText(r.destination).includes(mun))
+      filtered = rides.filter((r) => matchesQuery(r.origin, municipality) || matchesQuery(r.destination, municipality))
     }
     return sortByRelevance(filtered)
   }, [rides, isSearch, params.origin, params.destination, municipality])

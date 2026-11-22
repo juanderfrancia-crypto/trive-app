@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useMemo } from 'react'
 import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
@@ -19,7 +19,8 @@ import { showSuccess, showError } from '../utils/showError'
 import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
-import { Municipality } from '../data/colombiaMunicipalities'
+import { COLOMBIA_MUNICIPALITIES, Municipality } from '../data/colombiaMunicipalities'
+import { normalizeText } from '../utils/textMatch'
 import { usePassengerBookings, confirmPassengerTrip } from './passenger/usePassengerBookings'
 import { useTodayDepartures } from './passenger/useTodayDepartures'
 import { formatDia, formatHoraPartes, formatPrecio } from './passenger/passengerFormat'
@@ -41,6 +42,36 @@ export default function PassengerHomeScreen() {
 
   const [origin, setOrigin] = useState('')
   const [destination, setDestination] = useState('')
+  // Autocompletado con la lista oficial de municipios de Colombia (ya existe
+  // en la app, no depende de ningún servicio externo) -- ayuda a escribir el
+  // nombre correcto sin tener que adivinar exactamente cómo lo puso el
+  // conductor. Null = no mostrar sugerencias (campo vacío o sin foco).
+  const [suggestionField, setSuggestionField] = useState<'origin' | 'destination' | null>(null)
+  const originSuggestions = useMemo(() => {
+    if (suggestionField !== 'origin' || !origin.trim()) return []
+    const q = normalizeText(origin)
+    // Algunos nombres se repiten en departamentos distintos (ej. "Caldas" en
+    // Antioquia y en Boyacá) -- al tocar una sugerencia solo se usa el nombre,
+    // así que mostrar las dos por separado no aporta, se deja solo la primera.
+    const seen = new Set<string>()
+    return COLOMBIA_MUNICIPALITIES.filter((m) => {
+      if (!normalizeText(m.name).includes(q)) return false
+      if (seen.has(m.name)) return false
+      seen.add(m.name)
+      return true
+    }).slice(0, 5)
+  }, [suggestionField, origin])
+  const destinationSuggestions = useMemo(() => {
+    if (suggestionField !== 'destination' || !destination.trim()) return []
+    const q = normalizeText(destination)
+    const seen = new Set<string>()
+    return COLOMBIA_MUNICIPALITIES.filter((m) => {
+      if (!normalizeText(m.name).includes(q)) return false
+      if (seen.has(m.name)) return false
+      seen.add(m.name)
+      return true
+    }).slice(0, 5)
+  }, [suggestionField, destination])
   const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
 
@@ -256,16 +287,53 @@ export default function PassengerHomeScreen() {
 
         <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent} borderColor={COLORS.textPrimary}>
           <View style={styles.searchRow}>
-            <Icon name="CircleDot" size={18} color={COLORS.primary} />
+            {/* El ícono hace de atajo: llena el origen con el municipio guardado
+                en un toque. Si todavía no hay uno guardado, abre el mismo
+                selector que ya usa "Salidas de hoy". */}
+            <TouchableOpacity
+              onPress={() => {
+                if (preferredMunicipality) { setOrigin(preferredMunicipality); setSuggestionField(null) }
+                else setShowMunicipalityPicker(true)
+              }}
+              hitSlop={8}
+              accessibilityLabel="Usar mi municipio como origen"
+            >
+              <Icon name="CircleDot" size={18} color={COLORS.primary} />
+            </TouchableOpacity>
             <TextInput
               style={styles.searchInput}
               placeholder="¿De dónde sales?"
               placeholderTextColor={COLORS.textTertiary}
               value={origin}
-              onChangeText={setOrigin}
+              onChangeText={(t) => { setOrigin(t); setSuggestionField('origin') }}
+              onFocus={() => setSuggestionField('origin')}
               accessibilityLabel="Origen"
             />
+            {!!origin && (
+              <TouchableOpacity
+                onPress={() => { setOrigin(''); setSuggestionField(null) }}
+                accessibilityLabel="Limpiar origen"
+                hitSlop={8}
+              >
+                <Icon name="CircleX" size={18} color={COLORS.textTertiary} />
+              </TouchableOpacity>
+            )}
           </View>
+          {originSuggestions.length > 0 && (
+            <View style={styles.suggestionList}>
+              {originSuggestions.map((m, idx) => (
+                <TouchableOpacity
+                  key={`${m.department}-${m.name}`}
+                  style={[styles.suggestionItem, idx === 0 && styles.suggestionItemFirst]}
+                  onPress={() => { setOrigin(m.name); setSuggestionField(null) }}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="MapPin" size={13} color={COLORS.textTertiary} />
+                  <Text style={styles.suggestionText}>{m.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           <View style={styles.searchDivider} />
           <View style={styles.searchRow}>
             <Icon name="MapPin" size={18} color={COLORS.textPrimary} />
@@ -274,19 +342,35 @@ export default function PassengerHomeScreen() {
               placeholder="¿A dónde vas?"
               placeholderTextColor={COLORS.textTertiary}
               value={destination}
-              onChangeText={setDestination}
+              onChangeText={(t) => { setDestination(t); setSuggestionField('destination') }}
+              onFocus={() => setSuggestionField('destination')}
               accessibilityLabel="Destino"
             />
-            {!!(origin || destination) && (
+            {!!destination && (
               <TouchableOpacity
-                onPress={() => { setOrigin(''); setDestination('') }}
-                accessibilityLabel="Limpiar"
+                onPress={() => { setDestination(''); setSuggestionField(null) }}
+                accessibilityLabel="Limpiar destino"
                 hitSlop={8}
               >
                 <Icon name="CircleX" size={18} color={COLORS.textTertiary} />
               </TouchableOpacity>
             )}
           </View>
+          {destinationSuggestions.length > 0 && (
+            <View style={styles.suggestionList}>
+              {destinationSuggestions.map((m, idx) => (
+                <TouchableOpacity
+                  key={`${m.department}-${m.name}`}
+                  style={[styles.suggestionItem, idx === 0 && styles.suggestionItemFirst]}
+                  onPress={() => { setDestination(m.name); setSuggestionField(null) }}
+                  activeOpacity={0.7}
+                >
+                  <Icon name="MapPin" size={13} color={COLORS.textTertiary} />
+                  <Text style={styles.suggestionText}>{m.name}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           <TouchableOpacity
             activeOpacity={0.85}
             disabled={!canSearch}
@@ -527,6 +611,17 @@ const styles = StyleSheet.create({
   },
   searchInput: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.textPrimary },
   searchDivider: { height: SPACING.sm },
+  suggestionList: {
+    backgroundColor: COLORS.white, borderRadius: RADIUS.md, marginTop: SPACING.xs,
+    borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+  },
+  suggestionItem: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.sm,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderTopWidth: 1, borderTopColor: COLORS.borderLight,
+  },
+  suggestionItemFirst: { borderTopWidth: 0 },
+  suggestionText: { fontSize: 14, color: COLORS.textPrimary },
   searchBtn: {
     marginTop: SPACING.md, height: 52, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
