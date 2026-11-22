@@ -53,8 +53,8 @@ export default function AirportHubScreen() {
   const subtitle = showHistory
     ? 'Viajes completados'
     : isDriver
-      ? 'Rutas personalizadas que te piden'
-      : 'Pide una ruta personalizada a tu destino'
+      ? 'Viajes que te piden'
+      : 'Pide un viaje a donde quieras'
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

@@ -139,7 +139,7 @@ const FAQ_DATA: FAQItem[] = [
     category: 'Aeropuerto',
     question: '¿Cómo acepto una solicitud de aeropuerto como conductor?',
     answer:
-      'En tu inicio de conductor toca "Rutas personalizadas". Verás las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar" en la solicitud que te interese y confirma. Se descontará de tu billetera Trive el 10% del precio acordado (mínimo $3.000, máximo $25.000) como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y ambos podrán coordinar los detalles del recorrido.',
+      'En tu inicio de conductor toca "Solicitudes de viaje". Verás las solicitudes activas con origen, destino, fecha y precio ofrecido. Toca "Aceptar" en la solicitud que te interese y confirma. Se descontará de tu billetera Trive el 10% del precio acordado (mínimo $3.000, máximo $25.000) como costo de intermediación. El pasajero recibirá una notificación de que aceptaste y ambos podrán coordinar los detalles del recorrido.',
   },
   {
     id: '19',

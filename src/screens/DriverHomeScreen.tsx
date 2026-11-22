@@ -204,7 +204,7 @@ export default function DriverHomeScreen() {
             <Icon name="Plane" size={20} color={COLORS.primary} />
           </View>
           <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Rutas personalizadas</Text>
+            <Text style={styles.cardTitle}>Solicitudes de viaje</Text>
             <Text style={styles.cardSub}>
               {pendingAirportCount > 0 ? `${pendingAirportCount} solicitudes esperando respuesta` : 'Sin solicitudes pendientes'}
             </Text>

@@ -126,13 +126,6 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
 
   return (
     <View style={styles.container}>
-      {pendingRequests.length > 0 && (
-        <TouchableOpacity style={styles.topCreateBtn} onPress={openCreate} activeOpacity={0.85}>
-          <Icon name="Plus" size={18} color={COLORS.primary} />
-          <Text style={styles.topCreateBtnText}>Nueva solicitud</Text>
-        </TouchableOpacity>
-      )}
-
       {loading && pendingRequests.length === 0 ? (
         <SkeletonCardList variant="request" count={4} />
       ) : (
@@ -153,24 +146,6 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  topCreateBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.xs,
-    marginHorizontal: SPACING.xl,
-    marginTop: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primaryTint,
-  },
-  topCreateBtnText: {
-    fontSize: TYPOGRAPHY.size.sm,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
   listContainer: {
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,

@@ -214,7 +214,7 @@ export default function CreateAirportRequestScreen() {
           <Icon name="ChevronLeft" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View style={s.headerHero}>
-          <Text style={s.headerTitle}>Nueva ruta personalizada</Text>
+          <Text style={s.headerTitle}>Nueva solicitud de viaje</Text>
           <Text style={s.headerSub}>Publica a dónde vas y recibe ofertas de conductores</Text>
         </View>
       </View>

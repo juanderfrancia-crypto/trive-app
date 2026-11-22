@@ -176,7 +176,7 @@ const TUTORIALS: Tutorial[] = [
       icon: 'Plane',
       description: 'Cómo ver y aceptar solicitudes de pasajeros que van al aeropuerto',
       steps: [
-        "1. En tu inicio de conductor, toca \"Rutas personalizadas\"",
+        "1. En tu inicio de conductor, toca \"Solicitudes de viaje\"",
         "2. Verás las solicitudes activas con origen, destino, fecha, hora y precio ofrecido",
         "3. Revisa el número de personas, las notas y el precio",
         "4. Si el precio te sirve, toca \"Aceptar viaje\". Si prefieres cobrar otro valor, toca \"Proponer otro precio\", escribe tu propuesta y envíala — el pasajero decide si la acepta",
