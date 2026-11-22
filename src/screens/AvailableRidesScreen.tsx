@@ -271,7 +271,9 @@ export default function AvailableRidesScreen() {
     <View style={styles.emptyContainer}>
       <Illustration name="theSearch" width={200} />
       <Text style={styles.emptyTitle}>No hay viajes disponibles</Text>
-      <Text style={styles.emptyText}>Prueba con diferentes ciudades o horarios</Text>
+      <Text style={styles.emptyText}>
+        {isSearch ? 'Prueba con diferentes ciudades u horarios' : 'Aún no hay viajes publicados en este municipio'}
+      </Text>
       <TouchableOpacity style={styles.secondaryBtn} onPress={onRefresh}>
         <Text style={styles.secondaryBtnText}>Actualizar</Text>
       </TouchableOpacity>
@@ -536,9 +538,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.primary,
   },
-  secondaryBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.textPrimary },
+  secondaryBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
   footer: { paddingHorizontal: SPACING.xl, paddingBottom: SPACING.lg, paddingTop: SPACING.sm },
   cta: { height: 54, borderRadius: 16, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
