@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback, memo } from 'react'
 import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -136,6 +136,75 @@ function ListFooter({ isDriver }: { isDriver: boolean }) {
   )
 }
 
+// Memoizado: antes esta fila se dibujaba inline dentro del render de la
+// pantalla, recreándose en cada toque de selección (cada vez que selectedIds
+// cambiaba, SectionList redibujaba TODAS las filas visibles, no solo la
+// tocada). Como componente propio con React.memo, una fila solo se vuelve a
+// dibujar si sus propios props cambiaron de verdad.
+const NotificationRow = memo(function NotificationRow({
+  item,
+  isSelected,
+  selectionMode,
+  onPress,
+  onLongPress,
+  onDelete,
+}: {
+  item: NotificationWithSender
+  isSelected: boolean
+  selectionMode: boolean
+  onPress: (item: NotificationWithSender) => void
+  onLongPress: (item: NotificationWithSender) => void
+  onDelete: (item: NotificationWithSender) => void
+}) {
+  const tile = tileOf(item.type)
+  const cta = ctaOf(item)
+  const isUnread = !item.is_read
+
+  return (
+    <TouchableOpacity
+      style={[styles.card, isUnread && styles.cardUnread, isSelected && styles.cardSelected]}
+      onPress={() => onPress(item)}
+      onLongPress={() => onLongPress(item)}
+      activeOpacity={0.9}
+    >
+      {selectionMode && (
+        <Icon
+          name={isSelected ? 'CircleCheck' : 'Circle'}
+          size={20}
+          color={isSelected ? COLORS.primary : COLORS.textTertiary}
+        />
+      )}
+
+      <View style={[styles.tile, { backgroundColor: tile.bg }]}>
+        <Icon name={tile.icon} size={20} color={tile.fg} />
+      </View>
+
+      <View style={styles.body}>
+        <Text style={styles.cardTitle} numberOfLines={2}>{item.title || 'Alerta'}</Text>
+        <Text style={styles.cardMessage} numberOfLines={3}>
+          {item.type === 'message' && item.senderName ? `${item.senderName}: ${item.message}` : item.message}
+        </Text>
+        {cta && (
+          <Text style={styles.ctaLink}>{cta} ›</Text>
+        )}
+      </View>
+
+      <View style={styles.side}>
+        <Text style={styles.timeText}>{timeLabelOf(item.created_at)}</Text>
+        {isUnread && <View style={styles.unreadDot} />}
+        {!selectionMode && (
+          <TouchableOpacity
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            onPress={() => onDelete(item)}
+          >
+            <Icon name="Trash2" size={20} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
+      </View>
+    </TouchableOpacity>
+  )
+})
+
 export default function NotificationsScreen() {
   const navigation = useNavigation()
   const insets = useSafeAreaInsets()
@@ -226,9 +295,14 @@ export default function NotificationsScreen() {
     setRefreshing(false)
   }
 
+  // Solo los mensajes muestran senderName (ver renderNotification) -- para el
+  // resto, devolver notif tal cual (misma referencia) en vez de siempre un
+  // objeto nuevo, para que React.memo en NotificationRow pueda saltarse filas
+  // que no cambiaron de verdad.
   const getNotificationWithSender = (notif: Notification): NotificationWithSender => {
-    let senderName = 'Sistema'
+    if (notif.type !== 'message') return notif
 
+    let senderName = 'Sistema'
     if (notif.data?.sender_id && typeof notif.data.sender_id === 'string') {
       senderName = notif.data.sender_name || 'Usuario'
     } else if (notif.data?.from_user_name) {
@@ -247,9 +321,9 @@ export default function NotificationsScreen() {
       .filter((section) => section.data.length > 0)
   }, [notifications, activeFilter])
 
-  const toggleSelect = (id: string) => {
+  const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
-  }
+  }, [])
 
   const exitSelection = () => {
     setSelectionMode(false)
@@ -297,7 +371,11 @@ export default function NotificationsScreen() {
     )
   }
 
-  const handlePress = async (item: NotificationWithSender) => {
+  // useCallback con dependencias explícitas: antes se recreaba en cada render
+  // (incluido cada toque de selección, que cambia selectedIds), lo que forzaba
+  // a SectionList a redibujar TODAS las filas visibles en cada toque, aunque
+  // solo una fila necesitara cambiar.
+  const handlePress = useCallback(async (item: NotificationWithSender) => {
     if (selectionMode) { toggleSelect(item.id); return }
     if (!item.is_read) markAsRead(item.id)
 
@@ -330,73 +408,40 @@ export default function NotificationsScreen() {
     }
 
     setDetailNotif(item)
-  }
+  }, [selectionMode, toggleSelect, markAsRead, currentUser?.role, navigation, setSelectedRoute, showInfo])
 
-  const renderNotification = (item: NotificationWithSender) => {
-    const tile = tileOf(item.type)
-    const cta = ctaOf(item)
-    const isUnread = !item.is_read
-    const isSelected = selectedIds.includes(item.id)
+  const handleLongPress = useCallback((item: NotificationWithSender) => {
+    if (!selectionMode) setSelectionMode(true)
+    toggleSelect(item.id)
+  }, [selectionMode, toggleSelect])
 
-    return (
-      <TouchableOpacity
-        style={[styles.card, isUnread && styles.cardUnread, isSelected && styles.cardSelected]}
-        onPress={() => handlePress(item)}
-        onLongPress={() => { if (!selectionMode) setSelectionMode(true); toggleSelect(item.id) }}
-        activeOpacity={0.9}
-      >
-        {selectionMode && (
-          <Icon
-            name={isSelected ? 'CircleCheck' : 'Circle'}
-            size={20}
-            color={isSelected ? COLORS.primary : COLORS.textTertiary}
-          />
-        )}
+  const handleRowDelete = useCallback((item: NotificationWithSender) => {
+    Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteNotifications([item.id])
+          } catch {
+            showError('No se pudo eliminar. Verifica tu conexión e intenta de nuevo.')
+          }
+        },
+      },
+    ])
+  }, [deleteNotifications])
 
-        <View style={[styles.tile, { backgroundColor: tile.bg }]}>
-          <Icon name={tile.icon} size={20} color={tile.fg} />
-        </View>
-
-        <View style={styles.body}>
-          <Text style={styles.cardTitle} numberOfLines={2}>{item.title || 'Alerta'}</Text>
-          <Text style={styles.cardMessage} numberOfLines={3}>
-            {item.type === 'message' && item.senderName ? `${item.senderName}: ${item.message}` : item.message}
-          </Text>
-          {cta && (
-            <Text style={styles.ctaLink}>{cta} ›</Text>
-          )}
-        </View>
-
-        <View style={styles.side}>
-          <Text style={styles.timeText}>{timeLabelOf(item.created_at)}</Text>
-          {isUnread && <View style={styles.unreadDot} />}
-          {!selectionMode && (
-            <TouchableOpacity
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              onPress={() => {
-                Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
-                  { text: 'Cancelar', style: 'cancel' },
-                  {
-                    text: 'Eliminar',
-                    style: 'destructive',
-                    onPress: async () => {
-                      try {
-                        await deleteNotifications([item.id])
-                      } catch {
-                        showError('No se pudo eliminar. Verifica tu conexión e intenta de nuevo.')
-                      }
-                    },
-                  },
-                ])
-              }}
-            >
-              <Icon name="Trash2" size={20} color={COLORS.primary} />
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
-    )
-  }
+  const renderNotification = useCallback(({ item }: { item: NotificationWithSender }) => (
+    <NotificationRow
+      item={item}
+      isSelected={selectedIds.includes(item.id)}
+      selectionMode={selectionMode}
+      onPress={handlePress}
+      onLongPress={handleLongPress}
+      onDelete={handleRowDelete}
+    />
+  ), [selectedIds, selectionMode, handlePress, handleLongPress, handleRowDelete])
 
   const renderHeaderActions = () => {
     if (!selectionMode) {
@@ -525,7 +570,7 @@ export default function NotificationsScreen() {
         <SectionList
           sections={sections}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => renderNotification(item)}
+          renderItem={renderNotification}
           renderSectionHeader={({ section }) => (
             <Text style={styles.sectionTitle}>{section.title}</Text>
           )}

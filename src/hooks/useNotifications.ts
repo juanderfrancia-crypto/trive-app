@@ -103,25 +103,35 @@ export const useNotifications = (userId?: string) => {
     }
   }, [userId]);
 
-  // Marcar como leída
+  // Marcar como leída -- optimista: actualiza la pantalla ya mismo y solo
+  // revierte si el servidor de verdad falla, en vez de esperar la respuesta
+  // antes de mostrar cualquier cambio (se sentía lento).
   const markAsRead = useCallback(async (notificationId: string) => {
+    let snapshot: Notification[] = [];
+    setNotifications((prev) => {
+      snapshot = prev;
+      return prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n));
+    });
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
       if (error) throw error;
-      setNotifications((prev) =>
-        prev.map((n) => (n.id === notificationId ? { ...n, is_read: true } : n))
-      );
     } catch (err: any) {
       console.error('Error marking as read:', err.message);
+      setNotifications(snapshot);
     }
   }, []);
 
-  // Marcar todas como leídas
+  // Marcar todas como leídas -- optimista, mismo motivo.
   const markAllAsRead = useCallback(async () => {
     if (!userId) return;
+    let snapshot: Notification[] = [];
+    setNotifications((prev) => {
+      snapshot = prev;
+      return prev.map((n) => ({ ...n, is_read: true }));
+    });
     try {
       const { error } = await supabase
         .from('notifications')
@@ -129,54 +139,69 @@ export const useNotifications = (userId?: string) => {
         .eq('user_id', userId)
         .eq('is_read', false);
       if (error) throw error;
-      setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     } catch (err: any) {
       console.error('Error marking all as read:', err.message);
+      setNotifications(snapshot);
     }
   }, [userId]);
 
-  // Eliminar notificación
+  // Eliminar notificación -- optimista, mismo motivo.
   const deleteNotification = useCallback(async (notificationId: string) => {
+    let snapshot: Notification[] = [];
+    setNotifications((prev) => {
+      snapshot = prev;
+      return prev.filter((n) => n.id !== notificationId);
+    });
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
         .eq('id', notificationId);
       if (error) throw error;
-      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
     } catch (err: any) {
       console.error('Error deleting notification:', err.message);
+      setNotifications(snapshot);
     }
   }, []);
 
-  // Eliminar múltiples notificaciones
+  // Eliminar múltiples notificaciones -- optimista, mismo motivo.
   const deleteNotifications = useCallback(async (notificationIds: string[]) => {
     if (!notificationIds.length) return;
+    let snapshot: Notification[] = [];
+    setNotifications((prev) => {
+      snapshot = prev;
+      return prev.filter((n) => !notificationIds.includes(n.id));
+    });
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
         .in('id', notificationIds);
       if (error) throw error;
-      setNotifications((prev) => prev.filter((n) => !notificationIds.includes(n.id)));
     } catch (err: any) {
       console.error('Error deleting selected notifications:', err.message);
+      setNotifications(snapshot);
       throw err;
     }
   }, []);
 
-  // Eliminar todas las notificaciones del usuario
+  // Eliminar todas las notificaciones del usuario -- optimista, mismo motivo.
   const deleteAllNotifications = useCallback(async () => {
     if (!userId) return;
+    let snapshot: Notification[] = [];
+    setNotifications((prev) => {
+      snapshot = prev;
+      return [];
+    });
     try {
       const { error } = await supabase
         .from('notifications')
         .delete()
         .eq('user_id', userId);
       if (error) throw error;
-      setNotifications([]);
     } catch (err: any) {
       console.error('Error deleting all notifications:', err.message);
+      setNotifications(snapshot);
       throw err;
     }
   }, [userId]);
