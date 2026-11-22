@@ -532,8 +532,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
     borderWidth: 1, borderColor: COLORS.primaryDark,
   },
+  // Sin borderStyle: 'dashed' a propósito -- Android a veces no lo vuelve a
+  // pintar bien al activarse el botón (se queda "pegado" aunque el estilo ya
+  // cambió), un bug conocido de React Native con bordes punteados.
   searchBtnDisabled: {
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border, borderStyle: 'dashed',
+    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
   },
   searchBtnText: { fontSize: 16, fontWeight: '700', color: COLORS.white },
   searchBtnTextDisabled: { color: COLORS.textSecondary },
