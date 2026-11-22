@@ -5,7 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import Toast from "react-native-toast-message";
 import * as Sentry from "@sentry/react-native";
 import * as SplashScreen from "expo-splash-screen";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
@@ -22,7 +22,9 @@ import { useFonts, Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, M
 // react-native-screens está instalado pero nunca se activaba -- sin esto, los
 // navegadores (stack, tabs, drawer) no usan las vistas nativas optimizadas y
 // pierden varias optimizaciones reales (incluida detachInactiveScreens del
-// TabNavigator, que no hace nada sin esta llamada).
+// TabNavigator, que no hace nada sin esta llamada). Descartado como causa del
+// destello de Alertas (22-nov-2026): se probó desactivado y el destello seguía
+// igual -- ver [[project_navegacion_fluida_21nov]].
 enableScreens();
 
 let _crashlytics: any = null
@@ -99,15 +101,20 @@ function App() {
 
   if (maintenance.on) {
     return (
-      <SafeAreaProvider>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
         <StatusBar style="dark" />
         <MaintenanceScreen message={maintenance.message} />
       </SafeAreaProvider>
     );
   }
 
+  // initialMetrics evita que la primera pantalla nueva que se monta (ej. la
+  // primera vez que se entra a una pestaña en la sesión) se dibuje un instante
+  // asumiendo 0 de espacio arriba -- sin esto, el contenido se alcanza a ver
+  // superpuesto con la barra de estado real antes de corregirse con la medida
+  // real del dispositivo.
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <StatusBar style="dark" />
       <ErrorBoundary>
         <AppNavigator />

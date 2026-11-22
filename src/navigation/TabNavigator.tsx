@@ -136,6 +136,13 @@ export default function TabNavigator() {
         // causas reales del "salto" (barra de estado y sombras desalineadas), 'none'
         // debería sentirse instantáneo sin volver a verse mal.
         animation: 'none',
+        // Por defecto, una pestaña no se monta hasta que la tocas por primera
+        // vez -- ese primer montaje es más pesado (carga de datos, layout
+        // inicial) que las siguientes veces, y el destello reportado solo pasa
+        // la primera vez que se cambia de pestaña en la sesión. Con lazy:false
+        // las 5 pestañas se montan de una vez al abrir la app, antes de que el
+        // usuario llegue a tocarlas.
+        lazy: false,
         // El ícono activo se ve sobre la pastilla blanca (por eso usa tabBarActiveTintColor,
         // azul primario, ahí sí se lee bien) — pero el texto de la pestaña va directo sobre
         // el fondo azul de la barra, sin pastilla debajo. Si usara el mismo tinte azul,
