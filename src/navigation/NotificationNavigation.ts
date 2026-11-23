@@ -101,6 +101,12 @@ export function getNotificationRoute(
     case 'trip_started':
       return { screenName: 'Main', params: { screen: 'Search' } }
 
+    // Viaje lleno (update_route_available_seats) o ruta publicada con autoconfirmación
+    // (PublishRouteFlow/RecurringRoutesScreen) -- ninguno trae request_id, así que no
+    // entran en airportDetailTypes. La tarjeta del viaje está en Mis viajes.
+    case 'trip_update':
+      return { screenName: 'Main', params: { screen: 'Search' } }
+
     case 'review_received':
       return { screenName: 'Reviews', params: {} }
 
