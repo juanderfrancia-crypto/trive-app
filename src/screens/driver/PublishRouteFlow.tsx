@@ -386,7 +386,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Origen</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={[styles.fieldInput, styles.fieldInputCompact]}
             placeholder="Ej: Puerto Tejada"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.origin}
@@ -396,7 +396,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Destino</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={[styles.fieldInput, styles.fieldInputCompact]}
             placeholder="Ej: Cali"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.destination}
@@ -442,7 +442,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Precio por cupo</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={[styles.fieldInput, styles.fieldInputCompact]}
             placeholder="15000"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.price}
@@ -453,7 +453,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <View style={styles.field}>
           <Text style={styles.fieldLabel}>Cupos</Text>
           <TextInput
-            style={styles.fieldInput}
+            style={[styles.fieldInput, styles.fieldInputCompact]}
             placeholder="4"
             placeholderTextColor={COLORS.textTertiary}
             value={draft.seats}
@@ -503,7 +503,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
         <Text style={styles.fieldLabel}>Por dónde va (opcional)</Text>
         <TextInput
           style={styles.fieldInput}
-          placeholder="Ej: Por la Simón Bolívar, sin pasar por Cañas Gordas"
+          placeholder="Ej: Por la Simón Bolívar"
           placeholderTextColor={COLORS.textTertiary}
           value={draft.routeVia}
           onChangeText={(t) => update('routeVia', t)}
@@ -823,12 +823,22 @@ const styles = StyleSheet.create({
   fieldValue: { ...TYPOGRAPHY.bodyMedium, fontWeight: '700', color: COLORS.textPrimary, marginTop: SPACING.xs },
   fieldInput: {
     ...TYPOGRAPHY.bodyMedium,
+    fontSize: 14,
     fontWeight: '700',
     color: COLORS.textPrimary,
-    padding: 0,
-    marginTop: SPACING.xs,
+    marginTop: SPACING.sm,
+    backgroundColor: COLORS.surfaceAlt,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   multiline: { minHeight: 48, textAlignVertical: 'top' },
+  // Origen/Destino/Precio/Cupos van en fila de a dos (styles.field, mitad del
+  // ancho) -- el padding horizontal normal de fieldInput les deja muy poco
+  // espacio al texto y el placeholder se corta/salta de línea.
+  fieldInputCompact: { paddingHorizontal: SPACING.sm },
   fieldHint: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary, marginTop: SPACING.xs },
 
   summaryLine: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
