@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import Icon from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { showSuccess } from '../utils/showError'
 import OtpDigitsInput from '../components/OtpDigitsInput'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { supabase } from '../services/supabase'
@@ -87,7 +88,7 @@ export default function RecoveryEmailScreen() {
 
       setCurrentEmail(email.trim())
       setStep('view')
-      Alert.alert('Listo', 'Tu correo de recuperación quedó configurado.')
+      showSuccess('Tu correo de recuperación quedó configurado.')
     } catch (err: any) {
       setInlineError('El código es inválido o expiró. Solicita uno nuevo.')
       setCode('')
@@ -109,7 +110,7 @@ export default function RecoveryEmailScreen() {
       if (error) throw error
       setCurrentEmail(email.trim())
       setStep('view')
-      Alert.alert('Listo', 'Tu correo de recuperación quedó configurado.')
+      showSuccess('Tu correo de recuperación quedó configurado.')
     } catch (err: any) {
       setInlineError('El código es inválido o expiró. Solicita uno nuevo.')
       setCode('')

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Alert } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { checkDriverApprovalStatus, getDriverRestrictionMessage, type DriverApprovalStatus } from '../services/driverApproval'
+import { showWarning } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 export const useCreateRouteGate = (userId?: string) => {
   const navigation = useNavigation<any>()
@@ -21,15 +22,18 @@ export const useCreateRouteGate = (userId?: string) => {
 
   const goToCreateRoute = useCallback(() => {
     if (!approvalStatus) {
-      Alert.alert('Error', 'Verificando estado de aprobación...')
+      showWarning('Verificando estado de aprobación...')
       return
     }
 
     if (!approvalStatus.canCreateRoutes) {
-      Alert.alert('No puedes crear rutas', getDriverRestrictionMessage(approvalStatus), [
-        { text: 'Ver documentos', onPress: () => navigation.navigate('DriverDocuments') },
-        { text: 'Cerrar', style: 'cancel' },
-      ])
+      AppAlert.confirm({
+        title: 'No puedes crear rutas',
+        message: getDriverRestrictionMessage(approvalStatus),
+        confirmText: 'Ver documentos',
+        cancelText: 'Cerrar',
+        onConfirm: () => navigation.navigate('DriverDocuments'),
+      })
       return
     }
 

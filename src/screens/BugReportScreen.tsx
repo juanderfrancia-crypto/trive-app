@@ -1,4 +1,4 @@
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -9,6 +9,8 @@ import * as Device from 'expo-device'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { APP_VERSION_LABEL } from '../config/appInfo'
 import { supabase } from '../services/supabase'
+import { showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 type BugCategory = 'crash' | 'visual' | 'network' | 'performance' | 'other'
 
@@ -45,12 +47,12 @@ export default function BugReportScreen() {
   const handleSubmitReport = async () => {
     // Validations
     if (!report.title.trim()) {
-      Alert.alert('Error', 'Por favor ingresa un título para el problema')
+      showError('Por favor ingresa un título para el problema')
       return
     }
 
     if (!report.description.trim()) {
-      Alert.alert('Error', 'Por favor proporciona una descripción del problema')
+      showError('Por favor proporciona una descripción del problema')
       return
     }
 
@@ -73,22 +75,14 @@ export default function BugReportScreen() {
       if (error) throw error
 
       setLoading(false)
-      Alert.alert(
-        'Reporte enviado',
-        'Recibimos tu reporte y nuestro equipo lo va a revisar. ¡Gracias por ayudarnos a mejorar!',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.goBack(),
-          },
-        ]
-      )
+      AppAlert.info({
+        title: 'Reporte enviado',
+        message: 'Recibimos tu reporte y nuestro equipo lo va a revisar. ¡Gracias por ayudarnos a mejorar!',
+        onClose: () => navigation.goBack(),
+      })
     } catch (error) {
       setLoading(false)
-      Alert.alert(
-        'Error',
-        'No pudimos enviar tu reporte. Por favor intenta de nuevo o contacta directamente a privacy@trivesoft.com'
-      )
+      showError('No pudimos enviar tu reporte. Por favor intenta de nuevo o contacta directamente a privacy@trivesoft.com')
     }
   }
 

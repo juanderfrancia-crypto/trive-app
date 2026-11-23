@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -8,7 +8,8 @@ import Icon from '../../components/Icon'
 import Illustration from '../../components/illustrations/Illustration'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
-import { showError } from '../../utils/showError'
+import { showError, showSuccess } from '../../utils/showError'
+import { AppAlert } from '../../components/AppAlert'
 
 type Tab = 'live' | 'scheduled' | 'history'
 
@@ -125,7 +126,7 @@ export default function DriverTripsScreen() {
         return
       }
       const result = data as { refunded: boolean; message: string }
-      Alert.alert('Viaje cancelado', result.message)
+      showSuccess(result.message)
       fetchRoutes()
       return
     }
@@ -140,10 +141,14 @@ export default function DriverTripsScreen() {
   }
 
   const confirmChange = (route: Route, status: 'in_progress' | 'completed' | 'cancelled', title: string, message: string) => {
-    Alert.alert(title, message, [
-      { text: 'Volver', style: 'cancel' },
-      { text: 'Confirmar', style: status === 'cancelled' ? 'destructive' : 'default', onPress: () => changeStatus(route, status) },
-    ])
+    AppAlert.confirm({
+      title,
+      message,
+      confirmText: 'Confirmar',
+      cancelText: 'Volver',
+      destructive: status === 'cancelled',
+      onConfirm: () => changeStatus(route, status),
+    })
   }
 
   const renderCard = ({ item: route }: { item: Route }) => {

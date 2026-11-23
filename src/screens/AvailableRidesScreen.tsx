@@ -1,11 +1,12 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
+import { AppAlert } from '../components/AppAlert'
 import { useAvailableRides, AvailableRide } from '../hooks/useAvailableRides'
 import { SkeletonRideCard } from '../components/Skeleton'
 import { useAppStore } from '../store/useAppStore'
@@ -253,9 +254,11 @@ export default function AvailableRidesScreen() {
   const handleContinue = () => {
     if (!selectedRide) return
     if (!authUser) {
-      Alert.alert('Inicia sesión', 'Debes iniciar sesión para reservar un viaje.', [
-        { text: 'Aceptar', onPress: () => navigation.navigate('Login' as never) },
-      ])
+      AppAlert.info({
+        title: 'Inicia sesión',
+        message: 'Debes iniciar sesión para reservar un viaje.',
+        onClose: () => navigation.navigate('Login' as never),
+      })
       return
     }
     setSelectedRoute(selectedRide)

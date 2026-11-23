@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Platform, Share } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform, Share } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
@@ -9,6 +9,8 @@ import { exportUserData } from '../services/exportData'
 import { supabase } from '../services/supabase'
 import { useAppStore } from '../store/useAppStore'
 import Icon, { type IconName } from '../components/Icon'
+import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 export default function PrivacyScreen() {
   const navigation = useNavigation()
@@ -19,81 +21,66 @@ export default function PrivacyScreen() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDownloadData = () => {
-    Alert.alert(
-      'Descargar mis datos',
-      'Se generará un archivo con toda tu información personal, que podrás guardar o compartir.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Generar archivo',
-          onPress: async () => {
-            setIsExporting(true)
-            try {
-              const data = await exportUserData()
-              const fileName = `trive-datos-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
-              const jsonContent = JSON.stringify(data, null, 2)
+    AppAlert.confirm({
+      title: 'Descargar mis datos',
+      message: 'Se generará un archivo con toda tu información personal, que podrás guardar o compartir.',
+      confirmText: 'Generar archivo',
+      onConfirm: async () => {
+        setIsExporting(true)
+        try {
+          const data = await exportUserData()
+          const fileName = `trive-datos-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+          const jsonContent = JSON.stringify(data, null, 2)
 
-              if (Platform.OS === 'web' && typeof Blob !== 'undefined') {
-                const blob = new Blob([jsonContent], { type: 'application/json' })
-                const url = URL.createObjectURL(blob)
-                const anchor = document.createElement('a')
-                anchor.href = url
-                anchor.download = fileName
-                document.body.appendChild(anchor)
-                anchor.click()
-                anchor.remove()
-                URL.revokeObjectURL(url)
-              } else {
-                const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory || ''
-                const fileUri = `${dir}${fileName}`
-                await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
-                  encoding: FileSystem.EncodingType.UTF8,
-                })
-                await Share.share({
-                  url: fileUri,
-                  title: 'Mis datos de Trive',
-                  message: 'Aquí tienes tu archivo de datos de Trive.',
-                })
-              }
+          if (Platform.OS === 'web' && typeof Blob !== 'undefined') {
+            const blob = new Blob([jsonContent], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const anchor = document.createElement('a')
+            anchor.href = url
+            anchor.download = fileName
+            document.body.appendChild(anchor)
+            anchor.click()
+            anchor.remove()
+            URL.revokeObjectURL(url)
+          } else {
+            const dir = FileSystem.documentDirectory || FileSystem.cacheDirectory || ''
+            const fileUri = `${dir}${fileName}`
+            await FileSystem.writeAsStringAsync(fileUri, jsonContent, {
+              encoding: FileSystem.EncodingType.UTF8,
+            })
+            await Share.share({
+              url: fileUri,
+              title: 'Mis datos de Trive',
+              message: 'Aquí tienes tu archivo de datos de Trive.',
+            })
+          }
 
-              Alert.alert('Listo', 'Tu archivo de datos se generó correctamente.')
-            } catch (err: any) {
-              Alert.alert('Error', err?.message || 'No se pudo generar el archivo.')
-            } finally {
-              setIsExporting(false)
-            }
-          },
-        },
-      ]
-    )
+          showSuccess('Tu archivo de datos se generó correctamente.')
+        } catch (err: any) {
+          showError(err?.message || 'No se pudo generar el archivo.')
+        } finally {
+          setIsExporting(false)
+        }
+      },
+    })
   }
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Eliminar cuenta',
-      '¿Estás seguro? Se cancelarán tus reservas y rutas activas. Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sí, eliminar',
-          style: 'destructive',
-          onPress: () => {
-            Alert.alert(
-              'Confirmación final',
-              'Esta es tu última oportunidad. Al confirmar, tu cuenta se cierra de forma permanente.',
-              [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                  text: 'Confirmar eliminación',
-                  style: 'destructive',
-                  onPress: () => confirmDeleteAccount(),
-                },
-              ]
-            )
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar cuenta',
+      message: '¿Estás seguro? Se cancelarán tus reservas y rutas activas. Esta acción no se puede deshacer.',
+      confirmText: 'Sí, eliminar',
+      destructive: true,
+      onConfirm: () => {
+        AppAlert.confirm({
+          title: 'Confirmación final',
+          message: 'Esta es tu última oportunidad. Al confirmar, tu cuenta se cierra de forma permanente.',
+          confirmText: 'Confirmar eliminación',
+          destructive: true,
+          onConfirm: () => confirmDeleteAccount(),
+        })
+      },
+    })
   }
 
   // La función del servidor anonimiza los datos, bloquea la cuenta y devuelve el control aquí.
@@ -109,7 +96,7 @@ export default function PrivacyScreen() {
       setUser(null)
       setAuthUser(null)
     } catch (err: any) {
-      Alert.alert('Error', err?.message || 'No se pudo eliminar la cuenta. Contacta a soporte.')
+      showError(err?.message || 'No se pudo eliminar la cuenta. Contacta a soporte.')
     } finally {
       setIsDeleting(false)
     }

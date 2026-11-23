@@ -1,11 +1,12 @@
 import { useState, useCallback } from 'react'
-import { View, StyleSheet, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
+import { AppAlert } from '../components/AppAlert'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 
@@ -63,20 +64,16 @@ export default function DriverPaymentMethodsScreen() {
   }
 
   const handleDelete = (method: DriverPaymentMethod) => {
-    Alert.alert(
-      'Eliminar método',
-      `¿Eliminar ${METHOD_CONFIG[method.type].label} ${methodValue(method)}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: async () => {
-            await supabase.from('driver_payment_methods').update({ is_active: false }).eq('id', method.id)
-            loadMethods()
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar método',
+      message: `¿Eliminar ${METHOD_CONFIG[method.type].label} ${methodValue(method)}?`,
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
+        await supabase.from('driver_payment_methods').update({ is_active: false }).eq('id', method.id)
+        loadMethods()
+      },
+    })
   }
 
   return (

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
+import { showError } from '../utils/showError'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { supabase } from '../services/supabase'
@@ -59,7 +60,7 @@ export default function RecentActivityScreen() {
       setLoadedOnce(true)
     } catch (err) {
       console.error('Error loading activities:', err)
-      Alert.alert('Error', 'No se pueden cargar las actividades')
+      showError('No se pueden cargar las actividades')
       setLoading(false)
     } finally {
       setLoading(false)

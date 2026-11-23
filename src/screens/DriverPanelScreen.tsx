@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, RefreshControl, Share, StatusBar, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl, Share, StatusBar, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +15,8 @@ import { getTripUnreadCountFrom, subscribeTripMessages } from '../services/trip_
 import { withTimeout } from '../utils/withTimeout'
 import Icon, { type IconName } from '../components/Icon'
 import PublishSheet from '../components/driver/PublishSheet'
+import { showError, showSuccess } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 interface Passenger {
   booking_id: string
@@ -90,10 +92,7 @@ export default function DriverPanelScreen() {
     if (phone) {
       Linking.openURL(`tel:${phone}`)
     } else {
-      Alert.alert(
-        'No pudimos hacer la llamada',
-        'No tenemos el número de este pasajero en este momento. Puedes escribirle por el chat.'
-      )
+      showError('No tenemos el número de este pasajero en este momento. Puedes escribirle por el chat.')
     }
   }
 
@@ -307,9 +306,9 @@ export default function DriverPanelScreen() {
       if (error) throw error
       const result = data as { refunded: boolean; message: string }
       setRoutes((prevRoutes) => prevRoutes.filter((route) => route.id !== routeId))
-      Alert.alert('Viaje cancelado', result.message)
+      showSuccess(result.message)
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'No se pudo cancelar el viaje')
+      showError(err.message || 'No se pudo cancelar el viaje')
     } finally {
       setUpdatingRouteId(null)
     }
@@ -337,8 +336,7 @@ export default function DriverPanelScreen() {
       // driver_set_route_status ya notifica a cada pasajero confirmado en el
       // servidor (tipo 'trip_started'); no se duplica aquí desde el cliente.
 
-      Alert.alert(
-        'Éxito',
+      showSuccess(
         newStatus === 'in_progress'
           ? '¡Viaje iniciado! Los pasajeros han sido notificados.'
           : newStatus === 'completed'
@@ -357,7 +355,7 @@ export default function DriverPanelScreen() {
       // debe mostrarse tal cual — solo queda en consola para depurar.
       const isBusinessMessage = err?.code === 'P0001' && !!err.message
       if (__DEV__ && !isBusinessMessage) console.error('updateRouteStatus error:', err)
-      Alert.alert('Error', isBusinessMessage ? err.message : 'No se pudo actualizar el viaje. Intenta de nuevo.')
+      showError(isBusinessMessage ? err.message : 'No se pudo actualizar el viaje. Intenta de nuevo.')
     } finally {
       setUpdatingRouteId(null)
     }
@@ -881,14 +879,14 @@ export default function DriverPanelScreen() {
 
                       <TouchableOpacity
                         style={styles.secondaryActionBtn}
-                        onPress={() => Alert.alert(
-                          'Cancelar viaje',
-                          '¿Cancelar este viaje? Se notificará a los pasajeros.',
-                          [
-                            { text: 'No', style: 'cancel' },
-                            { text: 'Sí, cancelar', style: 'destructive', onPress: () => cancelRoute(route.id) },
-                          ]
-                        )}
+                        onPress={() => AppAlert.confirm({
+                          title: 'Cancelar viaje',
+                          message: '¿Cancelar este viaje? Se notificará a los pasajeros.',
+                          confirmText: 'Sí, cancelar',
+                          cancelText: 'No',
+                          destructive: true,
+                          onConfirm: () => cancelRoute(route.id),
+                        })}
                         disabled={isUpdating}
                         activeOpacity={0.8}
                       >

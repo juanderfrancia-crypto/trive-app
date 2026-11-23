@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
-import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Alert, Keyboard, Platform } from 'react-native'
+import { View, Modal, TouchableOpacity, StyleSheet, ActivityIndicator, Linking, Keyboard, Platform } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from './AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -11,6 +11,7 @@ import { QuickMessageInput } from './QuickMessageInput'
 import { useTripMessages } from '../hooks/useTripMessages'
 import { getCounterpartPhone } from '../services/profileColumns'
 import { supabase } from '../services/supabase'
+import { showError } from '../utils/showError'
 
 interface TripMessagesModalProps {
   visible: boolean
@@ -110,10 +111,7 @@ export const TripMessagesModal = React.memo(
       if (phone) {
         Linking.openURL(`tel:${phone}`)
       } else {
-        Alert.alert(
-          'No pudimos hacer la llamada',
-          'No tenemos el número de este contacto en este momento. Puedes escribirle por el chat.'
-        )
+        showError('No tenemos el número de este contacto en este momento. Puedes escribirle por el chat.')
       }
     }, [otherUserId])
 

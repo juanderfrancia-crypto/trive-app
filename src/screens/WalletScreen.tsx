@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, TextInput } from 'react-native'
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -12,6 +12,7 @@ import Icon, { type IconName } from '../components/Icon'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { ROUTE_FEE_MIN, ROUTE_FEE_MAX } from '../utils/platformFees'
 import { parseServerDate } from '../utils/serverDate'
+import { showSuccess, showError, showWarning } from '../utils/showError'
 
 const TX_PAGE_SIZE = 15
 const RECHARGE_MIN = 20000
@@ -148,7 +149,7 @@ export default function WalletScreen() {
         setUser({ ...user!, balance: newBalance })
         await loadData()
         setVerifying(false)
-        Alert.alert('¡Recarga exitosa!', `Se acreditaron $${(newBalance - previousBalance).toLocaleString('es-CO')} a tu billetera.`)
+        showSuccess(`¡Recarga exitosa! Se acreditaron $${(newBalance - previousBalance).toLocaleString('es-CO')} a tu billetera.`)
         return
       }
     }
@@ -162,7 +163,7 @@ export default function WalletScreen() {
   const handleRecharge = async () => {
     if (!user?.id) return
     if (effectiveAmount < RECHARGE_MIN) {
-      Alert.alert('Monto muy bajo', `La recarga mínima es $${RECHARGE_MIN.toLocaleString('es-CO')}.`)
+      showWarning(`Monto muy bajo: la recarga mínima es $${RECHARGE_MIN.toLocaleString('es-CO')}.`)
       return
     }
     setPaying(true)
@@ -182,7 +183,7 @@ export default function WalletScreen() {
       // Cuando el usuario cierra el browser, verificamos si el pago llegó
       pollBalanceUntilUpdated(previousBalance)
     } catch (err: any) {
-      Alert.alert('Error', err.message ?? 'No se pudo iniciar el pago')
+      showError(err.message ?? 'No se pudo iniciar el pago')
     } finally {
       setPaying(false)
     }

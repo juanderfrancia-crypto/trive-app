@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Linking, FlatList } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, FlatList } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -10,6 +10,8 @@ import { useAppStore } from '../store/useAppStore'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { uploadDriverDocument, getDriverDocuments, type DriverDocument } from '../services/driverDocuments'
 import { DOCUMENTS_WITHOUT_EXPIRY } from '../utils/documentHelpers'
+import { showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import { useCallback } from 'react'
 import { supabase } from '../services/supabase'
 import Icon from '../components/Icon'
@@ -135,22 +137,17 @@ export default function DriverDocumentsScreen() {
       },
       (payload: any) => {
         if (payload.new?.is_driver_verified === true && !payload.old?.is_driver_verified) {
-          Alert.alert(
-            '¡Felicidades! 🎉',
-            'Todos tus documentos han sido verificados. ¡Ahora eres un conductor verificado!',
-            [
-              {
-                text: 'OK',
-                onPress: () => {
-                  // Refresh the user profile in store
-                  if (user?.id) {
-                    // This will trigger a profile refresh
-                    navigation.navigate('Main' as never)
-                  }
-                },
-              },
-            ]
-          )
+          AppAlert.info({
+            title: '¡Felicidades! 🎉',
+            message: 'Todos tus documentos han sido verificados. ¡Ahora eres un conductor verificado!',
+            onClose: () => {
+              // Refresh the user profile in store
+              if (user?.id) {
+                // This will trigger a profile refresh
+                navigation.navigate('Main' as never)
+              }
+            },
+          })
         }
       }
     )
@@ -267,7 +264,7 @@ export default function DriverDocumentsScreen() {
 
   const handleUploadDocument = async (documentType: string, documentName: string) => {
     if (!authUser?.id) {
-      Alert.alert('Error', 'No se pudo identificar tu usuario')
+      showError('No se pudo identificar tu usuario')
       return
     }
 
@@ -296,7 +293,7 @@ export default function DriverDocumentsScreen() {
       // Validate file size (max 10MB)
       const fileSizeInMB = file.size ? file.size / (1024 * 1024) : 0
       if (fileSizeInMB > 10) {
-        Alert.alert('Error', 'El archivo no puede pesar más de 10 MB')
+        showError('El archivo no puede pesar más de 10 MB')
         setUploadingDocType(null)
         return
       }
@@ -304,7 +301,7 @@ export default function DriverDocumentsScreen() {
       // Validate file type
       const validTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
       if (!validTypes.includes(file.mimeType || '')) {
-        Alert.alert('Error', 'Solo se aceptan archivos PDF e imágenes (JPG, PNG, WebP)')
+        showError('Solo se aceptan archivos PDF e imágenes (JPG, PNG, WebP)')
         setUploadingDocType(null)
         return
       }
@@ -313,56 +310,49 @@ export default function DriverDocumentsScreen() {
       const currentStatus = getDocumentStatus(documentType)
       const isRenewal = currentStatus === 'verified'
       
-      Alert.alert(
-        'Documento Seleccionado',
-        isRenewal 
+      AppAlert.confirm({
+        title: 'Documento Seleccionado',
+        message: isRenewal
           ? `${file.name}\n\nTamaño: ${fileSizeInMB.toFixed(2)} MB\n\nSe reenviará a verificación. Tu documento actual será reemplazado y revisado nuevamente.`
           : `${file.name}\n\nTamaño: ${fileSizeInMB.toFixed(2)} MB\n\nSe enviará a verificación. Nuestro equipo revisará que sea un documento válido y que corresponda a tu perfil.`,
-        [
-          {
-            text: 'Cancelar',
-            onPress: () => setUploadingDocType(null),
-            style: 'cancel',
-          },
-          {
-            text: 'Confirmar Subida',
-            onPress: async () => {
-              try {
-                // Upload to backend
-                const uploadedDoc = await uploadDriverDocument(
-                  authUser.id,
-                  documentType,
-                  file.uri,
-                  file.name,
-                  file.size || 0,
-                  file.mimeType || 'application/octet-stream'
-                )
+        confirmText: 'Confirmar Subida',
+        onCancel: () => setUploadingDocType(null),
+        onConfirm: async () => {
+          try {
+            // Upload to backend
+            const uploadedDoc = await uploadDriverDocument(
+              authUser.id,
+              documentType,
+              file.uri,
+              file.name,
+              file.size || 0,
+              file.mimeType || 'application/octet-stream'
+            )
 
-                if (uploadedDoc) {
-                  // Update local state
-                  const newMap = new Map(backendDocuments)
-                  newMap.set(documentType, uploadedDoc)
-                  setBackendDocuments(newMap)
+            if (uploadedDoc) {
+              // Update local state
+              const newMap = new Map(backendDocuments)
+              newMap.set(documentType, uploadedDoc)
+              setBackendDocuments(newMap)
 
-                  Alert.alert(
-                    'Éxito',
-                    isRenewal
-                      ? `Tu ${documentName.toLowerCase()} ha sido actualizada correctamente.\n\nSerá revisada nuevamente por nuestro equipo. Recibirás una notificación cuando esté lista.`
-                      : `Tu ${documentName.toLowerCase()} ha sido subida correctamente.\n\nAhora sera revisada por nuestro equipo de verificación. Recibirás una notificación cuando esté lista.`,
-                    [{ text: 'Entendido', onPress: () => setUploadingDocType(null) }]
-                  )
-                }
-              } catch (error: any) {
-                Alert.alert('Error', error.message || 'No se pudo subir el documento')
-                setUploadingDocType(null)
-              }
-            },
-          },
-        ]
-      )
+              AppAlert.info({
+                title: 'Éxito',
+                message: isRenewal
+                  ? `Tu ${documentName.toLowerCase()} ha sido actualizada correctamente.\n\nSerá revisada nuevamente por nuestro equipo. Recibirás una notificación cuando esté lista.`
+                  : `Tu ${documentName.toLowerCase()} ha sido subida correctamente.\n\nAhora sera revisada por nuestro equipo de verificación. Recibirás una notificación cuando esté lista.`,
+                buttonText: 'Entendido',
+                onClose: () => setUploadingDocType(null),
+              })
+            }
+          } catch (error: any) {
+            showError(error.message || 'No se pudo subir el documento')
+            setUploadingDocType(null)
+          }
+        },
+      })
     } catch (error) {
       console.error('Error al seleccionar documento:', error)
-      Alert.alert('Error', 'No se pudo seleccionar el documento. Intenta nuevamente.')
+      showError('No se pudo seleccionar el documento. Intenta nuevamente.')
       setUploadingDocType(null)
     }
   }

@@ -86,6 +86,16 @@ export const COLORS = {
   // (badges de pestañas, chats, mensajes) se queda en rojo puro -- decisión
   // explícita del 23-nov-2026, separada de `error`/`danger`.
   notificationBadge: '#EF4444',
+
+  // Identidad única para toasts flotantes y el modal de confirmación que
+  // reemplaza a Alert.alert -- franja oscura flotante, igual al patrón de
+  // WhatsApp/notificaciones del sistema. A propósito NO usa los colores de
+  // marca de fondo (solo en el chip del ícono), decisión 23-nov-2026.
+  statusDark: 'rgba(26, 26, 30, 0.94)', // toast flotante (semitransparente)
+  statusDarkSolid: '#1C1C1E', // modal de confirmación (sólido)
+  statusDarkText: '#FFFFFF',
+  statusDarkTextSecondary: 'rgba(255, 255, 255, 0.62)',
+  statusDarkBorder: 'rgba(255, 255, 255, 0.18)',
 }
 
 export const TYPOGRAPHY = {

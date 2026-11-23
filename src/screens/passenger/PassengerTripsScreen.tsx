@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import TripHistoryScreen from '../TripHistoryScreen'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Linking, ActivityIndicator } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -11,6 +11,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../theme/theme'
 import { useAppStore } from '../../store/useAppStore'
 import { getCounterpartPhone } from '../../services/profileColumns'
 import { showSuccess, showError } from '../../utils/showError'
+import { AppAlert } from '../../components/AppAlert'
 import { TripMessagesModal } from '../../components/TripMessagesModal'
 import { getTripUnreadCountFrom, subscribeTripMessages } from '../../services/trip_messages'
 import {
@@ -111,14 +112,14 @@ export default function PassengerTripsScreen() {
   }
 
   const handleCancel = (booking: PassengerBooking) => {
-    Alert.alert(
-      'Cancelar viaje',
-      `¿Deseas cancelar el viaje de ${booking.origin} a ${booking.destination}?`,
-      [
-        { text: 'No, mantener', style: 'cancel' },
-        { text: 'Sí, cancelar', style: 'destructive', onPress: () => doCancel(booking) },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Cancelar viaje',
+      message: `¿Deseas cancelar el viaje de ${booking.origin} a ${booking.destination}?`,
+      confirmText: 'Sí, cancelar',
+      cancelText: 'No, mantener',
+      destructive: true,
+      onConfirm: () => doCancel(booking),
+    })
   }
 
   const handleCall = async (booking: PassengerBooking) => {
@@ -126,10 +127,7 @@ export default function PassengerTripsScreen() {
     if (phone) {
       Linking.openURL(`tel:${phone}`)
     } else {
-      Alert.alert(
-        'No pudimos hacer la llamada',
-        'No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.'
-      )
+      showError('No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.')
     }
   }
 

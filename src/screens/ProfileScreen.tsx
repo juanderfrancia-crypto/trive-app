@@ -16,6 +16,7 @@ import { useAuth } from '../hooks/useAuth'
 import { usePassengerStats } from '../hooks/usePassengerStats'
 import { useDriverEarnings } from '../hooks/useDriverEarnings'
 import { showSuccess, showError, showInfo } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import { uploadProfilePhoto, uploadVehiclePhoto, regenerateExpiredPhotoUrl, deleteProfilePhoto } from '../services/photoUpload'
 import { supabase } from '../services/supabase'
 import { getExpiryStatus } from '../utils/documentHelpers'
@@ -139,10 +140,13 @@ export default function ProfileScreen() {
   }, [shouldLogout])
 
   const handleLogout = () =>
-    Alert.alert('Cerrar Sesión', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Cerrar', style: 'destructive', onPress: () => setShouldLogout(true) },
-    ], { cancelable: false })
+    AppAlert.confirm({
+      title: 'Cerrar Sesión',
+      message: '¿Estás seguro?',
+      confirmText: 'Cerrar',
+      destructive: true,
+      onConfirm: () => setShouldLogout(true),
+    })
 
   const performLogout = async () => {
     try { showToast('Cerrando sesión...', 'info'); await logoutAuth(); logoutStore() }
@@ -158,7 +162,7 @@ export default function ProfileScreen() {
       setIsLoading(true)
       const result = await switchRole(user.id, 'passenger')
       if (result) { setIsDriver(false); showToast('Ahora eres pasajero') }
-    } catch { Alert.alert('Error', 'No se pudo cambiar el rol.') }
+    } catch { showError('No se pudo cambiar el rol.') }
     finally { setIsLoading(false) }
   }
 

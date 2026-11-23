@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, FlatList, StyleSheet, Alert, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from 'react-native'
 import { Text } from '../AppText'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
@@ -10,6 +10,7 @@ import { TripDetailsModal } from '../TripDetailsModal'
 import { supabase } from '../../services/supabase'
 import { useAirportNegotiation } from '../../hooks/useAirportNegotiation'
 import { showError } from '../../utils/showError'
+import { AppAlert } from '../AppAlert'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
 
@@ -123,27 +124,22 @@ export default function ActiveTripsTab({ isDriver }: HubTabProps) {
   }
 
   const handleComplete = (trip: ActiveTrip) => {
-    Alert.alert(
-      'Marcar como completado',
-      `¿Confirmas que el viaje con ${trip.otherUserName} ya se realizó? Pasará a tu historial.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: async () => {
-            setCompletingId(trip.id)
-            try {
-              await completeTrip(trip.id)
-              setTrips((prev) => prev.filter((t) => t.id !== trip.id))
-            } catch (err: any) {
-              showError(err.message || 'No se pudo marcar como completado')
-            } finally {
-              setCompletingId(null)
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Marcar como completado',
+      message: `¿Confirmas que el viaje con ${trip.otherUserName} ya se realizó? Pasará a tu historial.`,
+      confirmText: 'Confirmar',
+      onConfirm: async () => {
+        setCompletingId(trip.id)
+        try {
+          await completeTrip(trip.id)
+          setTrips((prev) => prev.filter((t) => t.id !== trip.id))
+        } catch (err: any) {
+          showError(err.message || 'No se pudo marcar como completado')
+        } finally {
+          setCompletingId(null)
+        }
+      },
+    })
   }
 
   const renderTripItem = ({ item: trip }: { item: ActiveTrip }) => (

@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect, useMemo } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, Linking, RefreshControl } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Linking, RefreshControl } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native'
@@ -16,6 +16,7 @@ import { useUpcomingTrip, formatCountdown } from '../hooks/useUpcomingTrip'
 import { useRecentRoutes } from '../hooks/useRecentRoutes'
 import { supabase } from '../services/supabase'
 import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import { toEmergencyContact } from '../utils/emergencyContact'
 import { MunicipalityPickerModal } from '../components/MunicipalityPickerModal'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
@@ -143,76 +144,69 @@ export default function PassengerHomeScreen() {
 
   const handleSOS = () => {
     if (!upcomingTrip) return
-    Alert.alert(
-      'Enviar SOS',
-      '¿Enviar tu ubicación y datos del viaje a tu contacto de emergencia por WhatsApp?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Enviar SOS',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const userId = useAppStore.getState().user?.id
-              const { data: prof } = userId
-                ? await supabase.from('profiles').select('emergency_contact').eq('id', userId).single()
-                : { data: null }
-              const contact = toEmergencyContact(prof?.emergency_contact)
-              if (!contact) {
-                Alert.alert(
-                  'Sin contacto de emergencia',
-                  'Configura un contacto en Ajustes → Privacidad y Seguridad.',
-                  [
-                    { text: 'Ir a Ajustes', onPress: () => navigation.navigate('Settings' as never) },
-                    { text: 'Cancelar', style: 'cancel' },
-                  ]
-                )
-                return
-              }
+    AppAlert.confirm({
+      title: 'Enviar SOS',
+      message: '¿Enviar tu ubicación y datos del viaje a tu contacto de emergencia por WhatsApp?',
+      confirmText: 'Enviar SOS',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const userId = useAppStore.getState().user?.id
+          const { data: prof } = userId
+            ? await supabase.from('profiles').select('emergency_contact').eq('id', userId).single()
+            : { data: null }
+          const contact = toEmergencyContact(prof?.emergency_contact)
+          if (!contact) {
+            AppAlert.confirm({
+              title: 'Sin contacto de emergencia',
+              message: 'Configura un contacto en Ajustes → Privacidad y Seguridad.',
+              confirmText: 'Ir a Ajustes',
+              onConfirm: () => navigation.navigate('Settings' as never),
+            })
+            return
+          }
 
-              let lat = 3.4372
-              let lng = -76.5197
-              let hasLocation = false
-              try {
-                const { status } = await Location.requestForegroundPermissionsAsync()
-                if (status === 'granted') {
-                  const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-                  lat = pos.coords.latitude
-                  lng = pos.coords.longitude
-                  hasLocation = true
-                }
-              } catch {}
-
-              const route = upcomingTrip.routeObj as any
-              const parts = [route?.vehicle_color, route?.vehicle_make, route?.vehicle_plate].filter(Boolean)
-              const vehicleStr = parts.length ? parts.join(' · ') : 'sin datos'
-              const mapsLink = `https://maps.google.com/?q=${lat},${lng}`
-
-              const message =
-                `🆘 *EMERGENCIA — Estoy en un viaje con Trive*\n\n` +
-                `Conductor: ${upcomingTrip.driverName}\n` +
-                `Vehículo: ${vehicleStr}\n` +
-                `Ruta: ${upcomingTrip.origin} → ${upcomingTrip.destination}\n` +
-                `Asiento: ${upcomingTrip.seatNumber}\n\n` +
-                `📍 Mi ubicación${hasLocation ? '' : ' (aprox.)'}:\n${mapsLink}\n\n` +
-                `Por favor contáctame o reporta esta situación.`
-
-              const digits = contact.phone.replace(/\D/g, '')
-              const fullPhone = digits.length === 10 ? `57${digits}` : digits
-              const waUrl = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(message)}`
-
-              try {
-                await Linking.openURL(waUrl)
-              } catch {
-                Alert.alert('WhatsApp no disponible', 'Instala WhatsApp para usar esta función.')
-              }
-            } catch {
-              Alert.alert('Error', 'No se pudo enviar el SOS. Intenta de nuevo.')
+          let lat = 3.4372
+          let lng = -76.5197
+          let hasLocation = false
+          try {
+            const { status } = await Location.requestForegroundPermissionsAsync()
+            if (status === 'granted') {
+              const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+              lat = pos.coords.latitude
+              lng = pos.coords.longitude
+              hasLocation = true
             }
-          },
-        },
-      ]
-    )
+          } catch {}
+
+          const route = upcomingTrip.routeObj as any
+          const parts = [route?.vehicle_color, route?.vehicle_make, route?.vehicle_plate].filter(Boolean)
+          const vehicleStr = parts.length ? parts.join(' · ') : 'sin datos'
+          const mapsLink = `https://maps.google.com/?q=${lat},${lng}`
+
+          const message =
+            `🆘 *EMERGENCIA — Estoy en un viaje con Trive*\n\n` +
+            `Conductor: ${upcomingTrip.driverName}\n` +
+            `Vehículo: ${vehicleStr}\n` +
+            `Ruta: ${upcomingTrip.origin} → ${upcomingTrip.destination}\n` +
+            `Asiento: ${upcomingTrip.seatNumber}\n\n` +
+            `📍 Mi ubicación${hasLocation ? '' : ' (aprox.)'}:\n${mapsLink}\n\n` +
+            `Por favor contáctame o reporta esta situación.`
+
+          const digits = contact.phone.replace(/\D/g, '')
+          const fullPhone = digits.length === 10 ? `57${digits}` : digits
+          const waUrl = `whatsapp://send?phone=${fullPhone}&text=${encodeURIComponent(message)}`
+
+          try {
+            await Linking.openURL(waUrl)
+          } catch {
+            showError('Instala WhatsApp para usar esta función.')
+          }
+        } catch {
+          showError('No se pudo enviar el SOS. Intenta de nuevo.')
+        }
+      },
+    })
   }
 
   const goToTripStatus = () => {

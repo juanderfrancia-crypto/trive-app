@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, Modal } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Modal } from 'react-native'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -15,6 +15,7 @@ import TimeInput12h from '../components/TimeInput12h'
 import DurationInput from '../components/DurationInput'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import {
   VEHICLE_TYPES,
   VehicleTypeId,
@@ -145,18 +146,18 @@ export default function RecurringRoutesScreen() {
 
   const handleSaveTemplate = async () => {
     if (!fOrigin.trim() || !fDest.trim() || !fPickup.trim() || !fDropoff.trim()) {
-      Alert.alert('Campos requeridos', 'Completa origen, destino, punto de salida y punto de llegada.')
+      showError('Completa origen, destino, punto de salida y punto de llegada.')
       return
     }
     const price = parseFloat(fPrice)
     const seats = parseInt(fSeats, 10)
     if (!price || price < 1000) {
-      Alert.alert('Precio inválido', 'El precio mínimo es $1.000.')
+      showError('El precio mínimo es $1.000.')
       return
     }
     const vt = VEHICLE_TYPES.find((v) => v.id === fVehicle)
     if (!seats || seats < 1 || seats > (vt?.maxSeats ?? 70)) {
-      Alert.alert('Asientos inválidos', `Ingresa entre 1 y ${vt?.maxSeats} asientos para ${vt?.name}.`)
+      showError(`Asientos inválidos: ingresa entre 1 y ${vt?.maxSeats} asientos para ${vt?.name}.`)
       return
     }
     if (!user?.id) return
@@ -196,17 +197,16 @@ export default function RecurringRoutesScreen() {
   }
 
   const handleDelete = (id: string) => {
-    Alert.alert('Eliminar plantilla', '¿Eliminar esta ruta frecuente?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          await supabase.from('route_templates').delete().eq('id', id)
-          setTemplates((prev) => prev.filter((t) => t.id !== id))
-        },
+    AppAlert.confirm({
+      title: 'Eliminar plantilla',
+      message: '¿Eliminar esta ruta frecuente?',
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
+        await supabase.from('route_templates').delete().eq('id', id)
+        setTemplates((prev) => prev.filter((t) => t.id !== id))
       },
-    ])
+    })
   }
 
   // Publicar desde plantilla: el servidor valida requisitos y cobra; su mensaje llega tal cual.
@@ -493,10 +493,10 @@ export default function RecurringRoutesScreen() {
 
                 <View style={styles.costNote}>
                   <TouchableOpacity
-                    onPress={() => Alert.alert(
-                      '¿Cómo se calcula?',
-                      'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.'
-                    )}
+                    onPress={() => AppAlert.info({
+                      title: '¿Cómo se calcula?',
+                      message: 'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.',
+                    })}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Icon name="Info" size={16} color={COLORS.primary} />

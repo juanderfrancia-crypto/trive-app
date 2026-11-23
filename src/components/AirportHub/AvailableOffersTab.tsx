@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native'
 import { Text } from '../AppText'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY } from '../../theme/theme'
@@ -9,6 +9,7 @@ import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../../utils/showError'
+import { AppAlert } from '../AppAlert'
 import { supabase } from '../../services/supabase'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
@@ -56,28 +57,23 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
   }
 
   const handleAccept = (item: AirportRequest) => {
-    Alert.alert(
-      'Aceptar viaje',
-      `¿Aceptas el viaje de ${item.passenger_name ?? 'el pasajero'} por ${formatPrice(item.offered_price)}? Se descontarán ${formatPrice(calculateTripAcceptFee(item.offered_price))} de tu billetera.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aceptar viaje',
-          onPress: async () => {
-            try {
-              setProcessing(item.id)
-              await acceptRequestDirect(item.id)
-              showSuccess('Viaje aceptado. Lo encontrarás en Aceptadas.')
-              await load()
-            } catch (err: any) {
-              showError(err.message || 'No se pudo aceptar el viaje')
-            } finally {
-              setProcessing(null)
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Aceptar viaje',
+      message: `¿Aceptas el viaje de ${item.passenger_name ?? 'el pasajero'} por ${formatPrice(item.offered_price)}? Se descontarán ${formatPrice(calculateTripAcceptFee(item.offered_price))} de tu billetera.`,
+      confirmText: 'Aceptar viaje',
+      onConfirm: async () => {
+        try {
+          setProcessing(item.id)
+          await acceptRequestDirect(item.id)
+          showSuccess('Viaje aceptado. Lo encontrarás en Aceptadas.')
+          await load()
+        } catch (err: any) {
+          showError(err.message || 'No se pudo aceptar el viaje')
+        } finally {
+          setProcessing(null)
+        }
+      },
+    })
   }
 
   const handleDismiss = async (item: AirportRequest) => {
@@ -95,26 +91,21 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
       ? 'Ya hiciste una oferta en esta solicitud. Se dejará de mostrar aquí, pero tu oferta sigue activa: si el pasajero la acepta, el viaje te aparecerá igual en "Aceptadas".'
       : 'Se deja de mostrar en tu lista. Otros conductores la seguirán viendo.'
 
-    Alert.alert(
-      'No me interesa',
+    AppAlert.confirm({
+      title: 'No me interesa',
       message,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Descartar',
-          onPress: async () => {
-            try {
-              setProcessing(item.id)
-              await dismissRequest(item.id, user.id)
-            } catch (err: any) {
-              showError(err.message || 'No se pudo descartar la solicitud')
-            } finally {
-              setProcessing(null)
-            }
-          },
-        },
-      ]
-    )
+      confirmText: 'Descartar',
+      onConfirm: async () => {
+        try {
+          setProcessing(item.id)
+          await dismissRequest(item.id, user.id)
+        } catch (err: any) {
+          showError(err.message || 'No se pudo descartar la solicitud')
+        } finally {
+          setProcessing(null)
+        }
+      },
+    })
   }
 
   const renderOfferItem = ({ item }: { item: AirportRequest }) => {
@@ -157,10 +148,10 @@ export default function AvailableOffersTab({ isDriver }: HubTabProps) {
             <View style={styles.costLabelRow}>
               <Text style={styles.priceLabel}>Tu costo</Text>
               <TouchableOpacity
-                onPress={() => Alert.alert(
-                  '¿Cómo se calcula?',
-                  'Es el 10% del precio acordado con el pasajero, con un mínimo de $3.000 y un máximo de $25.000. Se cobra al aceptar el viaje y se devuelve a tu saldo si el pasajero cancela antes de iniciarlo.'
-                )}
+                onPress={() => AppAlert.info({
+                  title: '¿Cómo se calcula?',
+                  message: 'Es el 10% del precio acordado con el pasajero, con un mínimo de $3.000 y un máximo de $25.000. Se cobra al aceptar el viaje y se devuelve a tu saldo si el pasajero cancela antes de iniciarlo.',
+                })}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               >
                 <Icon name="Info" size={13} color={COLORS.textSecondary} />

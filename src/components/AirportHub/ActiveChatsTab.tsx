@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../AppText'
 import { useFocusEffect, useNavigation } from '@react-navigation/native'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../../theme/theme'
 import Illustration from '../illustrations/Illustration'
+import { showError } from '../../utils/showError'
 import { useAppStore } from '../../store/useAppStore'
 import { SkeletonCardList } from '../SkeletonLoader'
 import { supabase } from '../../services/supabase'
@@ -143,7 +144,7 @@ export default function ActiveChatsTab({ isDriver }: HubTabProps) {
       setChats(chatsList)
     } catch (err) {
       console.error('Error loading chats:', err)
-      Alert.alert('Error', 'No se pudieron cargar los chats')
+      showError('No se pudieron cargar los chats')
     } finally {
       setLoading(false)
       setRefreshing(false)

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon from '../../components/Icon'
@@ -7,6 +7,7 @@ import KeyboardAvoidingScreen from '../../components/KeyboardAvoidingScreen'
 import TimeInput12h from '../../components/TimeInput12h'
 import { COLORS, SPACING, RADIUS, TYPOGRAPHY, SHADOWS } from '../../theme/theme'
 import Illustration from '../../components/illustrations/Illustration'
+import { AppAlert } from '../../components/AppAlert'
 import { useRoutes, PublishRoutePayload, Route } from '../../hooks/useRoutes'
 import { useAppStore } from '../../store/useAppStore'
 import { supabase } from '../../services/supabase'
@@ -601,10 +602,10 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
 
         <View style={styles.legalRow}>
           <TouchableOpacity
-            onPress={() => Alert.alert(
-              '¿Cómo se calcula?',
-              'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.'
-            )}
+            onPress={() => AppAlert.info({
+              title: '¿Cómo se calcula?',
+              message: 'Es el 7,8% del valor total de tu ruta (precio por cupo × cupos), con un mínimo de $2.500 y un máximo de $20.000. Se cobra una sola vez al publicar, sin importar cuántos pasajeros reserven.',
+            })}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Icon name="Info" size={14} color={COLORS.textSecondary} />

@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useCallback, memo } from 'react'
-import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Alert, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, SectionList, RefreshControl, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import Icon, { type IconName as IconNameType } from '../components/Icon'
@@ -15,6 +15,7 @@ import { sendTripMessage } from '../services/trip_messages'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { getNotificationRoute } from '../navigation/NotificationNavigation'
 import { showError, showInfo } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import { supabase } from '../services/supabase'
 import { parseServerDate } from '../utils/serverDate'
 
@@ -283,7 +284,7 @@ export default function NotificationsScreen() {
       setReplySent(true)
       setTimeout(() => setDetailNotif(null), 800)
     } catch {
-      Alert.alert('Error', 'No se pudo enviar el mensaje. Intenta de nuevo.')
+      showError('No se pudo enviar el mensaje. Intenta de nuevo.')
     } finally {
       setReplySending(false)
     }
@@ -332,43 +333,33 @@ export default function NotificationsScreen() {
 
   const deleteSelected = async () => {
     if (!selectedIds.length) return
-    Alert.alert(
-      'Eliminar alertas',
-      `¿Eliminar ${selectedIds.length} alerta${selectedIds.length > 1 ? 's' : ''}?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteNotifications(selectedIds)
-              exitSelection()
-            } catch {
-              showError('No se pudieron eliminar. Verifica tu conexión e intenta de nuevo.')
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar alertas',
+      message: `¿Eliminar ${selectedIds.length} alerta${selectedIds.length > 1 ? 's' : ''}?`,
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await deleteNotifications(selectedIds)
+          exitSelection()
+        } catch {
+          showError('No se pudieron eliminar. Verifica tu conexión e intenta de nuevo.')
+        }
+      },
+    })
   }
 
   const deleteAll = () => {
-    Alert.alert(
-      'Eliminar todas',
-      '¿Seguro que deseas eliminar todas las alertas?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar todas',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteAllNotifications()
-            exitSelection()
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar todas',
+      message: '¿Seguro que deseas eliminar todas las alertas?',
+      confirmText: 'Eliminar todas',
+      destructive: true,
+      onConfirm: async () => {
+        await deleteAllNotifications()
+        exitSelection()
+      },
+    })
   }
 
   // useCallback con dependencias explícitas: antes se recreaba en cada render
@@ -416,20 +407,19 @@ export default function NotificationsScreen() {
   }, [selectionMode, toggleSelect])
 
   const handleRowDelete = useCallback((item: NotificationWithSender) => {
-    Alert.alert('Eliminar', '¿Eliminar esta alerta?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteNotifications([item.id])
-          } catch {
-            showError('No se pudo eliminar. Verifica tu conexión e intenta de nuevo.')
-          }
-        },
+    AppAlert.confirm({
+      title: 'Eliminar',
+      message: '¿Eliminar esta alerta?',
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await deleteNotifications([item.id])
+        } catch {
+          showError('No se pudo eliminar. Verifica tu conexión e intenta de nuevo.')
+        }
       },
-    ])
+    })
   }, [deleteNotifications])
 
   const renderNotification = useCallback(({ item }: { item: NotificationWithSender }) => (

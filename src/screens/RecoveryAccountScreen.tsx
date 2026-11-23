@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, Alert, TextInput, ActivityIndicator, ScrollView } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { LinearGradient } from 'expo-linear-gradient'
 import Icon from '../components/Icon'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { showError } from '../utils/showError'
 import Illustration from '../components/illustrations/Illustration'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
@@ -21,7 +22,7 @@ export default function RecoveryAccountScreen() {
   const handleSend = async () => {
     const target = email.trim()
     if (!target || !/\S+@\S+\.\S+/.test(target)) {
-      Alert.alert('Correo inválido', 'Ingresa el correo con el que te registraste.')
+      showError('Ingresa el correo con el que te registraste.')
       return
     }
 
@@ -33,7 +34,7 @@ export default function RecoveryAccountScreen() {
       if (error) throw error
       setSentTo(target)
     } catch (err: any) {
-      Alert.alert('No se pudo enviar', err.message || 'Intenta de nuevo en unos minutos.')
+      showError(err.message || 'Intenta de nuevo en unos minutos.')
     } finally {
       setLoading(false)
     }

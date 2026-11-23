@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -8,6 +8,7 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAppStore } from '../store/useAppStore'
 import { supabase } from '../services/supabase'
 import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import Icon from '../components/Icon'
 import Illustration from '../components/illustrations/Illustration'
 
@@ -227,41 +228,33 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
   }
 
   const hideTrip = (id: string) => {
-    Alert.alert(
-      'Eliminar del historial',
-      '¿Quieres eliminar este viaje de tu historial?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar', style: 'destructive',
-          onPress: () => {
-            const next = new Set(hiddenIds)
-            next.add(id)
-            setHiddenIds(next)
-            saveHidden(next)
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar del historial',
+      message: '¿Quieres eliminar este viaje de tu historial?',
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: () => {
+        const next = new Set(hiddenIds)
+        next.add(id)
+        setHiddenIds(next)
+        saveHidden(next)
+      },
+    })
   }
 
   const hideAll = () => {
-    Alert.alert(
-      'Eliminar todo',
-      '¿Quieres eliminar todos los viajes visibles?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar todo', style: 'destructive',
-          onPress: () => {
-            const next = new Set(hiddenIds)
-            filtered.forEach((t) => next.add(t.id))
-            setHiddenIds(next)
-            saveHidden(next)
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Eliminar todo',
+      message: '¿Quieres eliminar todos los viajes visibles?',
+      confirmText: 'Eliminar todo',
+      destructive: true,
+      onConfirm: () => {
+        const next = new Set(hiddenIds)
+        filtered.forEach((t) => next.add(t.id))
+        setHiddenIds(next)
+        saveHidden(next)
+      },
+    })
   }
 
   const filtered = trips.filter((t) => {

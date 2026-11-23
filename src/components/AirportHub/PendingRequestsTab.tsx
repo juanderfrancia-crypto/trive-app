@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react'
-import { View, TouchableOpacity, FlatList, Alert, StyleSheet } from 'react-native'
+import { View, TouchableOpacity, FlatList, StyleSheet } from 'react-native'
 import { Text } from '../AppText'
 import Icon from '../Icon'
 import Illustration from '../illustrations/Illustration'
@@ -10,6 +10,8 @@ import { SkeletonCardList } from '../SkeletonLoader'
 import { useAirportNegotiation, AirportRequest } from '../../hooks/useAirportNegotiation'
 import type { HubTabProps } from './types'
 import { formatDeparture, formatPrice } from './formatters'
+import { showError } from '../../utils/showError'
+import { AppAlert } from '../AppAlert'
 
 export default function PendingRequestsTab({ isDriver }: HubTabProps) {
   const navigation = useNavigation<any>()
@@ -48,21 +50,21 @@ export default function PendingRequestsTab({ isDriver }: HubTabProps) {
   }
 
   const handleDeleteRequest = (requestId: string) => {
-    Alert.alert('Cancelar solicitud', '¿Deseas cancelar esta solicitud?', [
-      { text: 'No', style: 'cancel' },
-      {
-        text: 'Sí, cancelar',
-        style: 'destructive',
-        onPress: async () => {
-          if (!user?.id) return
-          try {
-            await cancelRequest(requestId, user.id)
-          } catch {
-            Alert.alert('Error', 'No se pudo cancelar la solicitud')
-          }
-        },
+    AppAlert.confirm({
+      title: 'Cancelar solicitud',
+      message: '¿Deseas cancelar esta solicitud?',
+      confirmText: 'Sí, cancelar',
+      cancelText: 'No',
+      destructive: true,
+      onConfirm: async () => {
+        if (!user?.id) return
+        try {
+          await cancelRequest(requestId, user.id)
+        } catch {
+          showError('No se pudo cancelar la solicitud')
+        }
       },
-    ])
+    })
   }
 
   const openDetails = (requestId: string) => {

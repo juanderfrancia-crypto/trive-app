@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native'
+import { View, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -7,6 +7,7 @@ import { useRoute, useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../theme/theme'
 import { useAirportNegotiation } from '../hooks/useAirportNegotiation'
 import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import Icon from '../components/Icon'
 import { VEHICLE_TYPES } from './driver/PublishRouteFlow'
 
@@ -61,48 +62,39 @@ export default function AirportRequestDetailsScreen() {
   }
 
   const handleAcceptOffer = async (offerId: string) => {
-    Alert.alert(
-      'Confirmar aceptación',
-      '¿Aceptas esta oferta?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Aceptar',
-          onPress: async () => {
-            try {
-              await acceptPassengerOffer(offerId, requestId)
-              showSuccess('¡Viaje confirmado! El conductor te contactará.')
-              setTimeout(() => navigation.goBack(), 1500)
-            } catch (err: any) {
-              showError(err.message)
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Confirmar aceptación',
+      message: '¿Aceptas esta oferta?',
+      confirmText: 'Aceptar',
+      onConfirm: async () => {
+        try {
+          await acceptPassengerOffer(offerId, requestId)
+          showSuccess('¡Viaje confirmado! El conductor te contactará.')
+          setTimeout(() => navigation.goBack(), 1500)
+        } catch (err: any) {
+          showError(err.message)
+        }
+      },
+    })
   }
 
   const handleCancel = () => {
-    Alert.alert(
-      'Cancelar solicitud',
-      '¿Estás seguro que quieres cancelar? Todos los conductores dejarán de verla.',
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Sí, cancelar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await cancelRequest(requestId, request?.passenger_id!)
-              showSuccess('Solicitud cancelada')
-              navigation.goBack()
-            } catch (err: any) {
-              showError(err.message)
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Cancelar solicitud',
+      message: '¿Estás seguro que quieres cancelar? Todos los conductores dejarán de verla.',
+      confirmText: 'Sí, cancelar',
+      cancelText: 'No',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          await cancelRequest(requestId, request?.passenger_id!)
+          showSuccess('Solicitud cancelada')
+          navigation.goBack()
+        } catch (err: any) {
+          showError(err.message)
+        }
+      },
+    })
   }
 
   if (loadingRequest) {

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Alert, Share, Linking } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Modal, Share, Linking } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
@@ -75,10 +75,7 @@ export default function TripStatusScreen() {
     if (phone) {
       Linking.openURL(`tel:${phone}`)
     } else {
-      Alert.alert(
-        'No pudimos hacer la llamada',
-        'No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.'
-      )
+      showError('No pudimos obtener el número del conductor en este momento. Puedes escribirle por el chat del viaje.')
     }
   }
 

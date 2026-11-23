@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -9,6 +9,7 @@ import { supabase } from '../services/supabase'
 import { getUserSessions, endUserSession, UserSessionRecord } from '../services/userSessions'
 import { getItem } from '../utils/storage'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { AppAlert } from '../components/AppAlert'
 
 export default function SessionHistoryScreen() {
   const navigation = useNavigation()
@@ -46,29 +47,24 @@ export default function SessionHistoryScreen() {
   }
 
   const handleCloseSession = async (sessionId: string) => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Deseas cerrar esta sesión en otro dispositivo?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setLoading(true)
-              await endUserSession(sessionId)
-              setSessions((prev) => prev.filter((session) => session.id !== sessionId))
-            } catch (err: any) {
-              console.error('Error cerrando sesión remota:', err)
-              setError(err?.message || 'No se pudo cerrar la sesión')
-            } finally {
-              setLoading(false)
-            }
-          },
-        },
-      ]
-    )
+    AppAlert.confirm({
+      title: 'Cerrar sesión',
+      message: '¿Deseas cerrar esta sesión en otro dispositivo?',
+      confirmText: 'Cerrar sesión',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          setLoading(true)
+          await endUserSession(sessionId)
+          setSessions((prev) => prev.filter((session) => session.id !== sessionId))
+        } catch (err: any) {
+          console.error('Error cerrando sesión remota:', err)
+          setError(err?.message || 'No se pudo cerrar la sesión')
+        } finally {
+          setLoading(false)
+        }
+      },
+    })
   }
 
   useEffect(() => {

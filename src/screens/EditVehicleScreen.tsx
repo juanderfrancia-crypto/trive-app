@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, TextInput } from 'react-native'
+import { View, ScrollView, StyleSheet, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Text } from '../components/AppText';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +7,8 @@ import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../services/supabase';
 import { COLORS } from '../theme/theme';
 import Icon from '../components/Icon'
+import { showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 interface VehicleFormData {
   vehicle_make: string;
@@ -53,7 +55,7 @@ export function EditVehicleScreen({ route }: any) {
 
   const handleSave = async () => {
     if (!validateForm()) {
-      Alert.alert('Error', 'Por favor completa todos los campos correctamente');
+      showError('Por favor completa todos los campos correctamente');
       return;
     }
 
@@ -72,16 +74,15 @@ export function EditVehicleScreen({ route }: any) {
         throw error;
       }
 
-      Alert.alert('Vehículo enviado', 'Trive revisará tu vehículo. Cuando esté aprobado podrás publicar viajes con él.', [
-        {
-          text: 'OK',
-          onPress: () => navigation.goBack(),
-        },
-      ]);
+      AppAlert.info({
+        title: 'Vehículo enviado',
+        message: 'Trive revisará tu vehículo. Cuando esté aprobado podrás publicar viajes con él.',
+        onClose: () => navigation.goBack(),
+      });
     } catch (err) {
       console.error('Error updating vehicle:', err);
       const message = (err as { message?: string })?.message;
-      Alert.alert('Error', message || 'No se pudo actualizar la información del vehículo');
+      showError(message || 'No se pudo actualizar la información del vehículo');
     } finally {
       setLoading(false);
     }

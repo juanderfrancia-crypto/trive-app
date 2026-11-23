@@ -1,6 +1,6 @@
 import { PROFILE_COLUMNS, getMyPhone, getMyCedula, saveMyProfile, CURRENT_TERMS_VERSION } from '../services/profileColumns'
 import { useState, useEffect, useRef } from "react";
-import { Alert, AppState, AppStateStatus } from "react-native";
+import { AppState, AppStateStatus } from "react-native";
 import * as Sentry from "@sentry/react-native";
 import { supabase } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
@@ -11,6 +11,7 @@ import { checkPendingProfileSetup } from "../services/profileCompleteness";
 import { getPushNotificationToken, registerPushToken, sendPushNotificationToUser } from "../services/pushNotifications";
 import { setUserId } from "../services/analytics";
 import { withTimeout } from "../utils/withTimeout";
+import { AppAlert } from "../components/AppAlert";
 
 let _crashlytics: any = null
 try { _crashlytics = require("@react-native-firebase/crashlytics").default } catch {}
@@ -277,11 +278,11 @@ export const useAuth = () => {
     const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_OUT' && !_manualLogout && !_sessionExpiredAlertPending) {
         _sessionExpiredAlertPending = true
-        Alert.alert(
-          'Sesión expirada',
-          'Tu sesión expiró o fue cerrada en otro dispositivo. Por favor inicia sesión de nuevo.',
-          [{ text: 'OK', onPress: () => { _sessionExpiredAlertPending = false } }]
-        )
+        AppAlert.info({
+          title: 'Sesión expirada',
+          message: 'Tu sesión expiró o fue cerrada en otro dispositivo. Por favor inicia sesión de nuevo.',
+          onClose: () => { _sessionExpiredAlertPending = false },
+        })
       }
       if (event === 'SIGNED_OUT') {
         // Defer reset so all concurrent callbacks see _manualLogout = true

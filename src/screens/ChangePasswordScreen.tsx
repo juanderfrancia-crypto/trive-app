@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { View, TouchableOpacity, TextInput, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native'
+import { View, TouchableOpacity, TextInput, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,6 +10,7 @@ import { validatePassword } from '../utils/validations'
 import { logPasswordChange } from '../services/activityLogger'
 import { useAuth } from '../hooks/useAuth'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
+import { showSuccess, showError } from '../utils/showError'
 
 export default function ChangePasswordScreen() {
   const insets = useSafeAreaInsets()
@@ -67,11 +68,11 @@ export default function ChangePasswordScreen() {
       await supabase.rpc('mark_password_set')
       if (user?.id) await logPasswordChange(user.id)
 
-      Alert.alert('Contraseña actualizada', 'Tu contraseña se actualizó correctamente.')
+      showSuccess('Tu contraseña se actualizó correctamente.')
       navigation.goBack()
     } catch (err: any) {
       console.error('Error actualizando contraseña:', err)
-      Alert.alert('Error', err.message || 'No se pudo actualizar la contraseña')
+      showError(err.message || 'No se pudo actualizar la contraseña')
     } finally {
       setLoading(false)
     }

@@ -4,11 +4,14 @@ import { View, StyleSheet } from 'react-native'
 import { Text } from './AppText'
 import Icon from './Icon'
 
+// Franja oscura flotante -- mismo patrón que WhatsApp y las notificaciones
+// nativas de iOS/Android, decidido 23-nov-2026. El color del estado solo
+// vive en el chip del ícono, nunca en el fondo (que siempre es oscuro).
 const TYPE_CONFIG = {
-  success: { icon: 'CircleCheck' as const, color: COLORS.success, chipBg: COLORS.successLight },
-  error:   { icon: 'CircleX'     as const, color: COLORS.error,   chipBg: COLORS.errorLight },
-  warning: { icon: 'TriangleAlert' as const, color: COLORS.warningDark, chipBg: COLORS.warningLight },
-  info:    { icon: 'Info'        as const, color: COLORS.primary, chipBg: COLORS.primaryTint },
+  success: { icon: 'CircleCheck' as const, color: COLORS.success },
+  error:   { icon: 'CircleX'     as const, color: COLORS.error },
+  warning: { icon: 'TriangleAlert' as const, color: COLORS.warningDark },
+  info:    { icon: 'Info'        as const, color: COLORS.primary },
 }
 
 function TriveToast({ text1, text2, type = 'info' }: {
@@ -17,8 +20,8 @@ function TriveToast({ text1, text2, type = 'info' }: {
   const cfg = TYPE_CONFIG[type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.info
   return (
     <View style={styles.container}>
-      <View style={[styles.iconChip, { backgroundColor: cfg.chipBg }]}>
-        <Icon name={cfg.icon} size={16} color={cfg.color} />
+      <View style={[styles.iconChip, { backgroundColor: cfg.color }]}>
+        <Icon name={cfg.icon} size={13} color={COLORS.white} />
       </View>
       <View style={styles.body}>
         <Text style={styles.title} numberOfLines={1}>{text1}</Text>
@@ -39,24 +42,22 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: COLORS.surface,
+    gap: 10,
+    backgroundColor: COLORS.statusDark,
     borderRadius: RADIUS.md,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
     maxWidth: '90%',
-    shadowColor: COLORS.textPrimary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
     elevation: 6,
   },
   iconChip: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.full,
+    width: 26,
+    height: 26,
+    borderRadius: RADIUS.sm - 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -64,15 +65,15 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.textPrimary,
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.statusDarkText,
     letterSpacing: -0.1,
   },
   message: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
+    fontSize: 11.5,
+    color: COLORS.statusDarkTextSecondary,
     marginTop: 1,
-    lineHeight: 17,
+    lineHeight: 16,
   },
 })

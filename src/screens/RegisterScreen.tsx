@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
-import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator } from 'react-native'
+import { View, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 import { Text } from '../components/AppText'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
 import { COLORS } from '../theme/theme'
+import { showWarning, showError } from '../utils/showError'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import Icon from '../components/Icon'
@@ -59,7 +60,7 @@ export default function RegisterScreen() {
     // Prevenir múltiples intentos rápidos (debounce)
     const now = Date.now()
     if (now - lastRegisterAttempt.current < 3000) {
-      Alert.alert('Espera un momento', 'Por favor espera unos segundos antes de intentar nuevamente')
+      showWarning('Espera un momento: por favor espera unos segundos antes de intentar nuevamente')
       return
     }
     lastRegisterAttempt.current = now
@@ -89,7 +90,7 @@ export default function RegisterScreen() {
         errorMessage = 'Datos inválidos. Revisa tu información.'
       }
       
-      Alert.alert('Error en el Registro', errorMessage)
+      showError(errorMessage)
     } finally {
       setIsSubmitting(false)
     }

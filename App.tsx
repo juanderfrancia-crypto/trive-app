@@ -9,6 +9,7 @@ import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-c
 import AppNavigator from "./src/navigation/AppNavigator";
 import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
+import AppAlertHost from "./src/components/AppAlert";
 import ErrorBoundary from "./src/components/ErrorBoundary";
 import MaintenanceScreen from "./src/components/MaintenanceScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
@@ -119,7 +120,8 @@ function App() {
       <ErrorBoundary>
         <AppNavigator />
       </ErrorBoundary>
-      <Toast config={toastConfig} position="bottom" bottomOffset={40} />
+      <AppAlertHost />
+      <Toast config={toastConfig} position="top" topOffset={54} />
     </SafeAreaProvider>
   );
 }
