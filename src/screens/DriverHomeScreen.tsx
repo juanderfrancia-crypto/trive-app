@@ -132,7 +132,7 @@ export default function DriverHomeScreen() {
         <Text style={styles.sectionTitle}>Tus rutas de hoy</Text>
         {todayRoutes.length === 0 ? (
           <View style={styles.emptyToday}>
-            <Illustration name="proudDriver" width={100} />
+            <Illustration name="todayRoutes" width={102} />
             <Text style={styles.emptyTodayText}>No tienes rutas programadas para hoy</Text>
           </View>
         ) : (
@@ -186,75 +186,83 @@ export default function DriverHomeScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{profile?.total_trips ?? 0}</Text>
-            <Text style={styles.statLabel}>Viajes</Text>
+            <View style={styles.statText}>
+              <Text style={styles.statValue}>{profile?.total_trips ?? 0}</Text>
+              <Text style={styles.statLabel}>Viajes</Text>
+            </View>
+            <Illustration name="driverTrips" width={60} />
           </View>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>★ {user?.rating ? Number(user.rating).toFixed(1) : '--'}</Text>
-            <Text style={styles.statLabel}>Calificación</Text>
+            <View style={styles.statText}>
+              <Text style={styles.statValue}>★ {user?.rating ? Number(user.rating).toFixed(1) : '--'}</Text>
+              <Text style={styles.statLabel}>Calificación</Text>
+            </View>
+            <Illustration name="driverRating" width={34} />
           </View>
         </View>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('Main' as never, { screen: 'Requests' } as never)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.cardIcon}>
-            <Icon name="Plane" size={20} color={COLORS.primary} />
-          </View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Solicitudes de viaje</Text>
-            <Text style={styles.cardSub}>
-              {pendingAirportCount > 0 ? `${pendingAirportCount} solicitudes esperando respuesta` : 'Sin solicitudes pendientes'}
-            </Text>
-          </View>
-          {pendingAirportCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{pendingAirportCount > 99 ? '99+' : pendingAirportCount}</Text>
+        <View style={styles.list}>
+          <TouchableOpacity
+            style={styles.listRow}
+            onPress={() => navigation.navigate('Main' as never, { screen: 'Requests' } as never)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.cardIcon}>
+              <Icon name="Plane" size={20} color={COLORS.primary} />
             </View>
-          )}
-          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('DriverPayments' as never)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.cardIcon}>
-            <Icon name="Banknote" size={20} color={COLORS.primary} />
-          </View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Pagos por confirmar</Text>
-            <Text style={styles.cardSub}>
-              {pendingPaymentsCount > 0
-                ? `${pendingPaymentsCount} ${pendingPaymentsCount === 1 ? 'pago esperando' : 'pagos esperando'} tu confirmación`
-                : 'Sin pagos pendientes de confirmar'}
-            </Text>
-          </View>
-          {pendingPaymentsCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{pendingPaymentsCount > 99 ? '99+' : pendingPaymentsCount}</Text>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Solicitudes de viaje</Text>
+              <Text style={styles.cardSub}>
+                {pendingAirportCount > 0 ? `${pendingAirportCount} solicitudes esperando respuesta` : 'Sin solicitudes pendientes'}
+              </Text>
             </View>
-          )}
-          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-        </TouchableOpacity>
+            {pendingAirportCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingAirportCount > 99 ? '99+' : pendingAirportCount}</Text>
+              </View>
+            )}
+            <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.card}
-          onPress={() => navigation.navigate('DriverPanel' as never)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.cardIcon}>
-            <Icon name="LayoutDashboard" size={20} color={COLORS.primary} />
-          </View>
-          <View style={styles.cardText}>
-            <Text style={styles.cardTitle}>Mi panel</Text>
-            <Text style={styles.cardSub}>Reservas, pasajeros y estado de tus rutas</Text>
-          </View>
-          <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.listRow}
+            onPress={() => navigation.navigate('DriverPayments' as never)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.cardIcon}>
+              <Icon name="Banknote" size={20} color={COLORS.primary} />
+            </View>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Pagos por confirmar</Text>
+              <Text style={styles.cardSub}>
+                {pendingPaymentsCount > 0
+                  ? `${pendingPaymentsCount} ${pendingPaymentsCount === 1 ? 'pago esperando' : 'pagos esperando'} tu confirmación`
+                  : 'Sin pagos pendientes de confirmar'}
+              </Text>
+            </View>
+            {pendingPaymentsCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{pendingPaymentsCount > 99 ? '99+' : pendingPaymentsCount}</Text>
+              </View>
+            )}
+            <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.listRow}
+            onPress={() => navigation.navigate('DriverPanel' as never)}
+            activeOpacity={0.7}
+          >
+            <View style={styles.cardIcon}>
+              <Icon name="LayoutDashboard" size={20} color={COLORS.primary} />
+            </View>
+            <View style={styles.cardText}>
+              <Text style={styles.cardTitle}>Mi panel</Text>
+              <Text style={styles.cardSub}>Reservas, pasajeros y estado de tus rutas</Text>
+            </View>
+            <Icon name="ChevronRight" size={16} color={COLORS.textTertiary} />
+          </TouchableOpacity>
+        </View>
       </ScrollView>
 
       <PublishSheet
@@ -332,7 +340,12 @@ const styles = StyleSheet.create({
   walletBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.primary },
 
   statsRow: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.md },
-  stat: { flex: 1, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border },
+  stat: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: SPACING.sm,
+    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
+    overflow: 'hidden',
+  },
+  statText: { flexShrink: 1 },
   statValue: { fontSize: 18, fontWeight: '800', color: COLORS.textPrimary },
   statLabel: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs },
 
@@ -348,11 +361,18 @@ const styles = StyleSheet.create({
   primaryCtaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.white },
   primaryCtaSub: { fontSize: 13, color: COLORS.white, opacity: 0.75, marginTop: 2 },
 
-  // Ya tenía borde, se le quita la sombra además (mismo motivo que en
-  // PassengerTripsScreen.tsx) -- ya alcanza a notarse como contorno sin sombra.
-  card: {
-    marginTop: SPACING.md, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
-    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg, borderWidth: 1, borderColor: COLORS.border,
+  // Lista unificada (Solicitudes de viaje / Pagos por confirmar / Mi panel):
+  // sangra hasta el borde de la pantalla cancelando el padding de `content`,
+  // igual que las listas de DriverProfileView.tsx -- se ve integrada, no como
+  // tres cards sueltas con espacio a los lados.
+  list: {
+    marginTop: SPACING.md, marginHorizontal: -SPACING.lg,
+    backgroundColor: COLORS.white, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
+  },
+  listRow: {
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
+    paddingHorizontal: SPACING.lg, paddingVertical: SPACING.lg,
+    borderTopWidth: 1, borderTopColor: COLORS.borderLight,
   },
   cardIcon: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.primaryTint, alignItems: 'center', justifyContent: 'center' },
   cardText: { flex: 1 },

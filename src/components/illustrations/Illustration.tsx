@@ -18,6 +18,9 @@ import SavingMoneyIllustration from './undraw/SavingMoneyIllustration'
 import PersonalFileIllustration from './undraw/PersonalFileIllustration'
 import BeginChatIllustration from './undraw/BeginChatIllustration'
 import WarningIllustration from './undraw/WarningIllustration'
+import DriverTripsIllustration from './undraw/DriverTripsIllustration'
+import DriverRatingIllustration from './undraw/DriverRatingIllustration'
+import TodayRoutesIllustration from './undraw/TodayRoutesIllustration'
 
 const ILLUSTRATIONS = {
   routePlanning: RoutePlanningIllustration,
@@ -38,6 +41,9 @@ const ILLUSTRATIONS = {
   personalFile: PersonalFileIllustration,
   beginChat: BeginChatIllustration,
   warning: WarningIllustration,
+  driverTrips: DriverTripsIllustration,
+  driverRating: DriverRatingIllustration,
+  todayRoutes: TodayRoutesIllustration,
 } as const
 
 export type IllustrationName = keyof typeof ILLUSTRATIONS
