@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: TYPOGRAPHY.size.xs,
     fontWeight: '700',
-    color: COLORS.error,
+    color: COLORS.danger,
   },
   emptyContainer: {
     flex: 1,

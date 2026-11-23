@@ -350,7 +350,7 @@ export default function RecurringRoutesScreen() {
                   <Icon name="Pencil" size={16} color={COLORS.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.iconBtn} onPress={() => handleDelete(tpl.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Icon name="Trash2" size={16} color={COLORS.error} />
+                  <Icon name="Trash2" size={16} color={COLORS.danger} />
                 </TouchableOpacity>
               </View>
 

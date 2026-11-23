@@ -73,6 +73,10 @@ export const COLORS = {
   warningDark: '#B45309',
   successLight: '#E7F6EF',
   errorLight: '#FDECEC',
+
+  // Vinotinto: reemplaza el rojo en botones de acción (no en errores/validación/badges).
+  danger: '#7A2E3A',
+  dangerLight: '#F1E3E6',
 }
 
 export const TYPOGRAPHY = {

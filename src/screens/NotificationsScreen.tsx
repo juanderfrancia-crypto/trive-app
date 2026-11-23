@@ -197,7 +197,7 @@ const NotificationRow = memo(function NotificationRow({
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             onPress={() => onDelete(item)}
           >
-            <Icon name="Trash2" size={20} color={COLORS.primary} />
+            <Icon name="Trash2" size={20} color={COLORS.danger} />
           </TouchableOpacity>
         )}
       </View>
@@ -453,7 +453,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           )}
           <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-            <Icon name="Trash2" size={16} color={COLORS.primary} />
+            <Icon name="Trash2" size={16} color={COLORS.danger} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerIconBtn} onPress={() => setSelectionMode(true)}>
             <Icon name="SquareCheck" size={16} color={COLORS.primary} />
@@ -468,11 +468,11 @@ export default function NotificationsScreen() {
           <Icon
             name="Trash2"
             size={16}
-            color={selectedIds.length ? COLORS.error : COLORS.textTertiary}
+            color={selectedIds.length ? COLORS.danger : COLORS.textTertiary}
           />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={deleteAll}>
-          <Icon name="Trash2" size={16} color={COLORS.error} />
+          <Icon name="Trash2" size={16} color={COLORS.danger} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.headerIconBtn} onPress={exitSelection}>
           <Icon name="X" size={18} color={COLORS.primary} />

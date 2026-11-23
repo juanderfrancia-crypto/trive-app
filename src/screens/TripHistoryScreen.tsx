@@ -391,7 +391,7 @@ export default function TripHistoryScreen({ embedded = false }: { embedded?: boo
         <Text style={s.title}>{isDriver ? 'Mis rutas' : 'Historial de Viajes'}</Text>
         {filtered.length > 0 ? (
           <TouchableOpacity style={[s.headerBtn, s.headerBtnDanger]} onPress={hideAll} activeOpacity={0.7}>
-            <Icon name="Trash2" size={16} color={COLORS.error} />
+            <Icon name="Trash2" size={16} color={COLORS.danger} />
           </TouchableOpacity>
         ) : (
           <View style={s.headerBtnPlaceholder} />
@@ -479,7 +479,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  headerBtnDanger: { backgroundColor: COLORS.errorLight },
+  headerBtnDanger: { backgroundColor: COLORS.dangerLight },
   headerBtnPlaceholder: { width: 40, height: 40 },
   title: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: '800' },
 

@@ -459,9 +459,9 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
-    borderColor: COLORS.error,
+    borderColor: COLORS.danger,
   },
-  cancelBtnText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.error },
+  cancelBtnText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.danger },
 
   cancelledBanner: {
     flexDirection: 'row',

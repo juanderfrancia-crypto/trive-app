@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     paddingVertical: SPACING.sm,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.danger,
   },
   subsanarBtnText: {
     ...TYPOGRAPHY.label,

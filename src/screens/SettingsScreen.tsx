@@ -250,8 +250,8 @@ function Divider() {
 }
 
 function Tile({ icon, tone }: { icon: IconName; tone?: 'danger' }) {
-  const bg = tone === 'danger' ? COLORS.errorLight : COLORS.primaryTint
-  const color = tone === 'danger' ? COLORS.error : COLORS.primary
+  const bg = tone === 'danger' ? COLORS.dangerLight : COLORS.primaryTint
+  const color = tone === 'danger' ? COLORS.danger : COLORS.primary
   return (
     <View style={[styles.tile, { backgroundColor: bg }]}>
       <Icon name={icon} size={18} color={color} />
@@ -295,7 +295,7 @@ function NavRow({ icon, title, sub, status, tone, onPress }: {
     <TouchableOpacity style={styles.row} onPress={onPress} activeOpacity={0.75}>
       <Tile icon={icon} tone={tone} />
       <View style={styles.rowText}>
-        <Text style={[styles.rowTitle, tone === 'danger' && { color: COLORS.error }]}>{title}</Text>
+        <Text style={[styles.rowTitle, tone === 'danger' && { color: COLORS.danger }]}>{title}</Text>
         {!!sub && <Text style={styles.rowSub} numberOfLines={1}>{sub}</Text>}
       </View>
       {status ? (
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.danger,
     alignItems: 'center',
     justifyContent: 'center',
   },

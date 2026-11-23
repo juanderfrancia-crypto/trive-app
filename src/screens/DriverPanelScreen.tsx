@@ -854,8 +854,8 @@ export default function DriverPanelScreen() {
                         disabled={isUpdating}
                         activeOpacity={0.8}
                       >
-                        <Icon name="CircleX" size={15} color={COLORS.error} />
-                        <Text style={[styles.secondaryActionText, { color: COLORS.error }]}>Cancelar viaje</Text>
+                        <Icon name="CircleX" size={15} color={COLORS.danger} />
+                        <Text style={[styles.secondaryActionText, { color: COLORS.danger }]}>Cancelar viaje</Text>
                       </TouchableOpacity>
                     </View>
                   </View>

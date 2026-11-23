@@ -170,15 +170,15 @@ function ActionCard({ icon, title, sub, onPress, disabled, busy, danger }: {
   busy: boolean
   danger?: boolean
 }) {
-  const tint = danger ? COLORS.errorLight : COLORS.primaryTint
-  const accent = danger ? COLORS.error : COLORS.primary
+  const tint = danger ? COLORS.dangerLight : COLORS.primaryTint
+  const accent = danger ? COLORS.danger : COLORS.primary
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.75} disabled={disabled}>
       <View style={[styles.cardIcon, { backgroundColor: tint }]}>
         <Icon name={icon} size={20} color={accent} />
       </View>
       <View style={styles.cardText}>
-        <Text style={[styles.cardTitle, danger && { color: COLORS.error }]}>{title}</Text>
+        <Text style={[styles.cardTitle, danger && { color: COLORS.danger }]}>{title}</Text>
         <Text style={styles.cardSub}>{sub}</Text>
       </View>
       {busy

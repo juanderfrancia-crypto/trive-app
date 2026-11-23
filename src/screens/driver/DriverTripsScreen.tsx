@@ -349,5 +349,5 @@ const styles = StyleSheet.create({
   btnBusy: { opacity: 0.7 },
   actionsRow: { flexDirection: 'row', gap: SPACING.sm },
   secondaryBtn: { marginTop: SPACING.sm, height: 42, borderRadius: RADIUS.md, alignItems: 'center', justifyContent: 'center' },
-  secondaryBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.error },
+  secondaryBtnText: { fontSize: 13, fontWeight: '700', color: COLORS.danger },
 })

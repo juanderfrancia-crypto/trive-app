@@ -93,8 +93,8 @@ export default function SupportScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('BugReport' as never)} activeOpacity={0.8}>
-          <View style={[styles.cardIcon, { backgroundColor: COLORS.errorLight }]}>
-            <Icon name="Bug" size={20} color={COLORS.error} />
+          <View style={[styles.cardIcon, { backgroundColor: COLORS.dangerLight }]}>
+            <Icon name="Bug" size={20} color={COLORS.danger} />
           </View>
           <View style={styles.cardText}>
             <Text style={styles.cardTitle}>Reportar un problema</Text>

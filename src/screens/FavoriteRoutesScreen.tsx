@@ -89,7 +89,7 @@ export default function FavoriteRoutesScreen() {
                 activeOpacity={0.7}
                 accessibilityLabel="Quitar de favoritas"
               >
-                <Icon name="Trash2" size={18} color={COLORS.error} />
+                <Icon name="Trash2" size={18} color={COLORS.danger} />
               </TouchableOpacity>
             </View>
           </View>
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.errorLight,
+    backgroundColor: COLORS.dangerLight,
     justifyContent: 'center',
     alignItems: 'center',
   },

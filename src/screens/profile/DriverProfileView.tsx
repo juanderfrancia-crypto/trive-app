@@ -222,8 +222,14 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
         <ListRow icon="Gift" title="Referidos" subtitle="Gana $2.500 por cada conductor que traigas" onPress={p.onOpenReferral} />
         <ListRow icon="Settings" title="Configuración" subtitle="Preferencias y privacidad" onPress={p.onOpenSettings} />
         <ListRow icon="LifeBuoy" title="Centro de ayuda" onPress={p.onOpenHelp} />
-        <ListRow icon="LogOut" title="Cerrar sesión" danger onPress={p.onLogout} />
       </View>
+
+      <TouchableOpacity style={styles.logoutBtn} onPress={p.onLogout} activeOpacity={0.75}>
+        <View style={styles.logoutIconWrap}>
+          <Icon name="LogOut" size={18} color="#fff" />
+        </View>
+        <Text style={styles.logoutBtnText}>Cerrar Sesión</Text>
+      </TouchableOpacity>
 
       <Text style={styles.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
     </ScrollView>
@@ -328,4 +334,33 @@ const styles = StyleSheet.create({
   listValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
   footer: { textAlign: 'center', fontSize: 11, color: COLORS.textTertiary, marginTop: SPACING.xl },
+
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    backgroundColor: COLORS.danger,
+    borderRadius: RADIUS.full,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    marginTop: SPACING.xl,
+    shadowColor: COLORS.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  logoutIconWrap: {
+    width: 22,
+    height: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
 })

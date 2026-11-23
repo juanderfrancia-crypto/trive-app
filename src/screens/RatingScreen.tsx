@@ -264,7 +264,7 @@ const s = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   toggleButtonActiveNo: {
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.danger,
     borderWidth: 0,
   },
   toggleButtonActiveYes: {

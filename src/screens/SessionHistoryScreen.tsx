@@ -232,9 +232,9 @@ const styles = StyleSheet.create({
     height: 36,
     justifyContent: 'center',
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.errorLight,
+    backgroundColor: COLORS.dangerLight,
   },
-  logoutBtnText: { ...TYPOGRAPHY.labelMedium, color: COLORS.error, fontWeight: TYPOGRAPHY.weight.bold },
+  logoutBtnText: { ...TYPOGRAPHY.labelMedium, color: COLORS.danger, fontWeight: TYPOGRAPHY.weight.bold },
 
   sessionDetails: { gap: SPACING.sm, paddingLeft: SPACING.xs },
   detailItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm },

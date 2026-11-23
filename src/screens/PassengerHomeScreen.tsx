@@ -336,7 +336,7 @@ export default function PassengerHomeScreen() {
           )}
           <View style={styles.searchDivider} />
           <View style={styles.searchRow}>
-            <Icon name="MapPin" size={18} color={COLORS.textPrimary} />
+            <Icon name="MapPin" size={18} color={COLORS.danger} />
             <TextInput
               style={styles.searchInput}
               placeholder="¿A dónde vas?"
@@ -569,7 +569,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   name: {
-    fontSize: 26,
+    fontSize: 21,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
@@ -593,16 +593,16 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     lineHeight: 42,
     textShadowColor: COLORS.shadowBlue,
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 8,
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 11,
   },
 
   searchCardWrap: {
     marginTop: SPACING.lg,
     shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.25,
     shadowRadius: 18,
-    elevation: 10,
+    elevation: 13,
   },
   searchCardContent: { padding: SPACING.lg, backgroundColor: '#FAFBFE' },
   searchRow: {

@@ -935,7 +935,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.borderLight,
   },
   modalBtnConfirm: {
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.danger,
   },
   modalBtnTextCancel: {
     ...TYPOGRAPHY.labelMedium,

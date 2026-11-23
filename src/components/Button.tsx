@@ -277,9 +277,9 @@ function getVariantStyles(variant: ButtonVariant, disabled: boolean) {
     },
     danger: {
       container: {
-        backgroundColor: COLORS.error,
+        backgroundColor: COLORS.danger,
         borderWidth: 0,
-        shadowColor: COLORS.error,
+        shadowColor: COLORS.danger,
         shadowOffset: { width: 0, height: 6 },
         shadowOpacity: disabled ? 0.08 : 0.15,
         shadowRadius: 12,

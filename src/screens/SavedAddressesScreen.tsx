@@ -304,7 +304,7 @@ export default function SavedAddressesScreen() {
                     <Text style={styles.editBtnText}>Editar</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDelete(item.id)} activeOpacity={0.85}>
-                    <Icon name="Trash2" size={15} color={COLORS.error} />
+                    <Icon name="Trash2" size={15} color={COLORS.danger} />
                     <Text style={styles.deleteBtnText}>Eliminar</Text>
                   </TouchableOpacity>
                 </View>
@@ -493,9 +493,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.xs,
     borderRadius: RADIUS.md,
-    backgroundColor: COLORS.errorLight,
+    backgroundColor: COLORS.dangerLight,
   },
-  deleteBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.error },
+  deleteBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.danger },
 
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: SPACING.xl, gap: SPACING.sm },
   emptyTitle: { ...TYPOGRAPHY.h4, color: COLORS.textPrimary, fontWeight: TYPOGRAPHY.weight.extrabold, marginTop: SPACING.sm },
