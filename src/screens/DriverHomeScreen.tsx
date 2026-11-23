@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary },
-  name: { fontSize: 22, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
+  name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primaryTint,
     alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
