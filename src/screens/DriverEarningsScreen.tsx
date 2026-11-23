@@ -70,7 +70,7 @@ export default function DriverEarningsScreen() {
   const getTransactionColor = (type: string) => {
     switch (type) {
       case 'trip':         return COLORS.success
-      case 'cancellation': return COLORS.error
+      case 'cancellation': return COLORS.danger
       case 'upcoming':     return COLORS.primary
       default:             return COLORS.textSecondary
     }
@@ -90,7 +90,7 @@ export default function DriverEarningsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={[styles.container, styles.centered]}>
-          <Icon name="TriangleAlert" size={48} color={COLORS.error} />
+          <Icon name="TriangleAlert" size={48} color={COLORS.danger} />
           <Text style={styles.errorText}>Error al cargar ganancias</Text>
           <Text style={styles.errorSubtext}>{error}</Text>
           <TouchableOpacity
@@ -260,7 +260,7 @@ export default function DriverEarningsScreen() {
 
                   <View style={styles.monthStat}>
                     <Text style={styles.monthStatLabel}>Cancelaciones</Text>
-                    <Text style={[styles.monthStatValue, { color: month.cancelledCount > 0 ? COLORS.error : COLORS.textTertiary }]}>
+                    <Text style={[styles.monthStatValue, { color: month.cancelledCount > 0 ? COLORS.danger : COLORS.textTertiary }]}>
                       {month.cancelledCount > 0 ? `-${formatCOP(month.cancelledAmount)}` : '$0'}
                     </Text>
                     <Text style={styles.monthStatSub}>{month.cancelledCount} cancelac.</Text>

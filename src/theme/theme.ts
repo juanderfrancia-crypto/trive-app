@@ -34,9 +34,9 @@ export const COLORS = {
   shadowWhiteDark: '#FFFFFF33', // Blanco con 20% de opacidad - sombras sutiles
   
   // Semánticos
-  success: '#10B981', // Verde éxito
+  success: '#185E3A', // Verde éxito
   warning: '#F59E0B', // Amarillo/Naranja advertencia
-  error: '#EF4444', // Rojo error
+  error: '#7A2E3A', // Decisión 23-nov-2026: ya no se usa rojo en la app, error = vinotinto (igual a danger)
   info: '#1230B8', // Igual al primary para consistencia
   
   // Fondos - Tonos grises sutiles con tech feel
@@ -72,9 +72,12 @@ export const COLORS = {
   warningLight: '#FEF3E2',
   warningDark: '#B45309',
   successLight: '#E7F6EF',
-  errorLight: '#FDECEC',
+  errorLight: '#F1E3E6', // Igual a dangerLight -- ver nota en `error`
 
-  // Vinotinto: reemplaza el rojo en botones de acción (no en errores/validación/badges).
+  // Vinotinto: desde el 23-nov-2026 reemplaza el rojo en toda la app (botones,
+  // errores, validación, badges). `danger`/`dangerLight` quedan como alias de
+  // `error`/`errorLight` -- ambos nombres siguen existiendo en el código, pero
+  // ya apuntan al mismo color.
   danger: '#7A2E3A',
   dangerLight: '#F1E3E6',
 }

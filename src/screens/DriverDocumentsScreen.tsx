@@ -63,7 +63,7 @@ const REQUIRED_DOCUMENTS: DocumentItem[] = [
 const getStatusInfo = (status: string) => {
   switch (status) {
     case 'verified':
-      return { label: 'Verificado ✓', color: COLORS.textPrimary, bg: COLORS.surfaceAlt, icon: 'CircleCheck' }
+      return { label: 'Verificado ✓', color: COLORS.success, bg: COLORS.surfaceAlt, icon: 'CircleCheck' }
     case 'verifying':
       return { label: 'En análisis...', color: COLORS.primary, bg: COLORS.primaryTint, icon: 'Clock' }
     case 'pending':
@@ -835,12 +835,18 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.textInverse + 'CC',
   },
+  // Sangra hasta el borde de la pantalla (cancela el padding de `content`),
+  // mismo mecanismo que las listas de DriverProfileView.tsx -- se ve como
+  // lista, no como card suelta. Borde en vez de sombra por el mismo motivo
+  // de siempre: la elevation de Android puede parpadear en negro.
   documentsSection: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
     padding: SPACING.lg,
     marginBottom: SPACING.lg,
-    ...SHADOWS.sm,
+    marginHorizontal: -SPACING.lg,
   },
   sectionTitle: {
     ...TYPOGRAPHY.h4,

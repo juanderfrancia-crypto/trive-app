@@ -33,7 +33,7 @@ function docState(doc: any): DocState {
   if (doc.status === 'verified') {
     const expiryColor = !expiry ? COLORS.textSecondary : expiry.daysLeft < 15 ? COLORS.error : expiry.daysLeft < 30 ? COLORS.warning : COLORS.textSecondary
     return {
-      label: 'Aprobado', color: COLORS.textPrimary, icon: 'CircleCheck', iconColor: COLORS.textPrimary, approved: true,
+      label: 'Aprobado', color: COLORS.success, icon: 'CircleCheck', iconColor: COLORS.success, approved: true,
       expiryText: expiry?.label, expiryColor,
     }
   }
@@ -41,7 +41,7 @@ function docState(doc: any): DocState {
 }
 
 const VEHICLE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  verified: { label: 'Aprobado', color: COLORS.textPrimary, bg: COLORS.surfaceAlt },
+  verified: { label: 'Aprobado', color: COLORS.success, bg: COLORS.surfaceAlt },
   pending: { label: 'En revisión', color: COLORS.warning, bg: COLORS.warningLight },
   rejected: { label: 'Rechazado', color: COLORS.error, bg: COLORS.errorLight },
 }
