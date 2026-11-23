@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, Alert, ActivityIndicator, ScrollView } from 'react-native'
+import { View, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, ScrollView } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon, { type IconName } from '../components/Icon'
@@ -9,6 +9,8 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../services/supabase'
 import { COLORS, SPACING, RADIUS, SHADOWS, TYPOGRAPHY } from '../theme/theme'
 import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
+import { showSuccess, showError } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 
 interface SavedAddress {
   id: string
@@ -58,7 +60,7 @@ export default function SavedAddressesScreen() {
       setLoadedOnce(true)
     } catch (err) {
       console.error('Error loading addresses:', err)
-      Alert.alert('Error', 'No se pueden cargar las direcciones')
+      showError('No se pueden cargar las direcciones')
       setLoading(false)
     } finally {
       setLoading(false)
@@ -80,7 +82,7 @@ export default function SavedAddressesScreen() {
 
   const handleSave = async () => {
     if (!label.trim() || !address.trim()) {
-      Alert.alert('Error', 'Por favor completa todos los campos')
+      showError('Por favor completa todos los campos')
       return
     }
 
@@ -143,10 +145,10 @@ export default function SavedAddressesScreen() {
       resetForm()
       setShowForm(false)
 
-      Alert.alert('Listo', editingId ? 'Dirección actualizada' : 'Dirección guardada')
+      showSuccess(editingId ? 'Dirección actualizada' : 'Dirección guardada')
     } catch (err) {
       console.error('Error saving address:', err)
-      Alert.alert('Error', 'No se pudo guardar la dirección')
+      showError('No se pudo guardar la dirección')
     } finally {
       setSaving(false)
     }
@@ -162,29 +164,28 @@ export default function SavedAddressesScreen() {
   }
 
   const handleDelete = (addressId: string) => {
-    Alert.alert('Eliminar dirección', '¿Estás seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const { error } = await supabase
-              .from('saved_addresses')
-              .delete()
-              .eq('id', addressId)
-              .eq('user_id', user?.id ?? '')
+    AppAlert.confirm({
+      title: 'Eliminar dirección',
+      message: '¿Estás seguro?',
+      confirmText: 'Eliminar',
+      destructive: true,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('saved_addresses')
+            .delete()
+            .eq('id', addressId)
+            .eq('user_id', user?.id ?? '')
 
-            if (error) throw error
+          if (error) throw error
 
-            // Optimistic update - remove from list
-            setAddresses(addresses.filter((addr) => addr.id !== addressId))
-          } catch (err) {
-            Alert.alert('Error', 'No se pudo eliminar la dirección')
-          }
-        },
+          // Optimistic update - remove from list
+          setAddresses(addresses.filter((addr) => addr.id !== addressId))
+        } catch (err) {
+          showError('No se pudo eliminar la dirección')
+        }
       },
-    ])
+    })
   }
 
   if (loading) {
@@ -211,7 +212,7 @@ export default function SavedAddressesScreen() {
         </TouchableOpacity>
       </View>
 
-      <KeyboardAvoidingScreen>
+      <KeyboardAvoidingScreen fill={showForm}>
       {showForm && (
         <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={styles.form}>
@@ -271,7 +272,7 @@ export default function SavedAddressesScreen() {
       )}
       </KeyboardAvoidingScreen>
 
-      {addresses.length > 0 ? (
+      {!showForm && (addresses.length > 0 ? (
         <FlatList
           data={addresses}
           keyExtractor={(item) => item.id}
@@ -314,11 +315,11 @@ export default function SavedAddressesScreen() {
         />
       ) : (
         <View style={styles.empty}>
-          <Illustration name="routePlanning" width={170} />
+          <Illustration name="addressDriver" width={170} />
           <Text style={styles.emptyTitle}>Sin direcciones guardadas</Text>
           <Text style={styles.emptyText}>Guarda tus lugares frecuentes para reservar más rápido.</Text>
         </View>
-      )}
+      ))}
     </SafeAreaView>
   )
 }
@@ -377,12 +378,7 @@ const styles = StyleSheet.create({
   addBtnText: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
 
   form: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
     padding: SPACING.lg,
-    marginHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-    borderRadius: RADIUS.lg,
   },
   formTitle: { ...TYPOGRAPHY.bodyMedium, fontWeight: TYPOGRAPHY.weight.extrabold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
   label: { ...TYPOGRAPHY.labelMedium, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.textSecondary, marginTop: SPACING.sm, marginBottom: SPACING.xs },
@@ -392,7 +388,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.lg,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.surfaceAlt,
     ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
   },
@@ -437,11 +433,11 @@ const styles = StyleSheet.create({
 
   list: { paddingHorizontal: SPACING.lg, paddingBottom: SPACING.xxxl },
   card: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.white,
-    borderRadius: RADIUS.lg,
-    padding: SPACING.lg,
-    marginBottom: SPACING.md,
+    paddingVertical: SPACING.lg,
+    marginHorizontal: -SPACING.lg,
+    paddingHorizontal: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
     gap: SPACING.md,
   },
   cardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.md },

@@ -21,6 +21,7 @@ import WarningIllustration from './undraw/WarningIllustration'
 import DriverTripsIllustration from './undraw/DriverTripsIllustration'
 import DriverRatingIllustration from './undraw/DriverRatingIllustration'
 import TodayRoutesIllustration from './undraw/TodayRoutesIllustration'
+import AddressDriverIllustration from './undraw/AddressDriverIllustration'
 
 const ILLUSTRATIONS = {
   routePlanning: RoutePlanningIllustration,
@@ -44,6 +45,7 @@ const ILLUSTRATIONS = {
   driverTrips: DriverTripsIllustration,
   driverRating: DriverRatingIllustration,
   todayRoutes: TodayRoutesIllustration,
+  addressDriver: AddressDriverIllustration,
 } as const
 
 export type IllustrationName = keyof typeof ILLUSTRATIONS
