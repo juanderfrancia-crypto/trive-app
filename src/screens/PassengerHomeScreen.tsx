@@ -35,6 +35,7 @@ const getGreeting = () => {
 export default function PassengerHomeScreen() {
   const navigation = useNavigation<any>()
   const user = useAppStore((s) => s.user)
+  const setUser = useAppStore((s) => s.setUser)
   const setSearchParams = useAppStore((s) => s.setSearchParams)
   const setSelectedRoute = useAppStore((s) => s.setSelectedRoute)
   const viewingAsPassenger = useAppStore((s) => s.viewingAsPassenger)
@@ -72,7 +73,7 @@ export default function PassengerHomeScreen() {
       return true
     }).slice(0, 5)
   }, [suggestionField, destination])
-  const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
+  const preferredMunicipality = user?.preferred_municipality ?? null
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
 
   const { trip: upcomingTrip } = useUpcomingTrip(user?.id)
@@ -103,18 +104,8 @@ export default function PassengerHomeScreen() {
   useFocusEffect(
     useCallback(() => {
       refetchBookings()
-      if (!user?.id) return
-      supabase
-        .from('profiles')
-        .select('preferred_municipality')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          const mun = data?.preferred_municipality ?? null
-          setPreferredMunicipality(mun)
-          if (mun) setOrigin((prev) => prev || mun)
-        })
-    }, [user?.id, refetchBookings])
+      if (preferredMunicipality) setOrigin((prev) => prev || preferredMunicipality)
+    }, [preferredMunicipality, refetchBookings])
   )
 
   const handleAvailableRidesPress = () => {
@@ -127,9 +118,9 @@ export default function PassengerHomeScreen() {
 
   const handleMunicipalitySelect = async (m: Municipality) => {
     setShowMunicipalityPicker(false)
-    setPreferredMunicipality(m.name)
     setOrigin((prev) => prev || m.name)
     if (user?.id) {
+      setUser({ ...user, preferred_municipality: m.name })
       await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
     }
     navigation.navigate('AvailableRides' as never, { municipality: m.name } as never)

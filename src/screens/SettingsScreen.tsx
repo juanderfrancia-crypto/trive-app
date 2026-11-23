@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
+import { useAppStore } from '../store/useAppStore'
 import {
   loadNotificationPreferences,
   updateNotificationPreference,
@@ -23,8 +24,10 @@ export default function SettingsScreen() {
   const navigation = useNavigation()
   const route = useRoute<any>()
   const { user } = useAuth()
+  const appUser = useAppStore((s) => s.user)
+  const setAppUser = useAppStore((s) => s.setUser)
   const [pushNotifications, setPushNotifications] = useState(true)
-  const [preferredMunicipality, setPreferredMunicipality] = useState<string | null>(null)
+  const preferredMunicipality = appUser?.preferred_municipality ?? null
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
   const [emergencyContact, setEmergencyContact] = useState<{name: string; phone: string} | null>(null)
   const [sosModalVisible, setSosModalVisible] = useState(false)
@@ -35,13 +38,12 @@ export default function SettingsScreen() {
     if (!user?.id) return
     supabase
       .from('profiles')
-      .select('emergency_contact, preferred_municipality')
+      .select('emergency_contact')
       .eq('id', user.id)
       .single()
       .then(({ data }) => {
         const contact = toEmergencyContact(data?.emergency_contact)
         if (contact) setEmergencyContact(contact)
-        if (data?.preferred_municipality) setPreferredMunicipality(data.preferred_municipality)
       })
   }, [user?.id])
 
@@ -54,8 +56,8 @@ export default function SettingsScreen() {
 
   const saveMunicipality = async (m: Municipality) => {
     setShowMunicipalityPicker(false)
-    setPreferredMunicipality(m.name)
-    if (user?.id) {
+    if (user?.id && appUser) {
+      setAppUser({ ...appUser, preferred_municipality: m.name })
       await supabase.from('profiles').update({ preferred_municipality: m.name }).eq('id', user.id)
     }
   }

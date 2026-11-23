@@ -77,6 +77,7 @@ async function fetchAppUserForSession(currentSession: Session): Promise<AppUser>
       membership_expiry: profile.membership_expiry,
       balance: profile.balance ?? 0,
       is_admin: profile.is_admin ?? false,
+      preferred_municipality: profile.preferred_municipality ?? null,
     };
   }
 
@@ -119,6 +120,7 @@ async function fetchAppUserForSession(currentSession: Session): Promise<AppUser>
     role: toAppRole(insertedProfile.role),
     rating: insertedProfile.rating ?? 0,
     avatar_url: insertedProfile.avatar_url ?? undefined,
+    preferred_municipality: insertedProfile.preferred_municipality ?? null,
   };
 }
 

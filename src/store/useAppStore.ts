@@ -19,6 +19,7 @@ export interface AppUser {
   balance?: number
   membership_type?: 'free' | 'basic' | 'premium' | 'vip'
   membership_expiry?: string | null
+  preferred_municipality?: string | null
 }
 
 interface AppState {
