@@ -18,6 +18,10 @@ const airportDetailTypes = new Set([
   'trip_published',
   'offer_received',
   'trip_update',
+  // Mensaje del chat de negociación (send_chat_message) -- trae request_id. Un
+  // mensaje del chat de un viaje normal también es type 'message' pero nunca
+  // trae request_id, así que no entra aquí y sigue cayendo al case de abajo.
+  'message',
 ])
 
 const airportActiveTypes = new Set([
