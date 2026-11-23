@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
-import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Alert, Modal, TextInput } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, ScrollView, Switch, Modal, TextInput } from 'react-native'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useNavigation, useRoute } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import { useAuth } from '../hooks/useAuth'
+import { showError, showInfo } from '../utils/showError'
+import { AppAlert } from '../components/AppAlert'
 import { useAppStore } from '../store/useAppStore'
 import {
   loadNotificationPreferences,
@@ -23,9 +25,10 @@ import KeyboardAvoidingScreen from '../components/KeyboardAvoidingScreen'
 export default function SettingsScreen() {
   const navigation = useNavigation()
   const route = useRoute<any>()
-  const { user } = useAuth()
+  const { user, logout: logoutAuth } = useAuth()
   const appUser = useAppStore((s) => s.user)
   const setAppUser = useAppStore((s) => s.setUser)
+  const logoutStore = useAppStore((s) => s.logout)
   const [pushNotifications, setPushNotifications] = useState(true)
   const preferredMunicipality = appUser?.preferred_municipality ?? null
   const [showMunicipalityPicker, setShowMunicipalityPicker] = useState(false)
@@ -33,6 +36,18 @@ export default function SettingsScreen() {
   const [sosModalVisible, setSosModalVisible] = useState(false)
   const [sosName, setSosName] = useState('')
   const [sosPhone, setSosPhone] = useState('')
+
+  const handleLogout = () =>
+    AppAlert.confirm({
+      title: 'Cerrar Sesión',
+      message: '¿Estás seguro?',
+      confirmText: 'Cerrar',
+      destructive: true,
+      onConfirm: async () => {
+        try { showInfo('Cerrando sesión...'); await logoutAuth(); logoutStore() }
+        catch { logoutStore() }
+      },
+    })
 
   useEffect(() => {
     if (!user?.id) return
@@ -64,7 +79,7 @@ export default function SettingsScreen() {
 
   const saveEmergencyContact = async () => {
     if (!sosPhone.trim()) {
-      Alert.alert('Error', 'El número de teléfono es obligatorio')
+      showError('El número de teléfono es obligatorio')
       return
     }
     if (!user?.id) return
@@ -103,7 +118,7 @@ export default function SettingsScreen() {
 
     const success = await updateNotificationPreference(user.id, 'push_notifications', value)
     if (!success) {
-      Alert.alert('Error', 'No se pudo guardar la preferencia')
+      showError('No se pudo guardar la preferencia')
       setPushNotifications(!value)
       return
     }
@@ -185,6 +200,11 @@ export default function SettingsScreen() {
           <Divider />
           <NavRow icon="CircleHelp" title="Soporte y ayuda" sub="Escríbenos o revisa las preguntas frecuentes" onPress={go('Support')} />
         </Group>
+
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.75}>
+          <Icon name="LogOut" size={18} color={COLORS.white} />
+          <Text style={styles.logoutBtnText}>Cerrar Sesión</Text>
+        </TouchableOpacity>
 
         <Text style={styles.footer}>Trive · versión {APP_VERSION_LABEL}</Text>
       </ScrollView>
@@ -345,10 +365,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   groupCard: {
-    ...SHADOWS.sm,
-    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.white,
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
+    marginHorizontal: -SPACING.lg,
   },
   divider: { height: 1, backgroundColor: COLORS.borderLight, marginLeft: 64 },
 
@@ -378,6 +400,25 @@ const styles = StyleSheet.create({
   pillWarnText: { color: COLORS.warningDark },
 
   footer: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary, textAlign: 'center', marginTop: SPACING.xl },
+
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    alignSelf: 'center',
+    backgroundColor: COLORS.danger,
+    borderRadius: RADIUS.full,
+    paddingVertical: 10,
+    paddingHorizontal: 28,
+    marginTop: SPACING.xl,
+    shadowColor: COLORS.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  logoutBtnText: { ...TYPOGRAPHY.bodySmall, fontWeight: TYPOGRAPHY.weight.bold, color: COLORS.white },
 
   overlay: {
     flex: 1,
