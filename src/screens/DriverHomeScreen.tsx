@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from 'react'
 import { View, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native'
-import { Image } from 'expo-image'
 import { Text } from '../components/AppText'
 import { useNavigation, useFocusEffect } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
@@ -33,7 +32,6 @@ export default function DriverHomeScreen() {
   const [pendingAirportCount, setPendingAirportCount] = useState(0)
   const [showPublishMenu, setShowPublishMenu] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
-  const [avatarBroken, setAvatarBroken] = useState(false)
   const { payments: pendingPayments, reload: reloadPayments } = useDriverPayments(user?.id)
   const { routes: todayRoutes, reload: reloadTodayRoutes } = useDriverTodayRoutes(user?.id)
   const pendingPaymentsCount = pendingPayments.length
@@ -74,7 +72,6 @@ export default function DriverHomeScreen() {
   }
 
   const fullName = user?.name ?? 'Conductor'
-  const initials = (user?.name || 'C').split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
   const balance = (user?.balance ?? 0).toLocaleString('es-CO')
 
   return (
@@ -85,26 +82,8 @@ export default function DriverHomeScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={COLORS.primary} />}
       >
         <View style={styles.header}>
-          <View style={{ flex: 1, marginRight: SPACING.md }}>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.name} numberOfLines={1}>{fullName}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.avatar}
-            onPress={() => navigation.navigate('Profile' as never)}
-            activeOpacity={0.75}
-            accessibilityLabel="Ir a mi perfil"
-          >
-            {user?.avatar_url && !avatarBroken ? (
-              <Image
-                source={{ uri: user.avatar_url }}
-                style={styles.avatarImg}
-                onError={() => setAvatarBroken(true)}
-              />
-            ) : (
-              <Text style={styles.avatarText}>{initials}</Text>
-            )}
-          </TouchableOpacity>
+          <Text style={styles.greeting}>{getGreeting()}</Text>
+          <Text style={styles.name} numberOfLines={1}>{fullName}</Text>
         </View>
 
         <View style={styles.modeRow}>
@@ -279,15 +258,9 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   content: { padding: SPACING.lg, paddingBottom: SPACING.xxxl },
 
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  header: {},
   greeting: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary },
   name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
-  avatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: COLORS.primaryTint,
-    alignItems: 'center', justifyContent: 'center', overflow: 'hidden',
-  },
-  avatarImg: { width: 44, height: 44 },
-  avatarText: { fontSize: 14, fontWeight: '800', color: COLORS.primary },
 
   modeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md },
   modePill: {
