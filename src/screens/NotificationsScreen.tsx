@@ -180,8 +180,8 @@ const NotificationRow = memo(function NotificationRow({
       </View>
 
       <View style={styles.body}>
-        <Text style={styles.cardTitle} numberOfLines={2}>{item.title || 'Alerta'}</Text>
-        <Text style={styles.cardMessage} numberOfLines={3}>
+        <Text style={[styles.cardTitle, !isUnread && styles.cardTitleRead]} numberOfLines={2}>{item.title || 'Alerta'}</Text>
+        <Text style={[styles.cardMessage, isUnread && styles.cardMessageUnread]} numberOfLines={3}>
           {item.type === 'message' && item.senderName ? `${item.senderName}: ${item.message}` : item.message}
         </Text>
         {cta && (
@@ -857,16 +857,20 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: SPACING.md,
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.xs,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
   cardUnread: {
-    backgroundColor: COLORS.surfaceAlt,
+    backgroundColor: COLORS.unreadHighlight,
+    borderRadius: RADIUS.sm,
   },
   cardSelected: {
     borderWidth: 1.5,
     borderColor: COLORS.primary,
     backgroundColor: COLORS.primaryTint,
+    borderRadius: RADIUS.sm,
   },
   tile: {
     width: 40,
@@ -883,10 +887,16 @@ const styles = StyleSheet.create({
     fontWeight: TYPOGRAPHY.weight.extrabold,
     color: COLORS.textPrimary,
   },
+  cardTitleRead: {
+    fontWeight: TYPOGRAPHY.weight.semibold,
+  },
   cardMessage: {
     ...TYPOGRAPHY.labelMedium,
     color: COLORS.textPrimary,
     marginTop: 2,
+  },
+  cardMessageUnread: {
+    fontWeight: TYPOGRAPHY.weight.bold,
   },
   ctaLink: {
     ...TYPOGRAPHY.labelMedium,

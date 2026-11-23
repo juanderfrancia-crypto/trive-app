@@ -43,6 +43,7 @@ export const COLORS = {
   background: '#f8fcff', // Azul casi blanco (~98.7% blanco), decidido 2026-11-21 -- antes '#FFFFFF'
   surface: '#fbfdff', // Prueba: antes '#FFFFFF' -- blanco puro para cards/containers
   surfaceAlt: '#F4F6FA', // Superficie secundaria
+  unreadHighlight: '#EDEFF3', // Fondo de alerta no leída (~94% blanco) -- separado de surfaceAlt para poder ajustarlo sin afectar el resto de la app
   surfaceHover: '#F0F0F0', // Gris claro para hover states
   backgroundAlt: '#F5F5F5', // Alias de surfaceAlt
   
