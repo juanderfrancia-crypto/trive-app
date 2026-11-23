@@ -169,7 +169,7 @@ export default function TabNavigator() {
           title: 'Viajes',
           tabBarBadge: messagesBadge,
           tabBarBadgeStyle: {
-            backgroundColor: COLORS.error,
+            backgroundColor: COLORS.notificationBadge,
             color: '#fff',
             fontSize: 10,
             fontWeight: '700',
@@ -186,7 +186,7 @@ export default function TabNavigator() {
           title: 'Solicitudes',
           tabBarBadge: requestsBadge,
           tabBarBadgeStyle: {
-            backgroundColor: COLORS.error,
+            backgroundColor: COLORS.notificationBadge,
             color: '#fff',
             fontSize: 10,
             fontWeight: '700',
@@ -203,7 +203,7 @@ export default function TabNavigator() {
           title: 'Alertas',
           tabBarBadge: alertsBadge,
           tabBarBadgeStyle: {
-            backgroundColor: COLORS.error,
+            backgroundColor: COLORS.notificationBadge,
             color: '#fff',
             fontSize: 10,
             fontWeight: '700',

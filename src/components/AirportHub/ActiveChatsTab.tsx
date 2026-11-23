@@ -268,7 +268,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -5,
     right: -5,
-    backgroundColor: COLORS.error,
+    backgroundColor: COLORS.notificationBadge,
     borderRadius: 12,
     minWidth: 22,
     height: 22,

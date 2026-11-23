@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textPrimary },
   cardSub: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
   badge: {
-    minWidth: 22, height: 22, borderRadius: 11, backgroundColor: COLORS.error,
+    minWidth: 22, height: 22, borderRadius: 11, backgroundColor: COLORS.notificationBadge,
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6,
   },
   badgeText: { fontSize: 11, fontWeight: '800', color: COLORS.white },

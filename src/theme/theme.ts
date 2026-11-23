@@ -80,6 +80,11 @@ export const COLORS = {
   // ya apuntan al mismo color.
   danger: '#7A2E3A',
   dangerLight: '#F1E3E6',
+
+  // Única excepción al vinotinto: el contador rojo de notificaciones no leídas
+  // (badges de pestañas, chats, mensajes) se queda en rojo puro -- decisión
+  // explícita del 23-nov-2026, separada de `error`/`danger`.
+  notificationBadge: '#EF4444',
 }
 
 export const TYPOGRAPHY = {
