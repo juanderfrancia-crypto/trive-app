@@ -137,8 +137,8 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
         <Illustration name="savingMoney" width={110} />
       </View>
 
-      <Text style={styles.section}>Verificación</Text>
-      <View style={styles.card}>
+      <Text style={[styles.section, styles.sectionFullBleed]}>Verificación</Text>
+      <View style={[styles.card, styles.sectionFullBleed]}>
         <View style={styles.cardHeader}>
           <Text style={styles.cardTitle}>Documentos</Text>
           <Text style={styles.cardMeta}>{approvedCount} de {REQUIRED_DOCS.length} aprobados</Text>
@@ -209,14 +209,14 @@ export default function DriverProfileView(p: DriverProfileViewProps) {
         )}
       </View>
 
-      <Text style={styles.section}>Mi trabajo</Text>
+      <Text style={[styles.section, styles.sectionFullBleed]}>Mi trabajo</Text>
       <View style={styles.list}>
         <ListRow icon="TrendingUp" title="Ganancias del mes" value={`$${p.monthEarnings.toLocaleString('es-CO')}`} onPress={p.onOpenEarnings} />
         <ListRow icon="Route" title="Mis rutas" subtitle="Rutas programadas, en curso y completadas" value={`${p.recentRoutes.length}`} onPress={p.onOpenTrips} />
         <ListRow icon="LayoutDashboard" title="Mi panel" subtitle="Reservas, pasajeros y estado de tus rutas" onPress={p.onOpenPanel} />
       </View>
 
-      <Text style={styles.section}>Cuenta</Text>
+      <Text style={[styles.section, styles.sectionFullBleed]}>Cuenta</Text>
       <View style={styles.list}>
         <ListRow icon="Smartphone" title="Métodos de pago" subtitle="Nequi, Daviplata y llave Bre-B" onPress={p.onOpenPaymentMethods} />
         <ListRow icon="Gift" title="Referidos" subtitle="Gana $2.500 por cada conductor que traigas" onPress={p.onOpenReferral} />
@@ -290,7 +290,12 @@ const styles = StyleSheet.create({
   walletBtn: { ...SHADOWS.xs, shadowColor: COLORS.primary, shadowOpacity: 0.3, marginTop: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
   walletBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.white },
 
-  section: { ...TYPOGRAPHY.bold, fontSize: 11, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginTop: SPACING.xl, marginBottom: SPACING.sm },
+  section: { ...TYPOGRAPHY.bold, fontSize: 13, color: COLORS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.8, marginTop: SPACING.xl, marginBottom: SPACING.sm },
+  // "Mi trabajo"/"Cuenta": la lista de abajo debe quedar al ras del borde de
+  // la pantalla (como en PassengerProfileView), no encerrada por el padding
+  // de `content` -- por eso tanto el rótulo como la lista cancelan ese padding
+  // con margen negativo, igual que el resto del contenido del pasajero.
+  sectionFullBleed: { marginHorizontal: -SPACING.lg },
 
   // Borde en vez de sombra (mismo motivo que en PassengerProfileView.tsx).
   card: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, padding: SPACING.lg },
@@ -326,7 +331,7 @@ const styles = StyleSheet.create({
   rowAction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: SPACING.xs, marginTop: SPACING.md, paddingTop: SPACING.md, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   rowActionText: { fontSize: 13, fontWeight: '700', color: COLORS.primary },
 
-  list: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden' },
+  list: { borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, borderRadius: RADIUS.lg, overflow: 'hidden', marginHorizontal: -SPACING.lg },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: SPACING.md, paddingHorizontal: SPACING.lg, paddingVertical: SPACING.md + 2, borderTopWidth: 1, borderTopColor: COLORS.borderLight },
   listText: { flex: 1 },
   listTitle: { fontSize: 15, fontWeight: '600', color: COLORS.textPrimary },
