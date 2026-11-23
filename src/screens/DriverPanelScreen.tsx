@@ -74,6 +74,18 @@ export default function DriverPanelScreen() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({})
   const msgChannelsRef = useRef<Map<string, () => void>>(new Map())
 
+  // Con varias rutas programadas, mostrar el detalle completo de todas apiladas
+  // obligaba a un scroll enorme. Ahora solo se ve el detalle de UNA a la vez,
+  // elegida con las pastillas de arriba (por hora de salida) -- ver render más abajo.
+  const [selectedRouteId, setSelectedRouteId] = useState<string | null>(null)
+  useEffect(() => {
+    if (routes.length === 0) { setSelectedRouteId(null); return }
+    if (!selectedRouteId || !routes.some((r) => r.id === selectedRouteId)) {
+      setSelectedRouteId(routes[0].id)
+    }
+  }, [routes, selectedRouteId])
+  const visibleRoute = routes.find((r) => r.id === selectedRouteId) ?? routes[0] ?? null
+
   const handleCallPassenger = (phone?: string) => {
     if (phone) {
       Linking.openURL(`tel:${phone}`)
@@ -527,7 +539,33 @@ export default function DriverPanelScreen() {
             )}
           </View>
         ) : (
-          routes.map((route) => {
+          <>
+            {routes.length > 1 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.routeTabsRow}
+              >
+                {routes.map((r) => {
+                  const active = r.id === visibleRoute?.id
+                  return (
+                    <TouchableOpacity
+                      key={r.id}
+                      style={[styles.routeTab, active && styles.routeTabActive]}
+                      onPress={() => setSelectedRouteId(r.id)}
+                      activeOpacity={0.8}
+                    >
+                      {r.status === 'in_progress' && <View style={styles.routeTabLiveDot} />}
+                      <Text style={[styles.routeTabText, active && styles.routeTabTextActive]}>
+                        {formatTime(r.departure_time)}
+                      </Text>
+                    </TouchableOpacity>
+                  )
+                })}
+              </ScrollView>
+            )}
+            {visibleRoute && (() => {
+            const route = visibleRoute
             const seatsFilled = getSeatsFilled(route)
             const isFull = route.available_seats === 0
             const statusInfo = getStatusInfo(route.status)
@@ -887,7 +925,8 @@ export default function DriverPanelScreen() {
                 )}
               </View>
             )
-          })
+            })()}
+          </>
         )}
       </ScrollView>
 
@@ -1028,19 +1067,31 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
   },
 
-  // Route Card
-  routeCard: {
-    ...SHADOWS.sm,
+  // Pastillas para elegir qué ruta ver cuando hay más de una programada.
+  routeTabsRow: { flexDirection: 'row', gap: SPACING.sm, paddingBottom: SPACING.sm },
+  routeTab: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border,
     backgroundColor: COLORS.white,
-    borderRadius: RADIUS.xl,
+  },
+  routeTabActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  routeTabText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
+  routeTabTextActive: { color: COLORS.white },
+  routeTabLiveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.success },
+
+  // Route "card": sin fondo/sombra/esquinas, sangra hasta el borde (cancela el
+  // padding de scrollContent) y se separa de la siguiente con una línea, en
+  // vez de verse como una card suelta flotando.
+  routeCard: {
+    marginHorizontal: -SPACING.lg,
     padding: SPACING.lg,
-    marginBottom: SPACING.lg,
-    overflow: 'hidden',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
   },
   routeCardActive: {
-    borderColor: COLORS.success,
     borderLeftWidth: 4,
-    backgroundColor: COLORS.background,
+    borderLeftColor: COLORS.success,
   },
   inProgressBanner: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
