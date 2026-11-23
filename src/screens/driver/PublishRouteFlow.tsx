@@ -625,7 +625,7 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
     return (
       <>
         <View style={{ alignItems: 'center' }}>
-          <Illustration name="postOnline" width={200} />
+          <Illustration name="postOnline" width={140} />
         </View>
         <Text style={styles.doneTitle}>Viaje publicado</Text>
         <Text style={styles.subtitle}>
