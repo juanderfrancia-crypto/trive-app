@@ -14,6 +14,8 @@ import MaintenanceScreen from "./src/components/MaintenanceScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
 import BiometricLockScreen from "./src/screens/BiometricLockScreen";
 import { useBiometricLock } from "./src/hooks/useBiometricLock";
+import { useAuth } from "./src/hooks/useAuth";
+import { useAppStore, loadPendingVerificationSecure } from "./src/store/useAppStore";
 import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
 import { initRemoteConfig, isMaintenanceMode, getMaintenanceMessage } from "./src/services/remoteConfig";
@@ -39,13 +41,13 @@ if (!__DEV__) {
   console.debug = () => {}
 }
 
-// Mantiene visible el splash nativo (el ícono) hasta que AppNavigator llame a
-// hideAsync() él mismo, una vez estén listas las fuentes, la sesión y el estado
-// persistido — no apenas cargan las fuentes. Sin esto, Android lo oculta solo
-// apenas arranca el JS: eso dejaba ver LoadingScreen por separado mientras se
-// restauraba la sesión, un "parpadeo" perceptible aunque las dos pantallas
-// muestren el mismo ícono (como WhatsApp: una sola pantalla fija hasta que todo
-// esté listo, nunca un paso intermedio visible).
+// Mantiene visible el splash nativo (el ícono) hasta que este mismo componente
+// llame a hideAsync() más abajo, una vez estén listas las fuentes y la
+// biometría -- no apenas arranca el JS. Sin esto, Android lo oculta solo de
+// inmediato: eso dejaba ver LoadingScreen por separado, un "parpadeo"
+// perceptible aunque las dos pantallas muestren el mismo ícono (como WhatsApp:
+// una sola espera continua hasta que todo esté listo, nunca un paso
+// intermedio visible).
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 // initSentry() antes que cualquier otra cosa: Sentry.wrap(App) de más abajo
@@ -71,17 +73,61 @@ function App() {
   const [maintenance, setMaintenance] = useState<{ on: boolean; message: string }>({ on: false, message: "" });
   const { ready: biometricReady, locked, authenticating, retryUnlock } = useBiometricLock();
 
+  // useAuth() ya no vive solo dentro de AppNavigator -- se llama aquí para que
+  // su cadena (sesión + perfil + cédula + verificación de dispositivo) arranque
+  // desde el instante cero, en paralelo con la biometría, y para que su
+  // `loading` entre en la MISMA cuenta regresiva que todo lo demás. useAuth ya
+  // está diseñado para que varias copias compartan el mismo trabajo sin
+  // duplicarlo (ver los guards de módulo en useAuth.ts), así que AppNavigator
+  // puede seguir llamándolo también, sin costo extra.
+  const { loading: authLoading } = useAuth();
+
+  // El store persiste hasSeenOnboarding/justRecoveredAccount con zustand
+  // (storeHydrated) y la verificación de correo pendiente vive en SecureStore
+  // aparte (pendingRestored) -- antes AppNavigator leía dos claves de
+  // AsyncStorage que ya nadie escribe (quedaron de un esquema viejo), así que
+  // ese "restoreState" nunca restauraba nada real y solo sumaba una espera.
+  const [storeHydrated, setStoreHydrated] = useState(useAppStore.persist.hasHydrated());
+  const [pendingRestored, setPendingRestored] = useState(false);
+
+  useEffect(() => {
+    if (useAppStore.persist.hasHydrated()) { setStoreHydrated(true); return; }
+    return useAppStore.persist.onFinishHydration(() => setStoreHydrated(true));
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const pending = await loadPendingVerificationSecure();
+        if (pending) {
+          useAppStore.getState().setPendingVerification(pending.email, pending.name, pending.phone);
+        }
+      } catch {
+        // sin verificación pendiente guardada, o no se pudo leer -- seguir igual
+      } finally {
+        setPendingRestored(true);
+      }
+    })();
+  }, []);
+
   useEffect(() => {
     initRemoteConfig().then(() => {
       setMaintenance({ on: isMaintenanceMode(), message: getMaintenanceMessage() });
     });
   }, []);
 
-  // El splash nativo normalmente lo oculta AppNavigator cuando está listo, pero
-  // AppNavigator nunca se monta mientras la app está bloqueada — sin esto, el
-  // splash se quedaría pegado para siempre tapando la pantalla de bloqueo.
-  // hideAsync() no hace nada si ya está oculto, así que es seguro llamarlo
-  // desde los dos lugares.
+  // Una sola cuenta regresiva para todo: fuentes, biometría, sesión+perfil, y
+  // el estado persistido. Antes esto se partía en dos (una acá, otra dentro de
+  // AppNavigator), lo que de verdad montaba dos pantallas de carga seguidas --
+  // aunque se vieran idénticas, React las trataba como dos cosas distintas.
+  const appReady = fontsLoaded && biometricReady && storeHydrated && pendingRestored && !authLoading;
+
+  // El splash nativo se queda puesto hasta que haya fuentes + biometría --
+  // recién ahí hay algo real que mostrar en su lugar (LoadingScreen, con el
+  // mismo ícono, o la pantalla de bloqueo). No se espera a appReady completo:
+  // si está bloqueada, el splash se quedaría pegado tapando la pantalla de
+  // bloqueo hasta que la sesión terminara de cargar. hideAsync() no hace nada
+  // si ya está oculto, así que es seguro que este efecto se repita.
   useEffect(() => {
     if (fontsLoaded && biometricReady) {
       SplashScreen.hideAsync().catch(() => {});
@@ -94,9 +140,14 @@ function App() {
   // igual al splash, nunca vacío — si no, se percibe como "carga dos veces".
   if (!fontsLoaded || !biometricReady) return <LoadingScreen />;
 
+  // El bloqueo biométrico no debe esperar a que la sesión/perfil terminen de
+  // cargar -- ya tiene todo lo que necesita (fuentes + su propio chequeo) para
+  // mostrarse y dejar desbloquear mientras esa cadena sigue en paralelo.
   if (locked) {
     return <BiometricLockScreen authenticating={authenticating} onRetry={retryUnlock} />;
   }
+
+  if (!appReady) return <LoadingScreen />;
 
   if (maintenance.on) {
     return (

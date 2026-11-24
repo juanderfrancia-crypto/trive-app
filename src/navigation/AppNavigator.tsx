@@ -1,6 +1,4 @@
-import { useEffect, useState } from 'react'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import * as SplashScreen from 'expo-splash-screen'
+import { useEffect } from 'react'
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native'
 import { COLORS } from '../theme/theme'
 
@@ -20,7 +18,6 @@ import VerifyPhoneScreen from '../screens/VerifyPhoneScreen'
 import CompleteCedulaScreen from '../screens/CompleteCedulaScreen'
 import DeviceVerificationScreen from '../screens/DeviceVerificationScreen'
 import VerifyEmailScreen from '../screens/VerifyEmailScreen'
-import LoadingScreen from '../screens/LoadingScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
@@ -30,68 +27,23 @@ import { configureNotificationHandler } from '../services/pushNotifications'
 const Stack = createNativeStackNavigator()
 
 export default function AppNavigator() {
-  const { session, loading: authLoading } = useAuth()
-  const [mounted, setMounted] = useState(false)
-  const [stateRestored, setStateRestored] = useState(false)
+  // App.tsx ya garantiza que, para cuando este componente se monta, la sesión
+  // ya está resuelta (loading siempre false acá) -- se vuelve a llamar solo
+  // por `session`, sin costo extra (ver el comentario junto a la primera
+  // llamada en App.tsx).
+  const { session } = useAuth()
   const hasSeenOnboarding = useAppStore((state) => state.hasSeenOnboarding)
   const user = useAppStore((state) => state.user)
   const deviceVerificationStatus = useAppStore((state) => state.deviceVerificationStatus)
   const justRecoveredAccount = useAppStore((state) => state.justRecoveredAccount)
   const pendingVerificationEmail = useAppStore((state) => state.pendingVerificationEmail)
   const setHasSeenOnboarding = useAppStore((state) => state.setHasSeenOnboarding)
-  const setPendingVerification = useAppStore((state) => state.setPendingVerification)
 
   // Handler de primer plano + canal de notificaciones de Android, antes de que
   // llegue cualquier push (se registraba la función pero nunca se llamaba).
   useEffect(() => {
     configureNotificationHandler()
   }, [])
-
-  // Restaurar estado persistido de AsyncStorage
-  useEffect(() => {
-    const restoreState = async () => {
-      try {
-        const stored = await AsyncStorage.getItem('hasSeenOnboarding')
-        if (stored !== null) {
-          setHasSeenOnboarding(JSON.parse(stored))
-        }
-
-        const pendingVerif = await AsyncStorage.getItem('pendingVerification')
-        if (pendingVerif !== null) {
-          const { email, name, phone } = JSON.parse(pendingVerif)
-          setPendingVerification(email, name, phone)
-        }
-      } catch (err) {
-        console.error('Error restaurando estado:', err)
-      } finally {
-        setStateRestored(true)
-      }
-    }
-
-    restoreState()
-  }, [setHasSeenOnboarding, setPendingVerification])
-
-  useEffect(() => {
-    const timer = setTimeout(() => setMounted(true), 100)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const appReady = mounted && !authLoading && stateRestored
-
-  // El splash nativo (App.tsx llamó preventAutoHideAsync) se queda puesto hasta este
-  // momento exacto — recién cuando ya hay algo real que mostrar en vez de LoadingScreen,
-  // nunca antes. Así el usuario nunca ve el paso intermedio: splash nativo y después,
-  // directo, la pantalla real (como WhatsApp). hideAsync() no hace nada si ya está oculto,
-  // así que es seguro que este efecto se repita si authLoading vuelve a activarse después.
-  useEffect(() => {
-    if (appReady) {
-      SplashScreen.hideAsync().catch(() => {})
-    }
-  }, [appReady])
-
-  if (!appReady) {
-    return <LoadingScreen />
-  }
 
   // Mostrar onboarding si no lo ha visto (SIEMPRE, incluso si hay verificación pendiente)
   // Esto permite que el usuario pueda reiniciar el proceso
