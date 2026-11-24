@@ -27,11 +27,18 @@ import { configureNotificationHandler } from '../services/pushNotifications'
 const Stack = createNativeStackNavigator()
 
 export default function AppNavigator() {
-  // App.tsx ya garantiza que, para cuando este componente se monta, la sesión
-  // ya está resuelta (loading siempre false acá) -- se vuelve a llamar solo
-  // por `session`, sin costo extra (ver el comentario junto a la primera
-  // llamada en App.tsx).
-  const { session } = useAuth()
+  // Se sigue llamando a useAuth() para que sus efectos (suscripciones de
+  // Realtime, etc.) sigan activos -- pero la decisión de ruta NO se basa en
+  // su `session` local, porque esta pantalla se desmonta y remonta cada vez
+  // que la app se bloquea/desbloquea con biometría (ver App.tsx: mientras
+  // `locked` es true, AppNavigator no existe). En cada remontaje, esa copia
+  // de useAuth() arranca con `session = null` hasta que su propia promesa
+  // resuelve un instante después -- en ese hueco se alcanzaba a ver el Login
+  // por teléfono antes de corregirse solo. `authUser` vive en el store
+  // global (Zustand), que NO se resetea al remontar, así que ya tiene el
+  // valor correcto desde el primer render de esta nueva instancia.
+  useAuth()
+  const authUser = useAppStore((state) => state.authUser)
   const hasSeenOnboarding = useAppStore((state) => state.hasSeenOnboarding)
   const user = useAppStore((state) => state.user)
   const deviceVerificationStatus = useAppStore((state) => state.deviceVerificationStatus)
@@ -55,8 +62,9 @@ export default function AppNavigator() {
     )
   }
 
-  // Usar session como fuente de verdad, ya que está conectado a Supabase Auth.onAuthStateChange
-  const isUserAuthenticated = !!session
+  // authUser como fuente de verdad (ver comentario arriba) -- se actualiza vía
+  // Supabase Auth.onAuthStateChange, igual que antes hacía session.
+  const isUserAuthenticated = !!authUser
 
   // Pantallas a las que nunca se llega apenas se abre la app (solo por
   // navegación explícita del usuario) usan getComponent en vez de un import
@@ -139,7 +147,7 @@ export default function AppNavigator() {
   // justRecoveredAccount: la cuenta se recuperó por correo (AccountRecoveryScreen) -- aunque
   // ya tenga un teléfono viejo guardado (el que se perdió), se le pide fijar uno nuevo con
   // la misma pantalla de siempre antes de dejarlo entrar.
-  const needsPhoneVerification = isUserAuthenticated && (!session?.user?.phone || justRecoveredAccount)
+  const needsPhoneVerification = isUserAuthenticated && (!authUser?.phone || justRecoveredAccount)
   // Cédula obligatoria para todos los usuarios (ver memoria project_seguridad_cuenta_unica_dispositivo,
   // punto 2) -- se pide una sola vez, después de resolver el teléfono, antes de dejar entrar al resto de la app.
   const needsCedula = isUserAuthenticated && !needsPhoneVerification && !!user && !user.cedula
@@ -164,7 +172,7 @@ export default function AppNavigator() {
           <Stack.Screen name="DeviceVerification" component={DeviceVerificationScreen} />
         </Stack.Navigator>
       ) : isUserAuthenticated ? (
-        <NotificationsProvider userId={session?.user?.id}>
+        <NotificationsProvider userId={authUser?.id}>
           <Stack.Navigator screenOptions={commonScreenOptions}>{authStack}</Stack.Navigator>
         </NotificationsProvider>
       ) : (
