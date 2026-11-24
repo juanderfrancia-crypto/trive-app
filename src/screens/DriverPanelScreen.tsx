@@ -3,7 +3,7 @@ import { View, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Refr
 import { Text } from '../components/AppText'
 import { LinearGradient } from 'expo-linear-gradient'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { useFocusEffect } from '@react-navigation/native'
+import { useFocusEffect, useIsFocused } from '@react-navigation/native'
 import { useNavigation } from '@react-navigation/native'
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../theme/theme'
 import Illustration from '../components/illustrations/Illustration'
@@ -54,6 +54,7 @@ interface DriverRoute {
 export default function DriverPanelScreen() {
   const insets = useSafeAreaInsets()
   const navigation = useNavigation()
+  const isFocused = useIsFocused()
   const user = useAppStore(s => s.user)
   const [routes, setRoutes] = useState<DriverRoute[]>([])
   const [loading, setLoading] = useState(true)
@@ -463,7 +464,12 @@ export default function DriverPanelScreen() {
 
   return (
     <View style={styles.safeContainer}>
-      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+      {/* Solo mientras esta pantalla está enfocada: al navegar a otra (ej. Crear
+          nueva ruta) este componente se desmonta y RN devuelve el control a la
+          StatusBar global de App.tsx (estilo oscuro) -- antes quedaba montada
+          de fondo en el stack y su "light-content" se filtraba a la pantalla
+          siguiente, donde se veía invisible sobre fondo claro (24-nov-2026). */}
+      {isFocused && <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />}
       {/* Header */}
       <LinearGradient
         colors={[COLORS.primaryDark, COLORS.primary, COLORS.primaryLight]}
