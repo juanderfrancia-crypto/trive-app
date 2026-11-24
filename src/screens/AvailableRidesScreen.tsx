@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react'
-import { View, TouchableOpacity, StyleSheet, FlatList, RefreshControl } from 'react-native'
+import { View, TouchableOpacity, StyleSheet, RefreshControl } from 'react-native'
+import { FlashList } from '@shopify/flash-list'
 import { Text } from '../components/AppText'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import Icon from '../components/Icon'
@@ -338,7 +339,7 @@ export default function AvailableRidesScreen() {
       ) : visibleRides.length === 0 ? (
         renderEmpty()
       ) : (
-        <FlatList
+        <FlashList
           data={visibleRides}
           renderItem={({ item }) => (
             <RideCard

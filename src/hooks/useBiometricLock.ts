@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { AppState, type AppStateStatus } from 'react-native'
 import { getStoredBiometricEnabled, isBiometricEnrolled, authenticateBiometric } from '../services/biometricAuth'
-import { supabase } from '../services/supabase'
+import { getSessionOnce } from '../services/supabase'
 
 // Bloqueo de pantalla completa estilo WhatsApp/Telegram: se dispara al abrir la
 // app desde cero y al volver de segundo plano, nunca por transacción puntual
@@ -42,7 +42,7 @@ export function useBiometricLock() {
       // El bloqueo es por cuenta, no por dispositivo — sin esto, activarlo
       // en una cuenta "se hereda" en cualquier otra que inicie sesión
       // después en el mismo teléfono (ver biometricAuth.ts).
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getSessionOnce()
       const userId = session?.user?.id
       const enabled = userId ? await getStoredBiometricEnabled(userId) : false
       const enrolled = enabled ? await isBiometricEnrolled() : false

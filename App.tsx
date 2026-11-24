@@ -7,7 +7,6 @@ import * as Sentry from "@sentry/react-native";
 import * as SplashScreen from "expo-splash-screen";
 import { SafeAreaProvider, initialWindowMetrics } from "react-native-safe-area-context";
 import AppNavigator from "./src/navigation/AppNavigator";
-import { configureNotificationHandler } from "./src/services/pushNotifications";
 import { toastConfig } from "./src/components/toastConfig";
 import AppAlertHost from "./src/components/AppAlert";
 import ErrorBoundary from "./src/components/ErrorBoundary";
@@ -54,7 +53,6 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 // lado aunque "parezca" configurado (bug real encontrado el 2026-10-27:
 // esta llamada nunca existía, Sentry no estaba reportando nada).
 initSentry();
-configureNotificationHandler();
 try { if (_crashlytics) _crashlytics().setCrashlyticsCollectionEnabled(!__DEV__) } catch {}
 initPerformanceMonitoring();
 

@@ -2,7 +2,7 @@ import { PROFILE_COLUMNS, getMyPhone, getMyCedula, saveMyProfile, CURRENT_TERMS_
 import { useState, useEffect, useRef } from "react";
 import { AppState, AppStateStatus } from "react-native";
 import * as Sentry from "@sentry/react-native";
-import { supabase } from "../services/supabase";
+import { supabase, getSessionOnce } from "../services/supabase";
 import { Session, User } from "@supabase/supabase-js";
 import { useAppStore, AppUser } from "../store/useAppStore";
 import { registerUserSession, deactivateCurrentSession, clearLocalSessionKey, updateSessionPushToken } from "../services/userSessions";
@@ -242,7 +242,7 @@ export const useAuth = () => {
       try {
         // Con timeout: si esta llamada se queda colgada, el usuario no debe
         // quedarse atascado para siempre en la pantalla de carga inicial.
-        const { data, error } = await withTimeout(supabase.auth.getSession(), 8000);
+        const { data, error } = await withTimeout(getSessionOnce(), 8000);
         if (error) {
           if (isRefreshTokenError(error.message)) {
             // Token inválido: limpiar sesión y redirigir al login sin alert

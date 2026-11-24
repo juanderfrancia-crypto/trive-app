@@ -19,57 +19,9 @@ import LoginPhoneScreen from '../screens/LoginPhoneScreen'
 import VerifyPhoneScreen from '../screens/VerifyPhoneScreen'
 import CompleteCedulaScreen from '../screens/CompleteCedulaScreen'
 import DeviceVerificationScreen from '../screens/DeviceVerificationScreen'
-import AccountRecoveryScreen from '../screens/AccountRecoveryScreen'
-import RecoveryEmailScreen from '../screens/RecoveryEmailScreen'
-import RegisterScreen from '../screens/RegisterScreen'
 import VerifyEmailScreen from '../screens/VerifyEmailScreen'
-import SeatSelectionScreen from '../screens/SeatSelectionScreen'
-import BookingScreen from '../screens/BookingScreen'
-import TripStatusScreen from '../screens/TripStatusScreen'
-import DriverRegisterScreen from '../screens/DriverRegisterScreen'
-import DriverPanelScreen from '../screens/DriverPanelScreen'
-import NotificationsScreen from '../screens/NotificationsScreen'
-import SettingsScreen from '../screens/SettingsScreen'
-import SecurityScreen from '../screens/SecurityScreen'
-import DriverDocumentsScreen from '../screens/DriverDocumentsScreen'
-import DriverOnboardingScreen from '../screens/DriverOnboardingScreen'
-import SessionHistoryScreen from '../screens/SessionHistoryScreen'
-import RecoveryAccountScreen from '../screens/RecoveryAccountScreen'
-import RecentActivityScreen from '../screens/RecentActivityScreen'
-import ChangePasswordScreen from '../screens/ChangePasswordScreen'
-import EditProfileScreen from '../screens/EditProfileScreen'
-import AddPaymentMethodScreen from '../screens/AddPaymentMethodScreen'
-import NegotiationChatScreen from '../screens/NegotiationChatScreen'
-import SetTripPriceScreen from '../screens/SetTripPriceScreen'
-import RatingScreen from '../screens/RatingScreen'
-import RatePassengersScreen from '../screens/RatePassengersScreen'
-import PrivacyScreen from '../screens/PrivacyScreen'
 import LoadingScreen from '../screens/LoadingScreen'
 import OnboardingScreen from '../screens/OnboardingScreen'
-import FavoriteRoutesScreen from '../screens/FavoriteRoutesScreen'
-import TripHistoryScreen from '../screens/TripHistoryScreen'
-import { EditVehicleScreen } from '../screens/EditVehicleScreen'
-import DriverEarningsScreen from '../screens/DriverEarningsScreen'
-import AboutTriveScreen from '../screens/AboutTriveScreen'
-import TermsOfServiceScreen from '../screens/TermsOfServiceScreen'
-import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen'
-import SupportScreen from '../screens/SupportScreen'
-import HelpScreen from '../screens/HelpScreen'
-import LearningCenterScreen from '../screens/LearningCenterScreen'
-import BugReportScreen from '../screens/BugReportScreen'
-import AvailableRidesScreen from '../screens/AvailableRidesScreen'
-import SavedAddressesScreen from '../screens/SavedAddressesScreen'
-import PaymentMethodsScreen from '../screens/PaymentMethodsScreen'
-import WalletScreen from '../screens/WalletScreen'
-import DriverPaymentMethodsScreen from '../screens/DriverPaymentMethodsScreen'
-import CancellationHistoryScreen from '../screens/CancellationHistoryScreen'
-import ReviewsScreen from '../screens/ReviewsScreen'
-import RecurringRoutesScreen from '../screens/RecurringRoutesScreen'
-import ReferralScreen from '../screens/ReferralScreen'
-import CreateAirportRequestScreen from '../screens/CreateAirportRequestScreen'
-import AirportRequestDetailsScreen from '../screens/AirportRequestDetailsScreen'
-import PassengerPaymentScreen from '../screens/payments/PassengerPaymentScreen'
-import DriverPaymentsScreen from '../screens/payments/DriverPaymentsScreen'
 import { useAppStore } from '../store/useAppStore'
 import { useAuth } from '../hooks/useAuth'
 import { NotificationsProvider } from '../context/NotificationsContext'
@@ -154,19 +106,26 @@ export default function AppNavigator() {
   // Usar session como fuente de verdad, ya que está conectado a Supabase Auth.onAuthStateChange
   const isUserAuthenticated = !!session
 
+  // Pantallas a las que nunca se llega apenas se abre la app (solo por
+  // navegación explícita del usuario) usan getComponent en vez de un import
+  // estático arriba -- con esto, Metro no evalúa ni ejecuta ese módulo (y todo
+  // lo que esa pantalla importe) hasta el instante en que el usuario navega
+  // ahí. Las pantallas que SÍ pueden ser la primera cosa que se ve (Login,
+  // Main, los pasos obligatorios de verificación) se quedan con import/component
+  // normal arriba.
   const guestStack = !isUserAuthenticated && pendingVerificationEmail ? (
     <>
       <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{}} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
+      <Stack.Screen name="Register" getComponent={() => require('../screens/RegisterScreen').default} />
     </>
   ) : !isUserAuthenticated ? (
     <>
       <Stack.Screen name="Login" component={LoginPhoneScreen} />
-      <Stack.Screen name="Register" component={RegisterScreen} />
-      <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
-      <Stack.Screen name="AccountRecovery" component={AccountRecoveryScreen} />
-      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Register" getComponent={() => require('../screens/RegisterScreen').default} />
+      <Stack.Screen name="RecoveryAccount" getComponent={() => require('../screens/RecoveryAccountScreen').default} />
+      <Stack.Screen name="AccountRecovery" getComponent={() => require('../screens/AccountRecoveryScreen').default} />
+      <Stack.Screen name="TermsOfService" getComponent={() => require('../screens/TermsOfServiceScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="PrivacyPolicy" getComponent={() => require('../screens/PrivacyPolicyScreen').default} options={{ headerShown: false }} />
       {!pendingVerificationEmail && (
         <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{}} />
       )}
@@ -176,52 +135,52 @@ export default function AppNavigator() {
   const authStack = isUserAuthenticated ? (
     <>
       <Stack.Screen name="Main" component={TabNavigator} />
-      <Stack.Screen name="AvailableRides" component={AvailableRidesScreen} />
-      <Stack.Screen name="SeatSelection" component={SeatSelectionScreen} />
-      <Stack.Screen name="Booking" component={BookingScreen} />
-      <Stack.Screen name="TripStatus" component={TripStatusScreen} />
-      <Stack.Screen name="DriverRegister" component={DriverRegisterScreen} />
-      <Stack.Screen name="DriverPanel" component={DriverPanelScreen} />
-      <Stack.Screen name="DriverOnboarding" component={DriverOnboardingScreen} />
-      <Stack.Screen name="DriverDocuments" component={DriverDocumentsScreen} />
-      <Stack.Screen name="Notifications" component={NotificationsScreen} />
-      <Stack.Screen name="Settings" component={SettingsScreen} />
-      <Stack.Screen name="Privacy" component={PrivacyScreen} />
-      <Stack.Screen name="Security" component={SecurityScreen} />
-      <Stack.Screen name="RecoveryEmail" component={RecoveryEmailScreen} />
-      <Stack.Screen name="SessionHistory" component={SessionHistoryScreen} />
-      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
-      <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-      <Stack.Screen name="RecoveryAccount" component={RecoveryAccountScreen} />
-      <Stack.Screen name="RecentActivity" component={RecentActivityScreen} />
-      <Stack.Screen name="FavoriteRoutes" component={FavoriteRoutesScreen} />
-      <Stack.Screen name="SavedAddresses" component={SavedAddressesScreen} />
-      <Stack.Screen name="PaymentMethods" component={PaymentMethodsScreen} />
-      <Stack.Screen name="Wallet" component={WalletScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DriverPaymentMethods" component={DriverPaymentMethodsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AddPaymentMethod" component={AddPaymentMethodScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="NegotiationChat" component={NegotiationChatScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="SetTripPrice" component={SetTripPriceScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="RatingScreen" component={RatingScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="RatePassengers" component={RatePassengersScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="CancellationHistory" component={CancellationHistoryScreen} />
-      <Stack.Screen name="TripHistory" component={TripHistoryScreen} />
-      <Stack.Screen name="Reviews" component={ReviewsScreen} />
-      <Stack.Screen name="RecurringRoutes" component={RecurringRoutesScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Referral" component={ReferralScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="EditVehicle" component={EditVehicleScreen} />
-      <Stack.Screen name="Earnings" component={DriverEarningsScreen} />
-      <Stack.Screen name="AboutTrive" component={AboutTriveScreen} />
-      <Stack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
-      <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-      <Stack.Screen name="Support" component={SupportScreen} />
-      <Stack.Screen name="Help" component={HelpScreen} />
-      <Stack.Screen name="LearningCenter" component={LearningCenterScreen} />
-      <Stack.Screen name="BugReport" component={BugReportScreen} />
-      <Stack.Screen name="AirportRequest" component={CreateAirportRequestScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="AirportRequestDetails" component={AirportRequestDetailsScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="PassengerPayment" component={PassengerPaymentScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="DriverPayments" component={DriverPaymentsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="AvailableRides" getComponent={() => require('../screens/AvailableRidesScreen').default} />
+      <Stack.Screen name="SeatSelection" getComponent={() => require('../screens/SeatSelectionScreen').default} />
+      <Stack.Screen name="Booking" getComponent={() => require('../screens/BookingScreen').default} />
+      <Stack.Screen name="TripStatus" getComponent={() => require('../screens/TripStatusScreen').default} />
+      <Stack.Screen name="DriverRegister" getComponent={() => require('../screens/DriverRegisterScreen').default} />
+      <Stack.Screen name="DriverPanel" getComponent={() => require('../screens/DriverPanelScreen').default} />
+      <Stack.Screen name="DriverOnboarding" getComponent={() => require('../screens/DriverOnboardingScreen').default} />
+      <Stack.Screen name="DriverDocuments" getComponent={() => require('../screens/DriverDocumentsScreen').default} />
+      <Stack.Screen name="Notifications" getComponent={() => require('../screens/NotificationsScreen').default} />
+      <Stack.Screen name="Settings" getComponent={() => require('../screens/SettingsScreen').default} />
+      <Stack.Screen name="Privacy" getComponent={() => require('../screens/PrivacyScreen').default} />
+      <Stack.Screen name="Security" getComponent={() => require('../screens/SecurityScreen').default} />
+      <Stack.Screen name="RecoveryEmail" getComponent={() => require('../screens/RecoveryEmailScreen').default} />
+      <Stack.Screen name="SessionHistory" getComponent={() => require('../screens/SessionHistoryScreen').default} />
+      <Stack.Screen name="ChangePassword" getComponent={() => require('../screens/ChangePasswordScreen').default} />
+      <Stack.Screen name="EditProfile" getComponent={() => require('../screens/EditProfileScreen').default} />
+      <Stack.Screen name="RecoveryAccount" getComponent={() => require('../screens/RecoveryAccountScreen').default} />
+      <Stack.Screen name="RecentActivity" getComponent={() => require('../screens/RecentActivityScreen').default} />
+      <Stack.Screen name="FavoriteRoutes" getComponent={() => require('../screens/FavoriteRoutesScreen').default} />
+      <Stack.Screen name="SavedAddresses" getComponent={() => require('../screens/SavedAddressesScreen').default} />
+      <Stack.Screen name="PaymentMethods" getComponent={() => require('../screens/PaymentMethodsScreen').default} />
+      <Stack.Screen name="Wallet" getComponent={() => require('../screens/WalletScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverPaymentMethods" getComponent={() => require('../screens/DriverPaymentMethodsScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="AddPaymentMethod" getComponent={() => require('../screens/AddPaymentMethodScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="NegotiationChat" getComponent={() => require('../screens/NegotiationChatScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="SetTripPrice" getComponent={() => require('../screens/SetTripPriceScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="RatingScreen" getComponent={() => require('../screens/RatingScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="RatePassengers" getComponent={() => require('../screens/RatePassengersScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="CancellationHistory" getComponent={() => require('../screens/CancellationHistoryScreen').default} />
+      <Stack.Screen name="TripHistory" getComponent={() => require('../screens/TripHistoryScreen').default} />
+      <Stack.Screen name="Reviews" getComponent={() => require('../screens/ReviewsScreen').default} />
+      <Stack.Screen name="RecurringRoutes" getComponent={() => require('../screens/RecurringRoutesScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="Referral" getComponent={() => require('../screens/ReferralScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="EditVehicle" getComponent={() => require('../screens/EditVehicleScreen').EditVehicleScreen} />
+      <Stack.Screen name="Earnings" getComponent={() => require('../screens/DriverEarningsScreen').default} />
+      <Stack.Screen name="AboutTrive" getComponent={() => require('../screens/AboutTriveScreen').default} />
+      <Stack.Screen name="TermsOfService" getComponent={() => require('../screens/TermsOfServiceScreen').default} />
+      <Stack.Screen name="PrivacyPolicy" getComponent={() => require('../screens/PrivacyPolicyScreen').default} />
+      <Stack.Screen name="Support" getComponent={() => require('../screens/SupportScreen').default} />
+      <Stack.Screen name="Help" getComponent={() => require('../screens/HelpScreen').default} />
+      <Stack.Screen name="LearningCenter" getComponent={() => require('../screens/LearningCenterScreen').default} />
+      <Stack.Screen name="BugReport" getComponent={() => require('../screens/BugReportScreen').default} />
+      <Stack.Screen name="AirportRequest" getComponent={() => require('../screens/CreateAirportRequestScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="AirportRequestDetails" getComponent={() => require('../screens/AirportRequestDetailsScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="PassengerPayment" getComponent={() => require('../screens/payments/PassengerPaymentScreen').default} options={{ headerShown: false }} />
+      <Stack.Screen name="DriverPayments" getComponent={() => require('../screens/payments/DriverPaymentsScreen').default} options={{ headerShown: false }} />
     </>
   ) : null
 

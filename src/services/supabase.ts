@@ -82,3 +82,14 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseKey, {
     detectSessionInUrl: false,
   },
 });
+
+// useAuth y useBiometricLock necesitaban cada uno su propia sesión al arrancar,
+// y como useBiometricLock bloquea el montaje de AppNavigator (ver App.tsx), eso
+// convertía dos llamadas de red en una cadena secuencial: getSession() de
+// biometría -> recién ahí getSession() de auth -> recién ahí el perfil. Con una
+// sola promesa compartida, ambos arrancan de la misma lectura en paralelo.
+let _sessionPromise: ReturnType<typeof supabase.auth.getSession> | null = null;
+export const getSessionOnce = () => {
+  if (!_sessionPromise) _sessionPromise = supabase.auth.getSession();
+  return _sessionPromise;
+};
