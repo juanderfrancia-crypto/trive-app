@@ -93,3 +93,15 @@ export const getSessionOnce = () => {
   if (!_sessionPromise) _sessionPromise = supabase.auth.getSession();
   return _sessionPromise;
 };
+
+// Sin esto, _sessionPromise quedaba en caché PARA SIEMPRE con la sesión del
+// momento en que se llamó por primera vez -- tras un logout real, cualquier
+// pantalla que volviera a pedirla (ej. useAuth() remontando) recibía esa
+// sesión vieja ya inválida en el cliente. Como las peticiones a Supabase usan
+// el estado interno real del cliente (no el objeto de sesión que se le pasa a
+// mano), terminaban yendo como anon -> "permission denied for table profiles"
+// en bucle (bug real encontrado el 24-nov-2026 al cerrar sesión). Se limpia
+// en cualquier evento de auth para que la próxima lectura sea siempre fresca.
+supabase.auth.onAuthStateChange(() => {
+  _sessionPromise = null;
+});

@@ -21,9 +21,16 @@ export const getMyPhone = async (): Promise<string | null> => {
 
 // Mi cédula. Igual que el teléfono, no está en PROFILE_COLUMNS (es más sensible,
 // nadie más que el dueño del perfil puede leerla) — se obtiene con su propia función.
+//
+// A propósito NO devuelve null si el RPC falla (a diferencia de getMyPhone): quien
+// llama a esto decide si hay cédula o no para saber si debe pedir verificación de
+// dispositivo (ver checkDeviceVerification) -- devolver null en un error de red se
+// veía IGUAL que "esta cuenta no tiene cédula", y eso dejaba pasar sin verificar
+// nada (bug real encontrado el 24-nov-2026: un error pasajero saltó por completo
+// la pantalla de "confirma tu identidad" sin que el usuario hiciera nada).
 export const getMyCedula = async (): Promise<string | null> => {
   const { data, error } = await supabase.rpc('get_my_cedula')
-  if (error) return null
+  if (error) throw error
   return (data as string | null) ?? null
 }
 

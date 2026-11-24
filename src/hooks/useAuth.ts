@@ -179,49 +179,69 @@ export const useAuth = () => {
       // This eliminates the flash of wrong role/content during login.
       setSession(currentSession);
 
-      subscribeToProfile(currentSession.user.id)
+      // A partir de aquí (suscripciones de Realtime, registro de sesión, push token) es
+      // trabajo SECUNDARIO -- el perfil ya cargó y ya se mostró al usuario arriba. Un
+      // error en esta parte (ej. un canal de Realtime que choca por un ciclo rápido de
+      // cerrar/volver a entrar sesión) NO debe tratarse igual que un fallo real de perfil
+      // -- antes sí lo hacía, y un error de Realtime aquí dejaba a authUser/session en
+      // null como si la sesión completa hubiera fallado (bug real encontrado 24-nov-2026:
+      // "cannot add postgres_changes callbacks ... after subscribe()" tras varios ciclos
+      // seguidos de logout/login durante pruebas).
+      try {
+        subscribeToProfile(currentSession.user.id)
 
-      // Todo lo de abajo (registrar la sesión, cerrar otras, pedir push token) solo debe
-      // correr UNA VEZ por sesión real -- no una vez por cada componente que llame a
-      // useAuth(). Sin este guard, dos copias del hook montadas al mismo tiempo corrían
-      // registerUserSession() en paralelo y se revocaban la sesión la una a la otra.
-      if (_sessionRegisteredForUserId !== currentSession.user.id) {
-        _sessionRegisteredForUserId = currentSession.user.id
+        // Todo lo de abajo (registrar la sesión, cerrar otras, pedir push token) solo debe
+        // correr UNA VEZ por sesión real -- no una vez por cada componente que llame a
+        // useAuth(). Sin este guard, dos copias del hook montadas al mismo tiempo corrían
+        // registerUserSession() en paralelo y se revocaban la sesión la una a la otra.
+        if (_sessionRegisteredForUserId !== currentSession.user.id) {
+          _sessionRegisteredForUserId = currentSession.user.id
 
-        const { sessionKey, revoked } = await registerUserSession(currentSession.user.id);
-        setUserId(currentSession.user.id);
-        try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
-        try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
+          const { sessionKey, revoked } = await registerUserSession(currentSession.user.id);
+          setUserId(currentSession.user.id);
+          try { if (_crashlytics) _crashlytics().setUserId(currentSession.user.id) } catch {}
+          try { Sentry.setUser({ id: currentSession.user.id }) } catch {}
 
-        subscribeToOwnSession(sessionKey)
-        checkPendingProfileSetup(currentSession.user.id)
+          subscribeToOwnSession(sessionKey)
+          checkPendingProfileSetup(currentSession.user.id)
 
-        // Sesión única (punto 4 de seguridad): avisar por push a los dispositivos que
-        // quedaron fuera porque esta cuenta entró aquí. Si esa app sigue abierta y
-        // conectada, subscribeToOwnSession ya la cierra al instante por su cuenta;
-        // esto es el aviso para cuando no lo esté.
-        revoked.forEach((r) => {
-          if (r.push_token) {
-            sendPushNotificationToUser(
-              r.push_token,
-              'Sesión cerrada',
-              'Tu cuenta de Trive se abrió en otro dispositivo, así que cerramos esta sesión por seguridad.',
-              { type: 'session_revoked' }
-            ).catch(() => {})
-          }
-        })
-
-        getPushNotificationToken(currentSession.user.id)
-          .then((token) => {
-            if (token) {
-              registerPushToken(currentSession.user.id, token)
-              updateSessionPushToken(token)
+          // Sesión única (punto 4 de seguridad): avisar por push a los dispositivos que
+          // quedaron fuera porque esta cuenta entró aquí. Si esa app sigue abierta y
+          // conectada, subscribeToOwnSession ya la cierra al instante por su cuenta;
+          // esto es el aviso para cuando no lo esté.
+          revoked.forEach((r) => {
+            if (r.push_token) {
+              sendPushNotificationToUser(
+                r.push_token,
+                'Sesión cerrada',
+                'Tu cuenta de Trive se abrió en otro dispositivo, así que cerramos esta sesión por seguridad.',
+                { type: 'session_revoked' }
+              ).catch(() => {})
             }
           })
-          .catch(() => {})
+
+          getPushNotificationToken(currentSession.user.id)
+            .then((token) => {
+              if (token) {
+                registerPushToken(currentSession.user.id, token)
+                updateSessionPushToken(token)
+              }
+            })
+            .catch(() => {})
+        }
+      } catch (err) {
+        console.error("Error en suscripciones/registro de sesión (perfil igual quedó activo):", err);
       }
     } catch (err: any) {
       console.error("Error restoring profile from session:", err);
+      // authUser se puso al principio de esta función de forma optimista
+      // (antes de saber si el perfil cargaba bien) -- si la carga falla hay
+      // que deshacer eso también, o queda la app creyendo que sí hay sesión
+      // (authUser con datos) mientras session/appUser están en null, un
+      // estado a medias que puede hacer que algo reintente la misma consulta
+      // fallida sin parar (bug real encontrado el 24-nov-2026 tras un logout
+      // con sesión en caché vieja -- ver getSessionOnce en supabase.ts).
+      setAuthUser(null);
       setAppUser(null);
       setSession(null);
     } finally {
@@ -290,15 +310,18 @@ export const useAuth = () => {
         // Limpiar suscripciones al cerrar sesión (compartidas entre todas las copias de
         // useAuth() -- esto es lo único que debe tirarlas, nunca el desmontaje de un
         // componente individual, o se rompería el hook de otra pantalla que siga montada).
-        if (_profileChannel) {
-          supabase.removeChannel(_profileChannel)
-          _profileChannel = null
-        }
-        if (_sessionChannel) {
-          supabase.removeChannel(_sessionChannel)
-          _sessionChannel = null
-        }
+        // Se espera (await) a que termine de verdad antes de seguir -- antes no se
+        // esperaba, y un logout/login muy seguido (como al probar) podía alcanzar a crear
+        // el canal nuevo antes de que el viejo acabara de soltarse del todo.
+        const oldProfileChannel = _profileChannel
+        const oldSessionChannel = _sessionChannel
+        _profileChannel = null
+        _sessionChannel = null
         _sessionRegisteredForUserId = null
+        try {
+          if (oldProfileChannel) await supabase.removeChannel(oldProfileChannel)
+          if (oldSessionChannel) await supabase.removeChannel(oldSessionChannel)
+        } catch {}
       }
       if (event === 'SIGNED_IN' && session?.user) {
         subscribeToProfile(session.user.id)
@@ -336,7 +359,15 @@ export const useAuth = () => {
         { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${userId}` },
         async (payload) => {
           const p = payload.new as any
-          const cedula = await getMyCedula()
+          // getMyCedula ahora lanza si el RPC falla (ver profileColumns.ts) en vez de
+          // devolver null -- si eso pasa aquí, mejor saltar esta actualización en vivo
+          // que arriesgar un cedula=null incorrecto sobreescribiendo el perfil.
+          let cedula: string | null
+          try {
+            cedula = await getMyCedula()
+          } catch {
+            return
+          }
           await checkDeviceVerification(cedula)
           setAppUser({
             id: p.id,
