@@ -299,10 +299,26 @@ const styles = StyleSheet.create({
   rideSeats: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
   rideChevron: { alignSelf: 'center', marginRight: SPACING.md },
 
-  walletCard: { ...SHADOWS.md, shadowColor: COLORS.primary, shadowOpacity: 0.28, marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary },
-  walletLabel: { fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85 },
-  walletValue: { fontSize: 32, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5 },
-  walletHint: { fontSize: 13, color: COLORS.white, opacity: 0.85, marginTop: SPACING.xs, lineHeight: 19 },
+  walletCard: {
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.48,
+    shadowRadius: 26,
+    elevation: 14,
+    marginTop: SPACING.xl, borderRadius: RADIUS.lg, padding: SPACING.xl, backgroundColor: COLORS.primary,
+  },
+  walletLabel: {
+    fontSize: 13, fontWeight: '600', color: COLORS.white, opacity: 0.85,
+    textShadowColor: 'rgba(8, 45, 102, 0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
+  },
+  walletValue: {
+    fontSize: 32, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5,
+    textShadowColor: 'rgba(8, 45, 102, 0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
+  },
+  walletHint: {
+    fontSize: 13, color: COLORS.white, opacity: 0.85, marginTop: SPACING.xs, lineHeight: 19,
+    textShadowColor: 'rgba(8, 45, 102, 0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
+  },
   walletBtn: {
     // Shadow azul (igual al fondo de la tarjeta) no se nota -- igual que
     // primaryCtaIcon, se usa negro bien opaco para que el botón blanco sí se
@@ -328,6 +344,11 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 13, color: COLORS.textSecondary, marginTop: SPACING.xs },
 
   primaryCta: {
+    shadowColor: COLORS.textPrimary,
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.4,
+    shadowRadius: 26,
+    elevation: 14,
     marginTop: SPACING.lg, flexDirection: 'row', alignItems: 'center', gap: SPACING.md,
     backgroundColor: COLORS.textPrimary, borderRadius: RADIUS.lg, padding: SPACING.lg,
   },
@@ -345,8 +366,14 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   primaryCtaText: { flex: 1 },
-  primaryCtaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.white },
-  primaryCtaSub: { fontSize: 13, color: COLORS.white, opacity: 0.75, marginTop: 2 },
+  primaryCtaTitle: {
+    fontSize: 16, fontWeight: '700', color: COLORS.white,
+    textShadowColor: 'rgba(8, 45, 102, 0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
+  },
+  primaryCtaSub: {
+    fontSize: 13, color: COLORS.white, opacity: 0.75, marginTop: 2,
+    textShadowColor: 'rgba(8, 45, 102, 0.35)', textShadowOffset: { width: 0, height: 2 }, textShadowRadius: 6,
+  },
 
   // Lista unificada (Solicitudes de viaje / Pagos por confirmar / Mi panel):
   // sangra hasta el borde de la pantalla cancelando el padding de `content`,
