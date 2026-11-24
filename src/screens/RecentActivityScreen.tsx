@@ -20,12 +20,29 @@ interface Activity {
   created_at: string
 }
 
+const mapActivity = (item: any): Activity => ({
+  id: item.id,
+  action: item.action,
+  device: item.device || 'Dispositivo desconocido',
+  location: item.location || 'Ubicación desconocida',
+  status: item.status,
+  created_at: item.created_at,
+})
+
+// Antes traía un tope fijo de 50 sin forma de ver nada más viejo -- una
+// cuenta con más actividad simplemente perdía acceso al resto (24-nov-2026).
+// Mismo patrón de "Ver más" que WalletScreen.tsx: se piden PAGE_SIZE+1 filas
+// para saber si hay más sin una segunda consulta de conteo.
+const PAGE_SIZE = 20
+
 export default function RecentActivityScreen() {
   const navigation = useNavigation()
   const { user } = useAuth()
   const [activities, setActivities] = useState<Activity[]>([])
   const [loading, setLoading] = useState(true)
   const [loadedOnce, setLoadedOnce] = useState(false)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   useEffect(() => {
     if (user?.id && !loadedOnce) {
@@ -43,20 +60,13 @@ export default function RecentActivityScreen() {
         .select('*')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false })
-        .limit(50)
+        .range(0, PAGE_SIZE)
 
       if (error) throw error
 
-      setActivities(
-        data?.map((item: any) => ({
-          id: item.id,
-          action: item.action,
-          device: item.device || 'Dispositivo desconocido',
-          location: item.location || 'Ubicación desconocida',
-          status: item.status,
-          created_at: item.created_at,
-        })) || []
-      )
+      const page = data ?? []
+      setHasMore(page.length > PAGE_SIZE)
+      setActivities(page.slice(0, PAGE_SIZE).map(mapActivity))
       setLoadedOnce(true)
     } catch (err) {
       console.error('Error loading activities:', err)
@@ -64,6 +74,31 @@ export default function RecentActivityScreen() {
       setLoading(false)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadMoreActivities = async () => {
+    if (!user?.id || loadingMore) return
+    setLoadingMore(true)
+    try {
+      const from = activities.length
+      const { data, error } = await supabase
+        .from('user_activity')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(from, from + PAGE_SIZE)
+
+      if (error) throw error
+
+      const page = data ?? []
+      setHasMore(page.length > PAGE_SIZE)
+      setActivities((prev) => [...prev, ...page.slice(0, PAGE_SIZE).map(mapActivity)])
+    } catch (err) {
+      console.error('Error loading more activities:', err)
+      showError('No se pudo cargar más actividad')
+    } finally {
+      setLoadingMore(false)
     }
   }
 
@@ -114,7 +149,7 @@ export default function RecentActivityScreen() {
         ) : activities.length > 0 ? (
           <>
             <Text style={styles.sectionSubtitle}>
-              {activities.length} actividad{activities.length > 1 ? 'es' : ''} registrada{activities.length > 1 ? 's' : ''}
+              {hasMore ? `Últimas ${activities.length} actividades` : `${activities.length} actividad${activities.length > 1 ? 'es' : ''} registrada${activities.length > 1 ? 's' : ''}`}
             </Text>
 
             {activities.map((activity) => {
@@ -141,6 +176,21 @@ export default function RecentActivityScreen() {
                 </View>
               )
             })}
+
+            {hasMore && (
+              <TouchableOpacity
+                style={styles.loadMoreBtn}
+                onPress={loadMoreActivities}
+                disabled={loadingMore}
+                activeOpacity={0.75}
+              >
+                {loadingMore ? (
+                  <ActivityIndicator color={COLORS.primary} size="small" />
+                ) : (
+                  <Text style={styles.loadMoreText}>Ver más actividad</Text>
+                )}
+              </TouchableOpacity>
+            )}
 
             <View style={styles.securityNote}>
               <Icon name="Info" size={18} color={COLORS.primary} />
@@ -209,6 +259,9 @@ const styles = StyleSheet.create({
   locationText: { ...TYPOGRAPHY.caption, color: COLORS.textTertiary },
   rightContent: { alignItems: 'flex-end', gap: SPACING.xs },
   timeText: { ...TYPOGRAPHY.caption, color: COLORS.textSecondary },
+
+  loadMoreBtn: { alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.md },
+  loadMoreText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
   securityNote: {
     flexDirection: 'row',
