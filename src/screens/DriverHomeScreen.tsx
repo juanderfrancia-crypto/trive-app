@@ -304,9 +304,14 @@ const styles = StyleSheet.create({
   walletValue: { fontSize: 32, fontWeight: '800', color: COLORS.white, marginTop: SPACING.xs, letterSpacing: -0.5 },
   walletHint: { fontSize: 13, color: COLORS.white, opacity: 0.85, marginTop: SPACING.xs, lineHeight: 19 },
   walletBtn: {
-    ...SHADOWS.xs,
-    shadowColor: COLORS.primary,
-    shadowOpacity: 0.3,
+    // Shadow azul (igual al fondo de la tarjeta) no se nota -- igual que
+    // primaryCtaIcon, se usa negro bien opaco para que el botón blanco sí se
+    // vea elevado sobre este fondo de color.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 6,
     marginTop: SPACING.lg, height: 46, borderRadius: RADIUS.md, backgroundColor: COLORS.white,
     alignItems: 'center', justifyContent: 'center',
   },
@@ -329,6 +334,15 @@ const styles = StyleSheet.create({
   primaryCtaIcon: {
     width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.white,
     alignItems: 'center', justifyContent: 'center',
+    // La sombra estándar (SHADOWS.sm) es negra casi transparente, pensada para
+    // fondos claros -- sobre este fondo ya oscuro (primaryCta) no se nota nada.
+    // Esta va mucho más opaca a propósito, para que sí se vea como un botón
+    // elevado sobre la tarjeta oscura.
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.45,
+    shadowRadius: 6,
+    elevation: 6,
   },
   primaryCtaText: { flex: 1 },
   primaryCtaTitle: { fontSize: 16, fontWeight: '700', color: COLORS.white },
