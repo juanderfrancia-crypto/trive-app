@@ -13,8 +13,10 @@ import ErrorBoundary from "./src/components/ErrorBoundary";
 import MaintenanceScreen from "./src/components/MaintenanceScreen";
 import LoadingScreen from "./src/screens/LoadingScreen";
 import BiometricLockScreen from "./src/screens/BiometricLockScreen";
+import OfflineBanner from "./src/components/OfflineBanner";
 import { useBiometricLock } from "./src/hooks/useBiometricLock";
 import { useAuth } from "./src/hooks/useAuth";
+import { useNetworkStatus } from "./src/hooks/useNetworkStatus";
 import { useAppStore, loadPendingVerificationSecure } from "./src/store/useAppStore";
 import { initSentry } from "./src/services/sentry";
 import { initPerformanceMonitoring } from "./src/services/performance";
@@ -72,6 +74,7 @@ function App() {
   // Play Store. Se revisa una vez al abrir la app, no en vivo durante la sesión.
   const [maintenance, setMaintenance] = useState<{ on: boolean; message: string }>({ on: false, message: "" });
   const { ready: biometricReady, locked, authenticating, retryUnlock } = useBiometricLock();
+  const { isOnline } = useNetworkStatus();
 
   // useAuth() ya no vive solo dentro de AppNavigator -- se llama aquí para que
   // su cadena (sesión + perfil + cédula + verificación de dispositivo) arranque
@@ -138,7 +141,7 @@ function App() {
   // suelta su splash apenas se dibuja el primer frame (puede pasar antes de
   // que preventAutoHideAsync surta efecto), lo que queda detrás debe verse
   // igual al splash, nunca vacío — si no, se percibe como "carga dos veces".
-  if (!fontsLoaded || !biometricReady) return <LoadingScreen />;
+  if (!fontsLoaded || !biometricReady) return <LoadingScreen offline={!isOnline} />;
 
   // El bloqueo biométrico no debe esperar a que la sesión/perfil terminen de
   // cargar -- ya tiene todo lo que necesita (fuentes + su propio chequeo) para
@@ -147,7 +150,7 @@ function App() {
     return <BiometricLockScreen authenticating={authenticating} onRetry={retryUnlock} />;
   }
 
-  if (!appReady) return <LoadingScreen />;
+  if (!appReady) return <LoadingScreen offline={!isOnline} />;
 
   if (maintenance.on) {
     return (
@@ -169,6 +172,7 @@ function App() {
       <ErrorBoundary>
         <AppNavigator />
       </ErrorBoundary>
+      <OfflineBanner />
       <AppAlertHost />
       <Toast config={toastConfig} position="top" topOffset={54} />
     </SafeAreaProvider>

@@ -234,31 +234,34 @@ class ErrorHandler {
       return error;
     }
 
-    // Mapeo de errores técnicos a mensajes amigables en español
+    // Mapeo de errores técnicos a mensajes amigables en español -- sin emoji:
+    // el ícono de estado ya lo pone el toast (TriveToast), duplicarlo en el
+    // texto se ve inconsistente con el resto de la app (23-nov-2026).
     const messages: Record<ErrorType, string> = {
-      [ErrorType.NETWORK]: '📡 Sin conexión a internet. Verifica tu WiFi o datos móviles.',
-      [ErrorType.AUTH]: '🔐 Error de autenticación. Por favor inicia sesión de nuevo.',
-      [ErrorType.VALIDATION]: '✏️ Algunos datos no son válidos. Revisa la información.',
-      [ErrorType.DATABASE]: '🔧 Tuvimos un problema. Por favor intenta más tarde.',
-      [ErrorType.PAYMENT]: '💳 No pudimos procesar el pago. Intenta con otro método.',
-      [ErrorType.FILE]: '📁 Problema al procesar el archivo. Intenta de nuevo.',
-      [ErrorType.UNKNOWN]: '⚠️ Algo salió mal. Por favor intenta de nuevo.',
+      [ErrorType.NETWORK]: 'Sin conexión a internet. Verifica tu WiFi o datos móviles.',
+      [ErrorType.AUTH]: 'Error de autenticación. Por favor inicia sesión de nuevo.',
+      [ErrorType.VALIDATION]: 'Algunos datos no son válidos. Revisa la información.',
+      [ErrorType.DATABASE]: 'Tuvimos un problema. Por favor intenta más tarde.',
+      [ErrorType.PAYMENT]: 'No pudimos procesar el pago. Intenta con otro método.',
+      [ErrorType.FILE]: 'Problema al procesar el archivo. Intenta de nuevo.',
+      [ErrorType.UNKNOWN]: 'Algo salió mal. Por favor intenta de nuevo.',
     };
 
     return messages[type] || messages[ErrorType.UNKNOWN];
   }
 
   /**
-   * Show error toast
+   * Show error toast -- siempre tipo "error" (ícono rojo): esta función solo
+   * se llama para errores reales, la severidad es para logging/Sentry, no
+   * para decidir si se le muestra al usuario como neutral. El mensaje va en
+   * text1 (título en negrita), igual que showError() del resto de la app --
+   * antes decía "Error" genérico ahí y el mensaje amigable quedaba chiquito.
    */
   private showErrorToast(message: string, severity: ErrorSeverity) {
-    const toastType = severity === ErrorSeverity.CRITICAL ? 'error' : 'info';
-
     Toast.show({
-      type: toastType,
-      text1: 'Error',
-      text2: message,
-      visibilityTime: severity === ErrorSeverity.CRITICAL ? 5000 : 3000,
+      type: 'error',
+      text1: message,
+      visibilityTime: severity === ErrorSeverity.CRITICAL || severity === ErrorSeverity.HIGH ? 5000 : 3500,
     });
   }
 

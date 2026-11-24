@@ -12,7 +12,6 @@ import { useBruteForceGuard } from '../hooks/useBruteForceGuard'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { checkDeviceVerification } from '../services/deviceVerification'
 import { logLogin } from '../services/activityLogger'
-import OfflineBanner from '../components/OfflineBanner'
 import Button from '../components/Button'
 import { showSuccess, showError, showInfo } from '../utils/showError'
 import Icon from '../components/Icon'
@@ -261,8 +260,6 @@ export default function LoginPhoneScreen() {
 
   return (
     <SafeAreaView style={s.safe} edges={['top', 'left', 'right']}>
-      <OfflineBanner />
-
       <KeyboardAvoidingView
         style={s.kav}
         behavior="padding"

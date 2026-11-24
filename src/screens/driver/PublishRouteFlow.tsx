@@ -243,7 +243,15 @@ export default function PublishRouteFlow({ onExit, onOpenPanel, onOpenHome, onOp
       // Su mensaje se muestra tal cual en el paso de requisitos.
       route = await createRoute(payload)
     } catch (err: any) {
-      setServerError(err?.message || 'No se pudo publicar el viaje. Intenta de nuevo.')
+      // TIMEOUT no significa que falló seguro: publish_route es una sola
+      // transacción en el servidor, pudo completarse del lado de allá aunque
+      // la respuesta nunca llegó por la señal. Avisarlo tal cual evita que el
+      // conductor publique dos veces (doble cobro) creyendo que no pasó nada.
+      setServerError(
+        err?.code === 'TIMEOUT'
+          ? 'No pudimos confirmar si tu viaje se publicó por una señal inestable. Antes de intentar de nuevo, revisa la pestaña "Viajes" -- si ya aparece, no lo publiques otra vez.'
+          : err?.message || 'No se pudo publicar el viaje. Intenta de nuevo.'
+      )
       setStep(0)
       setSubmitting(false)
       return

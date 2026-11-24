@@ -15,7 +15,6 @@ import * as Clipboard from 'expo-clipboard'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
 import { supabase } from '../services/supabase'
-import OfflineBanner from '../components/OfflineBanner'
 import CancellationPolicyCard from '../components/CancellationPolicyCard'
 
 const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
@@ -343,6 +342,19 @@ export default function BookingScreen() {
           { context: 'seat_conflict' }
         )
         setTimeout(() => navigation.navigate('SeatSelection' as never), 2000)
+      } else if (error.code === 'TIMEOUT') {
+        // finalize_bookings_atomic pudo completarse en el servidor (cobro y
+        // confirmación incluidos) aunque la respuesta nunca llegó por la
+        // señal -- antes esto caía en la rama genérica de "error en la base
+        // de datos", un mensaje falso que no avisaba del riesgo de pagar/
+        // reservar dos veces.
+        errorHandler.handle(
+          'No pudimos confirmar si tu reserva se completó por una señal inestable. Revisa en "Mis Viajes" antes de intentar de nuevo.',
+          ErrorType.NETWORK,
+          ErrorSeverity.HIGH,
+          true,
+          { context: 'booking_timeout' }
+        )
       } else if (error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
         errorHandler.handle(
           'Sin conexión a internet',
@@ -371,7 +383,6 @@ export default function BookingScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <OfflineBanner />
       <KeyboardAvoidingScreen>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>

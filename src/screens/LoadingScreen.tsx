@@ -1,7 +1,16 @@
 import { View, ActivityIndicator, StyleSheet, Image } from 'react-native'
+import { Text } from '../components/AppText'
 import { COLORS } from '../theme/theme'
 
-export default function LoadingScreen() {
+type Props = {
+  // Sin esto, un arranque sin señal (modo avión, zona sin cobertura) se veía
+  // igual que un arranque lento cualquiera -- solo el ícono y el spinner,
+  // sin ninguna pista de que el problema es la red. 8 segundos mudo se
+  // siente como que la app está colgada, no que falta señal (24-nov-2026).
+  offline?: boolean
+}
+
+export default function LoadingScreen({ offline = false }: Props) {
   return (
     <View style={styles.container}>
       <Image
@@ -9,7 +18,12 @@ export default function LoadingScreen() {
         style={styles.logo}
         resizeMode="contain"
       />
-      <ActivityIndicator size="small" color={COLORS.primary} style={styles.spinner} />
+      <View style={styles.bottomBlock}>
+        <ActivityIndicator size="small" color={COLORS.primary} />
+        {offline && (
+          <Text style={styles.offlineText}>Sin conexión a internet. Esperando señal…</Text>
+        )}
+      </View>
     </View>
   )
 }
@@ -27,8 +41,16 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
   },
-  spinner: {
+  bottomBlock: {
     position: 'absolute',
     bottom: 60,
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 40,
+  },
+  offlineText: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
   },
 })

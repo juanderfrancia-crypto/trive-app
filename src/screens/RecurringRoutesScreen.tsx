@@ -16,6 +16,7 @@ import DurationInput from '../components/DurationInput'
 import { insertNotificationForUser } from '../services/notificationInsert'
 import { showSuccess, showError } from '../utils/showError'
 import { AppAlert } from '../components/AppAlert'
+import { useNetworkStatus } from '../hooks/useNetworkStatus'
 import {
   VEHICLE_TYPES,
   VehicleTypeId,
@@ -60,6 +61,7 @@ export default function RecurringRoutesScreen() {
   const user = useAppStore((s) => s.user)
   const setBalance = useAppStore((s) => s.setBalance)
   const { createRoute } = useRoutes()
+  const { isOnline } = useNetworkStatus()
 
   // ── Plantillas ─────────────────────────────────────────────────────────────
   const [templates, setTemplates] = useState<RouteTemplate[]>([])
@@ -212,6 +214,7 @@ export default function RecurringRoutesScreen() {
   // Publicar desde plantilla: el servidor valida requisitos y cobra; su mensaje llega tal cual.
   const handlePublish = async () => {
     if (!publishTarget || !user?.id) return
+    if (!isOnline) { showError('Sin conexión a internet. Verifica tu red antes de publicar.'); return }
     let delay = 0
     if (departureTime.trim()) {
       const salida = parseHHMM(departureTime)
@@ -274,7 +277,11 @@ export default function RecurringRoutesScreen() {
       closePublishModal()
       showSuccess('¡Viaje publicado! Los pasajeros ya pueden reservar.')
     } catch (err: any) {
-      showError(err.message || 'No se pudo publicar la ruta.')
+      showError(
+        err?.code === 'TIMEOUT'
+          ? 'No pudimos confirmar si tu viaje se publicó por una señal inestable. Revisa en "Viajes" antes de intentar de nuevo.'
+          : err.message || 'No se pudo publicar la ruta.'
+      )
     } finally {
       setPublishing(false)
     }

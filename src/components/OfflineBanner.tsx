@@ -1,16 +1,22 @@
 import React from 'react'
-import { View, StyleSheet, TouchableOpacity, SafeAreaView } from 'react-native'
+import { View, StyleSheet } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Text } from './AppText'
-import { COLORS, TYPOGRAPHY, SPACING } from '../theme/theme'
+import { COLORS, RADIUS } from '../theme/theme'
 import NetInfo from '@react-native-community/netinfo'
 import Icon from './Icon'
 
+// Misma identidad visual que TriveToast/AppAlert (franja oscura + chip de
+// ícono) pero persistente mientras no haya red, no transitoria -- antes era
+// una barra roja sólida sin relación con el resto de alertas de la app
+// (24-nov-2026). Vive una sola vez en App.tsx, global para toda la app.
 export default function OfflineBanner() {
+  const insets = useSafeAreaInsets()
   const [visible, setVisible] = React.useState(false)
 
   React.useEffect(() => {
     const unsubscribe = NetInfo.addEventListener(state => {
-      setVisible(!state.isConnected)
+      setVisible(state.isConnected === false)
     })
     return () => unsubscribe()
   }, [])
@@ -18,9 +24,11 @@ export default function OfflineBanner() {
   if (!visible) return null
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Icon name="CloudOff" size={20} color={COLORS.white} style={styles.icon} />
+    <View style={[styles.container, { top: insets.top + 8 }]} pointerEvents="none">
+      <View style={styles.pill}>
+        <View style={styles.iconChip}>
+          <Icon name="CloudOff" size={13} color={COLORS.white} />
+        </View>
         <Text style={styles.text}>Sin conexión a internet</Text>
       </View>
     </View>
@@ -29,22 +37,39 @@ export default function OfflineBanner() {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.error,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 999,
   },
-  content: {
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
+    gap: 10,
+    backgroundColor: COLORS.statusDark,
+    borderRadius: RADIUS.md,
+    paddingVertical: 11,
+    paddingHorizontal: 13,
+    maxWidth: '90%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+    elevation: 6,
   },
-  icon: {
-    marginRight: 4,
+  iconChip: {
+    width: 26,
+    height: 26,
+    borderRadius: RADIUS.sm - 2,
+    backgroundColor: COLORS.error,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   text: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.white,
-    fontWeight: '600',
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.statusDarkText,
+    letterSpacing: -0.1,
   },
 })

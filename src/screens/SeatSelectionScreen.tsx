@@ -11,7 +11,6 @@ import { useBookings } from '../hooks/useBookings'
 import { useRoutes, Route } from '../hooks/useRoutes'
 import { supabase } from '../services/supabase'
 import { errorHandler, ErrorType, ErrorSeverity } from '../services/errorHandler'
-import OfflineBanner from '../components/OfflineBanner'
 import { useNetworkStatus } from '../hooks/useNetworkStatus'
 
 const formatCOP = (n: number) => `$${Math.round(n).toLocaleString('es-CO')}`
@@ -373,7 +372,19 @@ export default function SeatSelectionScreen() {
           { context: 'seat_already_reserved' }
         )
         await loadBookings()
-      } else if (error.code === 'TIMEOUT' || error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
+      } else if (error.code === 'TIMEOUT') {
+        // reserve_seats pudo completarse en el servidor aunque la respuesta
+        // nunca llegó por la señal -- decirlo tal cual evita que el pasajero
+        // reserve el mismo asiento dos veces creyendo que no pasó nada.
+        errorHandler.handle(
+          'No pudimos confirmar si el asiento quedó reservado por una señal inestable. Revisa en "Mis Viajes" antes de intentar de nuevo.',
+          ErrorType.NETWORK,
+          ErrorSeverity.HIGH,
+          true,
+          { context: 'seat_reserve_timeout' }
+        )
+        await loadBookings()
+      } else if (error.message?.includes('Network') || error.message?.includes('Failed to fetch')) {
         errorHandler.handle(
           'Sin conexión o respuesta lenta. Verifica tu red e intenta de nuevo.',
           ErrorType.NETWORK,
@@ -411,7 +422,6 @@ export default function SeatSelectionScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <OfflineBanner />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} accessibilityLabel="Volver">

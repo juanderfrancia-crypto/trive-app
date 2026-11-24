@@ -306,7 +306,15 @@ export const useRoutes = () => {
     try {
       setError(null);
 
-      const { data, error } = await supabase.rpc("publish_route", { p_route: routeData });
+      // publish_route cobra la tarifa de publicación y crea la ruta en una sola
+      // transacción -- es la única mutación que mueve dinero sin withTimeout
+      // (a diferencia de reserve_seats/finalize_bookings_atomic). Sin esto, una
+      // señal que se degrada a mitad de la petición (típico 3G/Edge rural) deja
+      // el botón "pensando" para siempre, sin error y sin saber si ya cobró.
+      const { data, error } = await withTimeout(
+        Promise.resolve(supabase.rpc("publish_route", { p_route: routeData })),
+        15000
+      );
       if (error) throw error;
 
       return data as Route;
