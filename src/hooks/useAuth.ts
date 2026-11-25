@@ -52,7 +52,7 @@ let _sessionRegisteredForUserId: string | null = null
 let _appUserFetch: { userId: string; promise: Promise<AppUser> } | null = null
 
 async function fetchAppUserForSession(currentSession: Session): Promise<AppUser> {
-  const { data: profile, error: profileError } = await supabase
+  let { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select(PROFILE_COLUMNS)
     .eq("id", currentSession.user.id)
@@ -60,6 +60,25 @@ async function fetchAppUserForSession(currentSession: Session): Promise<AppUser>
 
   if (profileError && profileError.code !== "PGRST116") {
     throw profileError;
+  }
+
+  // Que no aparezca el perfil no siempre significa "cuenta nueva" -- justo tras
+  // iniciar sesión en un dispositivo, auth.uid() puede tardar una fracción de
+  // segundo en "asentarse" del lado del servidor; mientras tanto esta consulta
+  // (que depende de RLS con auth.uid() = id) puede devolver vacío SIN error,
+  // para una cuenta que sí existe. Sin este reintento, eso se trataba como
+  // cuenta nueva por error -- bug real encontrado el 24-nov-2026: una cuenta ya
+  // creada mostró por un instante "Confirma tu cédula" (la pantalla de cuenta
+  // nueva) antes de corregirse sola al momento de volver a cargar el perfil.
+  if (!profile && !profileError) {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    const retry = await supabase
+      .from("profiles")
+      .select(PROFILE_COLUMNS)
+      .eq("id", currentSession.user.id)
+      .maybeSingle();
+    if (retry.error && retry.error.code !== "PGRST116") throw retry.error;
+    profile = retry.data;
   }
 
   if (profile) {
@@ -369,7 +388,19 @@ export const useAuth = () => {
             return
           }
           await checkDeviceVerification(cedula)
+          // setUser() REEMPLAZA el perfil entero, no lo mezcla -- este objeto no
+          // traía preferred_municipality (aunque sí venía en `p`, el payload
+          // completo de la fila), así que CUALQUIER cambio en profiles (saldo,
+          // rating, lo que sea, no solo el municipio) borraba el municipio
+          // guardado de la app en memoria, aunque en la base de datos seguía
+          // intacto -- bug real encontrado el 24-nov-2026 ("Salidas de hoy"
+          // pedía elegir municipio de nuevo sin razón visible). Se parte del
+          // perfil que ya había en el store (no de cero) para que un campo
+          // nuevo que se agregue a AppUser en el futuro y se olvide listar
+          // aquí no se borre igual -- conserva su valor anterior en vez de
+          // desaparecer.
           setAppUser({
+            ...useAppStore.getState().user,
             id: p.id,
             name: p.name,
             email: p.email,
@@ -382,6 +413,7 @@ export const useAuth = () => {
             membership_expiry: p.membership_expiry,
             balance: p.balance ?? 0,
             is_admin: p.is_admin ?? false,
+            preferred_municipality: p.preferred_municipality ?? null,
           })
         }
       )
