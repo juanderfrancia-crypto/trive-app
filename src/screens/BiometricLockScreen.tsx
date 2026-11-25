@@ -11,7 +11,7 @@ interface Props {
 export default function BiometricLockScreen({ authenticating, onRetry }: Props) {
   return (
     <View style={styles.container}>
-      <Image source={require('../../assets/icon.png')} style={styles.logo} resizeMode="contain" />
+      <Image source={require('../../assets/icon-loading.png')} style={styles.logo} resizeMode="contain" />
 
       <View style={styles.iconCircle}>
         <Icon name="Fingerprint" size={32} color={COLORS.primary} />

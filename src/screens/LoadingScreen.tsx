@@ -14,7 +14,7 @@ export default function LoadingScreen({ offline = false }: Props) {
   return (
     <View style={styles.container}>
       <Image
-        source={require('../../assets/icon.png')}
+        source={require('../../assets/icon-loading.png')}
         style={styles.logo}
         resizeMode="contain"
       />

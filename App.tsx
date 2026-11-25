@@ -51,6 +51,10 @@ if (!__DEV__) {
 // una sola espera continua hasta que todo esté listo, nunca un paso
 // intermedio visible).
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// fade: true solo tiene efecto en iOS en esta versión de expo-splash-screen
+// (Android siempre corta de golpe, la librería no lo soporta ahí todavía) --
+// se deja puesto sin costo ni riesgo, por si Expo lo habilita en Android más adelante.
+SplashScreen.setOptions({ duration: 400, fade: true });
 
 // initSentry() antes que cualquier otra cosa: Sentry.wrap(App) de más abajo
 // necesita que el DSN ya esté configurado, si no, no manda nada a ningún
