@@ -58,7 +58,7 @@ const SLIDES: Slide[] = [
     ratio: 933.5 / 800,
     eyebrow: 'EMPECEMOS',
     title: 'Crea tu cuenta en un minuto',
-    description: 'Usa tu correo y confirma tu celular. Cada persona tiene una sola cuenta.',
+    description: 'Ingresa tu número y confirma con un código. Cada persona tiene una sola cuenta.',
   },
 ]
 
