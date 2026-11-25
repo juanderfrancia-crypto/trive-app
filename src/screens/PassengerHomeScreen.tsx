@@ -265,12 +265,12 @@ export default function PassengerHomeScreen() {
         </View>
 
         <View style={{ alignItems: 'center' }}>
-          <Illustration name="routePlanning" width={220} />
+          <Illustration name="routePlanning" width={190} />
         </View>
 
         <Text style={styles.headline}>¿A dónde vas hoy?</Text>
 
-        <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent} borderColor={COLORS.textPrimary}>
+        <DepthCard style={styles.searchCardWrap} contentStyle={styles.searchCardContent} borderColor={COLORS.primary}>
           <View style={styles.searchRow}>
             {/* El ícono hace de atajo: llena el origen con el municipio guardado
                 en un toque. Si todavía no hay uno guardado, abre el mismo
@@ -360,10 +360,10 @@ export default function PassengerHomeScreen() {
             activeOpacity={0.85}
             disabled={!canSearch}
             onPress={handleSearch}
-            style={[styles.searchBtn, !canSearch && styles.searchBtnDisabled]}
+            style={styles.searchBtn}
           >
-            <Icon name="Search" size={18} color={canSearch ? COLORS.white : COLORS.textTertiary} />
-            <Text style={[styles.searchBtnText, !canSearch && styles.searchBtnTextDisabled]}>Buscar cupos</Text>
+            <Icon name="Search" size={18} color={COLORS.white} />
+            <Text style={styles.searchBtnText}>Buscar cupos</Text>
           </TouchableOpacity>
         </DepthCard>
 
@@ -522,7 +522,7 @@ export default function PassengerHomeScreen() {
 
         <View style={styles.airportRow}>
           <Text style={styles.airportText}>¿Vas a otro lugar?</Text>
-          <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.75}>
+          <TouchableOpacity style={styles.airportLink} onPress={() => navigation.navigate('AirportRequest' as never)} activeOpacity={0.85}>
             <Text style={styles.airportLinkText} numberOfLines={1}>Pide un viaje a donde quieras</Text>
           </TouchableOpacity>
         </View>
@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   greeting: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   name: {
-    fontSize: 21,
+    fontSize: 19,
     fontWeight: '800',
     color: COLORS.textPrimary,
     letterSpacing: -0.5,
@@ -584,18 +584,22 @@ const styles = StyleSheet.create({
 
   searchCardWrap: {
     marginTop: SPACING.lg,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.25,
     shadowRadius: 18,
     elevation: 13,
   },
-  searchCardContent: { padding: SPACING.lg, backgroundColor: '#FAFBFE' },
+  searchCardContent: {
+    paddingHorizontal: 10, paddingTop: 10, paddingBottom: SPACING.md,
+    backgroundColor: '#FAFBFE',
+  },
   searchRow: {
-    flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 48,
+    flexDirection: 'row', alignItems: 'center', gap: SPACING.md, height: 68,
     backgroundColor: COLORS.white, borderRadius: RADIUS.md, paddingHorizontal: SPACING.md,
   },
   searchInput: { flex: 1, fontSize: 16, fontWeight: '600', color: COLORS.textPrimary },
-  searchDivider: { height: SPACING.sm },
+  searchDivider: { height: 10 },
   suggestionList: {
     backgroundColor: COLORS.white, borderRadius: RADIUS.md, marginTop: SPACING.xs,
     borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden',
@@ -608,18 +612,15 @@ const styles = StyleSheet.create({
   suggestionItemFirst: { borderTopWidth: 0 },
   suggestionText: { fontSize: 14, color: COLORS.textPrimary },
   searchBtn: {
-    marginTop: SPACING.md, height: 52, borderRadius: RADIUS.md, backgroundColor: COLORS.primary,
+    // Negativo para cancelar el padding del contenedor (searchCardContent) --
+    // así el botón queda a ras de los 3 bordes de la card, y el overflow:hidden
+    // + borderRadius de DepthCard le redondea solo las esquinas de abajo.
+    marginTop: SPACING.md, marginHorizontal: -10, marginBottom: -SPACING.md,
+    height: 60, backgroundColor: COLORS.primary,
+    borderTopLeftRadius: 5, borderTopRightRadius: 5,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: SPACING.sm,
-    borderWidth: 1, borderColor: COLORS.primaryDark,
-  },
-  // Sin borderStyle: 'dashed' a propósito -- Android a veces no lo vuelve a
-  // pintar bien al activarse el botón (se queda "pegado" aunque el estilo ya
-  // cambió), un bug conocido de React Native con bordes punteados.
-  searchBtnDisabled: {
-    backgroundColor: COLORS.surfaceAlt, borderWidth: 1, borderColor: COLORS.border,
   },
   searchBtnText: { fontSize: 16, fontWeight: '700', color: COLORS.white },
-  searchBtnTextDisabled: { color: COLORS.textSecondary },
 
   chipsScroll: { marginTop: SPACING.md },
   chipsContent: { gap: SPACING.sm },
@@ -665,8 +666,8 @@ const styles = StyleSheet.create({
   sectionLink: {
     fontSize: 15,
     fontWeight: '700',
-    color: COLORS.primary,
-    textShadowColor: 'rgba(18, 48, 184, 0.35)',
+    color: COLORS.textPrimary,
+    textShadowColor: 'rgba(15, 26, 46, 0.35)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 6,
   },
@@ -721,13 +722,14 @@ const styles = StyleSheet.create({
     columnGap: 6,
   },
   airportText: { fontSize: 13, color: COLORS.textSecondary },
-  airportLink: {},
+  // Mismo color y forma que el "pill" de Modo Conductor (DriverHomeScreen.tsx).
+  airportLink: {
+    backgroundColor: COLORS.white, paddingHorizontal: SPACING.xs, paddingVertical: 3,
+    borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border,
+  },
   airportLinkText: {
-    fontSize: 15,
-    color: COLORS.primary,
+    fontSize: 13,
+    color: COLORS.textPrimary,
     fontWeight: '800',
-    textShadowColor: 'rgba(18, 48, 184, 0.35)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 6,
   },
 })

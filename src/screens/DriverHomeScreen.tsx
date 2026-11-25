@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
 
   header: {},
   greeting: { ...TYPOGRAPHY.body2, color: COLORS.textSecondary },
-  name: { fontSize: 21, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
+  name: { fontSize: 19, fontWeight: '800', color: COLORS.textPrimary, letterSpacing: -0.3, marginTop: 6 },
 
   modeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: SPACING.md },
   modePill: {
