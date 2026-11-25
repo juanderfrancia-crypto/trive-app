@@ -17,6 +17,7 @@ import Icon, { type IconName } from '../components/Icon'
 import PublishSheet from '../components/driver/PublishSheet'
 import { showError, showSuccess } from '../utils/showError'
 import { AppAlert } from '../components/AppAlert'
+import { formatCountdown } from '../hooks/useUpcomingTrip'
 
 interface Passenger {
   booking_id: string
@@ -370,7 +371,7 @@ export default function DriverPanelScreen() {
   const countdownLabel = (dateString: string, nowMs: number) => {
     const minutes = Math.ceil((new Date(dateString).getTime() - nowMs) / 60000)
     if (minutes <= 0) return 'Hora de salida: sal ahora o cancela'
-    return `Sale en ${minutes} ${minutes === 1 ? 'minuto' : 'minutos'}`
+    return `Sale en ${formatCountdown(minutes)}`
   }
 
   const formatDate = (dateString: string) => {
